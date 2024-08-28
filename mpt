@@ -1,0 +1,157 @@
+#!/bin/bash
+
+export LC_ALL=C
+set -o pipefail
+
+usage()
+{
+  echo "\
+  Script for building open source libraries on Windows,
+
+  Usage: [$0] [options] [list of package name]
+
+  Optional Options:
+  --help                   : Display this help
+  --arch                   : Build and test x86 or x64 variant
+  --prefix                 : Install root location of bin, include, lib, share etc. the
+                        default value is $FWD/$ARCH. Also some special prefix can
+                        be set in here for some builds, the delimiter is colon combining
+                        equal for different prefix
+  --[package name]-prefix  : Install root location of bin, include, lib, share etc for specify
+                        package name, e.g. --llvm-project-prefix means set the install prefix
+                        of package llvm-project
+  --clean-build            : Do a clean build of current package and its dependencies no matter they
+                        have been installed or not
+  Example:
+    [$0] --arch x86 gmp gettext
+    [$0] --arch x64
+    [$0] --prefix="D:\mswin64"
+    [$0] --prefix="D:\mswin64" gmp ncurses
+    [$0] --llvm-project-prefix "D:\LLVM" --lua-prefix "D:\Lua"
+    [$0] gmp ncurses
+    [$0] --clean-build gmp gettext"
+}
+
+check_arch()
+{
+  local mach_name=`uname -m`
+  case $mach_name in
+    x86_64 )
+      export HOST_ARCH=x64  # or AMD64 or Intel64 or whatever
+      ;;
+    i*86 )
+      export HOST_ARCH=x86  # or IA32 or Intel32 or whatever
+      ;;
+    * )
+      # leave HOST_ARCH as-is
+      ;;
+  esac
+  if [ -z "$ARCH" ]; then
+    ARCH=x64
+  fi
+}
+
+check_triplet()
+{
+  if [ ! -f "config.guess" ]; then
+    echo [$0] Downloading config.guess
+    wget --no-check-certificate "https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD" \
+      -O config.guess
+  fi
+  export BUILD_TRIPLET=$(sh "config.guess")
+  if [ "$ARCH" == "x86" ]; then
+    export HOST_TRIPLET=i686-w64-mingw32
+    export LLVM_TRIPLET=i686-pc-windows-msvc
+  elif [ "$ARCH" == "x64" ]; then
+    export HOST_TRIPLET=x86_64-w64-mingw32
+    export LLVM_TRIPLET=x86_64-pc-windows-msvc
+  else
+    echo [$0] Please specify parameter ARCH to build, e.g. x86 or x64
+  fi
+}
+
+iter_builds()
+{
+  cd builds
+  if [ -n "$BUILDS" ]; then
+    array=($(echo $BUILDS | tr "," "\n"))
+    for p in ${array[@]}; do
+      ./$p
+    done
+  else
+    # If not specify any package name, then will build all those packages haven't been
+    # build before or build fail before.
+    for p in `ls`; do
+      ./$p
+    done
+  fi
+}
+
+. utils/pathutils.sh
+export ARCH=
+BUILDS=
+export COMMON_PREFIX=
+export CLEAN_BUILD=
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help )
+      usage
+      exit $? ;;
+    --arch )
+      shift
+      if test $# = 0; then
+        echo "missing argument for --arch"
+      fi
+      ARCH=$1
+      shift ;;
+    --arch=* )
+      arg=`echo "X$1" | sed -e 's/^X--arch=//'`
+      ARCH=$arg
+      shift ;;
+    --clean-build )
+      CLEAN_BUILD=1
+      shift ;;
+    --prefix )
+      shift
+      if test $# = 0; then
+        echo "missing argument for --prefix"
+        exit 1
+      fi
+      COMMON_PREFIX=$(unix_path "$1")
+      shift ;;
+    --prefix=* )
+      arg=`echo "X$1" | sed -e 's/^X--prefix=//'`
+      COMMON_PREFIX=$(unix_path "$arg")
+      shift ;;
+    --*-prefix )
+      pkg_name=`expr "x$1" : 'x--\(.*\)-prefix'`
+      shift
+      if test $# = 0; then
+        echo "missing argument for --*-prefix"
+        exit 1
+      fi
+      desired_var_name="${pkg_name/-/_}_prefix"
+      desired_value=$(unix_path "$1")
+      export ${desired_var_name^^}=$desired_value
+      shift ;;
+    --*-prefix=* )
+      pkg_name=`expr "x$1" : 'x--\(.*\)-prefix=.*'`
+      arg=`echo "X$1" | sed -e "s/^X--$pkg_name-prefix=//"`
+      desired_var_name="${pkg_name/-/_}_prefix"
+      desired_value=$(unix_path "$arg")
+      export ${desired_var_name^^}=$desired_value
+      shift ;;
+    * )
+      if [[ -z $BUILDS ]]; then
+        BUILDS=$1
+      else
+        BUILDS=$BUILDS,$1
+      fi
+      shift ;;
+  esac
+done
+
+check_arch
+check_triplet
+. utils/compiler.sh $ARCH
+iter_builds
