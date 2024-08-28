@@ -11,6 +11,8 @@ cygserver-config
 # Dealing with line endings
 # See https://stackoverflow.com/questions/1967370/git-replacing-lf-with-crlf
 git config --global core.autocrlf input
+git config --global core.autocrlf false
+
 # speed up git handling if on cygwin environment
 git config --system core.fileMode false
 # SSL certificate problem: Unable to get local issuer certificate

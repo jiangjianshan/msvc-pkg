@@ -127,7 +127,7 @@ download_extract()
     wget --no-check-certificate $pkg_url -O $archive || exit_error $LINENO $?
   else
     case "$archive" in
-      *.gz)
+      *.gz | *.tgz)
         local check_tool=gzip
         ;;
       *.bz2)
@@ -148,7 +148,10 @@ download_extract()
   fi
   if [ ! -d "$SRC_DIR" ]; then
     cd $PKGS_DIR
-    tar -xvf $TAGS_DIR/$archive $dest_dir || exit_error $LINENO $?
+    if [[ ! -d "$dest_dir" ]]; then
+      mkdir -p "$dest_dir"
+    fi
+    tar -xvf $TAGS_DIR/$archive -C $dest_dir --strip-components=1 || exit_error $LINENO $?
     patch_package
   fi
 }
