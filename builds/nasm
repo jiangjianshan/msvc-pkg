@@ -1,0 +1,74 @@
+#!/bin/bash
+#
+# NOTICE: don't set PATH_SEPARATOR like below, it will cause issue that 'checking for
+# grep that handles long lines and -e... configure: error: no acceptable grep could 
+# be found'
+# export PATH_SEPARATOR=";"
+
+FWD=`dirname $(pwd)`
+CWD=$(cd `dirname $0`; pwd)
+PKG_DEPS=
+PKG_NAME=nasm
+PKG_VER=2.16.03
+PKG_URL=https://www.nasm.us/pub/nasm/releasebuilds/$PKG_VER/$PKG_NAME-$PKG_VER.tar.xz
+PKGS_DIR=$FWD/pkgs
+SRC_DIR=$PKGS_DIR/$PKG_NAME-$PKG_VER
+BUILD_DIR=$SRC_DIR
+
+. $FWD/utils/common.sh
+
+clean_build()
+{
+  echo [$0] Cleaning $PKG_NAME $PKG_VER
+  cd $CWD
+  if [ -d $BUILD_DIR ]; then
+    if [ "$BUILD_DIR" != "$SRC_DIR" ]; then
+      rm -rf $BUILD_DIR
+    else
+      pushd $BUILD_DIR
+      nmake -f Mkfiles/msvc.mak clean
+      popd
+    fi
+  fi
+}
+
+patch_package()
+{
+  echo [$0] Patching package $PKG_NAME $PKG_VER
+  echo [$0] Nothing to do
+}
+
+prepare_package()
+{
+  clean_build
+  clean_log
+  create_dirs bin include lib share
+  display_info
+  download_extract $PKG_URL $PKG_NAME-$PKG_VER.tar.xz $PKG_NAME-$PKG_VER
+  if [ ! -d "$BUILD_DIR" ]; then mkdir -p "$BUILD_DIR"; fi
+}
+
+build_stage()
+{
+  echo [$0] Building $PKG_NAME $PKG_VER
+  cd $BUILD_DIR
+  build_cmd nmake -f Mkfiles/msvc.mak prefix=$PREFIX_W
+}
+
+install_package()
+{
+  echo [$0] Installing $PKG_NAME $PKG_VER
+  cd $BUILD_DIR
+  install_cmd cp -rv *.exe $PREFIX/bin
+  clean_build
+  build_ok
+}
+
+process_build()
+{
+  prepare_package
+  build_stage
+  install_package
+}
+
+do_actions
