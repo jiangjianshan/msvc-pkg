@@ -1,0 +1,15 @@
+diff --color -urN zlib-1.3.1-orig/CMakeLists.txt zlib-1.3.1/CMakeLists.txt
+--- zlib-1.3.1-orig/CMakeLists.txt	2024-01-23 02:32:37.000000000 +0800
++++ zlib-1.3.1/CMakeLists.txt	2024-07-04 09:20:26.130080100 +0800
+@@ -174,8 +174,9 @@
+      set_target_properties(zlib PROPERTIES LINK_FLAGS "-Wl,--version-script,\"${CMAKE_CURRENT_SOURCE_DIR}/zlib.map\"")
+    endif()
+ elseif(BUILD_SHARED_LIBS AND WIN32)
+-    # Creates zlib1.dll when building shared library version
+-    set_target_properties(zlib PROPERTIES SUFFIX "1.dll")
++   set_target_properties(zlibstatic PROPERTIES OUTPUT_NAME z)
++   # Creates zlib1.dll when building shared library version
++   set_target_properties(zlib PROPERTIES SUFFIX "1.dll")
+ endif()
+ 
+ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
