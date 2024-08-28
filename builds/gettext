@@ -1,0 +1,322 @@
+#!/bin/bash
+#
+# NOTICE: don't set PATH_SEPARATOR like below, it will cause issue that 'checking for
+# grep that handles long lines and -e... configure: error: no acceptable grep could 
+# be found'
+# export PATH_SEPARATOR=";"
+
+FWD=`dirname $(pwd)`
+CWD=$(cd `dirname $0`; pwd)
+PKG_DEPS='libiconv'
+PKG_NAME=gettext
+PKG_VER=0.22.5
+PKG_URL=https://ftp.gnu.org/pub/gnu/$PKG_NAME/$PKG_NAME-$PKG_VER.tar.gz
+PKGS_DIR=$FWD/pkgs
+SRC_DIR=$PKGS_DIR/$PKG_NAME-$PKG_VER
+BUILD_DIR=$FWD/out/$PKG_NAME-$PKG_VER
+
+. $FWD/utils/common.sh
+
+clean_build()
+{
+  echo [$0] Cleaning $PKG_NAME $PKG_VER
+  cd $CWD
+  if [ -d "$BUILD_DIR" ]; then
+    if [ "$BUILD_DIR" != "$SRC_DIR" ]; then
+      rm -rf $BUILD_DIR
+    else
+      pushd $BUILD_DIR
+      make distclean
+      popd
+    fi
+  fi
+}
+
+patch_package()
+{
+  echo [$0] Patching package $PKG_NAME $PKG_VER
+  pushd $SRC_DIR
+
+  # XXX: libtool don't have options can set the naming style of static and 
+  #      shared library. Here is only a workaround.
+  echo [$0] Patching ltmain.sh in build-aux
+  pushd build-aux
+  sed                                                                                                \
+    -e "s|old_library='\$old_library'|old_library='lib\$old_library'|g"                              \
+    -e 's|oldlibs="$output_objdir/$libname.$libext|oldlibs="$output_objdir/lib$libname.$libext|g'    \
+    -e 's|oldlibs " $output_objdir/$libname.$libext|oldlibs " $output_objdir/lib$libname.$libext|g'  \
+    ltmain.sh > ltmain.sh-t
+  mv ltmain.sh-t ltmain.sh
+  popd
+
+  echo [$0] Patching ltmain.sh in gettext-tools/examples/hello-c++-kde/admin
+  pushd gettext-tools/examples/hello-c++-kde/admin
+  sed                                                                                                \
+    -e "s|old_library='\$old_library'|old_library='lib\$old_library'|g"                              \
+    -e 's|oldlibs="$output_objdir/$libname.$libext|oldlibs="$output_objdir/lib$libname.$libext|g'    \
+    -e 's|oldlibs " $output_objdir/$libname.$libext|oldlibs " $output_objdir/lib$libname.$libext|g'  \
+    ltmain.sh > ltmain.sh-t
+  mv ltmain.sh-t ltmain.sh
+  popd
+
+  echo [$0] Patching ltmain.sh in libtextstyle/build-aux
+  pushd libtextstyle/build-aux
+  sed                                                                                                \
+    -e "s|old_library='\$old_library'|old_library='lib\$old_library'|g"                              \
+    -e 's|oldlibs="$output_objdir/$libname.$libext|oldlibs="$output_objdir/lib$libname.$libext|g'    \
+    -e 's|oldlibs " $output_objdir/$libname.$libext|oldlibs " $output_objdir/lib$libname.$libext|g'  \
+    ltmain.sh > ltmain.sh-t
+  mv ltmain.sh-t ltmain.sh
+  popd
+
+  echo [$0] Patching configure in top level
+  sed                                                                                                \
+    -e "s|library_names_spec='\$libname.dll.lib'|library_names_spec='\$libname.lib'|g"               \
+    -e 's|$tool_output_objdir$libname.dll.lib|$tool_output_objdir$libname.lib|g'                     \
+    configure > configure-t
+  mv configure-t configure
+  chmod +x configure
+
+  echo [$0] Patching configure in gettext-runtime
+  pushd gettext-runtime
+  sed                                                                                                \
+    -e "s|library_names_spec='\$libname.dll.lib'|library_names_spec='\$libname.lib'|g"               \
+    -e 's|$tool_output_objdir$libname.dll.lib|$tool_output_objdir$libname.lib|g'                     \
+    configure > configure-t
+  mv configure-t configure
+  chmod +x configure
+  popd
+
+  echo [$0] Patching configure in gettext-runtime/intl
+  pushd gettext-runtime/intl
+  sed                                                                                                \
+    -e "s|library_names_spec='\$libname.dll.lib'|library_names_spec='\$libname.lib'|g"               \
+    -e 's|$tool_output_objdir$libname.dll.lib|$tool_output_objdir$libname.lib|g'                     \
+    configure > configure-t
+  mv configure-t configure
+  chmod +x configure
+  popd
+
+  echo [$0] Patching configure in gettext-runtime/libasprintf
+  pushd gettext-runtime/libasprintf
+  sed                                                                                                \
+    -e "s|library_names_spec='\$libname.dll.lib'|library_names_spec='\$libname.lib'|g"               \
+    -e 's|$tool_output_objdir$libname.dll.lib|$tool_output_objdir$libname.lib|g'                     \
+    configure > configure-t
+  mv configure-t configure
+  chmod +x configure
+  popd
+
+  echo [$0] Patching configure in gettext-tools
+  pushd gettext-tools
+  sed                                                                                                \
+    -e "s|library_names_spec='\$libname.dll.lib'|library_names_spec='\$libname.lib'|g"               \
+    -e 's|$tool_output_objdir$libname.dll.lib|$tool_output_objdir$libname.lib|g'                     \
+    configure > configure-t
+  mv configure-t configure
+  chmod +x configure
+  popd
+
+  echo [$0] Patching configure in gettext-tools/examples
+  pushd gettext-tools/examples
+  sed                                                                                                \
+    -e "s|library_names_spec='\$libname.dll.lib'|library_names_spec='\$libname.lib'|g"               \
+    -e 's|$tool_output_objdir$libname.dll.lib|$tool_output_objdir$libname.lib|g'                     \
+    configure > configure-t
+  mv configure-t configure
+  chmod +x configure
+  popd
+
+  echo [$0] Patching configure in libtextstyle
+  pushd libtextstyle
+  sed                                                                                                \
+    -e "s|library_names_spec='\$libname.dll.lib'|library_names_spec='\$libname.lib'|g"               \
+    -e 's|$tool_output_objdir$libname.dll.lib|$tool_output_objdir$libname.lib|g'                     \
+    configure > configure-t
+  mv configure-t configure
+  chmod +x configure
+  popd
+
+  popd
+}
+
+prepare_package()
+{
+  clean_build
+  clean_log
+  create_dirs bin include lib share
+  display_info
+  download_extract $PKG_URL $PKG_NAME-$PKG_VER.tar.gz $PKG_NAME-$PKG_VER
+  if [ ! -d "$BUILD_DIR" ]; then mkdir -p "$BUILD_DIR"; fi
+}
+
+configure_stage()
+{
+  echo [$0] Configuring $PKG_NAME $PKG_VER
+  cd $BUILD_DIR
+  array=($(echo $PREFIX_PATH_M | tr ";" "\n"))
+  for p in ${array[@]}; do
+    local old_lib="$p/lib"
+    if [[ -d "$old_lib" ]] && [[ "$LDFLAGS" != *"$old_lib"* ]]; then
+      if [ -z "$LDFLAGS" ]; then
+        LDFLAGS='-L'"$p"'/lib'
+      else
+        LDFLAGS="$LDFLAGS"' -L'"$p"'/lib'
+      fi
+    fi
+  done
+  OPTIONS='-nologo -MD -fp:precise -diagnostics:column -wd4819 -openmp:llvm'
+  DEFINES="-DWIN32 -D_WIN32_WINNT=$WIN32_TARGET -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS"
+  # NOTE:
+  # 1. Don't use CPP="$FWD/wrapper/compile cl -nologo -EP" here,
+  #    it will cause checking absolute name of standard files is empty.
+  #    e.g. checking absolute name of <fcntl.h> ... '', but we can use
+  #    CPP="$FWD/wrapper/compile cl -nologo -E" 
+  # 2. Don't use 'compile cl -nologo' but 'compile cl'. Because configure 
+  #    on some libraries will detect whether is msvc compiler according to
+  #    '*cl | cl.exe'
+  # 3. with below options, ncurses which version is 6.2 need to add 
+  #    '--with-shared' configuation option if not use '--disable-curses'
+  # 4. If want to generate libintl-8.dll, please don't use '--disable-nls'
+  #    option
+  configure_cmd $SRC_DIR/configure --build=$BUILD_TRIPLET                                      \
+    --host=$HOST_TRIPLET                                                                       \
+    --prefix="$PREFIX"                                                                         \
+    --libdir="$PREFIX/lib"                                                                     \
+    --mandir="$PREFIX/share/man"                                                               \
+    --enable-static                                                                            \
+    --enable-shared                                                                            \
+    --enable-relocatable                                                                       \
+    --enable-threads=windows                                                                   \
+    --disable-java                                                                             \
+    --disable-csharp                                                                           \
+    --disable-openmp                                                                           \
+    --disable-curses                                                                           \
+    --with-included-libxml                                                                     \
+    --with-included-libunistring                                                               \
+    --with-included-gettext                                                                    \
+    --with-included-libintl                                                                    \
+    --with-included-glib                                                                       \
+    --with-included-libcroco                                                                   \
+    --without-emacs                                                                            \
+    --without-cvs                                                                              \
+    --without-git                                                                              \
+    --without-bzip2                                                                            \
+    --without-xz                                                                               \
+    AR="$FWD/wrapper/ar-lib lib -nologo"                                                       \
+    CC="$FWD/wrapper/compile cl"                                                               \
+    CFLAGS="$OPTIONS"                                                                          \
+    CPP="$FWD/wrapper/compile cl -E"                                                           \
+    CPPFLAGS="$DEFINES $INCLUDES"                                                              \
+    CXX="$FWD/wrapper/compile cl"                                                              \
+    CXXFLAGS="-EHsc $OPTIONS"                                                                  \
+    DLLTOOL='link.exe -verbose -dll'                                                           \
+    LD="link -nologo"                                                                          \
+    LDFLAGS="$LDFLAGS"                                                                         \
+    NM="dumpbin -nologo -symbols"                                                              \
+    RANLIB=":"                                                                                 \
+    RC="$FWD/wrapper/windres-rc rc -nologo"                                                    \
+    STRIP=":"                                                                                  \
+    WINDRES="$FWD/wrapper/windres-rc rc -nologo"                                               \
+    gt_cv_locale_zh_CN=none
+}
+
+patch_stage()
+{
+  # Patch Makefiles
+  echo [$0] Patching Makefile in gettext-runtime/gnulib-lib
+  pushd gettext-runtime/gnulib-lib
+  sed                                                                                          \
+    -e 's|libgrt.a|libgrt.lib|g'                                                               \
+    Makefile > Makefile-t
+  mv Makefile-t Makefile
+  popd
+
+  echo [$0] Patching Makefile in gettext-runtime/intl
+  pushd gettext-runtime/intl
+  sed                                                                                          \
+    -e 's|libintl.a|libintl.lib|g'                                                             \
+    Makefile > Makefile-t
+  mv Makefile-t Makefile
+  popd
+
+  echo [$0] Patching Makefile in gettext-runtime/src
+  pushd gettext-runtime/src
+  sed                                                                                          \
+    -e 's|libgrt.a|libgrt.lib|g'                                                               \
+    Makefile > Makefile-t
+  mv Makefile-t Makefile
+  popd
+
+  echo [$0] Patching Makefile in gettext-runtime/intl/gnulib-lib
+  pushd gettext-runtime/intl/gnulib-lib
+  sed                                                                                          \
+    -e 's|libintl.a|libintl.lib|g'                                                             \
+    Makefile > Makefile-t
+  mv Makefile-t Makefile
+  popd
+
+  echo [$0] Patching Makefile in gettext-tools/src
+  pushd gettext-tools/src
+  sed                                                                                          \
+    -e 's|libgrep.a|libgrep.lib|g'                                                             \
+    Makefile > Makefile-t
+  mv Makefile-t Makefile
+  popd
+
+  echo [$0] Patching Makefile in gettext-tools/libgrep
+  pushd gettext-tools/libgrep
+  sed                                                                                          \
+    -e 's|libgrep.a|libgrep.lib|g'                                                             \
+    Makefile > Makefile-t
+  mv Makefile-t Makefile
+  popd
+
+  echo [$0] Patching Makefile in gettext-tools/gnulib-tests
+  pushd gettext-tools/gnulib-tests
+  sed                                                                                          \
+    -e 's|libtests.a|libtests.lib|g'                                                           \
+    Makefile > Makefile-t
+  mv Makefile-t Makefile
+  popd
+
+  echo [$0] Patching Makefile in libtextstyle/tests
+  pushd libtextstyle/tests
+  sed                                                                                          \
+    -e 's|libtests.a|libtests.lib|g'                                                           \
+    Makefile > Makefile-t
+  mv Makefile-t Makefile
+  popd
+}
+
+build_stage()
+{
+  echo [$0] Building $PKG_NAME $PKG_VER
+  cd $BUILD_DIR
+  build_cmd make -j$(nproc)
+}
+
+install_package()
+{
+  echo [$0] Installing $PKG_NAME $PKG_VER
+  cd $BUILD_DIR
+  install_cmd make install
+  # Fix libtool: warning: '../intl/libintl.la' has not been installed
+  cp -v gettext-runtime/intl/.libs/libintl.lai $PREFIX/lib/libintl.la
+  cd $PREFIX/bin
+  # Fix 0xc0000022 issue
+  chmod 755 intl-8.dll
+  clean_build
+  build_ok
+}
+
+process_build()
+{
+  prepare_package
+  configure_stage
+  patch_stage
+  build_stage
+  install_package
+}
+
+do_actions
