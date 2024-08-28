@@ -1,0 +1,18 @@
+diff --color -urN xz-5.4.6-orig/CMakeLists.txt xz-5.4.6/CMakeLists.txt
+--- xz-5.4.6-orig/CMakeLists.txt	2024-01-26 19:41:20.000000000 +0800
++++ xz-5.4.6/CMakeLists.txt	2024-06-05 09:10:22.659695800 +0800
+@@ -1023,11 +1023,9 @@
+         DESTINATION "${liblzma_INSTALL_CMAKEDIR}"
+         COMPONENT liblzma_Development)
+ 
+-if(NOT MSVC)
+-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/liblzma.pc"
+-            DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig"
+-            COMPONENT liblzma_Development)
+-endif()
++install(FILES "${CMAKE_CURRENT_BINARY_DIR}/liblzma.pc"
++        DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig"
++        COMPONENT liblzma_Development)
+ 
+ 
+ #############################################################################
