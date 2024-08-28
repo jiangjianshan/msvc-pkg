@@ -1,0 +1,107 @@
+diff --color -urN bzip2-1.0.8-orig/bzip2.pc.cmakein bzip2-1.0.8/bzip2.pc.cmakein
+--- bzip2-1.0.8-orig/bzip2.pc.cmakein	1970-01-01 08:00:00.000000000 +0800
++++ bzip2-1.0.8/bzip2.pc.cmakein	2024-06-06 14:34:48.667889500 +0800
+@@ -0,0 +1,13 @@
++prefix=@CMAKE_INSTALL_PREFIX@
++exec_prefix=@CMAKE_INSTALL_PREFIX@
++libdir=@CMAKE_INSTALL_PREFIX@/lib
++sharedlibdir=@CMAKE_INSTALL_PREFIX@/lib
++includedir=@CMAKE_INSTALL_PREFIX@/include
++
++Name: bzip2
++Description: bzip2 compression library
++Version: @VERSION@
++
++Requires:
++Libs: -L${libdir} -L${sharedlibdir} -lbz2
++Cflags: -I${includedir}
+diff --color -urN bzip2-1.0.8-orig/CMakeLists.txt bzip2-1.0.8/CMakeLists.txt
+--- bzip2-1.0.8-orig/CMakeLists.txt	1970-01-01 08:00:00.000000000 +0800
++++ bzip2-1.0.8/CMakeLists.txt	2024-06-06 14:35:52.539996800 +0800
+@@ -0,0 +1,86 @@
++cmake_minimum_required(VERSION 3.9)
++
++project(bzip2 C)
++
++set(VERSION "1.0.8")
++
++set(LIBBZ2_PUBLIC_HDRS
++  bzlib.h
++)
++set(LIBBZ2_PRIVATE_HDRS
++  bzlib_private.h
++)
++
++set(LIBBZ2_SOURCES
++  blocksort.c
++  huffman.c
++  crctable.c
++  randtable.c
++  compress.c
++  decompress.c
++  bzlib.c
++)
++
++if (MSVC)
++  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
++endif()
++
++include(GNUInstallDirs)
++
++# The libbz2 shared library.
++add_library(libbz2_shared SHARED ${LIBBZ2_SOURCES} ${LIBBZ2_PUBLIC_HDRS} ${LIBBZ2_PRIVATE_HDRS} libbz2.def)
++target_compile_definitions(libbz2_shared PUBLIC -D_FILE_OFFSET_BITS=64)
++target_compile_options(libbz2_shared PUBLIC -MD -Ox -nologo)
++target_include_directories(libbz2_shared PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
++set_target_properties(libbz2_shared PROPERTIES
++  VERSION 1.0.8
++  OUTPUT_NAME bz2)
++set_target_properties(libbz2_shared PROPERTIES SOVERSION 0)
++
++# The libbz2 static library.
++add_library(libbz2_static STATIC ${LIBBZ2_SOURCES} ${LIBBZ2_PUBLIC_HDRS} ${LIBBZ2_PRIVATE_HDRS})
++target_compile_definitions(libbz2_static PUBLIC -D_FILE_OFFSET_BITS=64)
++target_compile_options(libbz2_static PUBLIC -MD -Ox -nologo)
++target_include_directories(libbz2_static PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
++set_target_properties(libbz2_static PROPERTIES
++    VERSION     1.0.8
++    OUTPUT_NAME libbz2)
++
++add_executable(bzip2 bzip2.c)
++target_link_libraries(bzip2 libbz2_shared)
++
++add_executable(bzip2recover bzip2recover.c)
++
++set(BZIP2_PC ${CMAKE_CURRENT_BINARY_DIR}/bzip2.pc)
++configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/bzip2.pc.cmakein
++		${BZIP2_PC} @ONLY)
++
++install(TARGETS bzip2 bzip2recover libbz2_shared libbz2_static RUNTIME DESTINATION "bin" ARCHIVE DESTINATION "lib")
++install(PROGRAMS $<TARGET_FILE:bzip2> DESTINATION "bin" RENAME "bunzip2${CMAKE_EXECUTABLE_SUFFIX}")
++install(PROGRAMS $<TARGET_FILE:bzip2> DESTINATION "bin" RENAME "bzcat${CMAKE_EXECUTABLE_SUFFIX}")
++install(FILES bzip2.1 DESTINATION "${CMAKE_INSTALL_PREFIX}/share/man/man1")
++install(FILES bzlib.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
++install(FILES ${BZIP2_PC} DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig")
++
++# Install bash scripts
++if (UNIX OR LINUX)
++    install(PROGRAMS bzgrep bzmore bzdiff DESTINATION "bin")
++    install(CODE "${CMAKE_COMMAND} -E create_symlink ${CMAKE_INSTALL_BINDIR}/bzgrep ${CMAKE_INSTALL_BINDIR}/bzegrep")
++    install(CODE "${CMAKE_COMMAND} -E create_symlink ${CMAKE_INSTALL_BINDIR}/bzgrep ${CMAKE_INSTALL_BINDIR}/bzegrep")
++    install(CODE "${CMAKE_COMMAND} -E create_symlink ${CMAKE_INSTALL_BINDIR}/bzmore ${CMAKE_INSTALL_BINDIR}/bzless")
++    install(CODE "${CMAKE_COMMAND} -E create_symlink ${CMAKE_INSTALL_BINDIR}/bzdiff ${CMAKE_INSTALL_BINDIR}/bzcmp")
++
++    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/bzegrep.1" ".so ${CMAKE_INSTALL_PREFIX}/share/man/man1/bzgrep.1")
++    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/bzfgrep.1" ".so ${CMAKE_INSTALL_PREFIX}/share/man/man1/bzgrep.1")
++    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/bzless.1" ".so ${CMAKE_INSTALL_PREFIX}/share/man/man1/bzmore.1")
++    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/bzcmp.1" ".so ${CMAKE_INSTALL_PREFIX}/share/man/man1/bzdiff.1")
++    install(FILES
++      bzgrep.1 bzmore.1 bzdiff.1
++      "${CMAKE_CURRENT_BINARY_DIR}/bzegrep.1"
++      "${CMAKE_CURRENT_BINARY_DIR}/bzfgrep.1"
++      "${CMAKE_CURRENT_BINARY_DIR}/bzless.1"
++      "${CMAKE_CURRENT_BINARY_DIR}/bzcmp.1"
++    DESTINATION "${CMAKE_INSTALL_PREFIX}/share/man/man1")
++endif()
++
++
