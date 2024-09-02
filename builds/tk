@@ -1,0 +1,95 @@
+#!/bin/bash
+#
+# NOTICE: don't set PATH_SEPARATOR like below, it will cause issue that 'checking for
+# grep that handles long lines and -e... configure: error: no acceptable grep could 
+# be found'
+# export PATH_SEPARATOR=";"
+
+FWD=`dirname $(pwd)`
+CWD=$(cd `dirname $0`; pwd)
+PKG_DEPS='tcl'
+PKG_NAME=tk
+PKG_VER=8.6.14
+PKG_URL=http://prdownloads.sourceforge.net/tcl/$PKG_NAME$PKG_VER-src.tar.gz
+PKGS_DIR=$FWD/pkgs
+SRC_DIR=$PKGS_DIR/${PKG_NAME}${PKG_VER}
+BUILD_DIR=$SRC_DIR/win
+
+. $FWD/utils/common.sh
+
+clean_build()
+{
+  echo [$0] Cleaning $PKG_NAME $PKG_VER
+  cd $CWD
+  if [[ -d $BUILD_DIR ]]; then
+    cd $BUILD_DIR
+    nmake -f makefile.vc clean
+  fi
+}
+
+patch_package()
+{
+  echo [$0] Patching package $PKG_NAME $PKG_VER
+  echo [$0] Nothing to do
+}
+
+prepare_package()
+{
+  clean_build
+  clean_log
+  create_dirs bin include lib share
+  display_info
+  download_extract $PKG_URL $PKG_NAME$PKG_VER-src.tar.gz ${PKG_NAME}${PKG_VER}
+  if [ ! -d "$BUILD_DIR" ]; then mkdir -p "$BUILD_DIR"; fi
+}
+
+configure_stage()
+{
+  echo [$0] Configuring $PKG_NAME $PKG_VER
+  cd $BUILD_DIR
+  array=($(echo $PREFIX_PATH_M | tr ";" "\n"))
+  for p in ${array[@]}; do
+    local old_include="$p/include"
+    if [[ -d "$old_include" ]] && [[ "$INCLUDE" != *"${old_include//\//\\}"* ]]; then
+      if [[ -z "$INCLUDE" ]]; then
+        INCLUDE=$(win_wpath "$old_include")
+      else
+        INCLUDE="$INCLUDE"';'$(win_wpath "$old_include")
+      fi
+    fi
+    local old_lib="$p/lib"
+    if [[ -d "$old_lib" ]] && [[ "$LIB" != *"${old_lib//\//\\}"* ]]; then
+      if [[ -z "$LIB" ]]; then
+        LIB=$(win_wpath "$old_lib")
+      else
+        LIB="$LIB"';'$(win_wpath "$old_lib")
+      fi
+    fi
+  done
+}
+
+build_stage()
+{
+  echo [$0] Building $PKG_NAME $PKG_VER
+  cd $BUILD_DIR
+  build_cmd nmake -f makefile.vc release
+}
+
+install_package()
+{
+  echo [$0] Installing $PKG_NAME $PKG_VER
+  cd $BUILD_DIR
+  install_cmd nmake -f makefile.vc install INSTALLDIR=$PREFIX_W
+  clean_build
+  build_ok
+}
+
+process_build()
+{
+  prepare_package
+  configure_stage
+  build_stage
+  install_package
+}
+
+do_actions
