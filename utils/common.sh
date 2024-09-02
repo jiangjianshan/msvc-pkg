@@ -172,6 +172,36 @@ git_sync()
   fi
 }
 
+git_rescure()
+{
+  local pkg_url=$1
+  local branch=$2
+  cd $PKGS_DIR
+  if [ ! -d "$SRC_DIR" ]; then
+    git clone --recurse-submodules --shallow-submodules -b $branch $pkg_url
+  elif [ ! -d "$SRC_DIR/.git" ]; then
+    rm -rf $SRC_DIR
+    git clone --recurse-submodules --shallow-submodules -b $branch $pkg_url
+  else
+    cd $SRC_DIR
+    local branch_ver=`git name-rev --name-only HEAD | sed 's/[^0-9.]*\([0-9.]*\).*/\1/'`
+    if [ "$PKG_VER" == "$branch_ver" ]; then
+      echo [$0] Branch version is $branch_ver 
+      for m in `git status | grep -oP '(?<=modified:\s{3}).*(?=\s{1}\(modified content\))'`; do
+        rm -rfv $m
+      done
+      git submodule update --init --recursive
+    else
+      cd $PKGS_DIR
+      echo [$0] Deleting the old branch version $branch_ver
+      rm -rf $SRC_DIR 
+      echo [$0] Cloning the new branch version $PKG_VER
+      git clone --recurse-submodules --shallow-submodules -b $branch $PKG_URL
+    fi
+  fi
+
+}
+
 do_actions()
 {
   check_depends
