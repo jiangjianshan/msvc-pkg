@@ -1,0 +1,30 @@
+diff --color -urN perl-5.38.2-orig/win32/Makefile perl-5.38.2/win32/Makefile
+--- perl-5.38.2-orig/win32/Makefile	2023-11-28 20:16:18.000000000 +0800
++++ perl-5.38.2/win32/Makefile	2024-05-31 11:23:56.071305200 +0800
+@@ -893,7 +893,7 @@
+ ..\config.sh : $(CFGSH_TMPL) config_sh.PL FindExt.pm $(MINIPERL)
+ 	$(MINIPERL) -I..\lib config_sh.PL $(CFG_VARS) $(CFGSH_TMPL) > ..\config.sh.tmp
+ 	if exist ..\config.sh del /f ..\config.sh
+-	rename ..\config.sh.tmp config.sh
++	cmd /c "rename ..\\config.sh.tmp config.sh"
+ 
+ # This target is for when changes to the main config.sh happen.
+ # Edit config.vc, then make perl in a minimal configuration (i.e. with MULTI,
+@@ -904,7 +904,7 @@
+ 	$(MINIPERL) -I..\lib ..\configpm --chdir=..
+ 	-del /f $(CFGH_TMPL)
+ 	-$(MINIPERL) -I..\lib config_h.PL
+-	rename config.h $(CFGH_TMPL)
++	cmd /c "rename config.h $(CFGH_TMPL)"
+ 
+ $(CONFIGPM) : $(MINIPERL) ..\config.sh config_h.PL ..\git_version.h
+ 	$(MINIPERL) -I..\lib ..\configpm --chdir=..
+@@ -1331,7 +1331,7 @@
+ minitest : .\config.h $(MINIPERL) ..\git_version.h $(GLOBEXE) $(CONFIGPM) $(UNIDATAFILES)
+ 	$(XCOPY) $(MINIPERL) ..\t\$(NULL)
+ 	if exist ..\t\perl.exe del /f ..\t\perl.exe
+-	rename ..\t\miniperl.exe perl.exe
++	cmd /c "rename ..\\t\\miniperl.exe perl.exe"
+ 	$(XCOPY) $(GLOBEXE) ..\t\$(NULL)
+ # Note this perl.exe is miniperl
+ 	cd ..\t && perl.exe TEST base/*.t comp/*.t cmd/*.t run/*.t io/*.t re/*.t opbasic/*.t op/*.t uni/*.t perf/*.t pragma/*.t
