@@ -1,0 +1,40 @@
+diff --color -urN libxslt-1.1.39-orig/CMakeLists.txt libxslt-1.1.39/CMakeLists.txt
+--- libxslt-1.1.39-orig/CMakeLists.txt	2023-05-08 19:05:19.000000000 +0800
++++ libxslt-1.1.39/CMakeLists.txt	2024-06-05 09:42:16.401792700 +0800
+@@ -478,17 +478,17 @@
+ install(DIRECTORY doc/ DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/libxslt COMPONENT documentation PATTERN Makefile.* EXCLUDE)
+ 
+ if(LIBXSLT_WITH_CRYPTO AND NOT WIN32)
+-	install(FILES FindGcrypt.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxslt-${PROJECT_VERSION} COMPONENT development)
++	install(FILES FindGcrypt.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxslt COMPONENT development)
+ endif()
+ 
+ configure_package_config_file(
+ 	libxslt-config.cmake.cmake.in libxslt-config.cmake
+-	INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxslt-${PROJECT_VERSION}
++	INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxslt
+ )
+ 
+ install(
+ 	FILES ${CMAKE_CURRENT_BINARY_DIR}/libxslt-config.cmake
+-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxslt-${PROJECT_VERSION}
++	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxslt
+ 	COMPONENT development
+ )
+ 
+@@ -500,13 +500,13 @@
+ 
+ install(
+ 	FILES ${CMAKE_CURRENT_BINARY_DIR}/libxslt-config-version.cmake
+-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxslt-${PROJECT_VERSION}
++	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxslt
+ 	COMPONENT development
+ )
+ 
+ install(
+ 	EXPORT LibXslt
+-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxslt-${PROJECT_VERSION}
++	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxslt
+ 	NAMESPACE LibXslt::
+ 	FILE libxslt-export.cmake
+ 	COMPONENT development
