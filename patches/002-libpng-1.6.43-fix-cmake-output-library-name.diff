@@ -1,0 +1,14 @@
+diff --color -urN libpng-1.6.43-orig/CMakeLists.txt libpng-1.6.43/CMakeLists.txt
+--- libpng-1.6.43-orig/CMakeLists.txt	2024-06-30 11:04:51.182917500 +0800
++++ libpng-1.6.43/CMakeLists.txt	2024-07-04 11:07:02.285102700 +0800
+@@ -683,8 +683,8 @@
+   # Borland/Embarcadero, etc. We need to specify the "libpng" name explicitly.
+   # We also need to use a custom suffix, in order to distinguish between the
+   # shared import library name and the static library name.
+-  set(PNG_SHARED_OUTPUT_NAME "libpng${PNGLIB_ABI_VERSION}")
+-  set(PNG_STATIC_OUTPUT_NAME "libpng${PNGLIB_ABI_VERSION}_static")
++  set(PNG_SHARED_OUTPUT_NAME "png${PNGLIB_ABI_VERSION}")
++  set(PNG_STATIC_OUTPUT_NAME "libpng${PNGLIB_ABI_VERSION}")
+ endif()
+ 
+ if(PNG_SHARED)

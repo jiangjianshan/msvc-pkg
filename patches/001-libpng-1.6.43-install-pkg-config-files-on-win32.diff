@@ -1,0 +1,48 @@
+diff --color -urN libpng-1.6.43-orig/CMakeLists.txt libpng-1.6.43/CMakeLists.txt
+--- libpng-1.6.43-orig/CMakeLists.txt	2024-02-23 17:51:40.000000000 +0800
++++ libpng-1.6.43/CMakeLists.txt	2024-06-26 16:31:14.755209800 +0800
+@@ -1039,7 +1039,7 @@
+ # We use the same files like ./configure, so we have to set its vars.
+ # Only do this on Windows for Cygwin - the files don't make much sense
+ # outside of a UNIX look-alike.
+-if(NOT WIN32 OR CYGWIN OR MINGW)
++if(WIN32 OR CYGWIN OR MINGW)
+   set(prefix      ${CMAKE_INSTALL_PREFIX})
+   set(exec_prefix ${CMAKE_INSTALL_PREFIX})
+   set(libdir      ${CMAKE_INSTALL_FULL_LIBDIR})
+@@ -1066,7 +1066,7 @@
+ 
+   if(PNG_SHARED)
+     # Create a symlink for libpng.dll.a => libpng16.dll.a on Cygwin
+-    if(NOT WIN32 OR CYGWIN OR MINGW)
++    if(WIN32 OR CYGWIN OR MINGW)
+       create_symlink(libpng${CMAKE_SHARED_LIBRARY_SUFFIX} TARGET png_shared)
+       install(FILES $<TARGET_LINKER_FILE_DIR:png_shared>/libpng${CMAKE_SHARED_LIBRARY_SUFFIX}
+               DESTINATION ${CMAKE_INSTALL_LIBDIR})
+@@ -1074,7 +1074,7 @@
+   endif()
+ 
+   if(PNG_STATIC)
+-    if(NOT WIN32 OR CYGWIN OR MINGW)
++    if(WIN32 OR CYGWIN OR MINGW)
+       create_symlink(libpng${CMAKE_STATIC_LIBRARY_SUFFIX} TARGET png_static)
+       install(FILES $<TARGET_LINKER_FILE_DIR:png_static>/libpng${CMAKE_STATIC_LIBRARY_SUFFIX}
+               DESTINATION ${CMAKE_INSTALL_LIBDIR})
+@@ -1109,7 +1109,7 @@
+   install(FILES png.5
+           DESTINATION ${CMAKE_INSTALL_MANDIR}/man5)
+   # Install the pkg-config files.
+-  if(NOT CMAKE_HOST_WIN32 OR CYGWIN OR MINGW)
++  if(CMAKE_HOST_WIN32 OR CYGWIN OR MINGW)
+     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libpng.pc
+             DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+     install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/libpng-config
+@@ -1124,7 +1124,7 @@
+ # Create an export file that CMake users can include() to import our targets.
+ if(NOT SKIP_INSTALL_EXPORT AND NOT SKIP_INSTALL_ALL)
+   install(EXPORT libpng
+-          DESTINATION ${CMAKE_INSTALL_LIBDIR}/libpng
++          DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libpng
+           FILE libpng${PNGLIB_ABI_VERSION}.cmake)
+ endif()
+ 
