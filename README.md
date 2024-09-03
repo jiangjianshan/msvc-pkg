@@ -24,6 +24,7 @@ There are already some good projects exist, e.g. [vcpkg](https://github.com/micr
 - [wget](https://eternallybored.org/misc/wget/)
 - [ninja](https://ninja-build.org/)
 - [meson](https://mesonbuild.com/)
+- [CUDA](https://developer.nvidia.com/cuda-toolkit) and [CUDNN](https://developer.nvidia.com/cudnn) (Some libraries need them)
 - Windows Terminal (Optional but recommend to have it)
 
 ## Quick Start

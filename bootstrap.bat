@@ -14,6 +14,8 @@ echo [%~nx0] Checking wget whether has been installed
 call :check_wget || goto :end
 echo [%~nx0] Checking VC Build Tools whether has been installed
 call :check_vcbuildtools vs_buildTools || goto :end
+echo [%~nx0] Checking CUDA and CUDNN whether has been installed
+call :check_cuda || goto :end
 echo [%~nx0] Checking Python whether has been installed
 call :check_python || goto :end
 echo [%~nx0] Checking meson whether has been installed
@@ -115,6 +117,58 @@ if exist "%vsinstall%\VC\Auxiliary\Build\vcvarsall.bat" exit /b 0
 )
 exit /b 0
 
+::==============================================================================
+:: Check CUDA whether has been installed. If not, install it automatically
+::==============================================================================
+:check_cuda
+for /f "usebackq tokens=*" %%i in (`wmic path win32_VideoController get name ^| findstr "NVIDIA"`) do (
+  set nv_gpu=%%i
+)
+if "%nv_gpu%" == "" (
+  echo [%~nx0] You don't have NVIDIA GPU on your PC
+) else (
+  echo [%~nx0] You NVIDIA GPU is !nv_gpu!
+  if "%CUDA_PATH%" == "" (
+    echo [%~nx0] You don't have CUDA installed
+    set CUDA_VERSION=12.5.1_555.85
+    for /f "tokens=1-4 delims=." %%a in ("!CUDA_VERSION!") do set cuda_major=%%a
+    for /f "tokens=1-4 delims=." %%a in ("!CUDA_VERSION!") do set cuda_major_minor=%%a.%%b
+    :: https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html
+    if not exist "cuda_!CUDA_VERSION!_windows.exe" (
+      echo [%~nx0] Downloading CUDA !CUDA_VERSION!, please wait ...
+      wget https://developer.download.nvidia.com/compute/cuda/!CUDA_VERSION:_555.85=!/local_installers/cuda_!CUDA_VERSION!_windows.exe
+    )
+    echo [%~nx0] Installing CUDA !CUDA_VERSION!, please wait ...
+    cuda_!CUDA_VERSION!_windows.exe -s cuda_profiler_api_!cuda_major_minor! cudart_!cuda_major_minor! cuobjdump_!cuda_major_minor! cupti_!cuda_major_minor! cuxxfilt_!cuda_major_minor! demo_suite_!cuda_major_minor! nvcc_!cuda_major_minor! nvdisasm_!cuda_major_minor! nvfatbin_!cuda_major_minor! nvjitlink_!cuda_major_minor! nvml_dev_!cuda_major_minor! nvprof_!cuda_major_minor! nvprune_!cuda_major_minor! nvrtc_!cuda_major_minor! nvrtc_dev_!cuda_major_minor! opencl_!cuda_major_minor! visual_profiler_!cuda_major_minor! sanitizer_!cuda_major_minor! thrust_!cuda_major_minor! cublas_!cuda_major_minor! cublas_dev_!cuda_major_minor! cufft_!cuda_major_minor! cufft_dev_!cuda_major_minor! curand_!cuda_major_minor! curand_dev_!cuda_major_minor! cusolver_!cuda_major_minor! cusolver_dev_!cuda_major_minor! cusparse_!cuda_major_minor! cusparse_dev_!cuda_major_minor! npp_!cuda_major_minor! npp_dev_!cuda_major_minor! nvjpeg_!cuda_major_minor! nvjpeg_dev_!cuda_major_minor! occupancy_calculator_!cuda_major_minor!
+    del /q cuda_!CUDA_VERSION!_windows.exe
+    echo [%~nx0] Done.
+
+    set CUDNN_VERSION=9.2.1.18
+    :: https://docs.nvidia.com/deeplearning/cudnn/latest/reference/support-matrix.html#support-matrix
+    :: https://docs.nvidia.com/deeplearning/cudnn/latest/installation/windows.html
+    if not exist "cudnn-windows-x86_64-!CUDNN_VERSION!_cuda!cuda_major!-archive.zip" (
+      echo [%~nx0] Downloading CUDNN !CUDNN_VERSION!, please wait ...
+      wget https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-!CUDNN_VERSION!_cuda!cuda_major!-archive.zip
+    )
+    powershell Expand-Archive -Path cudnn-windows-x86_64-!CUDNN_VERSION!_cuda!cuda_major!-archive.zip -DestinationPath . > nul || pause
+    if not exist "C:\Program Files\NVIDIA\CUDNN\v9.x\bin" mkdir "C:\Program Files\NVIDIA\CUDNN\v9.x\bin"
+    if not exist "C:\Program Files\NVIDIA\CUDNN\v9.x\include" mkdir "C:\Program Files\NVIDIA\CUDNN\v9.x\include"
+    if not exist "C:\Program Files\NVIDIA\CUDNN\v9.x\lib" mkdir "C:\Program Files\NVIDIA\CUDNN\v9.x\lib"
+    pushd cudnn-windows-x86_64-!CUDNN_VERSION!_cuda!cuda_major!-archive
+    xcopy /S /F /V bin\cudnn*.dll "C:\Program Files\NVIDIA\CUDNN\v9.x\bin"
+    xcopy /S /F /V include\cudnn*.h "C:\Program Files\NVIDIA\CUDNN\v9.x\include"
+    xcopy /S /F /V lib\x64\cudnn*.lib "C:\Program Files\NVIDIA\CUDNN\v9.x\lib"
+    setx /m PATH "%PATH%;C:\Program Files\NVIDIA\CUDNN\v9.x\bin"
+    rmdir /s /q bin
+    rmdir /s /q include
+    rmdir /s /q lib
+    popd
+    rmdir /s /q cudnn-windows-x86_64-!CUDNN_VERSION!_cuda!cuda_major!-archive
+    del /q cudnn-windows-x86_64-!CUDNN_VERSION!_cuda!cuda_major!-archive.zip
+    echo [%~nx0] Done.
+  )
+)
+exit /b 0
 
 ::==============================================================================
 :: Check ninja whether has been installed. If not, install it automatically
