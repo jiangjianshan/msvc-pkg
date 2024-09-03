@@ -21,8 +21,8 @@ clean_build()
 {
   echo [$0] Cleaning $PKG_NAME $PKG_VER
   cd $CWD
-  if [ -d "$BUILD_DIR" ]; then
-    if [ "$BUILD_DIR" != "$SRC_DIR" ]; then
+  if [[ -d "$BUILD_DIR" ]]; then
+    if [[ "$BUILD_DIR" != "$SRC_DIR" ]]; then
       rm -rf $BUILD_DIR
     else
       pushd $BUILD_DIR
@@ -87,26 +87,14 @@ prepare_package()
   create_dirs bin include lib share
   display_info
   download_extract $PKG_URL $PKG_NAME-$PKG_VER.tar.gz $PKG_NAME-$PKG_VER
-  if [ ! -d "$BUILD_DIR" ]; then mkdir -p "$BUILD_DIR"; fi
+  if [[ ! -d "$BUILD_DIR" ]]; then mkdir -p "$BUILD_DIR"; fi
 }
 
 configure_stage()
 {
   echo [$0] Configuring $PKG_NAME $PKG_VER
   cd $BUILD_DIR
-  array=($(echo $PREFIX_PATH_M | tr ";" "\n"))
-  for p in ${array[@]}; do
-    local old_lib="$p/lib"
-    if [[ -d "$old_lib" ]] && [[ "$LDFLAGS" != *"$old_lib"* ]]; then
-      if [ -z "$LDFLAGS" ]; then
-        LDFLAGS='-L'"$p"'/lib'
-      else
-        LDFLAGS="$LDFLAGS"' -L'"$p"'/lib'
-      fi
-    fi
-  done
-  OPTIONS='-nologo -MD -fp:precise -diagnostics:column -wd4819 -openmp:llvm'
-  DEFINES="-DWIN32 -D_WIN32_WINNT=$WIN32_TARGET -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS"
+  configure_options
   # NOTE:
   # 1. Don't use CPP="$FWD/wrapper/compile cl -nologo -EP" here,
   #    it will cause checking absolute name of standard files is empty.
@@ -128,10 +116,10 @@ configure_stage()
     CC="$FWD/wrapper/compile cl"                                                               \
     CFLAGS="$OPTIONS"                                                                          \
     CPP="$FWD/wrapper/compile cl -E"                                                           \
-    CPPFLAGS="$DEFINES $INCLUDES"                                                              \
+    CPPFLAGS="$DEFINES -I${PREFIX_PATH_M//;/ -I}"                                              \
     DLLTOOL='link.exe -verbose -dll'                                                           \
     LD="link -nologo"                                                                          \
-    LDFLAGS="$LDFLAGS"                                                                         \
+    LDFLAGS="-L${PREFIX_PATH_M//;/ -L}"                                                        \
     NM="dumpbin -nologo -symbols"                                                              \
     RANLIB=":"                                                                                 \
     RC="$FWD/wrapper/windres-rc rc -nologo"                                                    \

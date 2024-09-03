@@ -50,82 +50,62 @@ prepare_package()
   create_dirs bin include lib
   display_info
   download_extract $PKG_URL $PKG_NAME-$PKG_VER.tar.gz $PKG_NAME-$PKG_VER
-  if [ ! -d "$BUILD_DIR" ]; then mkdir -p "$BUILD_DIR"; fi
+  if [[ ! -d "$BUILD_DIR" ]]; then mkdir -p "$BUILD_DIR"; fi
 }
 
 configure_stage()
 {
   echo [$0] Configuring $PKG_NAME $PKG_VER
   cd $BUILD_DIR
-  array=($(echo $PREFIX_PATH_M | tr ";" "\n"))
-  for p in ${array[@]}; do
-    local old_include="$p/include"
-    if [[ -d "$old_include" ]] && [[ "$INCLUDE" != *"${old_include//\//\\}"* ]]; then
-      if [[ -z "$INCLUDE" ]]; then
-        INCLUDE=$(win_wpath "$old_include")
-      else
-        INCLUDE="$INCLUDE"';'$(win_wpath "$old_include")
-      fi
-    fi
-    local old_lib="$p/lib"
-    if [[ -d "$old_lib" ]] && [[ "$LIB" != *"${old_lib//\//\\}"* ]]; then
-      if [[ -z "$LIB" ]]; then
-        LIB=$(win_wpath "$old_lib")
-      else
-        LIB="$LIB"';'$(win_wpath "$old_lib")
-      fi
-    fi
-  done
-  OPTIONS='-nologo -fp:precise -diagnostics:column -wd4819 -openmp:llvm'
-  DEFINES="-DWIN32 -D_WIN32_WINNT=$WIN32_TARGET -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SILENCE_NONFLOATING_COMPLEX_DEPRECATION_WARNING"
-  bootstrap_cmake_options='CMAKE_BUILD_TYPE;CMAKE_INSTALL_PREFIX;CMAKE_PREFIX_PATH;CMAKE_POLICY_DEFAULT_CMP0076;CMAKE_POLICY_DEFAULT_CMP0114;CMAKE_POLICY_DEFAULT_CMP0116;CLANG_DEFAULT_CXX_STDLIB;CLANG_DEFAULT_RTLIB;CLANG_INCLUDE_DOCS;LLVM_BUILD_DOCS;LLVM_BUILD_EXAMPLES;LLVM_BUILD_TESTS;LLVM_BUILD_TOOLS;LLVM_BUILD_UTILS;LLVM_BUILD_LLVM_C_DYLIB;LLVM_ENABLE_DOXYGEN;LLVM_ENABLE_OCAMLDOC;LLVM_ENABLE_PLUGINS;LLVM_EXPORT_SYMBOLS_FOR_PLUGINS;LLVM_INCLUDE_DOCS;LLVM_INCLUDE_EXAMPLES;LLVM_INCLUDE_TESTS;LLVM_INCLUDE_TOOLS;LLVM_INCLUDE_UTILS;LLVM_INSTALL_UTILS;LLVM_ENABLE_PROJECTS;LLVM_ENABLE_RUNTIMES;LLVM_ENABLE_RTTI;LLVM_RUNTIME_TARGETS;LLVM_OPTIMIZED_TABLEGEN;LLVM_TARGETS_TO_BUILD;LIBCXX_USE_COMPILER_RT;Python3_EXECUTABLE'
+  configure_options
+  bootstrap_cmake_options='CMAKE_BUILD_TYP;CMAKE_INSTALL_PREFI;CMAKE_PREFIX_PAT;CMAKE_POLICY_DEFAULT_CMP007;CMAKE_POLICY_DEFAULT_CMP011;CMAKE_POLICY_DEFAULT_CMP011;CLANG_DEFAULT_CXX_STDLI;CLANG_DEFAULT_RTLI;CLANG_INCLUDE_DOC;LLVM_BUILD_DOC;LLVM_BUILD_EXAMPLE;LLVM_BUILD_TEST;LLVM_BUILD_TOOL;LLVM_BUILD_UTIL;LLVM_BUILD_LLVM_C_DYLI;LLVM_ENABLE_DOXYGE;LLVM_ENABLE_OCAMLDO;LLVM_ENABLE_PLUGIN;LLVM_EXPORT_SYMBOLS_FOR_PLUGIN;LLVM_INCLUDE_DOC;LLVM_INCLUDE_EXAMPLE;LLVM_INCLUDE_TEST;LLVM_INCLUDE_TOOL;LLVM_INCLUDE_UTIL;LLVM_INSTALL_UTIL;LLVM_ENABLE_PROJECT;LLVM_ENABLE_RUNTIME;LLVM_ENABLE_RTT;LLVM_RUNTIME_TARGET;LLVM_OPTIMIZED_TABLEGE;LLVM_TARGETS_TO_BUIL;LIBCXX_USE_COMPILER_R;Python3_EXECUTABLE'
   bootstrap_cmake_cxx_flags='-Xclang -O3 -march=native -fms-extensions -fms-compatibility -fms-compatibility-version=19.41'
   # NOTE:
   # 1. Don't install cygwin's cmake because it will use gcc-like compile
   #    command. To use windows's cmake, here have to use 'cygpath -m' to
   #    convert path to windows path but not cygwin path
   # 2. Don't set cmake generator to 'Unix Makefiles' if use MSYS2 shell
-  configure_cmd cmake -G "Ninja"                                                         \
-    -DBOOTSTRAP_CMAKE_CXX_FLAGS="$bootstrap_cmake_cxx_flags $OPTIONS $DEFINES $INCLUDES" \
-    -DCMAKE_BUILD_TYPE=Release                                                           \
-    -DCMAKE_C_COMPILER=cl                                                                \
-    -DCMAKE_C_FLAGS="$OPTIONS $DEFINES $INCLUDES"                                        \
-    -DCMAKE_CXX_COMPILER=cl                                                              \
-    -DCMAKE_CXX_FLAGS="$OPTIONS $DEFINES $INCLUDES"                                      \
-    -DCMAKE_INSTALL_PREFIX="$PREFIX_M"                                                   \
-    -DCMAKE_PREFIX_PATH="$PREFIX_PATH_M"                                                 \
-    -DCMAKE_POLICY_DEFAULT_CMP0076=OLD                                                   \
-    -DCMAKE_POLICY_DEFAULT_CMP0114=OLD                                                   \
-    -DCMAKE_POLICY_DEFAULT_CMP0116=OLD                                                   \
-    -DCLANG_DEFAULT_CXX_STDLIB=libc++                                                    \
-    -DCLANG_DEFAULT_RTLIB=compiler-rt                                                    \
-    -DCLANG_INCLUDE_DOCS=OFF                                                             \
-    -DLLVM_BUILD_DOCS=OFF                                                                \
-    -DLLVM_BUILD_EXAMPLES=OFF                                                            \
-    -DLLVM_BUILD_TESTS=OFF                                                               \
-    -DLLVM_BUILD_TOOLS=ON                                                                \
-    -DLLVM_BUILD_UTILS=ON                                                                \
-    -DLLVM_BUILD_LLVM_C_DYLIB=ON                                                         \
-    -DLLVM_ENABLE_DOXYGEN=OFF                                                            \
-    -DLLVM_ENABLE_OCAMLDOC=OFF                                                           \
-    -DLLVM_ENABLE_PLUGINS=ON                                                             \
-    -DLLVM_ENABLE_PROJECTS="bolt;clang;clang-tools-extra;flang;mlir;lld;pstl;polly"      \
-    -DLLVM_ENABLE_RUNTIMES="compiler-rt;libcxx;openmp"                                   \
-    -DLLVM_ENABLE_RTTI=ON                                                                \
-    -DLLVM_EXPORT_SYMBOLS_FOR_PLUGINS=ON                                                 \
-    -DLLVM_INCLUDE_DOCS=OFF                                                              \
-    -DLLVM_INCLUDE_EXAMPLES=OFF                                                          \
-    -DLLVM_INCLUDE_TESTS=OFF                                                             \
-    -DLLVM_INCLUDE_TOOLS=ON                                                              \
-    -DLLVM_INCLUDE_UTILS=ON                                                              \
-    -DLLVM_INSTALL_UTILS=ON                                                              \
-    -DLLVM_OPTIMIZED_TABLEGEN=ON                                                         \
-    -DLLVM_TARGETS_TO_BUILD=X86                                                          \
-    -DLIBCXX_USE_COMPILER_RT=ON                                                          \
-    -DPython3_EXECUTABLE="$(python -c 'import sys; print(sys.executable)')"              \
-    -DCLANG_ENABLE_BOOTSTRAP=ON                                                          \
-    -DCLANG_BOOTSTRAP_PASSTHROUGH="$bootstrap_cmake_options"                             \
-    $SRC_DIR_M/llvm
+  configure_cmd cmake -G "Ninja"                                                                         \
+    -DBOOTSTRAP_CMAKE_CXX_FLAGS="$bootstrap_cmake_cxx_flags $OPTIONS $DEFINES -I${PREFIX_PATH_M//;/ -I}" \
+    -DCMAKE_BUILD_TYPE=Release                                                                           \
+    -DCMAKE_C_COMPILER=cl                                                                                \
+    -DCMAKE_C_FLAGS="${OPTIONS//-MD /} $DEFINES -I${PREFIX_PATH_M//;/ -I}"                               \
+    -DCMAKE_CXX_COMPILER=cl                                                                              \
+    -DCMAKE_CXX_FLAGS="${OPTIONS//-MD /} $DEFINES -I${PREFIX_PATH_M//;/ -I}"                             \
+    -DCMAKE_INSTALL_PREFIX="$PREFIX_M"                                                                   \
+    -DCMAKE_PREFIX_PATH="$PREFIX_PATH_M"                                                                 \
+    -DCMAKE_POLICY_DEFAULT_CMP0076=OLD                                                                   \
+    -DCMAKE_POLICY_DEFAULT_CMP0114=OLD                                                                   \
+    -DCMAKE_POLICY_DEFAULT_CMP0116=OLD                                                                   \
+    -DCLANG_DEFAULT_CXX_STDLIB=libc++                                                                    \
+    -DCLANG_DEFAULT_RTLIB=compiler-rt                                                                    \
+    -DCLANG_INCLUDE_DOCS=OFF                                                                             \
+    -DLLVM_BUILD_DOCS=OFF                                                                                \
+    -DLLVM_BUILD_EXAMPLES=OFF                                                                            \
+    -DLLVM_BUILD_TESTS=OFF                                                                               \
+    -DLLVM_BUILD_TOOLS=ON                                                                                \
+    -DLLVM_BUILD_UTILS=ON                                                                                \
+    -DLLVM_BUILD_LLVM_C_DYLIB=ON                                                                         \
+    -DLLVM_ENABLE_DOXYGEN=OFF                                                                            \
+    -DLLVM_ENABLE_OCAMLDOC=OFF                                                                           \
+    -DLLVM_ENABLE_PLUGINS=ON                                                                             \
+    -DLLVM_ENABLE_PROJECTS="bolt;clang;clang-tools-extr;flang;mlir;ll;pstl;polly"                        \
+    -DLLVM_ENABLE_RUNTIMES="compiler-rt;libcxx;openmp"                                                   \
+    -DLLVM_ENABLE_RTTI=ON                                                                                \
+    -DLLVM_EXPORT_SYMBOLS_FOR_PLUGINS=ON                                                                 \
+    -DLLVM_INCLUDE_DOCS=OFF                                                                              \
+    -DLLVM_INCLUDE_EXAMPLES=OFF                                                                          \
+    -DLLVM_INCLUDE_TESTS=OFF                                                                             \
+    -DLLVM_INCLUDE_TOOLS=ON                                                                              \
+    -DLLVM_INCLUDE_UTILS=ON                                                                              \
+    -DLLVM_INSTALL_UTILS=ON                                                                              \
+    -DLLVM_OPTIMIZED_TABLEGEN=ON                                                                         \
+    -DLLVM_TARGETS_TO_BUILD=X86                                                                          \
+    -DLIBCXX_USE_COMPILER_RT=ON                                                                          \
+    -DPython3_EXECUTABLE="$(python -c 'import sys; print(sys.executable)')"                              \
+    -DCLANG_ENABLE_BOOTSTRAP=ON                                                                          \
+    -DCLANG_BOOTSTRAP_PASSTHROUGH="$bootstrap_cmake_options"                                             \
+    "$SRC_DIR_M/llvm"
 }
 
 build_stage()

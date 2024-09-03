@@ -52,10 +52,17 @@ prepare_package()
   create_dirs bin include lib share
   display_info
   download_extract $PKG_URL $PKG_NAME-$PKG_VER.tar.tgz $PKG_NAME-$PKG_VER
-  if [ ! -d "$BUILD_DIR" ]; then mkdir -p "$BUILD_DIR"; fi
+  if [[ ! -d "$BUILD_DIR" ]]; then mkdir -p "$BUILD_DIR"; fi
 }
 
 configure_stage()
+{
+  echo [$0] Configuring $PKG_NAME $PKG_VER
+  cd $BUILD_DIR
+  configure_options
+}
+
+build_stage()
 {
   echo [$0] Building $PKG_NAME $PKG_VER
   cd $BUILD_DIR

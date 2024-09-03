@@ -21,8 +21,8 @@ clean_build()
 {
   echo [$0] Cleaning $PKG_NAME $PKG_VER
   cd $CWD
-  if [ -d "$BUILD_DIR" ]; then
-    if [ "$BUILD_DIR" != "$SRC_DIR" ]; then
+  if [[ -d "$BUILD_DIR" ]]; then
+    if [[ "$BUILD_DIR" != "$SRC_DIR" ]]; then
       rm -rf $BUILD_DIR
     else
       pushd $BUILD_DIR
@@ -47,49 +47,29 @@ prepare_package()
   create_dirs bin include lib share
   display_info
   download_extract $PKG_URL $PKG_NAME-$PKG_VER.tar.gz $PKG_NAME-$PKG_VER
-  if [ ! -d "$BUILD_DIR" ]; then mkdir -p "$BUILD_DIR"; fi
+  if [[ ! -d "$BUILD_DIR" ]]; then mkdir -p "$BUILD_DIR"; fi
 }
 
 configure_stage()
 {
   echo [$0] Configuring $PKG_NAME $PKG_VER
   cd $BUILD_DIR
-  array=($(echo $PREFIX_PATH_M | tr ";" "\n"))
-  for p in ${array[@]}; do
-    local old_include="$p/include"
-    if [[ -d "$old_include" ]] && [[ "$INCLUDE" != *"${old_include//\//\\}"* ]]; then
-      if [[ -z "$INCLUDE" ]]; then
-        INCLUDE=$(win_wpath "$old_include")
-      else
-        INCLUDE="$INCLUDE"';'$(win_wpath "$old_include")
-      fi
-    fi
-    local old_lib="$p/lib"
-    if [[ -d "$old_lib" ]] && [[ "$LIB" != *"${old_lib//\//\\}"* ]]; then
-      if [[ -z "$LIB" ]]; then
-        LIB=$(win_wpath "$old_lib")
-      else
-        LIB="$LIB"';'$(win_wpath "$old_lib")
-      fi
-    fi
-  done
-  OPTIONS='-nologo -MD -fp:precise -diagnostics:column -wd4819 -openmp:llvm'
-  DEFINES="-DWIN32 -D_WIN32_WINNT=$WIN32_TARGET -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE"
+  configure_options
   # NOTE:
   # 1. Don't install cygwin's cmake because it will use gcc-like compile
   #    command. To use windows's cmake, here have to use 'cygpath -m' to
   #    convert path to windows path but not cygwin path
   # 2. Don't set cmake generator to 'Unix Makefiles' if use MSYS2 shell
-  configure_cmd cmake -G "Ninja"                           \
-    -DBUILD_SHARED_LIBS=ON                                 \
-    -DCMAKE_BUILD_TYPE=Release                             \
-    -DCMAKE_C_COMPILER=cl                                  \
-    -DCMAKE_C_FLAGS="$OPTIONS $DEFINES $INCLUDES"          \
-    -DCMAKE_CXX_COMPILER=cl                                \
-    -DCMAKE_CXX_FLAGS="-EHsc $OPTIONS $DEFINES $INCLUDES"  \
-    -DCMAKE_INSTALL_PREFIX="$PREFIX_M"                     \
-    -DCMAKE_PREFIX_PATH="$PREFIX_PATH_M"                   \
-    -DINSTALL_PKGCONFIG_DIR="$PREFIX_M/lib/pkgconfig"      \
+  configure_cmd cmake -G "Ninja"                                           \
+    -DBUILD_SHARED_LIBS=ON                                                 \
+    -DCMAKE_BUILD_TYPE=Release                                             \
+    -DCMAKE_C_COMPILER=cl                                                  \
+    -DCMAKE_C_FLAGS="$OPTIONS $DEFINES -I${PREFIX_PATH_M//;/ -I}"          \
+    -DCMAKE_CXX_COMPILER=cl                                                \
+    -DCMAKE_CXX_FLAGS="-EHsc $OPTIONS $DEFINES -I${PREFIX_PATH_M//;/ -I}"  \
+    -DCMAKE_INSTALL_PREFIX="$PREFIX_M"                                     \
+    -DCMAKE_PREFIX_PATH="$PREFIX_PATH_M"                                   \
+    -DINSTALL_PKGCONFIG_DIR="$PREFIX_M/lib/pkgconfig"                      \
     $SRC_DIR_M
 }
 

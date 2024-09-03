@@ -23,7 +23,7 @@ clean_build()
   cd $CWD
   if [[ -d "$BUILD_DIR" ]]; then
     pushd $BUILD_DIR
-    if [ -d WinRel ]; then rm -rf WinRel; fi
+    if [[ -d WinRel ]]; then rm -rf WinRel; fi
     popd
   fi
 }
@@ -41,7 +41,14 @@ prepare_package()
   create_dirs bin include lib share
   display_info
   download_extract $PKG_URL $PKG_NAME-$PKG_VER.tar.gz $PKG_NAME-$PKG_VER
-  if [ ! -d "$BUILD_DIR" ]; then mkdir -p "$BUILD_DIR"; fi
+  if [[ ! -d "$BUILD_DIR" ]]; then mkdir -p "$BUILD_DIR"; fi
+}
+
+configure_stage()
+{
+  echo [$0] Configuring $PKG_NAME $PKG_VER
+  cd $BUILD_DIR
+  configure_options
 }
 
 build_stage()
@@ -64,6 +71,7 @@ install_package()
 process_build()
 {
   prepare_package
+  configure_stage
   build_stage
   install_package
 }

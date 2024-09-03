@@ -45,67 +45,45 @@ prepare_package()
   create_dirs bin include lib
   display_info
   git_sync sycl
-  if [ ! -d "$BUILD_DIR" ]; then mkdir -p "$BUILD_DIR"; fi
+  if [[ ! -d "$BUILD_DIR" ]]; then mkdir -p "$BUILD_DIR"; fi
 }
 
 configure_stage()
 {
   echo [$0] Configuring $PKG_NAME $PKG_VER
   cd $SRC_DIR
-  array=($(echo $PREFIX_PATH_M | tr ";" "\n"))
-  for p in ${array[@]}; do
-    local old_include="$p/include"
-    if [[ -d "$old_include" ]] && [[ "$INCLUDE" != *"${old_include//\//\\}"* ]]; then
-      if [[ -z "$INCLUDE" ]]; then
-        INCLUDE=$(win_wpath "$old_include")
-      else
-        INCLUDE="$INCLUDE"';'$(win_wpath "$old_include")
-      fi
-    fi
-    local old_lib="$p/lib"
-    if [[ -d "$old_lib" ]] && [[ "$LIB" != *"${old_lib//\//\\}"* ]]; then
-      if [[ -z "$LIB" ]]; then
-        LIB=$(win_wpath "$old_lib")
-      else
-        LIB="$LIB"';'$(win_wpath "$old_lib")
-      fi
-    fi
-  done
-  OPTIONS='-nologo -MD -fp:precise -diagnostics:column -wd4819 -openmp:llvm'
-  DEFINES="-DWIN32 -D_WIN32_WINNT=$WIN32_TARGET -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE"
-  BOOST_PREFIX=`grep -E "\w+\s+boost\s+.+" $OK_FILE | awk '{print substr($0, index($0, $4))}' | awk '{$1=$1};1'`
-  PERL_PREFIX=`grep -E "\w+\s+perl\s+.+" $OK_FILE | awk '{print substr($0, index($0, $4))}' | awk '{$1=$1};1'`
+  configure_options
   # NOTE:
   # 1. Please keep your internet connection well, because there are some modules may have to bed downloaded 
   #    during the configuration
-  if [ -z "$CUDA_PATH" ]; then
+  if [[ -z "$CUDA_PATH" ]]; then
     WITH_CUDA=
   else
     WITH_CUDA=--cuda
   fi
-  configure_cmd python buildbot/configure.py                               \
-    -n $(nproc)                                                            \
-    -o $BUILD_DIR_M                                                        \
-    -t Release                                                             \
-    --cmake-opt=-DCMAKE_C_COMPILER=cl                                      \
-    --cmake-opt=-DCMAKE_CXX_COMPILER=cl                                    \
-    --cmake-opt=-DLLVM_ENABLE_WERROR=OFF                                   \
-    --cmake-opt=-DCMAKE_CXX_FLAGS="$OPTIONS $DEFINES $INCLUDES"            \
-    --cmake-opt=-DCMAKE_POLICY_DEFAULT_CMP0053=OLD                         \
-    --cmake-opt=-DCMAKE_POLICY_DEFAULT_CMP0114=OLD                         \
-    --cmake-opt=-DCMAKE_POLICY_DEFAULT_CMP0116=OLD                         \
-    --cmake-opt=-DCMAKE_POLICY_DEFAULT_CMP0146=OLD                         \
-    --cmake-opt=-DPERL_EXECUTABLE="$PERL_PREFIX/bin/perl.exe"              \
-    --cmake-opt=-DBOOST_MP11_SOURCE_DIR="$BOOST_PREFIX"                    \
-    --cmake-opt=-DBOOST_UNORDERED_SOURCE_DIR="$BOOST_PREFIX"               \
-    --cmake-opt=-DBOOST_ASSERT_SOURCE_DIR="$BOOST_PREFIX"                  \
-    --cmake-opt=-DBOOST_CONFIG_SOURCE_DIR="$BOOST_PREFIX"                  \
-    --cmake-opt=-DBOOST_CONTAINER_HASH_SOURCE_DIR="$BOOST_PREFIX"          \
-    --cmake-opt=-DBOOST_CORE_SOURCE_DIR="$BOOST_PREFIX"                    \
-    --cmake-opt=-DBOOST_DESCRIBE_SOURCE_DIR="$BOOST_PREFIX"                \
-    --cmake-opt=-DBOOST_PREDEF_SOURCE_DIR="$BOOST_PREFIX"                  \
-    --cmake-opt=-DBOOST_STATIC_ASSERT_SOURCE_DIR="$BOOST_PREFIX"           \
-    --cmake-opt=-DBOOST_THROW_EXCEPTION_SOURCE_DIR="$BOOST_PREFIX"         \
+  configure_cmd python buildbot/configure.py                                               \
+    -n $(nproc)                                                                            \
+    -o "$BUILD_DIR_M"                                                                      \
+    -t Release                                                                             \
+    --cmake-opt=-DCMAKE_C_COMPILER=cl                                                      \
+    --cmake-opt=-DCMAKE_CXX_COMPILER=cl                                                    \
+    --cmake-opt=-DLLVM_ENABLE_WERROR=OFF                                                   \
+    --cmake-opt=-DCMAKE_CXX_FLAGS="$OPTIONS $DEFINES -I${PREFIX_PATH_M//;/ -I}"            \
+    --cmake-opt=-DCMAKE_POLICY_DEFAULT_CMP0053=OLD                                         \
+    --cmake-opt=-DCMAKE_POLICY_DEFAULT_CMP0114=OLD                                         \
+    --cmake-opt=-DCMAKE_POLICY_DEFAULT_CMP0116=OLD                                         \
+    --cmake-opt=-DCMAKE_POLICY_DEFAULT_CMP0146=OLD                                         \
+    --cmake-opt=-DPERL_EXECUTABLE="$PERL_PREFIX/bin/perl.exe"                              \
+    --cmake-opt=-DBOOST_MP11_SOURCE_DIR="$BOOST_PREFIX"                                    \
+    --cmake-opt=-DBOOST_UNORDERED_SOURCE_DIR="$BOOST_PREFIX"                               \
+    --cmake-opt=-DBOOST_ASSERT_SOURCE_DIR="$BOOST_PREFIX"                                  \
+    --cmake-opt=-DBOOST_CONFIG_SOURCE_DIR="$BOOST_PREFIX"                                  \
+    --cmake-opt=-DBOOST_CONTAINER_HASH_SOURCE_DIR="$BOOST_PREFIX"                          \
+    --cmake-opt=-DBOOST_CORE_SOURCE_DIR="$BOOST_PREFIX"                                    \
+    --cmake-opt=-DBOOST_DESCRIBE_SOURCE_DIR="$BOOST_PREFIX"                                \
+    --cmake-opt=-DBOOST_PREDEF_SOURCE_DIR="$BOOST_PREFIX"                                  \
+    --cmake-opt=-DBOOST_STATIC_ASSERT_SOURCE_DIR="$BOOST_PREFIX"                           \
+    --cmake-opt=-DBOOST_THROW_EXCEPTION_SOURCE_DIR="$BOOST_PREFIX"                         \
     $WITH_CUDA
 }
 

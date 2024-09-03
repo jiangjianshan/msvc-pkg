@@ -45,14 +45,14 @@ prepare_package()
   create_dirs bin include lib share
   display_info
   download_extract $PKG_URL $PKG_NAME-$PKG_VER.tar.gz $PKG_NAME-$PKG_VER
-  if [ ! -d "$BUILD_DIR" ]; then mkdir -p "$BUILD_DIR"; fi
+  if [[ ! -d "$BUILD_DIR" ]]; then mkdir -p "$BUILD_DIR"; fi
 }
 
 configure_stage()
 {
   echo [$0] Configuring $PKG_NAME $PKG_VER
   cd $BUILD_DIR
-  PERL_PREFIX=`grep -E "\w+\s+perl\s+.+" $OK_FILE | awk '{print substr($0, index($0, $4))}' | awk '{$1=$1};1'`
+  configure_options
   configure_cmd $(unix_path "$PERL_PREFIX/bin/perl.exe") Configure VC-WIN64A --prefix=$PREFIX_W --openssldir="$PREFIX_W\\ssl"
 }
 

@@ -38,8 +38,6 @@ display_info()
   printf "%-18s: %s\n" "BUILD_DIR_M" "$BUILD_DIR_M" > >(build_log) 2>&1
   printf "%-18s: %s\n" "LOGS_DIR" "$LOGS_DIR" > >(build_log) 2>&1
   printf "%-18s: %s\n" "LOG_FILE" "$LOG_FILE" > >(build_log) 2>&1
-  printf "%-18s: %s\n" "PKG_CONFIG_PATH" "$PKG_CONFIG_PATH" > >(build_log) 2>&1
-  printf "%-18s: %s\n" "CMAKE_PREFIX_PATH" "$PREFIX_PATH_M" > >(build_log) 2>&1
 }
 
 configure_cmd()
@@ -273,6 +271,83 @@ build_ok()
   fi
 }
 
+configure_options()
+{
+  if [[ -f "$OK_FILE" ]] && [[ -s "$OK_FILE" ]]; then
+    while read -a line; do 
+      local old_arch=${line[0]}
+      local pkg_name=${line[1]}
+      local old_prefix=${line[3]}
+      desired_var_name="${pkg_name/-/_}_prefix"
+      desired_value=$(unix_path "$old_prefix")
+      export ${desired_var_name^^}=$desired_value
+      if [[ "$old_arch" == "$ARCH" ]] && [[ "$PREFIX_PATH_M" != *"$old_prefix"* ]]; then
+        if [ -z "$PREFIX_PATH_M" ]; then
+          PREFIX_PATH_M="$old_prefix"
+        else
+          PREFIX_PATH_M="$PREFIX_PATH_M;$old_prefix"
+        fi
+        # NOTE:
+        # 1. If add $old_prefix/bin to PATH here, they must be putted behind the 
+        #    original $PATH. Especially the path of custom build of Perl.
+        #    If not do like that, autoconf and automake will use windows's
+        #    Perl but not cygwin's Perl. This will cause the configuration
+        #    of prcoess fail
+        local old_bin=$(unix_path "$old_prefix/bin")
+        if [[ -d "$old_bin" ]] && [[ "$PATH" != *"$old_bin"* ]]; then
+          PATH="$PATH":"$old_bin"
+        fi
+      fi
+    done < $OK_FILE
+    # For pkg-config from cygwin
+    array=($(echo $PREFIX_PATH_M | tr ";" "\n"))
+    for p in "${array[@]}"; do
+      local old_pkgconfig=$p/lib/pkgconfig
+      if [[ -d "$old_pkgconfig" ]] && [[ "$PKG_CONFIG_PATH" != *"$old_pkgconfig"* ]]; then
+        if [ -z "$PKG_CONFIG_PATH" ]; then
+          PKG_CONFIG_PATH="$p/lib/pkgconfig"
+        else
+          PKG_CONFIG_PATH="$PKG_CONFIG_PATH;$p/lib/pkgconfig"
+        fi
+      fi
+      # NOTE:
+      # 1. Don't add those include path to $INCLUDE, otherwise check_include_file commmand in cmake
+      #    may be failed
+      # 2. Some msbuild project need this updated $INCLUDE
+      local old_include="$p/include"
+      if [[ -d "$old_include" ]] && [[ "$INCLUDE" != *"${old_include//\//\\}"* ]]; then
+        if [[ -z "$INCLUDE" ]]; then
+          INCLUDE=$(win_wpath "$old_include")
+        else
+          INCLUDE="$INCLUDE"';'$(win_wpath "$old_include")
+        fi
+      fi
+      local old_lib="$p/lib"
+      if [[ -d "$old_lib" ]] && [[ "$LIB" != *"${old_lib//\//\\}"* ]]; then
+        if [[ -z "$LIB" ]]; then
+          LIB=$(win_wpath "$old_lib")
+        else
+          LIB="$LIB"';'$(win_wpath "$old_lib")
+        fi
+      fi
+    done
+  fi
+  if [ "$ARCH" == "x86" ]; then
+    YASM_OBJ_FMT=win32
+  else
+    YASM_OBJ_FMT=win64
+  fi
+  OPTIONS='-nologo -MD -fp:precise -diagnostics:column -wd4819 -openmp:llvm'
+  # https://learn.microsoft.com/en-us/cpp/c-runtime-library/compatibility?view=msvc-170
+  # https://learn.microsoft.com/en-us/archive/msdn-magazine/2005/may/repel-attacks-with-visual-studio-2005-safe-c-and-c-libraries
+  DEFINES="-DWIN32 -D_WIN32_WINNT=$WIN32_TARGET -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_SILENCE_NONFLOATING_COMPLEX_DEPRECATION_WARNING"
+  echo [$0] Part of configuration options:
+  printf "%-18s: %s\n" "PKG_CONFIG_PATH" "$PKG_CONFIG_PATH" > >(build_log) 2>&1
+  printf "%-18s: %s\n" "CMAKE_PREFIX_PATH" "$PREFIX_PATH_M" > >(build_log) 2>&1
+  printf "%-18s: %s\n" "INCLUDE" "$INCLUDE" > >(build_log) 2>&1
+  printf "%-18s: %s\n" "LIB" "$LIB" > >(build_log) 2>&1
+}
+
 pre_config()
 {
   WIN32_TARGET=_WIN32_WINNT_WIN10
@@ -297,58 +372,6 @@ pre_config()
   fi
   PREFIX_M=$(win_mpath $PREFIX)
   PREFIX_W=$(win_wpath $PREFIX)
-  if [[ -f "$OK_FILE" ]] && [[ -s "$OK_FILE" ]]; then
-    while read -a line; do 
-      local old_arch=${line[0]}
-      local old_prefix=${line[3]}
-      if [[ "$old_arch" == "$ARCH" ]] && [[ "$PREFIX_PATH_M" != *"$old_prefix"* ]]; then
-        if [ -z "$PREFIX_PATH_M" ]; then
-          PREFIX_PATH_M="$old_prefix"
-        else
-          PREFIX_PATH_M="$PREFIX_PATH_M;$old_prefix"
-        fi
-        # NOTE:
-        # 1. If add $old_prefix/bin to PATH here, they must be putted behind the 
-        #    original $PATH. Especially the path of custom build of Perl.
-        #    If not do like that, autoconf and automake will use windows's
-        #    Perl but not cygwin's Perl. This will cause the configuration
-        #    of prcoess fail
-        local old_bin=$(unix_path "$old_prefix/bin")
-        if [[ -d "$old_bin" ]] && [[ "$PATH" != *"$old_bin"* ]]; then
-          PATH="$PATH":"$old_bin"
-        fi
-      fi
-    done < $OK_FILE
-    # For pkg-config from cygwin
-    array=($(echo $PREFIX_PATH_M | tr ";" "\n"))
-    for p in ${array[@]}; do
-      local old_pkgconfig=$p/lib/pkgconfig
-      if [[ -d "$old_pkgconfig" ]] && [[ "$PKG_CONFIG_PATH" != *"$old_pkgconfig"* ]]; then
-        if [ -z "$PKG_CONFIG_PATH" ]; then
-          PKG_CONFIG_PATH="$p/lib/pkgconfig"
-        else
-          PKG_CONFIG_PATH="$PKG_CONFIG_PATH;$p/lib/pkgconfig"
-        fi
-      fi
-      # NOTE:
-      # 1. Don't add those include path to $INCLUDE, otherwise check_include_file commmand in cmake
-      #    may be failed
-      # 2. Some msbuild project need this updated $INCLUDE
-      local old_include="$p/include"
-      if [[ -d "$old_include" ]] && [[ "$INCLUDES" != *"$old_include"* ]]; then
-        if [ -z "$INCLUDES" ]; then
-          INCLUDES='-I'"$p"'/include'
-        else
-          INCLUDES="$INCLUDES"' -I'"$p"'/include'
-        fi
-      fi
-    done
-  fi
-  if [ "$ARCH" == "x86" ]; then
-    YASM_OBJ_FMT=win32
-  else
-    YASM_OBJ_FMT=win64
-  fi
 }
 
 . $FWD/utils/colors.sh

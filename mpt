@@ -141,6 +141,9 @@ while test $# -gt 0; do
       desired_value=$(unix_path "$arg")
       export ${desired_var_name^^}=$desired_value
       shift ;;
+    --* )
+      echo "Ignore option: $1"
+      shift ;;
     * )
       if [[ -z $BUILDS ]]; then
         BUILDS=$1

@@ -21,8 +21,8 @@ clean_build()
 {
   echo [$0] Cleaning $PKG_NAME $PKG_VER
   cd $CWD
-  if [ -d "$BUILD_DIR" ]; then
-    if [ "$BUILD_DIR" != "$SRC_DIR" ]; then
+  if [[ -d "$BUILD_DIR" ]]; then
+    if [[ "$BUILD_DIR" != "$SRC_DIR" ]]; then
       rm -rf $BUILD_DIR
     else
       pushd $BUILD_DIR
@@ -45,7 +45,14 @@ prepare_package()
   create_dirs bin include lib share
   display_info
   download_extract $PKG_URL $PKG_NAME-$PKG_VER.tar.gz $PKG_NAME-$PKG_VER
-  if [ ! -d "$BUILD_DIR" ]; then mkdir -p "$BUILD_DIR"; fi
+  if [[ ! -d "$BUILD_DIR" ]]; then mkdir -p "$BUILD_DIR"; fi
+}
+
+configure_stage()
+{
+  echo [$0] Configuring $PKG_NAME $PKG_VER
+  cd $BUILD_DIR
+  configure_options
 }
 
 build_stage()
@@ -62,7 +69,7 @@ install_package()
   echo [$0] Installing $PKG_NAME $PKG_VER
   cd $BUILD_DIR
   install_cmd cp -v *.dll $PREFIX/bin
-  if [[ ! -d "$PREFIX/include/gc" ]]; then 
+  if [[ ! -d "$PREFIX/include/gc" ]; then 
     mkdir -p $PREFIX/include/gc
   fi
   install_cmd cp -v include/*.h $PREFIX/include/gc
@@ -74,6 +81,7 @@ install_package()
 process_build()
 {
   prepare_package
+  configure_stage
   build_stage
   install_package
 }
