@@ -7,10 +7,12 @@
 
 FWD=`dirname $(pwd)`
 CWD=$(cd `dirname $0`; pwd)
-PKG_DEPS='icu libiconv libjpeg-turbo libpng libtiff openssl zlib zstd'
-PKG_NAME=boost
-PKG_VER=1.86.0
-PKG_URL=https://github.com/boostorg/$PKG_NAME.git
+PKG_DEPS='abseil-cpp c-ares re2 openssl zlib'
+PKG_NAME=grpc
+PKG_VER=1.66.1
+# NOTE: Don't use archive but git for grpc. Because archive was missing files during
+#       build
+PKG_URL=https://github.com/grpc/$PKG_NAME.git
 PKGS_DIR=$FWD/pkgs
 SRC_DIR=$PKGS_DIR/$PKG_NAME
 BUILD_DIR=$FWD/out/$PKG_NAME
@@ -44,9 +46,8 @@ prepare_package()
   clean_log
   create_dirs bin include lib share
   display_info
-  git_rescure $PKG_NAME-$PKG_VER
+  git_rescure v$PKG_VER
   if [ ! -d "$BUILD_DIR" ]; then mkdir -p "$BUILD_DIR"; fi
-  python -m pip install --upgrade numpy
 }
 
 configure_stage()
@@ -73,29 +74,30 @@ configure_stage()
     fi
   done
   OPTIONS='-nologo -MD -fp:precise -diagnostics:column -wd4819 -openmp:llvm'
-  DEFINES="-DWIN32 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE"
+  DEFINES="-DWIN32 -D_WIN32_WINNT=$WIN32_TARGET -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE"
   # NOTE:
   # 1. Don't install cygwin's cmake because it will use gcc-like compile
   #    command. To use windows's cmake, here have to use 'cygpath -m' to
   #    convert path to windows path but not cygwin path
   # 2. Don't set cmake generator to 'Unix Makefiles' if use MSYS2 shell
-  # 3. Can't use '-D_WIN32_WINNT=$WIN32_TARGET' option, it will cause error
-  #    C3861
-  # TODO:
-  # 1. If enable BOOST_ENABLE_PYTHON, it will have "libs\python\src\numpy\dtype.cpp(101,83): error C2039: 'elsize': is not a member of '_PyArray_Descr'"
-  configure_cmd cmake -G "Ninja"                                                               \
-    -DBOOST_ENABLE_MPI=OFF                                                                     \
-    -DBUILD_SHARED_LIBS=ON                                                                     \
-    -DCMAKE_BUILD_TYPE=Release                                                                 \
-    -DCMAKE_C_COMPILER=cl                                                                      \
-    -DCMAKE_C_FLAGS="-std:c17 $OPTIONS $DEFINES $INCLUDES"                                     \
-    -DCMAKE_CXX_COMPILER=cl                                                                    \
-    -DCMAKE_CXX_FLAGS="-std:c++20 -EHsc $OPTIONS $DEFINES $INCLUDES"                           \
-    -DCMAKE_INSTALL_PREFIX="$PREFIX_M"                                                         \
-    -DBOOST_INSTALL_INCLUDE_SUBDIR=""                                                          \
-    -DINSTALL_PKGCONFIG_DIR="$PREFIX_M/lib/pkgconfig"                                          \
-    -DCMAKE_POLICY_DEFAULT_CMP0148=OLD                                                         \
-    -DCMAKE_PREFIX_PATH="$PREFIX_PATH_M"                                                       \
+  # 3. Don't build protobuf standalone and use grpc's one. because it may
+  #    have version conflict with upb header files and cause grpc build failed
+  # 4. Don't set '-DBUILD_SHARED_LIBS=ON', it will cause upb build fail for 
+  #    this package
+  configure_cmd cmake -G "Ninja"                                                     \
+    -DCMAKE_BUILD_TYPE=Release                                                       \
+    -DCMAKE_C_COMPILER=cl                                                            \
+    -DCMAKE_C_FLAGS="$OPTIONS $DEFINES $INCLUDES"                                    \
+    -DCMAKE_CXX_COMPILER=cl                                                          \
+    -DCMAKE_CXX_FLAGS="-EHsc $OPTIONS $DEFINES $INCLUDES"                            \
+    -DCMAKE_INSTALL_PREFIX="$PREFIX_M"                                               \
+    -DCMAKE_PREFIX_PATH="$PREFIX_PATH_M"                                             \
+    -DgRPC_INSTALL=ON                                                                \
+    -DgRPC_ABSL_PROVIDER=package                                                     \
+    -DgRPC_CARES_PROVIDER=package                                                    \
+    -DgRPC_RE2_PROVIDER=package                                                      \
+    -DgRPC_SSL_PROVIDER=package                                                      \
+    -DgRPC_ZLIB_PROVIDER=package                                                     \
     $SRC_DIR_M
 }
 

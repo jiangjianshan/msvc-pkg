@@ -158,39 +158,46 @@ download_extract()
 
 git_sync()
 {
-  local pkg_url=$1
-  local branch=$2
+  local branch=$1
   cd $PKGS_DIR
   if [ ! -d "$SRC_DIR" ]; then
-    git clone --single-branch -b $branch $pkg_url || exit_error $LINENO $?
+    git clone --config core.autocrlf=false --single-branch -b $branch $PKG_URL $PKG_NAME || exit_error $LINENO $?
+  elif [ ! -d "$SRC_DIR/.git" ]; then
+    rm -rf $SRC_DIR
+    git clone --config core.autocrlf=false --single-branch -b $branch $PKG_URL $PKG_NAME || exit_error $LINENO $?
   else
+    echo [$0] Updating $PKG_NAME
     pushd $SRC_DIR
-    echo [$0] Updating $PKG_NAME $PKG_VER
-    git fetch origin $branch
-    git reset --hard origin/$branch
+    git fetch origin $branch || exit_error $LINENO $?
+    git reset --hard origin/$branch || exit_error $LINENO $?
     popd
   fi
 }
 
 git_rescure()
 {
-  local pkg_url=$1
-  local branch=$2
+  local branch=$1
   cd $PKGS_DIR
   if [ ! -d "$SRC_DIR" ]; then
-    git clone --recurse-submodules --shallow-submodules -b $branch $pkg_url
+    git clone --recurse-submodules --shallow-submodules -b $branch $PKG_URL
   elif [ ! -d "$SRC_DIR/.git" ]; then
     rm -rf $SRC_DIR
-    git clone --recurse-submodules --shallow-submodules -b $branch $pkg_url
+    git clone --recurse-submodules --shallow-submodules -b $branch $PKG_URL
   else
     cd $SRC_DIR
     local branch_ver=`git name-rev --name-only HEAD | sed 's/[^0-9.]*\([0-9.]*\).*/\1/'`
     if [ "$PKG_VER" == "$branch_ver" ]; then
       echo [$0] Branch version is $branch_ver 
-      for m in `git status | grep -oP '(?<=modified:\s{3}).*(?=\s{1}\(modified content\))'`; do
+      for m in `git status | grep -oP '(?<=modified:\s{3}).*(?=\s{1}\(.*\))'`; do
         rm -rfv $m
       done
-      git submodule update --init --recursive
+      # FIXME:
+      # 1. To solve the issue of "fatal: destination path 'xxx' already exists and is 
+      #    not an empty directory.", change 'git submodule update --init --recursive'
+      #    to following three lines:
+      git submodule deinit --force . 
+      git submodule init 
+      git submodule update --recursive
     else
       cd $PKGS_DIR
       echo [$0] Deleting the old branch version $branch_ver
