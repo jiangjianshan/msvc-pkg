@@ -88,6 +88,7 @@ iter_builds()
 }
 
 . utils/pathutils.sh
+export PKG_CONFIG='/usr/bin/pkg-config --msvc-syntax'
 export ARCH=
 BUILDS=
 export COMMON_PREFIX=
