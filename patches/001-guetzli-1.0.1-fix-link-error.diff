@@ -1,0 +1,46 @@
+diff --color -urN guetzli-1.0.1-orig/guetzli.vcxproj guetzli-1.0.1/guetzli.vcxproj
+--- guetzli-1.0.1-orig/guetzli.vcxproj	2017-03-22 00:37:01.000000000 +0800
++++ guetzli-1.0.1/guetzli.vcxproj	2024-07-24 09:50:56.600967300 +0800
+@@ -109,7 +109,7 @@
+       <GenerateDebugInformation>false</GenerateDebugInformation>
+       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+       <OptimizeReferences>true</OptimizeReferences>
+-      <AdditionalDependencies>shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
++      <AdditionalDependencies>shlwapi.lib;png16.lib;%(AdditionalDependencies)</AdditionalDependencies>
+       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+     </Link>
+   </ItemDefinitionGroup>
+@@ -129,7 +129,7 @@
+       <GenerateDebugInformation>false</GenerateDebugInformation>
+       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+       <OptimizeReferences>true</OptimizeReferences>
+-      <AdditionalDependencies>shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
++      <AdditionalDependencies>shlwapi.lib;png16.lib;%(AdditionalDependencies)</AdditionalDependencies>
+       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+     </Link>
+   </ItemDefinitionGroup>
+@@ -144,7 +144,7 @@
+     <Link>
+       <SubSystem>Console</SubSystem>
+       <GenerateDebugInformation>true</GenerateDebugInformation>
+-      <AdditionalDependencies>shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
++      <AdditionalDependencies>shlwapi.lib;png16.lib;%(AdditionalDependencies)</AdditionalDependencies>
+       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+     </Link>
+   </ItemDefinitionGroup>
+@@ -159,7 +159,7 @@
+     <Link>
+       <SubSystem>Console</SubSystem>
+       <GenerateDebugInformation>true</GenerateDebugInformation>
+-      <AdditionalDependencies>shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
++      <AdditionalDependencies>shlwapi.lib;png16.lib;%(AdditionalDependencies)</AdditionalDependencies>
+       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+     </Link>
+   </ItemDefinitionGroup>
+@@ -217,4 +217,4 @@
+   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+   <ImportGroup Label="ExtensionTargets">
+   </ImportGroup>
+-</Project>
+\ 文件末尾没有换行符
++</Project>
