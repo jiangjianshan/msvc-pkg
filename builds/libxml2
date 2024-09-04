@@ -88,6 +88,9 @@ install_package()
   echo [$0] Installing $PKG_NAME $PKG_VER
   cd $BUILD_DIR
   install_cmd ninja install
+  # FIXME:
+  # 1. Fix the issue of "xml2-config: line 10: syntax error near unexpected token `$'\r''"
+  dos2unix "$PREFIX/bin/xml2-config"
   # NOTE: 
   # 1. Don't put CYGWIN before tar command, otherwise some .tar.* will not be 
   #    extracted successful
