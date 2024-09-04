@@ -100,6 +100,9 @@ install_package()
   echo [$0] Installing $PKG_NAME $PKG_VER
   cd $BUILD_DIR
   install_cmd make install
+  # FIXME:
+  # 1. correct the install location of .lib
+  install_cmd mv "$PREFIX/lib/x64/vpxmd.lib" "$PREFIX/lib/vpxmd.lib"
   clean_build
   build_ok
 }
