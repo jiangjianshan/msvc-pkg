@@ -1,0 +1,104 @@
+#!/bin/bash
+#
+# NOTICE: don't set PATH_SEPARATOR like below, it will cause issue that 'checking for
+# grep that handles long lines and -e... configure: error: no acceptable grep could 
+# be found'
+# export PATH_SEPARATOR=";"
+
+FWD=`dirname $(pwd)`
+CWD=$(cd `dirname $0`; pwd)
+PKG_DEPS='gettext libffi pcre2 zlib'
+PKG_NAME=glib
+PKG_VER=2.80.2
+PKG_URL=https://download.gnome.org/sources/glib/${PKG_VER%.*}/$PKG_NAME-$PKG_VER.tar.xz
+PKGS_DIR=$FWD/pkgs
+SRC_DIR=$PKGS_DIR/$PKG_NAME-$PKG_VER
+BUILD_DIR=$FWD/out/$PKG_NAME-$PKG_VER
+
+. $FWD/utils/common.sh
+
+clean_build()
+{
+  echo [$0] Cleaning $PKG_NAME $PKG_VER
+  cd $CWD
+  if [[ -d "$BUILD_DIR" ]]; then
+    if [[ "$BUILD_DIR" != "$SRC_DIR" ]]; then
+      rm -rf $BUILD_DIR
+    else
+      pushd $BUILD_DIR
+      ninja clean
+      popd
+    fi
+  fi
+}
+
+patch_package()
+{
+  echo [$0] Patching package $PKG_NAME $PKG_VER
+  echo [$0] Nothing to do
+}
+
+prepare_package()
+{
+  clean_build
+  clean_log
+  create_dirs bin include lib share
+  display_info
+  download_extract $PKG_URL $PKG_NAME-$PKG_VER.tar.xz $PKG_NAME-$PKG_VER
+  if [[ ! -d "$BUILD_DIR" ]]; then mkdir -p "$BUILD_DIR"; fi
+}
+
+configure_stage()
+{
+  echo [$0] Configuring $PKG_NAME $PKG_VER
+  cd $SRC_DIR
+  configure_options
+  # https://mesonbuild.com/Builtin-options.html
+  # https://mesonbuild.com/Commands.html
+  # NOTE:
+  # 1. Don't use '-L' or '-LIBPATH' in c_link_args or cpp_link_args, you have to use
+  #    '/LIBPATH'. Otherwise meson will not insert /LIBPATH just after '/link' and
+  #    throw out and error so that can't find third party
+  # 2. Don't define _WIN32_WINNT, it will throw out warning C4005: '_WIN32_WINNT': macro 
+  #    redefinition
+  # TODO:
+  # 1. meson can't find libffi even it is installed. For this moment, please keep internet
+  #    connection so that can git clone libffi during configuration process
+  configure_cmd meson setup $BUILD_DIR_M                                                                 \
+    --buildtype=release                                                                                  \
+    --prefix="$PREFIX_M"                                                                                 \
+    --mandir="$PREFIX_M/share/man"                                                                       \
+    --cmake-prefix-path="$PREFIX_PATH_M"                                                                 \
+    -Ddefault_library=shared                                                                             \
+    -Dc_args="$OPTIONS ${DEFINES//-D_WIN32_WINNT=$WIN32_TARGET /} -I${PREFIX_PATH_M//;/ -I}"             \
+    -Dc_link_args="/LIBPATH:${PREFIX_PATH_M//;/ \/LIBPATH:}"                                             \
+    -Dcpp_args="-EHsc $OPTIONS ${DEFINES//-D_WIN32_WINNT=$WIN32_TARGET /} -I${PREFIX_PATH_M//;/ -I}"     \
+    -Dcpp_link_args="/LIBPATH:${PREFIX_PATH_M//;/ \/LIBPATH:}"                                           \
+    -Dtests=false
+}
+
+build_stage()
+{
+  echo [$0] Building $PKG_NAME $PKG_VER
+  cd $BUILD_DIR
+  build_cmd ninja -j$(nproc)
+}
+
+install_package()
+{
+  echo [$0] Installing $PKG_NAME $PKG_VER
+  cd $BUILD_DIR
+  install_cmd ninja install
+  clean_build
+  build_ok
+}
+
+process_build()
+{
+  prepare_package
+  configure_stage
+  build_stage
+  install_package
+}
+
+do_actions
