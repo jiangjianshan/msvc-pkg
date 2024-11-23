@@ -1,0 +1,12 @@
+name: libsigc++
+version: 3.6.0
+url: https://download.gnome.org/sources/libsigc++/3.6/libsigc++-3.6.0.tar.xz
+steps:
+  one:
+    dependencies:
+      - doxygen
+      - pkg-config
+      - boost
+      - libxslt
+      - mm-common
+    run: build.bat

@@ -1,0 +1,7 @@
+name: AviSynthPlus
+version: 3.7.3
+url: https://github.com/AviSynth/AviSynthPlus/archive/refs/tags/v3.7.3.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.bat

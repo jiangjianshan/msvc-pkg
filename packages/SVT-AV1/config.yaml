@@ -1,0 +1,9 @@
+name: SVT-AV1
+version: 2.3.0
+url: https://gitlab.com/AOMediaCodec/SVT-AV1/-/archive/v2.3.0/SVT-AV1-v2.3.0.tar.bz2
+steps:
+  one:
+    dependencies:
+      - nasm
+      - winpthreads
+    run: build.bat

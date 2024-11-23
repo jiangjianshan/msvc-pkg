@@ -1,0 +1,13 @@
+diff -urN winpthreads-12.0.0-orig/include/pthread_compat.h winpthreads-12.0.0/include/pthread_compat.h
+--- winpthreads-12.0.0-orig/include/pthread_compat.h	2024-05-22 15:07:14.000000000 +0800
++++ winpthreads-12.0.0/include/pthread_compat.h	2024-11-06 21:05:22.219933700 +0800
+@@ -70,6 +70,9 @@
+ 
+ #include "pthread_time.h"
+ 
++#ifdef pid_t
++#undef pid_t
++#endif
+ #ifdef _WIN64
+ typedef __int64 pid_t;
+ #else

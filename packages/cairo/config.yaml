@@ -1,0 +1,18 @@
+name: cairo
+version: 1.18.0
+url: https://www.cairographics.org/releases/cairo-1.18.0.tar.xz
+steps:
+  one:
+    dependencies:
+      - pkg-config
+      - fontconfig
+      - freetype
+      - glib
+      - libffi
+      - libpng
+      - libatomic_ops
+      - lzo2
+      - pixman
+      - zlib
+      - winpthreads
+    run: build.bat

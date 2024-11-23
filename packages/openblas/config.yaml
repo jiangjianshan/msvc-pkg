@@ -1,0 +1,10 @@
+name: openblas
+version: 0.3.28
+url: https://github.com/OpenMathLib/OpenBLAS/archive/refs/tags/v0.3.28.tar.gz
+steps:
+  one:
+    dependencies:
+      - llvm-project
+      - perl
+      - winpthreads
+    run: build.bat

@@ -1,0 +1,10 @@
+name: nettle
+version: 3.10
+url: https://ftp.gnu.org/gnu/nettle/nettle-3.10.tar.gz
+steps:
+  one:
+    dependencies:
+      - gmp:two
+      - openssl
+      - yasm
+    run: build.sh

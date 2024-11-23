@@ -1,0 +1,12 @@
+name: pixman
+version: 0.43.4
+url: https://www.cairographics.org/releases/pixman-0.43.4.tar.gz
+steps:
+  one:
+    dependencies:
+      - pkg-config
+      - libpng
+      - glib
+      - zlib
+      - winpthreads
+    run: build.bat

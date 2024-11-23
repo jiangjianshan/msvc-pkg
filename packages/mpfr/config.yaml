@@ -1,0 +1,9 @@
+name: mpfr
+version: 4.2.1
+url: https://ftp.gnu.org/gnu/mpfr/mpfr-4.2.1.tar.xz
+steps:
+  one:
+    dependencies:
+      - yasm
+      - gmp:two
+    run: build.sh

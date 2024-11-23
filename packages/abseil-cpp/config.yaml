@@ -1,0 +1,8 @@
+name: abseil-cpp
+version: 20240722.0
+url: https://github.com/abseil/abseil-cpp/releases/download/20240722.0/abseil-cpp-20240722.0.tar.gz
+steps:
+  one:
+    dependencies:
+      - winpthreads
+    run: build.bat

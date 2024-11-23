@@ -1,0 +1,8 @@
+name: automake
+version: 1.16.5
+url: https://ftp.gnu.org/pub/gnu/automake/automake-1.16.5.tar.xz
+steps:
+  one:
+    dependencies:
+      - autoconf
+    run: build.sh

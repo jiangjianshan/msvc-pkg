@@ -1,0 +1,8 @@
+name: fmt
+version: 11.0.2
+url: https://github.com/fmtlib/fmt/archive/11.0.2/fmt-11.0.2.tar.gz
+steps:
+  one:
+    dependencies:
+      - winpthreads
+    run: build.bat

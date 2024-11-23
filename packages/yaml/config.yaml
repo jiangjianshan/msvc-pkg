@@ -1,0 +1,8 @@
+name: yaml
+version: 0.2.5
+url: http://pyyaml.org/download/libyaml/yaml-0.2.5.tar.gz
+steps:
+  one:
+    dependencies:
+      - doxygen
+    run: build.sh

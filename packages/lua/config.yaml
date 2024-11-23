@@ -1,0 +1,7 @@
+name: lua
+version: 5.4.7
+url: https://www.lua.org/ftp/lua-5.4.7.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.bat

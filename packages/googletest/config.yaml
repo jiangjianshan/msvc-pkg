@@ -1,0 +1,9 @@
+name: googletest
+version: 1.15.2
+url: https://github.com/google/googletest/archive/refs/tags/v1.15.2.tar.gz
+steps:
+  one:
+    dependencies:
+      - abseil-cpp
+      - re2
+    run: build.bat

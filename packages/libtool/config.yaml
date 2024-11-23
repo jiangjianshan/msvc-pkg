@@ -1,0 +1,8 @@
+name: libtool
+version: 2.5.3
+url: https://ftp.gnu.org/pub/gnu/libtool/libtool-2.5.3.tar.xz
+steps:
+  one:
+    dependencies:
+      - m4
+    run: build.sh

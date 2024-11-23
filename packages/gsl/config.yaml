@@ -1,0 +1,8 @@
+name: gsl
+version: 2.8
+url: https://ftp.gnu.org/gnu/gsl/gsl-2.8.tar.gz
+steps:
+  one:
+    dependencies:
+      - libiconv
+    run: build.sh

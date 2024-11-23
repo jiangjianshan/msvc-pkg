@@ -1,0 +1,9 @@
+name: libthai
+version: 0.1.29
+url: https://github.com/tlwg/libthai/archive/refs/tags/v0.1.29.tar.gz
+steps:
+  one:
+    dependencies:
+      - doxygen
+      - libdatrie
+    run: build.sh

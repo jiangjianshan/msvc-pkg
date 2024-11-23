@@ -1,0 +1,11 @@
+name: re2
+version: 2024-07-02
+url: https://github.com/google/re2/archive/refs/tags/2024-07-02.tar.gz
+steps:
+  one:
+    dependencies:
+      - abseil-cpp
+      - pcre
+      - pcre2
+      - winpthreads
+    run: build.bat

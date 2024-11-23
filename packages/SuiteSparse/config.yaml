@@ -1,0 +1,13 @@
+name: SuiteSparse
+version: 7.7.0
+url: https://github.com/DrTimothyAldenDavis/SuiteSparse/archive/refs/tags/v7.7.0.tar.gz
+steps:
+  one:
+    dependencies:
+      - gmp:two
+      - LAPACK
+      - llvm-project
+      - mpfr
+      - openblas
+      - winpthreads
+    run: build.bat

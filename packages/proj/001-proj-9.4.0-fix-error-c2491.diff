@@ -1,0 +1,12 @@
+diff --color -urN proj-9.4.0-orig/test/unit/main.cpp proj-9.4.0/test/unit/main.cpp
+--- proj-9.4.0-orig/test/unit/main.cpp	2024-03-02 00:19:32.000000000 +0800
++++ proj-9.4.0/test/unit/main.cpp	2024-05-22 12:05:00.660876000 +0800
+@@ -30,7 +30,7 @@
+ 
+ #include "gtest_include.h"
+ 
+-GTEST_API_ int main(int argc, char **argv) {
++int main(int argc, char **argv) {
+     // Use a potentially non-C locale to make sure we are robust
+     setlocale(LC_ALL, "");
+ 

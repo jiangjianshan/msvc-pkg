@@ -1,0 +1,11 @@
+name: libaom
+version: 3.9.1
+url: https://storage.googleapis.com/aom-releases/libaom-3.9.1.tar.gz
+steps:
+  one:
+    dependencies:
+      - doxygen
+      - yasm
+      - perl
+      - winpthreads
+    run: build.bat

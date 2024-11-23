@@ -1,0 +1,8 @@
+name: tcl
+version: 8.6.15
+url: https://sourceforge.net/projects/tcl/files/Tcl/8.6.15/tcl8.6.15-src.tar.gz
+steps:
+  one:
+    dependencies:
+      - zlib
+    run: build.bat

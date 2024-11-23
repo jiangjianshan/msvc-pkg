@@ -1,0 +1,10 @@
+name: libgeotiff
+version: 1.7.3
+url: https://github.com/OSGeo/libgeotiff/archive/refs/tags/1.7.3.tar.gz
+steps:
+  one:
+    dependencies:
+      - proj
+      - zlib
+      - libjpeg-turbo
+    run: build.bat

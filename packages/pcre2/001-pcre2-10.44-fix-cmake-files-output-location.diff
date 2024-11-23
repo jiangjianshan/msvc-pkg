@@ -1,0 +1,12 @@
+diff --color -urN pcre2-10.43-orig/CMakeLists.txt pcre2-10.43/CMakeLists.txt
+--- pcre2-10.43-orig/CMakeLists.txt	2024-01-23 01:12:58.000000000 +0800
++++ pcre2-10.43/CMakeLists.txt	2024-06-26 16:20:47.736937500 +0800
+@@ -1124,7 +1124,7 @@
+ set(PCRE2_CONFIG_VERSION_IN  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/pcre2-config-version.cmake.in)
+ set(PCRE2_CONFIG_VERSION_OUT ${CMAKE_CURRENT_BINARY_DIR}/cmake/pcre2-config-version.cmake)
+ configure_file(${PCRE2_CONFIG_VERSION_IN} ${PCRE2_CONFIG_VERSION_OUT} @ONLY)
+-install(FILES ${PCRE2_CONFIG_OUT} ${PCRE2_CONFIG_VERSION_OUT} DESTINATION cmake)
++install(FILES ${PCRE2_CONFIG_OUT} ${PCRE2_CONFIG_VERSION_OUT} DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/pcre2)
+ 
+ FILE(GLOB html ${PROJECT_SOURCE_DIR}/doc/html/*.html)
+ FILE(GLOB man1 ${PROJECT_SOURCE_DIR}/doc/*.1)

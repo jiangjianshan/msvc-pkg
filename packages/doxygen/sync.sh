@@ -1,0 +1,17 @@
+#!/bin/bash
+
+LANG=en_US
+export LANG
+
+ROOT_DIR=$(cygpath -u "$ROOT_DIR")
+PKG_NAME=$(yq -r '.name' config.yaml)
+PKG_VER=$(yq -r '.version' config.yaml)
+PKG_URL=$(yq -r '.url' config.yaml)
+RELS_DIR=$ROOT_DIR/releases
+TAGS_DIR=$ROOT_DIR/tags
+SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
+ARCHIVE=$(basename "$PKG_URL")
+EXT=${ARCHIVE#$(echo "$ARCHIVE" | sed 's/\.[^[:digit:]].*$//g')}
+
+. $ROOT_DIR/common.sh
+download_extract $PKG_NAME-$PKG_VER$EXT

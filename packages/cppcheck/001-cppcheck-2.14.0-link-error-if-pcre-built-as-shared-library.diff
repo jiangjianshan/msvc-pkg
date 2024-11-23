@@ -1,0 +1,13 @@
+diff -urN cppcheck-2.14.0-orig/lib/cppcheck.cpp cppcheck-2.14.0/lib/cppcheck.cpp
+--- cppcheck-2.14.0-orig/lib/cppcheck.cpp	2024-04-21 02:31:07.000000000 +0800
++++ cppcheck-2.14.0/lib/cppcheck.cpp	2024-10-27 16:56:30.235397700 +0800
+@@ -67,9 +67,6 @@
+ #include "xml.h"
+ 
+ #ifdef HAVE_RULES
+-#ifdef _WIN32
+-#define PCRE_STATIC
+-#endif
+ #include <pcre.h>
+ #endif
+ 

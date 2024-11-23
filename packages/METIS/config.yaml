@@ -1,0 +1,8 @@
+name: METIS
+version: 5.2.1
+url: https://github.com/KarypisLab/METIS/archive/refs/tags/v5.2.1.tar.gz
+steps:
+  one:
+    dependencies:
+      - GKlib
+    run: build.bat

@@ -1,0 +1,29 @@
+diff -urN libunibreak-6.1-orig/configure.ac libunibreak-6.1/configure.ac
+--- libunibreak-6.1-orig/configure.ac	2024-03-02 09:16:12.000000000 +0800
++++ libunibreak-6.1/configure.ac	2024-11-21 16:26:44.517191100 +0800
+@@ -8,6 +8,6 @@
+ AC_PROG_CC
+ AC_PROG_LN_S
+ AC_EXEEXT
+-AM_PROG_LIBTOOL
+-AC_CONFIG_FILES([Makefile src/Makefile])
+-AC_OUTPUT([libunibreak.pc])
++LT_INIT
++AC_CONFIG_FILES([libunibreak.pc Makefile src/Makefile])
++AC_OUTPUT
+diff -urN libunibreak-6.1-orig/src/Makefile.am libunibreak-6.1/src/Makefile.am
+--- libunibreak-6.1-orig/src/Makefile.am	2024-03-02 09:16:12.000000000 +0800
++++ libunibreak-6.1/src/Makefile.am	2024-11-21 16:31:55.314234300 +0800
+@@ -49,9 +49,9 @@
+ 	GraphemeBreakTest.txt
+ 
+ install-exec-hook:
+-	- [ -f $(DESTDIR)/${libdir}/libunibreak.a ] && \
+-	rm -f $(DESTDIR)/${libdir}/liblinebreak.a && \
+-	${LN_S} libunibreak.a $(DESTDIR)/${libdir}/liblinebreak.a
++	- [ -f ${libdir}/libunibreak.lib ] && \
++	rm -f ${libdir}/liblinebreak.lib && \
++	${LN_S} libunibreak.lib ${libdir}/liblinebreak.lib
+ 
+ distclean-local:
+ 	rm -f LineBreak.txt WordBreakData.txt GraphemeBreakData.txt DerivedCoreProperties.txt EastAsianWidth.txt emoji-data.txt

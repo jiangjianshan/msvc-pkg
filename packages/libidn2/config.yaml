@@ -1,0 +1,10 @@
+name: libidn2
+version: 2.3.7
+url: https://ftp.gnu.org/gnu/libidn/libidn2-2.3.7.tar.gz
+steps:
+  one:
+    dependencies:
+      - gettext
+      - libiconv
+      - libunistring
+    run: build.sh

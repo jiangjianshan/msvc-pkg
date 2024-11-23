@@ -1,0 +1,12 @@
+name: fltk
+version: 1.3.9
+url: https://www.fltk.org/pub/fltk/1.3.9/fltk-1.3.9-source.tar.bz2
+steps:
+  one:
+    dependencies:
+      - doxygen
+      - fontconfig
+      - openjpeg
+      - libpng
+      - zlib
+    run: build.bat

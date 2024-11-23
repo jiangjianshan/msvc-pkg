@@ -1,0 +1,32 @@
+diff -urN hwloc-2.11.2-orig/utils/lstopo/lstopo.c hwloc-2.11.2/utils/lstopo/lstopo.c
+--- hwloc-2.11.2-orig/utils/lstopo/lstopo.c	2024-09-26 17:04:34.000000000 +0800
++++ hwloc-2.11.2/utils/lstopo/lstopo.c	2024-11-13 15:34:11.398424800 +0800
+@@ -63,6 +63,12 @@
+ extern void setJNIEnv();
+ #endif
+ 
++#ifdef _MSC_VER
++#define STDIN_FILENO  0
++#define STDOUT_FILENO 1
++#define STDERR_FILENO 2
++#endif
++
+ FILE *open_output(const char *filename, int overwrite)
+ {
+   struct stat st;
+diff -urN hwloc-2.11.2-orig/utils/lstopo/lstopo-ascii.c hwloc-2.11.2/utils/lstopo/lstopo-ascii.c
+--- hwloc-2.11.2-orig/utils/lstopo/lstopo-ascii.c	2024-09-26 17:04:34.000000000 +0800
++++ hwloc-2.11.2/utils/lstopo/lstopo-ascii.c	2024-11-13 15:34:44.801949800 +0800
+@@ -34,6 +34,12 @@
+ 
+ #define TERM_COLOR_START 16
+ 
++#ifdef _MSC_VER
++#define STDIN_FILENO  0
++#define STDOUT_FILENO 1
++#define STDERR_FILENO 2
++#endif
++
+ /* Uses unicode bars if available */
+ #ifdef HAVE_PUTWC
+ typedef wchar_t character;

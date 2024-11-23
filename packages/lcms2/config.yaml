@@ -1,0 +1,11 @@
+name: lcms2
+version: 2.16
+url: https://github.com/mm2/Little-CMS/releases/download/lcms2.16/lcms2-2.16.tar.gz
+steps:
+  one:
+    dependencies:
+      - openjpeg
+      - tiff
+      - zlib
+      - winpthreads
+    run: build.sh

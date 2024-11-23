@@ -1,0 +1,10 @@
+name: libevent
+version: 2.1.12
+url: https://github.com/libevent/libevent/archive/refs/tags/release-2.1.12-stable.tar.gz
+steps:
+  one:
+    dependencies:
+      - openssl
+      - zlib
+      - winpthreads
+    run: build.bat

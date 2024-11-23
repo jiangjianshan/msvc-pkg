@@ -1,0 +1,8 @@
+name: autoconf
+version: 2.72
+url: https://ftp.gnu.org/pub/gnu/autoconf/autoconf-2.72.tar.xz
+steps:
+  one:
+    dependencies:
+      - m4
+    run: build.sh

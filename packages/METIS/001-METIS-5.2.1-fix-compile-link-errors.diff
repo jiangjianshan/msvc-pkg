@@ -1,0 +1,48 @@
+diff --color -urN METIS-5.2.1-orig/programs/CMakeLists.txt METIS-5.2.1/programs/CMakeLists.txt
+--- METIS-5.2.1-orig/programs/CMakeLists.txt	2022-12-05 21:27:57.000000000 +0800
++++ METIS-5.2.1/programs/CMakeLists.txt	2024-07-08 20:13:38.037295300 +0800
+@@ -11,7 +11,7 @@
+ 
+ # Link with the required libraries
+ foreach(prog gpmetis ndmetis mpmetis m2gmetis graphchk cmpfillin)
+-  target_link_libraries(${prog} metis GKlib m)
++  target_link_libraries(${prog} metis GKlib)
+ endforeach(prog)
+ 
+ if(METIS_INSTALL)
+diff --color -urN METIS-5.2.1-orig/programs/gpmetis.c METIS-5.2.1/programs/gpmetis.c
+--- METIS-5.2.1-orig/programs/gpmetis.c	2022-12-05 21:27:57.000000000 +0800
++++ METIS-5.2.1/programs/gpmetis.c	2024-07-08 11:12:22.968511900 +0800
+@@ -239,7 +239,7 @@
+   printf("\nMemory Information ----------------------------------------------------------\n");
+   printf("  Max memory used:\t\t %7.3"PRREAL" MB\n", (real_t)(params->maxmemory/(1024.0*1024.0)));
+ 
+-#ifndef MACOS
++#ifdef MACOS
+   {
+     struct rusage usage;
+     getrusage(RUSAGE_SELF, &usage);
+diff --color -urN METIS-5.2.1-orig/programs/mpmetis.c METIS-5.2.1/programs/mpmetis.c
+--- METIS-5.2.1-orig/programs/mpmetis.c	2022-12-05 21:27:57.000000000 +0800
++++ METIS-5.2.1/programs/mpmetis.c	2024-07-08 11:12:55.853673100 +0800
+@@ -188,7 +188,7 @@
+   printf("\nMemory Information ----------------------------------------------------------\n");
+   printf("  Max memory used:\t\t %7.3"PRREAL" MB\n", (real_t)(params->maxmemory/(1024.0*1024.0)));
+ 
+-#ifndef MACOS
++#ifdef MACOS
+   {
+     struct rusage usage;
+     getrusage(RUSAGE_SELF, &usage);
+diff --color -urN METIS-5.2.1-orig/programs/ndmetis.c METIS-5.2.1/programs/ndmetis.c
+--- METIS-5.2.1-orig/programs/ndmetis.c	2022-12-05 21:27:57.000000000 +0800
++++ METIS-5.2.1/programs/ndmetis.c	2024-07-08 11:13:04.431259800 +0800
+@@ -172,7 +172,7 @@
+   printf("\nMemory Information ----------------------------------------------------------\n");
+   printf("  Max memory used:\t\t %7.3"PRREAL" MB\n", (real_t)(params->maxmemory/(1024.0*1024.0)));
+ 
+-#ifndef MACOS
++#ifdef MACOS
+   {
+     struct rusage usage;
+     getrusage(RUSAGE_SELF, &usage);

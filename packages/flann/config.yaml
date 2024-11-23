@@ -1,0 +1,10 @@
+name: flann
+version: 1.9.2
+url: https://github.com/flann-lib/flann/archive/refs/tags/1.9.2.tar.gz
+steps:
+  one:
+    dependencies:
+      - boost
+      - hdf5
+      - lz4
+    run: build.bat

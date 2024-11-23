@@ -1,0 +1,9 @@
+name: benchmark
+version: 1.9.0
+url: https://github.com/google/benchmark/archive/refs/tags/v1.9.0.tar.gz
+steps:
+  one:
+    dependencies:
+      - winpthreads
+      - googletest
+    run: build.bat

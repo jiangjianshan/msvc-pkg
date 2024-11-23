@@ -1,0 +1,13 @@
+name: soplex
+version: 7.0.1
+url: https://github.com/scipopt/soplex/archive/refs/tags/release-701.tar.gz
+steps:
+  one:
+    dependencies:
+      - boost
+      - zlib
+      - gmp:two
+      - mpfr
+      - papilo
+      - winpthreads
+    run: build.bat

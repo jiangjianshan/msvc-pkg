@@ -1,0 +1,19 @@
+name: boost
+version: 1.86.0
+url: https://archives.boost.io/release/1.86.0/source/boost_1_86_0.tar.bz2
+steps:
+  one:
+    dependencies:
+      - pkg-config
+      - bzip2
+      - icu4c
+      - libiconv
+      - libjpeg-turbo
+      - libpng
+      - tiff
+      - openssl
+      - xz
+      - zlib
+      - zstd
+      - winpthreads
+    run: build.bat

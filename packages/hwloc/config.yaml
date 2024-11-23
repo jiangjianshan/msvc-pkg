@@ -1,0 +1,11 @@
+name: hwloc
+version: 2.11.2
+url: https://github.com/open-mpi/hwloc/archive/refs/tags/hwloc-2.11.2.tar.gz
+steps:
+  one:
+    dependencies:
+      - level-zero
+      - libxml2
+      - doxygen
+      - cairo
+    run: build.sh

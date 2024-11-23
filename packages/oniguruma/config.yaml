@@ -1,0 +1,7 @@
+name: oniguruma
+version: 6.9.9
+url: https://github.com/kkos/oniguruma/archive/refs/tags/v6.9.9.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.bat

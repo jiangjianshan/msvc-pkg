@@ -1,0 +1,7 @@
+name: gnulib
+version: master
+url: https://git.savannah.gnu.org/git/gnulib.git
+steps:
+  one:
+    dependencies:
+    run:

@@ -1,0 +1,11 @@
+name: cppcheck
+version: 2.14.0
+url: https://github.com/danmar/cppcheck/archive/refs/tags/2.14.0.tar.gz
+steps:
+  one:
+    dependencies:
+      - boost
+      - libxml2
+      - pcre
+      - winpthreads
+    run: build.bat

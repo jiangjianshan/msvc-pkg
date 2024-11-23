@@ -1,0 +1,9 @@
+name: glpk
+version: 5.0
+url: https://ftp.gnu.org/gnu/glpk/glpk-5.0.tar.gz
+steps:
+  one:
+    dependencies:
+      - gmp
+      - libtool
+    run: build.bat

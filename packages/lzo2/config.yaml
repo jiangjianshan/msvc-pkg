@@ -1,0 +1,7 @@
+name: lzo2
+version: "2.10"
+url: https://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.sh

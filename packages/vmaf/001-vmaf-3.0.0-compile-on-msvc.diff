@@ -1,0 +1,1155 @@
+diff -urN vmaf-3.0.0-orig/libvmaf/src/feature/adm.c vmaf-3.0.0/libvmaf/src/feature/adm.c
+--- vmaf-3.0.0-orig/libvmaf/src/feature/adm.c	2023-12-08 03:27:32.000000000 +0800
++++ vmaf-3.0.0/libvmaf/src/feature/adm.c	2024-11-13 21:09:13.208187700 +0800
+@@ -49,7 +49,9 @@
+     return data_top;
+ }
+ 
++#ifndef _MSC_VER
+ __attribute__((unused))
++#endif
+ static char *init_dwt_band_d(adm_dwt_band_t_d *band, char *data_top, size_t buf_sz_one)
+ {
+     band->band_a = (double *)data_top; data_top += buf_sz_one;
+diff -urN vmaf-3.0.0-orig/libvmaf/src/feature/cuda/integer_adm_cuda.c vmaf-3.0.0/libvmaf/src/feature/cuda/integer_adm_cuda.c
+--- vmaf-3.0.0-orig/libvmaf/src/feature/cuda/integer_adm_cuda.c	2023-12-08 03:27:32.000000000 +0800
++++ vmaf-3.0.0/libvmaf/src/feature/cuda/integer_adm_cuda.c	2024-11-13 21:09:13.223756600 +0800
+@@ -30,7 +30,11 @@
+ #include "cpu.h"
+ #include "cuda/integer_adm_cuda.h"
+ #include "picture_cuda.h"
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ 
+ #include <assert.h>
+ 
+diff -urN vmaf-3.0.0-orig/libvmaf/src/feature/integer_adm.c vmaf-3.0.0/libvmaf/src/feature/integer_adm.c
+--- vmaf-3.0.0-orig/libvmaf/src/feature/integer_adm.c	2023-12-08 03:27:32.000000000 +0800
++++ vmaf-3.0.0/libvmaf/src/feature/integer_adm.c	2024-11-13 21:09:13.223756600 +0800
+@@ -22,6 +22,7 @@
+ #include "feature_extractor.h"
+ #include "feature_name.h"
+ #include "integer_adm.h"
++#include "integer_vif.h"
+ #include "log.h"
+ 
+ #if ARCH_X86
+diff -urN vmaf-3.0.0-orig/libvmaf/src/feature/integer_vif.c vmaf-3.0.0/libvmaf/src/feature/integer_vif.c
+--- vmaf-3.0.0-orig/libvmaf/src/feature/integer_vif.c	2023-12-08 03:27:32.000000000 +0800
++++ vmaf-3.0.0/libvmaf/src/feature/integer_vif.c	2024-11-13 21:09:13.239377400 +0800
+@@ -643,7 +643,11 @@
+     const size_t data_sz =
+         2 * (pad_size + frame_size + pad_size) + 2 * (h * s->public.buf.stride_16) +
+         5 * (s->public.buf.stride_32) + 7 * s->public.buf.stride_tmp;
++#ifdef _MSC_VER
++    size_t *data = _aligned_malloc(data_sz, MAX_ALIGN);
++#else
+     void *data = aligned_malloc(data_sz, MAX_ALIGN);
++#endif
+     if (!data) return -ENOMEM;
+     memset(data, 0, data_sz);
+ 
+diff -urN vmaf-3.0.0-orig/libvmaf/src/feature/mkdirp.c vmaf-3.0.0/libvmaf/src/feature/mkdirp.c
+--- vmaf-3.0.0-orig/libvmaf/src/feature/mkdirp.c	2023-12-08 03:27:32.000000000 +0800
++++ vmaf-3.0.0/libvmaf/src/feature/mkdirp.c	2024-11-13 21:09:13.239377400 +0800
+@@ -6,7 +6,11 @@
+ // MIT licensed
+ //
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ #include <errno.h>
+ #include <stdlib.h>
+ #include <string.h>
+diff -urN vmaf-3.0.0-orig/libvmaf/src/feature/mkdirp.h vmaf-3.0.0/libvmaf/src/feature/mkdirp.h
+--- vmaf-3.0.0-orig/libvmaf/src/feature/mkdirp.h	2023-12-08 03:27:32.000000000 +0800
++++ vmaf-3.0.0/libvmaf/src/feature/mkdirp.h	2024-11-13 21:09:13.239377400 +0800
+@@ -12,6 +12,10 @@
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ 
++#ifdef _MSC_VER
++typedef unsigned short mode_t;
++#endif
++
+ /*
+  * Recursively `mkdir(path, mode)`
+  */
+diff -urN vmaf-3.0.0-orig/libvmaf/src/libvmaf.c vmaf-3.0.0/libvmaf/src/libvmaf.c
+--- vmaf-3.0.0-orig/libvmaf/src/libvmaf.c	2023-12-08 03:27:32.000000000 +0800
++++ vmaf-3.0.0/libvmaf/src/libvmaf.c	2024-11-13 21:09:13.239377400 +0800
+@@ -864,7 +864,12 @@
+     const char *suffix_stddev = "_stddev";
+     const size_t name_sz =
+         strlen(model_collection->name) + strlen(suffix_lo) + 1;
++#ifdef _MSC_VER
++    char *name = malloc(sizeof(char) * name_sz);
++    if (name == NULL) return err;
++#else
+     char name[name_sz];
++#endif
+     memset(name, 0, name_sz);
+ 
+     snprintf(name, name_sz, "%s%s", model_collection->name, suffix_bagging);
+@@ -887,6 +892,9 @@
+                                      &score->bootstrap.ci.p95.hi,
+                                      index_low, index_high);
+ 
++#ifdef _MSC_VER
++    free(name);
++#endif
+     return err;
+ }
+ 
+diff -urN vmaf-3.0.0-orig/libvmaf/src/log.c vmaf-3.0.0/libvmaf/src/log.c
+--- vmaf-3.0.0-orig/libvmaf/src/log.c	2023-12-08 03:27:32.000000000 +0800
++++ vmaf-3.0.0/libvmaf/src/log.c	2024-11-13 21:09:13.254998600 +0800
+@@ -19,7 +19,11 @@
+ #include "libvmaf/libvmaf.h"
+ 
+ #include <stdarg.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ 
+ static enum VmafLogLevel vmaf_log_level = VMAF_LOG_LEVEL_INFO;
+ static int istty = 0;
+diff -urN vmaf-3.0.0-orig/libvmaf/src/meson.build vmaf-3.0.0/libvmaf/src/meson.build
+--- vmaf-3.0.0-orig/libvmaf/src/meson.build	2023-12-08 03:27:32.000000000 +0800
++++ vmaf-3.0.0/libvmaf/src/meson.build	2024-11-13 21:09:13.254998600 +0800
+@@ -208,6 +208,7 @@
+     'libvmaf_cpu',
+     libvmaf_cpu_sources,
+     include_directories : [libvmaf_include],
++    name_suffix : 'lib'
+ )
+ 
+ platform_specific_cpu_objects = []
+@@ -223,7 +224,8 @@
+           'arm64_v8',
+           arm64_sources,
+           include_directories : vmaf_base_include,
+-          c_args : vmaf_cflags_common + ['-DARCH_AARCH64']
++          c_args : vmaf_cflags_common + ['-DARCH_AARCH64'],
++          name_suffix : 'lib'
+         )
+ 
+         platform_specific_cpu_objects += arm64_static_lib.extract_all_objects()
+@@ -243,6 +245,7 @@
+           x86_avx2_sources,
+           include_directories : vmaf_base_include,
+           c_args : ['-mavx', '-mavx2'] + vmaf_cflags_common,
++          name_suffix : 'lib'
+       )
+ 
+       platform_specific_cpu_objects += x86_avx2_static_lib.extract_all_objects(recursive: true)
+@@ -260,6 +263,7 @@
+             c_args : ['-mavx512f', '-mavx512dq', '-mavx512bw', '-mavx512cd', '-mavx512dq',
+                       '-mavx512vbmi', '-mavx512vl'] +
+                      vmaf_cflags_common,
++            name_suffix : 'lib'
+         )
+ 
+         platform_specific_cpu_objects += x86_avx512_static_lib.extract_all_objects(recursive: true)
+@@ -361,6 +365,7 @@
+         ],
+         c_args : vmaf_cflags_common,
+         cuda_args: cuda_flags # + ['-gencode', 'arch=compute_86,code=sm_86' ] #, '--use_fast_math']
++        ,name_suffix : 'lib'
+     )
+ 
+     common_cuda_objects += cuda_static_lib.extract_all_objects()
+@@ -442,7 +447,8 @@
+     libvmaf_feature_sources,
+     include_directories : [libvmaf_include, vmaf_include, cuda_dir],
+     dependencies: [stdatomic_dependency, cuda_dependency],
+-    objects: common_cuda_objects
++    objects: common_cuda_objects,
++    name_suffix : 'lib'
+ )
+ 
+ libvmaf_sources = [
+@@ -496,6 +502,7 @@
+     version : vmaf_soname_version,
+     soversion : vmaf_soversion,
+     install: true,
++    name_suffix: 'lib'
+ )
+ 
+ pkg_mod = import('pkgconfig')
+diff -urN vmaf-3.0.0-orig/libvmaf/src/predict.c vmaf-3.0.0/libvmaf/src/predict.c
+--- vmaf-3.0.0-orig/libvmaf/src/predict.c	2023-12-08 03:27:32.000000000 +0800
++++ vmaf-3.0.0/libvmaf/src/predict.c	2024-11-13 21:09:13.254998600 +0800
+@@ -354,7 +354,12 @@
+                                         VmafModelCollectionScore *score)
+ {
+     int err = 0;
++#ifdef _MSC_VER
++    double *scores = malloc(sizeof(double) * model_collection->cnt);
++    if (scores == NULL) return err;
++#else
+     double scores[model_collection->cnt];
++#endif
+ 
+     for (unsigned i = 0; i < model_collection->cnt; i++) {
+         // mean, stddev, etc. are calculated on untransformed/unclipped scores
+@@ -366,7 +371,12 @@
+                                           feature_collector, index,
+                                           &scores[i], false,
+                                           flags);
+-        if (err) return err;
++        if (err) {
++#ifdef _MSC_VER
++            free(scores);
++#endif
++            return err;
++        }
+ 
+         // do not override the model's transform/clip behavior
+         // write the scores to the feature collector
+@@ -374,7 +384,12 @@
+         err = vmaf_predict_score_at_index(model_collection->model[i],
+                                           feature_collector, index,
+                                           &score, true, 0);
+-        if (err) return err;
++        if (err) {
++#ifdef _MSC_VER
++            free(scores);
++#endif
++            return err;
++        }
+     }
+ 
+     score->type = VMAF_MODEL_COLLECTION_SCORE_BOOTSTRAP;
+@@ -420,7 +435,12 @@
+     const char *suffix_stddev = "_stddev";
+     const size_t name_sz =
+         strlen(model_collection->name) + strlen(suffix_lo) + 1;
++#ifdef _MSC_VER
++    char *name = malloc(sizeof(char) * name_sz);
++    if (name == NULL) return err;
++#else
+     char name[name_sz];
++#endif
+     memset(name, 0, name_sz);
+ 
+     snprintf(name, name_sz, "%s%s", model_collection->name, suffix_bagging);
+@@ -439,6 +459,10 @@
+     err |= vmaf_feature_collector_append(feature_collector, name,
+                                          score->bootstrap.ci.p95.hi,
+                                          index);
++#ifdef _MSC_VER
++    free(scores);
++    free(name);
++#endif
+     return err;
+ }
+ 
+diff -urN vmaf-3.0.0-orig/libvmaf/src/read_json_model.c vmaf-3.0.0/libvmaf/src/read_json_model.c
+--- vmaf-3.0.0-orig/libvmaf/src/read_json_model.c	2023-12-08 03:27:32.000000000 +0800
++++ vmaf-3.0.0/libvmaf/src/read_json_model.c	2024-11-13 21:09:13.270670200 +0800
+@@ -486,15 +486,30 @@
+     if (!c.name) return -ENOMEM;
+ 
+     const size_t cfg_name_sz = strlen(name) + 5 + 1;
++#ifdef _MSC_VER
++    char *cfg_name = malloc(sizeof(char) * cfg_name_sz);
++    if (cfg_name == NULL) return -EINVAL;
++#else
+     char cfg_name[cfg_name_sz];
++#endif
+ 
+     const size_t generated_key_sz = 4 + 1;
++#ifdef _MSC_VER
++    char *generated_key = malloc(sizeof(char) * generated_key_sz);
++    if (generated_key == NULL) return -EINVAL;
++#else
+     char generated_key[generated_key_sz];
++#endif
+ 
+     unsigned i = 0;
+     while (json_peek(s) != JSON_OBJECT_END && !json_get_error(s)) {
+-        if (json_next(s) != JSON_STRING)
++        if (json_next(s) != JSON_STRING) {
++#ifdef _MSC_VER
++            free(cfg_name);
++            free(generated_key);
++#endif
+             return -EINVAL;
++        }
+ 
+         const char *key = json_get_string(s, NULL);
+         snprintf(generated_key, generated_key_sz, "%d", i);
+@@ -502,14 +517,26 @@
+         if (!strcmp(key, generated_key)) {
+             VmafModel *m;
+             err = vmaf_read_json_model(&m, &c, s);
+-            if (err) return err;
++            if (err) {
++#ifdef _MSC_VER
++                free(cfg_name);
++                free(generated_key);
++#endif
++                return err;
++            }
+ 
+             if (i == 0) {
+                 *model = m;
+                 c.name = cfg_name;
+             } else {
+                 err = vmaf_model_collection_append(model_collection, m);
+-                if (err) return err;
++                if (err) {
++#ifdef _MSC_VER
++                    free(cfg_name);
++                    free(generated_key);
++#endif
++                    return err;
++                }
+             }
+ 
+             sprintf((char*)c.name, "%s_%04d", name, ++i);
+@@ -520,7 +547,17 @@
+     }
+ 
+     free((char*)name);
+-    if (!(*model_collection)) return -EINVAL;
++    if (!(*model_collection)) {
++#ifdef _MSC_VER
++        free(cfg_name);
++        free(generated_key);
++#endif
++        return -EINVAL;
++    }
++#ifdef _MSC_VER
++    free(cfg_name);
++    free(generated_key);
++#endif
+     return err;
+ }
+ 
+diff -urN vmaf-3.0.0-orig/libvmaf/test/test_ring_buffer.c vmaf-3.0.0/libvmaf/test/test_ring_buffer.c
+--- vmaf-3.0.0-orig/libvmaf/test/test_ring_buffer.c	2023-12-08 03:27:32.000000000 +0800
++++ vmaf-3.0.0/libvmaf/test/test_ring_buffer.c	2024-11-13 21:09:13.270670200 +0800
+@@ -20,7 +20,11 @@
+ #include <stdint.h>
+ #include <stdlib.h>
+ #include <string.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ 
+ #include "test.h"
+ 
+diff -urN vmaf-3.0.0-orig/libvmaf/tools/getopt.c vmaf-3.0.0/libvmaf/tools/getopt.c
+--- vmaf-3.0.0-orig/libvmaf/tools/getopt.c	1970-01-01 08:00:00.000000000 +0800
++++ vmaf-3.0.0/libvmaf/tools/getopt.c	2024-11-13 21:09:13.270670200 +0800
+@@ -0,0 +1,556 @@
++/*	$OpenBSD: getopt_long.c,v 1.23 2007/10/31 12:34:57 chl Exp $	*/
++/*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
++
++/*
++ * Copyright (c) 2002 Todd C. Miller <Todd.Miller@courtesan.com>
++ *
++ * Permission to use, copy, modify, and distribute this software for any
++ * purpose with or without fee is hereby granted, provided that the above
++ * copyright notice and this permission notice appear in all copies.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
++ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
++ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
++ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ *
++ * Sponsored in part by the Defense Advanced Research Projects
++ * Agency (DARPA) and Air Force Research Laboratory, Air Force
++ * Materiel Command, USAF, under agreement number F39502-99-1-0512.
++ */
++/*-
++ * Copyright (c) 2000 The NetBSD Foundation, Inc.
++ * All rights reserved.
++ *
++ * This code is derived from software contributed to The NetBSD Foundation
++ * by Dieter Baron and Thomas Klausner.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
++ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
++ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
++ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
++ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
++ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
++ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
++ * POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include <errno.h>
++#include <stdlib.h>
++#include <string.h>
++#include <getopt.h>
++#include <stdarg.h>
++#include <stdio.h>
++#include <windows.h>
++
++#define	REPLACE_GETOPT		/* use this getopt as the system getopt(3) */
++
++#ifdef REPLACE_GETOPT
++int	opterr = 1;		/* if error message should be printed */
++int	optind = 1;		/* index into parent argv vector */
++int	optopt = '?';		/* character checked for validity */
++#undef	optreset		/* see getopt.h */
++#define	optreset		__mingw_optreset
++int	optreset;		/* reset getopt */
++char    *optarg;		/* argument associated with option */
++#endif
++
++#define PRINT_ERROR	((opterr) && (*options != ':'))
++
++#define FLAG_PERMUTE	0x01	/* permute non-options to the end of argv */
++#define FLAG_ALLARGS	0x02	/* treat non-options as args to option "-1" */
++#define FLAG_LONGONLY	0x04	/* operate as getopt_long_only */
++
++/* return values */
++#define	BADCH		(int)'?'
++#define	BADARG		((*options == ':') ? (int)':' : (int)'?')
++#define	INORDER 	(int)1
++
++#ifdef __CYGWIN__
++static char EMSG[] = "";
++#else
++#define	EMSG		""
++#endif
++
++static int getopt_internal(int, char * const *, const char *,
++			   const struct option *, int *, int);
++static int parse_long_options(char * const *, const char *,
++			      const struct option *, int *, int);
++static int gcd(int, int);
++static void permute_args(int, int, int, char * const *);
++
++static char *place = EMSG; /* option letter processing */
++
++/* XXX: set optreset to 1 rather than these two */
++static int nonopt_start = -1; /* first non option argument (for permute) */
++static int nonopt_end = -1;   /* first option after non options (for permute) */
++
++/* Error messages */
++static const char recargchar[] = "option requires an argument -- %c";
++static const char recargstring[] = "option requires an argument -- %s";
++static const char ambig[] = "ambiguous option -- %.*s";
++static const char noarg[] = "option doesn't take an argument -- %.*s";
++static const char illoptchar[] = "unknown option -- %c";
++static const char illoptstring[] = "unknown option -- %s";
++
++static void
++_vwarnx(const char *argv0,const char *fmt,va_list ap)
++{
++  (void)fprintf(stderr,"%s: ",argv0);
++  if (fmt != NULL)
++    (void)vfprintf(stderr,fmt,ap);
++  (void)fprintf(stderr,"\n");
++}
++
++static void
++warnx(const char *argv0,const char *fmt,...)
++{
++  va_list ap;
++  va_start(ap,fmt);
++  _vwarnx(argv0,fmt,ap);
++  va_end(ap);
++}
++
++/*
++ * Compute the greatest common divisor of a and b.
++ */
++static int
++gcd(int a, int b)
++{
++	int c;
++
++	c = a % b;
++	while (c != 0) {
++		a = b;
++		b = c;
++		c = a % b;
++	}
++
++	return (b);
++}
++
++/*
++ * Exchange the block from nonopt_start to nonopt_end with the block
++ * from nonopt_end to opt_end (keeping the same order of arguments
++ * in each block).
++ */
++static void
++permute_args(int panonopt_start, int panonopt_end, int opt_end,
++	char * const *nargv)
++{
++	int cstart, cyclelen, i, j, ncycle, nnonopts, nopts, pos;
++	char *swap;
++
++	/*
++	 * compute lengths of blocks and number and size of cycles
++	 */
++	nnonopts = panonopt_end - panonopt_start;
++	nopts = opt_end - panonopt_end;
++	ncycle = gcd(nnonopts, nopts);
++	cyclelen = (opt_end - panonopt_start) / ncycle;
++
++	for (i = 0; i < ncycle; i++) {
++		cstart = panonopt_end+i;
++		pos = cstart;
++		for (j = 0; j < cyclelen; j++) {
++			if (pos >= panonopt_end)
++				pos -= nnonopts;
++			else
++				pos += nopts;
++			swap = nargv[pos];
++			/* LINTED const cast */
++			((char **) nargv)[pos] = nargv[cstart];
++			/* LINTED const cast */
++			((char **)nargv)[cstart] = swap;
++		}
++	}
++}
++
++/*
++ * parse_long_options --
++ *	Parse long options in argc/argv argument vector.
++ * Returns -1 if short_too is set and the option does not match long_options.
++ */
++static int
++parse_long_options(char * const *nargv, const char *options,
++	const struct option *long_options, int *idx, int short_too)
++{
++	char *current_argv, *has_equal;
++	size_t current_argv_len;
++	int i, ambiguous, match;
++
++#define IDENTICAL_INTERPRETATION(_x, _y)                                \
++	(long_options[(_x)].has_arg == long_options[(_y)].has_arg &&    \
++	 long_options[(_x)].flag == long_options[(_y)].flag &&          \
++	 long_options[(_x)].val == long_options[(_y)].val)
++
++	current_argv = place;
++	match = -1;
++	ambiguous = 0;
++
++	optind++;
++
++	if ((has_equal = strchr(current_argv, '=')) != NULL) {
++		/* argument found (--option=arg) */
++		current_argv_len = has_equal - current_argv;
++		has_equal++;
++	} else
++		current_argv_len = strlen(current_argv);
++
++	for (i = 0; long_options[i].name; i++) {
++		/* find matching long option */
++		if (strncmp(current_argv, long_options[i].name,
++		    current_argv_len))
++			continue;
++
++		if (strlen(long_options[i].name) == current_argv_len) {
++			/* exact match */
++			match = i;
++			ambiguous = 0;
++			break;
++		}
++		/*
++		 * If this is a known short option, don't allow
++		 * a partial match of a single character.
++		 */
++		if (short_too && current_argv_len == 1)
++			continue;
++
++		if (match == -1)	/* partial match */
++			match = i;
++		else if (!IDENTICAL_INTERPRETATION(i, match))
++			ambiguous = 1;
++	}
++	if (ambiguous) {
++		/* ambiguous abbreviation */
++		if (PRINT_ERROR)
++			warnx(nargv[0], ambig, (int)current_argv_len,
++			     current_argv);
++		optopt = 0;
++		return (BADCH);
++	}
++	if (match != -1) {		/* option found */
++		if (long_options[match].has_arg == no_argument
++		    && has_equal) {
++			if (PRINT_ERROR)
++				warnx(nargv[0], noarg, (int)current_argv_len,
++				     current_argv);
++			/*
++			 * XXX: GNU sets optopt to val regardless of flag
++			 */
++			if (long_options[match].flag == NULL)
++				optopt = long_options[match].val;
++			else
++				optopt = 0;
++			return (BADARG);
++		}
++		if (long_options[match].has_arg == required_argument ||
++		    long_options[match].has_arg == optional_argument) {
++			if (has_equal)
++				optarg = has_equal;
++			else if (long_options[match].has_arg ==
++			    required_argument) {
++				/*
++				 * optional argument doesn't use next nargv
++				 */
++				optarg = nargv[optind++];
++			}
++		}
++		if ((long_options[match].has_arg == required_argument)
++		    && (optarg == NULL)) {
++			/*
++			 * Missing argument; leading ':' indicates no error
++			 * should be generated.
++			 */
++			if (PRINT_ERROR)
++				warnx(nargv[0], recargstring,
++				    current_argv);
++			/*
++			 * XXX: GNU sets optopt to val regardless of flag
++			 */
++			if (long_options[match].flag == NULL)
++				optopt = long_options[match].val;
++			else
++				optopt = 0;
++			--optind;
++			return (BADARG);
++		}
++	} else {			/* unknown option */
++		if (short_too) {
++			--optind;
++			return (-1);
++		}
++		if (PRINT_ERROR)
++			warnx(nargv[0], illoptstring, current_argv);
++		optopt = 0;
++		return (BADCH);
++	}
++	if (idx)
++		*idx = match;
++	if (long_options[match].flag) {
++		*long_options[match].flag = long_options[match].val;
++		return (0);
++	} else
++		return (long_options[match].val);
++#undef IDENTICAL_INTERPRETATION
++}
++
++/*
++ * getopt_internal --
++ *	Parse argc/argv argument vector.  Called by user level routines.
++ */
++static int
++getopt_internal(int nargc, char * const *nargv, const char *options,
++	const struct option *long_options, int *idx, int flags)
++{
++	char *oli;				/* option letter list index */
++	int optchar, short_too;
++	static int posixly_correct = -1;
++
++	if (options == NULL)
++		return (-1);
++
++	/*
++	 * XXX Some GNU programs (like cvs) set optind to 0 instead of
++	 * XXX using optreset.  Work around this braindamage.
++	 */
++	if (optind == 0)
++		optind = optreset = 1;
++
++	/*
++	 * Disable GNU extensions if POSIXLY_CORRECT is set or options
++	 * string begins with a '+'.
++	 *
++	 * CV, 2009-12-14: Check POSIXLY_CORRECT anew if optind == 0 or
++	 *                 optreset != 0 for GNU compatibility.
++	 */
++	if (posixly_correct == -1 || optreset != 0)
++		posixly_correct = (GetEnvironmentVariableW(L"POSIXLY_CORRECT", NULL, 0) != 0);
++	if (*options == '-')
++		flags |= FLAG_ALLARGS;
++	else if (posixly_correct || *options == '+')
++		flags &= ~FLAG_PERMUTE;
++	if (*options == '+' || *options == '-')
++		options++;
++
++	optarg = NULL;
++	if (optreset)
++		nonopt_start = nonopt_end = -1;
++start:
++	if (optreset || !*place) {		/* update scanning pointer */
++		optreset = 0;
++		if (optind >= nargc) {          /* end of argument vector */
++			place = EMSG;
++			if (nonopt_end != -1) {
++				/* do permutation, if we have to */
++				permute_args(nonopt_start, nonopt_end,
++				    optind, nargv);
++				optind -= nonopt_end - nonopt_start;
++			}
++			else if (nonopt_start != -1) {
++				/*
++				 * If we skipped non-options, set optind
++				 * to the first of them.
++				 */
++				optind = nonopt_start;
++			}
++			nonopt_start = nonopt_end = -1;
++			return (-1);
++		}
++		if (*(place = nargv[optind]) != '-' ||
++		    (place[1] == '\0' && strchr(options, '-') == NULL)) {
++			place = EMSG;		/* found non-option */
++			if (flags & FLAG_ALLARGS) {
++				/*
++				 * GNU extension:
++				 * return non-option as argument to option 1
++				 */
++				optarg = nargv[optind++];
++				return (INORDER);
++			}
++			if (!(flags & FLAG_PERMUTE)) {
++				/*
++				 * If no permutation wanted, stop parsing
++				 * at first non-option.
++				 */
++				return (-1);
++			}
++			/* do permutation */
++			if (nonopt_start == -1)
++				nonopt_start = optind;
++			else if (nonopt_end != -1) {
++				permute_args(nonopt_start, nonopt_end,
++				    optind, nargv);
++				nonopt_start = optind -
++				    (nonopt_end - nonopt_start);
++				nonopt_end = -1;
++			}
++			optind++;
++			/* process next argument */
++			goto start;
++		}
++		if (nonopt_start != -1 && nonopt_end == -1)
++			nonopt_end = optind;
++
++		/*
++		 * If we have "-" do nothing, if "--" we are done.
++		 */
++		if (place[1] != '\0' && *++place == '-' && place[1] == '\0') {
++			optind++;
++			place = EMSG;
++			/*
++			 * We found an option (--), so if we skipped
++			 * non-options, we have to permute.
++			 */
++			if (nonopt_end != -1) {
++				permute_args(nonopt_start, nonopt_end,
++				    optind, nargv);
++				optind -= nonopt_end - nonopt_start;
++			}
++			nonopt_start = nonopt_end = -1;
++			return (-1);
++		}
++	}
++
++	/*
++	 * Check long options if:
++	 *  1) we were passed some
++	 *  2) the arg is not just "-"
++	 *  3) either the arg starts with -- we are getopt_long_only()
++	 */
++	if (long_options != NULL && place != nargv[optind] &&
++	    (*place == '-' || (flags & FLAG_LONGONLY))) {
++		short_too = 0;
++		if (*place == '-')
++			place++;		/* --foo long option */
++		else if (*place != ':' && strchr(options, *place) != NULL)
++			short_too = 1;		/* could be short option too */
++
++		optchar = parse_long_options(nargv, options, long_options,
++		    idx, short_too);
++		if (optchar != -1) {
++			place = EMSG;
++			return (optchar);
++		}
++	}
++
++	if ((optchar = (int)*place++) == (int)':' ||
++	    (optchar == (int)'-' && *place != '\0') ||
++	    (oli = strchr(options, optchar)) == NULL) {
++		/*
++		 * If the user specified "-" and  '-' isn't listed in
++		 * options, return -1 (non-option) as per POSIX.
++		 * Otherwise, it is an unknown option character (or ':').
++		 */
++		if (optchar == (int)'-' && *place == '\0')
++			return (-1);
++		if (!*place)
++			++optind;
++		if (PRINT_ERROR)
++			warnx(nargv[0], illoptchar, optchar);
++		optopt = optchar;
++		return (BADCH);
++	}
++	if (long_options != NULL && optchar == 'W' && oli[1] == ';') {
++		/* -W long-option */
++		if (*place)			/* no space */
++			/* NOTHING */;
++		else if (++optind >= nargc) {	/* no arg */
++			place = EMSG;
++			if (PRINT_ERROR)
++				warnx(nargv[0], recargchar, optchar);
++			optopt = optchar;
++			return (BADARG);
++		} else				/* white space */
++			place = nargv[optind];
++		optchar = parse_long_options(nargv, options, long_options,
++		    idx, 0);
++		place = EMSG;
++		return (optchar);
++	}
++	if (*++oli != ':') {			/* doesn't take argument */
++		if (!*place)
++			++optind;
++	} else {				/* takes (optional) argument */
++		optarg = NULL;
++		if (*place)			/* no white space */
++			optarg = place;
++		else if (oli[1] != ':') {	/* arg not optional */
++			if (++optind >= nargc) {	/* no arg */
++				place = EMSG;
++				if (PRINT_ERROR)
++					warnx(nargv[0], recargchar, optchar);
++				optopt = optchar;
++				return (BADARG);
++			} else
++				optarg = nargv[optind];
++		}
++		place = EMSG;
++		++optind;
++	}
++	/* dump back option letter */
++	return (optchar);
++}
++
++#ifdef REPLACE_GETOPT
++/*
++ * getopt --
++ *	Parse argc/argv argument vector.
++ *
++ * [eventually this will replace the BSD getopt]
++ */
++int
++getopt(int nargc, char * const *nargv, const char *options)
++{
++
++	/*
++	 * We don't pass FLAG_PERMUTE to getopt_internal() since
++	 * the BSD getopt(3) (unlike GNU) has never done this.
++	 *
++	 * Furthermore, since many privileged programs call getopt()
++	 * before dropping privileges it makes sense to keep things
++	 * as simple (and bug-free) as possible.
++	 */
++	return (getopt_internal(nargc, nargv, options, NULL, NULL, 0));
++}
++#endif /* REPLACE_GETOPT */
++
++/*
++ * getopt_long --
++ *	Parse argc/argv argument vector.
++ */
++int
++getopt_long(int nargc, char * const *nargv, const char *options,
++    const struct option *long_options, int *idx)
++{
++
++	return (getopt_internal(nargc, nargv, options, long_options, idx,
++	    FLAG_PERMUTE));
++}
++
++/*
++ * getopt_long_only --
++ *	Parse argc/argv argument vector.
++ */
++int
++getopt_long_only(int nargc, char * const *nargv, const char *options,
++    const struct option *long_options, int *idx)
++{
++
++	return (getopt_internal(nargc, nargv, options, long_options, idx,
++	    FLAG_PERMUTE|FLAG_LONGONLY));
++}
+diff -urN vmaf-3.0.0-orig/libvmaf/tools/getopt.h vmaf-3.0.0/libvmaf/tools/getopt.h
+--- vmaf-3.0.0-orig/libvmaf/tools/getopt.h	1970-01-01 08:00:00.000000000 +0800
++++ vmaf-3.0.0/libvmaf/tools/getopt.h	2024-11-13 21:09:13.286241100 +0800
+@@ -0,0 +1,97 @@
++#ifndef __GETOPT_H__
++/**
++ * DISCLAIMER
++ * This file has no copyright assigned and is placed in the Public Domain.
++ * This file is part of the mingw-w64 runtime package.
++ *
++ * The mingw-w64 runtime package and its code is distributed in the hope that it 
++ * will be useful but WITHOUT ANY WARRANTY.  ALL WARRANTIES, EXPRESSED OR 
++ * IMPLIED ARE HEREBY DISCLAIMED.  This includes but is not limited to 
++ * warranties of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++#define __GETOPT_H__
++
++/* All the headers include this file. */
++#include <corecrt.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++int optind;		/* index of first non-option in argv      */
++int optopt;		/* single option character, as parsed     */
++int opterr;		/* flag to enable built-in diagnostics... */
++				/* (user may set to zero, to suppress)    */
++
++char *optarg;		/* pointer to argument of current option  */
++
++int getopt(int nargc, char * const *nargv, const char *options);
++
++#ifdef __cplusplus
++}
++#endif
++/*
++ * POSIX requires the `getopt' API to be specified in `unistd.h';
++ * thus, `unistd.h' includes this header.  However, we do not want
++ * to expose the `getopt_long' or `getopt_long_only' APIs, when
++ * included in this manner.  Thus, close the standard __GETOPT_H__
++ * declarations block, and open an additional __GETOPT_LONG_H__
++ * specific block, only when *not* __UNISTD_H_SOURCED__, in which
++ * to declare the extended API.
++ */
++#endif /* !defined(__GETOPT_H__) */
++
++#if !defined(__GETOPT_BSD_H__) && defined(_BSD_SOURCE)
++#define __GETOPT_BSD_H__
++/*
++ * BSD adds the non-standard `optreset' feature, for reinitialisation
++ * of `getopt' parsing.  We support this feature, for applications which
++ * proclaim their BSD heritage, before including this header; however,
++ * to maintain portability, developers are advised to avoid it.
++ */
++# define optreset  __mingw_optreset
++extern int optreset;
++#endif /* !defined(__GETOPT_BSD_H__) && defined(_BSD_SOURCE) */
++
++#if !defined(__UNISTD_H_SOURCED__) && !defined(__GETOPT_LONG_H__)
++#define __GETOPT_LONG_H__
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++struct option		/* specification for a long form option...	*/
++{
++  const char *name;		/* option name, without leading hyphens */
++  int         has_arg;		/* does it take an argument?		*/
++  int        *flag;		/* where to save its status, or NULL	*/
++  int         val;		/* its associated status value		*/
++};
++
++enum    		/* permitted values for its `has_arg' field...	*/
++{
++  no_argument = 0,      	/* option never takes an argument	*/
++  required_argument,		/* option always requires an argument	*/
++  optional_argument		/* option may take an argument		*/
++};
++
++int getopt_long(int nargc, char * const *nargv, const char *options,
++    const struct option *long_options, int *idx);
++int getopt_long_only(int nargc, char * const *nargv, const char *options,
++    const struct option *long_options, int *idx);
++/*
++ * Previous MinGW implementation had...
++ */
++#ifndef HAVE_DECL_GETOPT
++/*
++ * ...for the long form API only; keep this for compatibility.
++ */
++# define HAVE_DECL_GETOPT	1
++#endif
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* !defined(__UNISTD_H_SOURCED__) && !defined(__GETOPT_LONG_H__) */
+diff -urN vmaf-3.0.0-orig/libvmaf/tools/meson.build vmaf-3.0.0/libvmaf/tools/meson.build
+--- vmaf-3.0.0-orig/libvmaf/tools/meson.build	2023-12-08 03:27:32.000000000 +0800
++++ vmaf-3.0.0/libvmaf/tools/meson.build	2024-11-13 21:09:13.286241100 +0800
+@@ -5,7 +5,7 @@
+ 
+ vmaf = executable(
+     'vmaf',
+-    ['vmaf.c', 'cli_parse.c', 'y4m_input.c', 'vidinput.c', 'yuv_input.c'],
++    ['vmaf.c', 'cli_parse.c', 'y4m_input.c', 'vidinput.c', 'yuv_input.c', 'getopt.c'],
+     include_directories : [libvmaf_inc, vmaf_include],
+     dependencies: [stdatomic_dependency, cuda_dependency],
+     c_args : [vmaf_cflags_common, compat_cflags],
+diff -urN vmaf-3.0.0-orig/libvmaf/tools/vmaf.c vmaf-3.0.0/libvmaf/tools/vmaf.c
+--- vmaf-3.0.0-orig/libvmaf/tools/vmaf.c	2023-12-08 03:27:32.000000000 +0800
++++ vmaf-3.0.0/libvmaf/tools/vmaf.c	2024-11-13 21:09:13.286241100 +0800
+@@ -1,7 +1,11 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <time.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ 
+ #include "cli_parse.h"
+ #include "spinner.h"
+@@ -268,7 +272,12 @@
+     model_collection = malloc(model_sz);
+     memset(model_collection, 0, model_collection_sz);
+ 
++#ifdef _MSC_VER
++    const char **model_collection_label = malloc(sizeof(char) * c.model_cnt);
++    if (*model_collection_label == NULL) return -1;
++#else
+     const char *model_collection_label[c.model_cnt];
++#endif
+     unsigned model_collection_cnt = 0;
+ 
+     for (unsigned i = 0; i < c.model_cnt; i++) {
+@@ -300,6 +309,9 @@
+                 fprintf(stderr, "problem loading model: %s\n",
+                         c.model_config[i].version ?
+                             c.model_config[i].version : c.model_config[i].path);
++#ifdef _MSC_VER
++                free(model_collection_label);
++#endif
+                 return -1;
+             }
+ 
+@@ -319,6 +331,9 @@
+                             "model collection: %s\n",
+                             c.model_config[i].version ?
+                             c.model_config[i].version : c.model_config[i].path);
++#ifdef _MSC_VER
++                    free(model_collection_label);
++#endif
+                     return -1;
+                 }
+             }
+@@ -331,6 +346,9 @@
+                         "model collection: %s\n",
+                         c.model_config[i].version ?
+                             c.model_config[i].version : c.model_config[i].path);
++#ifdef _MSC_VER
++                free(model_collection_label);
++#endif
+                 return -1;
+             }
+ 
+@@ -348,8 +366,10 @@
+                         "model: %s\n",
+                         c.model_config[i].version ?
+                             c.model_config[i].version : c.model_config[i].path);
++#ifdef _MSC_VER
++                free(model_collection_label);
++#endif
+                 return -1;
+-
+             }
+         }
+ 
+@@ -359,6 +379,9 @@
+                     "problem loading feature extractors from model: %s\n",
+                      c.model_config[i].version ?
+                          c.model_config[i].version : c.model_config[i].path);
++#ifdef _MSC_VER
++            free(model_collection_label);
++#endif
+             return -1;
+         }
+     }
+@@ -369,6 +392,9 @@
+         if (err) {
+             fprintf(stderr, "problem loading feature extractor: %s\n",
+                     c.feature_cfg[i].name);
++#ifdef _MSC_VER
++            free(model_collection_label);
++#endif
+             return -1;
+         }
+     }
+@@ -438,6 +464,9 @@
+     err |= vmaf_read_pictures(vmaf, NULL, NULL, 0);
+     if (err) {
+         fprintf(stderr, "problem flushing context\n");
++#ifdef _MSC_VER
++        free(model_collection_label);
++#endif
+         return err;
+     }
+ 
+@@ -448,6 +477,9 @@
+                                     &vmaf_score, 0, picture_index - 1);
+             if (err) {
+                 fprintf(stderr, "problem generating pooled VMAF score\n");
++#ifdef _MSC_VER
++                free(model_collection_label);
++#endif
+                 return -1;
+             }
+ 
+@@ -466,6 +498,9 @@
+                                                      0, picture_index - 1);
+             if (err) {
+                 fprintf(stderr, "problem generating pooled VMAF score\n");
++#ifdef _MSC_VER
++                free(model_collection_label);
++#endif
+                 return -1;
+             }
+ 
+@@ -500,5 +535,8 @@
+     video_input_close(&vid_dist);
+     vmaf_close(vmaf);
+     cli_free(&c);
++#ifdef _MSC_VER
++    free(model_collection_label);
++#endif
+     return err;
+ }

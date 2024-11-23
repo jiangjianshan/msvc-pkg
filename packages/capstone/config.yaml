@@ -1,0 +1,7 @@
+name: capstone
+version: 5.0.3
+url: https://github.com/capstone-engine/capstone/archive/refs/tags/5.0.3.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.bat

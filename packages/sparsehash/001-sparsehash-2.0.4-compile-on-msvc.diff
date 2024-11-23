@@ -1,0 +1,52 @@
+diff -urN sparsehash-2.0.4-orig/src/hashtable_test.cc sparsehash-2.0.4/src/hashtable_test.cc
+--- sparsehash-2.0.4-orig/src/hashtable_test.cc	2019-07-18 18:57:37.000000000 +0800
++++ sparsehash-2.0.4/src/hashtable_test.cc	2024-11-19 11:33:29.631512400 +0800
+@@ -94,8 +94,7 @@
+ 
+ namespace {
+ 
+-#ifndef _MSC_VER   // windows defines its own version
+-# ifdef __MINGW32__ // mingw has trouble writing to /tmp
++# if defined(_MSC_VER) || defined(__MINGW32__) // mingw has trouble writing to /tmp
+ static string TmpFile(const char* basename) {
+   return string("./#") + basename;
+ }
+@@ -105,7 +104,6 @@
+   return kTmpdir + "/" + basename;
+ }
+ # endif
+-#endif
+ 
+ // Used as a value in some of the hashtable tests.  It's just some
+ // arbitrary user-defined type with non-trivial memory management.
+@@ -586,8 +584,13 @@
+   typename TypeParam::const_pointer cp;
+   // I can't declare variables of reference-type, since I have nothing
+   // to point them to, so I just make sure that these types exist.
++#ifdef _MSC_VER
++  typedef typename TypeParam::reference r;
++  typedef typename TypeParam::const_reference cf;
++#else
+   __attribute__((unused)) typedef typename TypeParam::reference r;
+   __attribute__((unused)) typedef typename TypeParam::const_reference cf;
++#endif
+ 
+   typename TypeParam::iterator i;
+   typename TypeParam::const_iterator ci;
+diff -urN sparsehash-2.0.4-orig/src/sparsehash/internal/hashtable-common.h sparsehash-2.0.4/src/sparsehash/internal/hashtable-common.h
+--- sparsehash-2.0.4-orig/src/sparsehash/internal/hashtable-common.h	2019-07-18 18:57:37.000000000 +0800
++++ sparsehash-2.0.4/src/sparsehash/internal/hashtable-common.h	2024-11-19 11:30:50.003957300 +0800
+@@ -50,8 +50,13 @@
+ _START_GOOGLE_NAMESPACE_
+ 
+ template <bool> struct SparsehashCompileAssert { };
++#ifdef _MSC_VER
++#define SPARSEHASH_COMPILE_ASSERT(expr, msg) \
++  typedef SparsehashCompileAssert<(bool(expr))> msg[bool(expr) ? 1 : -1]
++#else
+ #define SPARSEHASH_COMPILE_ASSERT(expr, msg) \
+   __attribute__((unused)) typedef SparsehashCompileAssert<(bool(expr))> msg[bool(expr) ? 1 : -1]
++#endif
+ 
+ namespace sparsehash_internal {
+ 

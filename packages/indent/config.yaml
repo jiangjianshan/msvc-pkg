@@ -1,0 +1,9 @@
+name: indent
+version: 2.2.13
+url: https://ftp.gnu.org/gnu/indent/indent-2.2.13.tar.xz
+steps:
+  one:
+    dependencies:
+      - libiconv
+      - gettext
+    run: build.sh

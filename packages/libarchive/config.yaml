@@ -1,0 +1,16 @@
+name: libarchive
+version: 3.7.3
+url: https://www.libarchive.org/downloads/libarchive-3.7.3.tar.gz
+steps:
+  one:
+    dependencies:
+      - bzip2
+      - libiconv
+      - libxml2
+      - lz4
+      - pcre
+      - xz
+      - zlib
+      - zstd
+      - winpthreads
+    run: build.bat

@@ -1,0 +1,20 @@
+diff -urN icu4c-75-1-orig/source/config/mh-msys-msvc icu4c-75-1/source/config/mh-msys-msvc
+--- icu4c-75-1-orig/source/config/mh-msys-msvc	2024-04-17 05:08:53.000000000 +0800
++++ icu4c-75-1/source/config/mh-msys-msvc	2024-10-25 10:31:33.298250200 +0800
+@@ -5,6 +5,16 @@
+ ## Copyright (c) 2014, International Business Machines Corporation and
+ ## others. All Rights Reserved.
+ 
++# TODO: Finish the rest of this port. This platform port is incomplete.
++
++# On Windows we generally have the DLLs in the bin directory rather than the lib directory.
++# This setting moves the ICU DLLs into the bin folder for MinGW/MSYS2 when "make install" is run.
++# If you prefer to have the DLLs in the lib folder, then set this to NO instead.
++MINGW_MOVEDLLSTOBINDIR = YES
++
++# This file is similar to mh-mingw
++# Any changes made here may also need to be made in mh-mingw
++
+ # We install sbin tools into the same bin directory because
+ # pkgdata needs some of the tools in sbin, and we can't always depend on
+ # icu-config working on Windows.

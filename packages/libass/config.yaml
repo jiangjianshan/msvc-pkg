@@ -1,0 +1,14 @@
+name: libass
+version: 0.17.3
+url: https://github.com/libass/libass/archive/refs/tags/0.17.3.tar.gz
+steps:
+  one:
+    dependencies:
+      - pkg-config
+      - libiconv
+      - freetype
+      - fribidi
+      - harfbuzz
+      - fontconfig
+      - libunibreak
+    run: build.bat

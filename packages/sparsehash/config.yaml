@@ -1,0 +1,7 @@
+name: sparsehash
+version: 2.0.4
+url: https://github.com/sparsehash/sparsehash/archive/refs/tags/sparsehash-2.0.4.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.sh

@@ -1,0 +1,12 @@
+name: libxml2
+version: 2.13.4
+url: https://download.gnome.org/sources/libxml2/2.13/libxml2-2.13.4.tar.xz
+steps:
+  one:
+    dependencies:
+      - icu4c
+      - libiconv
+      - xz
+      - zlib
+      - winpthreads
+    run: build.bat

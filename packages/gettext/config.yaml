@@ -1,0 +1,11 @@
+name: gettext
+version: 0.22.5
+url: https://ftp.gnu.org/pub/gnu/gettext/gettext-0.22.5.tar.xz
+steps:
+  one:
+    dependencies:
+      - bzip2
+      - libiconv
+      - xz
+      - winpthreads
+    run: build.sh

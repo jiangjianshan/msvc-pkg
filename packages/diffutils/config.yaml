@@ -1,0 +1,11 @@
+name: diffutils
+version: 0.3.10
+url: https://ftp.gnu.org/gnu/diffutils/diffutils-3.10.tar.xz
+steps:
+  one:
+    dependencies:
+      - libiconv
+      - libsigsegv
+      - gettext
+      - winpthreads
+    run: build.sh

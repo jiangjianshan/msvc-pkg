@@ -1,0 +1,9 @@
+name: dav1d
+version: 1.5.0
+url: https://code.videolan.org/videolan/dav1d/-/archive/1.5.0/dav1d-1.5.0.tar.bz2
+steps:
+  one:
+    dependencies:
+      - pkg-config
+      - winpthreads
+    run: build.bat

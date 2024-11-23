@@ -1,0 +1,7 @@
+name: libunibreak
+version: 6.1
+url: https://github.com/adah1972/libunibreak/archive/refs/tags/libunibreak_6_1.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.sh

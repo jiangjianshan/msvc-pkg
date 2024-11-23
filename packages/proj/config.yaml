@@ -1,0 +1,12 @@
+name: proj
+version: 9.4.0
+url: https://download.osgeo.org/proj/proj-9.4.0.tar.gz
+steps:
+  one:
+    dependencies:
+      - sqlite
+      - tiff
+      - curl
+      - googletest
+      - winpthreads
+    run: build.bat

@@ -1,0 +1,9 @@
+name: libunistring
+version: 1.3
+url: https://ftp.gnu.org/pub/gnu/libunistring/libunistring-1.3.tar.xz
+steps:
+  one:
+    dependencies:
+      - libiconv
+      - winpthreads
+    run: build.sh

@@ -1,0 +1,11 @@
+name: m4
+version: 1.4.19
+url: https://ftp.gnu.org/pub/gnu/m4/m4-1.4.19.tar.xz
+steps:
+  one:
+    dependencies:
+      - libiconv
+      - libsigsegv
+      - gettext
+      - winpthreads
+    run: build.sh

@@ -1,0 +1,14 @@
+diff -urN sed-4.9-orig/bootstrap.conf sed-4.9/bootstrap.conf
+--- sed-4.9-orig/bootstrap.conf	2022-09-16 03:51:33.000000000 +0800
++++ sed-4.9/bootstrap.conf	2024-10-01 16:06:21.395263400 +0800
+@@ -31,8 +31,10 @@
+ dfa
+ eloop-threshold
+ extensions
++fchdir
+ fwriting
+ getdelim
++getopt-gnu
+ gettext-h
+ git-version-gen
+ gitlog-to-changelog

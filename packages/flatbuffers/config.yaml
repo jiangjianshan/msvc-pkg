@@ -1,0 +1,7 @@
+name: flatbuffers
+version: 24.3.25
+url: https://github.com/google/flatbuffers/archive/refs/tags/v24.3.25.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.bat

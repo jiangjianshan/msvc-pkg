@@ -1,0 +1,369 @@
+diff -urN nettle-3.10-orig/aclocal.m4 nettle-3.10/aclocal.m4
+--- nettle-3.10-orig/aclocal.m4	2024-06-16 23:27:54.000000000 +0800
++++ nettle-3.10/aclocal.m4	2024-11-14 09:46:39.036014500 +0800
+@@ -268,7 +268,7 @@
+ [cat >conftest.s <<EOF
+ [$1]
+ EOF
+-gmp_assemble="$CC $CFLAGS $CPPFLAGS $ASM_FLAGS -c conftest.s >conftest.out 2>&1"
++gmp_assemble="$CCAS $CPPFLAGS $ASM_FLAGS -c conftest.s >conftest.out 2>&1"
+ if AC_TRY_EVAL(gmp_assemble); then
+   cat conftest.out >&AS_MESSAGE_LOG_FD
+   ifelse([$2],,:,[$2])
+diff -urN nettle-3.10-orig/config.make.in nettle-3.10/config.make.in
+--- nettle-3.10-orig/config.make.in	2024-06-16 23:27:54.000000000 +0800
++++ nettle-3.10/config.make.in	2024-11-14 09:46:39.036014500 +0800
+@@ -29,6 +29,7 @@
+ PACKAGE_TARNAME = @PACKAGE_TARNAME@
+ PACKAGE_VERSION = @PACKAGE_VERSION@
+ 
++LIBNETTLE_DEF = @LIBNETTLE_DEF@
+ LIBNETTLE_MAJOR = @LIBNETTLE_MAJOR@
+ LIBNETTLE_MINOR = @LIBNETTLE_MINOR@
+ LIBNETTLE_SONAME = @LIBNETTLE_SONAME@
+@@ -37,7 +38,9 @@
+ LIBNETTLE_FORLINK = @LIBNETTLE_FORLINK@
+ LIBNETTLE_LIBS = @LIBNETTLE_LIBS@
+ LIBNETTLE_LINK = @LIBNETTLE_LINK@
++LIBNETTLE_ARCHIVE = @LIBNETTLE_ARCHIVE@
+ 
++LIBHOGWEED_DEF = @LIBHOGWEED_DEF@
+ LIBHOGWEED_MAJOR = @LIBHOGWEED_MAJOR@
+ LIBHOGWEED_MINOR = @LIBHOGWEED_MINOR@
+ LIBHOGWEED_SONAME = @LIBHOGWEED_SONAME@
+@@ -46,6 +49,7 @@
+ LIBHOGWEED_FORLINK = @LIBHOGWEED_FORLINK@
+ LIBHOGWEED_LIBS = @LIBHOGWEED_LIBS@
+ LIBHOGWEED_LINK = @LIBHOGWEED_LINK@
++LIBHOGWEED_ARCHIVE = @LIBHOGWEED_ARCHIVE@
+ 
+ NUMB_BITS = @NUMB_BITS@
+ 
+@@ -74,6 +78,8 @@
+ # flags before CPPFLAGS and LDFLAGS. While EXTRA_CFLAGS are added at the end.
+ 
+ COMPILE = $(CC) $(PRE_CPPFLAGS) $(CPPFLAGS) $(DEFS) $(CFLAGS) $(EXTRA_CFLAGS) $(DEP_FLAGS)
++CCAS = @CCAS@
++COMPILE_AS = $(CCAS) $(PRE_CPPFLAGS) $(CPPFLAGS) $(DEFS) $(ASM_FLAGS) $(DEP_FLAGS)
+ COMPILE_CXX = $(CXX) $(PRE_CPPFLAGS) $(CPPFLAGS) $(DEFS) $(CXXFLAGS) $(DEP_FLAGS)
+ LINK = $(CC) $(CFLAGS) $(PRE_LDFLAGS) $(LDFLAGS)
+ LINK_CXX = $(CXX) $(CXXFLAGS) $(PRE_LDFLAGS) $(LDFLAGS)
+diff -urN nettle-3.10-orig/configure.ac nettle-3.10/configure.ac
+--- nettle-3.10-orig/configure.ac	2024-06-16 23:27:54.000000000 +0800
++++ nettle-3.10/configure.ac	2024-11-14 09:46:39.051673600 +0800
+@@ -148,6 +148,9 @@
+ 
+ # Checks for programs.
+ AC_PROG_CC
++# Copied from gmp
++test -n "$CCAS" || CCAS='$(CC)'
++AC_SUBST(CCAS)
+ 
+ NETTLE_CHECK_IFUNC
+ 
+@@ -318,7 +321,7 @@
+ case "$host_cpu" in
+   [x86_64 | amd64])
+     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+-#if defined(__x86_64__) || defined(__arch64__)
++#if defined(__x86_64__) || defined(__arch64__) || defined(_M_AMD64)
+ #error 64-bit x86
+ #endif
+     ]], [[]])], [
+@@ -794,8 +797,8 @@
+     # linking to the DLL, is installed into the lib dir.
+     case "$host_os" in
+       mingw32*)
+-        LIBNETTLE_FORLINK='libnettle-$(LIBNETTLE_MAJOR).dll'
+-        LIBHOGWEED_FORLINK='libhogweed-$(LIBHOGWEED_MAJOR).dll'
++        LIBNETTLE_FORLINK='nettle-$(LIBNETTLE_MAJOR).dll'
++        LIBHOGWEED_FORLINK='hogweed-$(LIBHOGWEED_MAJOR).dll'
+         ;;
+       cygwin*)
+         LIBNETTLE_FORLINK='cygnettle-$(LIBNETTLE_MAJOR).dll'
+@@ -805,20 +808,24 @@
+     if test "x$cross_compiling" = xyes ; then
+       EMULATOR=wine
+     fi
++    LIBNETTLE_DEF='nettle.def'
++    LIBHOGWEED_DEF='hogweed.def'
+     if test "x$ABI" = x64 ; then
+         W64_ABI=yes
+     fi
+     LIBNETTLE_SONAME=''
+-    LIBNETTLE_FILE='libnettle.dll.a'
++    LIBNETTLE_FILE='nettle.lib'
+     LIBNETTLE_FILE_SRC='$(LIBNETTLE_FILE)'
+-    LIBNETTLE_LINK='$(CC) $(CFLAGS) $(LDFLAGS) -shared -Wl,--out-implib=$(LIBNETTLE_FILE) -Wl,--export-all-symbols -Wl,--enable-auto-import -Wl,--whole-archive'
++    LIBNETTLE_LINK='$(CC) $(CFLAGS) $(LDFLAGS) -shared -Wl,--out-implib=$(LIBNETTLE_FILE) -Wl,--export-all-symbols -Wl,--enable-auto-import -Wl,--whole-archive -Wl,--output-def,$(LIBNETTLE_DEF)'
+     LIBNETTLE_LIBS='-Wl,--no-whole-archive $(LIBS)'
++    LIBNETTLE_ARCHIVE='libnettle.lib'
+ 
+     LIBHOGWEED_SONAME=''
+-    LIBHOGWEED_FILE='libhogweed.dll.a'
++    LIBHOGWEED_FILE='hogweed.lib'
+     LIBHOGWEED_FILE_SRC='$(LIBHOGWEED_FILE)'
+-    LIBHOGWEED_LINK='$(CC) $(CFLAGS) $(LDFLAGS) -shared -Wl,--out-implib=$(LIBHOGWEED_FILE) -Wl,--export-all-symbols -Wl,--enable-auto-import -Wl,--whole-archive'
+-    LIBHOGWEED_LIBS='-Wl,--no-whole-archive $(LIBS) libnettle.dll.a'
++    LIBHOGWEED_LINK='$(CC) $(CFLAGS) $(LDFLAGS) -shared -Wl,--out-implib=$(LIBHOGWEED_FILE) -Wl,--export-all-symbols -Wl,--enable-auto-import -Wl,--whole-archive -Wl,--output-def,$(LIBHOGWEED_DEF)'
++    LIBHOGWEED_LIBS='-Wl,--no-whole-archive $(LIBS) $(LIBNETTLE_FILE)'
++    LIBHOGWEED_ARCHIVE='libhogweed.lib'
+     IF_DLL=''
+     ;;
+   midipix*)
+@@ -1082,6 +1089,7 @@
+ AC_SUBST(ASM_X86_MARK_CET)
+ AC_SUBST(ASM_X86_MARK_CET_ALIGN)
+ 
++AC_SUBST(LIBNETTLE_DEF)
+ AC_SUBST(LIBNETTLE_MAJOR)
+ AC_SUBST(LIBNETTLE_MINOR)
+ AC_SUBST(LIBNETTLE_FORLINK)
+@@ -1090,7 +1098,9 @@
+ AC_SUBST(LIBNETTLE_FILE_SRC)
+ AC_SUBST(LIBNETTLE_LINK)
+ AC_SUBST(LIBNETTLE_LIBS)
++AC_SUBST(LIBNETTLE_ARCHIVE)
+ 
++AC_SUBST(LIBHOGWEED_DEF)
+ AC_SUBST(LIBHOGWEED_MAJOR)
+ AC_SUBST(LIBHOGWEED_MINOR)
+ AC_SUBST(LIBHOGWEED_FORLINK)
+@@ -1099,6 +1109,7 @@
+ AC_SUBST(LIBHOGWEED_FILE_SRC)
+ AC_SUBST(LIBHOGWEED_LINK)
+ AC_SUBST(LIBHOGWEED_LIBS)
++AC_SUBST(LIBHOGWEED_ARCHIVE)
+ 
+ AC_PATH_PROG(M4, m4, m4)
+ 
+@@ -1202,7 +1213,7 @@
+ AC_SUBST(OPENSSL_LIBFLAGS)
+ 
+ AH_BOTTOM(
+-[#if defined(__x86_64__) || defined(__arch64__)
++[#if defined(__x86_64__) || defined(__arch64__) || defined(_M_AMD64)
+ # define HAVE_NATIVE_64_BIT 1
+ #else
+ /* Needs include of <limits.h> before use. */
+diff -urN nettle-3.10-orig/examples/Makefile.in nettle-3.10/examples/Makefile.in
+--- nettle-3.10-orig/examples/Makefile.in	2024-06-16 23:27:54.000000000 +0800
++++ nettle-3.10/examples/Makefile.in	2024-11-14 09:46:39.051673600 +0800
+@@ -11,7 +11,7 @@
+ PRE_LDFLAGS = -L..
+ 
+ OPENSSL_LIBFLAGS = @OPENSSL_LIBFLAGS@
+-BENCH_LIBS = @BENCH_LIBS@ -lm
++BENCH_LIBS = @BENCH_LIBS@
+ 
+ HOGWEED_TARGETS = rsa-keygen$(EXEEXT) rsa-sign$(EXEEXT) \
+ 	      rsa-verify$(EXEEXT) rsa-encrypt$(EXEEXT) rsa-decrypt$(EXEEXT) \
+diff -urN nettle-3.10-orig/exported.sh nettle-3.10/exported.sh
+--- nettle-3.10-orig/exported.sh	1970-01-01 08:00:00.000000000 +0800
++++ nettle-3.10/exported.sh	2024-11-14 09:46:39.051673600 +0800
+@@ -0,0 +1,23 @@
++#! /bin/sh
++#
++# Copyright (C) 2006, 2009, 2019 Free Software Foundation, Inc.
++#
++# This program is free software: you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 3 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <https://www.gnu.org/licenses/>.
++#
++
++# This is a script that determines the exported symbols of an object file.
++# This is a separate script because $(GLOBAL_SYMBOL_PIPE) cannot be used in a
++# Makefile, since it may contain dollar signs.
++
++dumpbin -nologo -symbols "$1" | gawk '     {last_section=section; section=$ 3};     /^COFF SYMBOL TABLE/{for(i in hide) delete hide[i]};     /Section length .*#relocs.*(pick any)/{hide[last_section]=1};     /^ *Symbol name *: /{split($ 0,sn,":"); si=substr(sn[2],2)};     /^ *Type *: code/{print "T",si,substr(si,length(prfx))};     /^ *Type *: data/{print "I",si,substr(si,length(prfx))};     $ 0!~/External *\|/{next};     / 0+ UNDEF /{next}; / UNDEF \([^|]\)*()/{next};     {if(hide[section]) next};     {f="D"}; $ 0~/\(\).*\|/{f="T"};     {split($ 0,a,/\||\r/); split(a[2],s)};     s[1]~/^[@?]/{print f,s[1],s[1]; next};     s[1]~prfx {split(s[1],t,"@"); print f,t[1],substr(t[1],length(prfx))}     ' prfx=^ | /usr/bin/sed '/ __gnu_lto/d'
+diff -urN nettle-3.10-orig/getopt.c nettle-3.10/getopt.c
+--- nettle-3.10-orig/getopt.c	2024-06-16 23:27:54.000000000 +0800
++++ nettle-3.10/getopt.c	2024-11-14 09:46:39.067349200 +0800
+@@ -32,7 +32,11 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ 
+ 
+ /* Comment out all this code if we are using the GNU C Library, and are not
+diff -urN nettle-3.10-orig/Makefile.in nettle-3.10/Makefile.in
+--- nettle-3.10-orig/Makefile.in	2024-06-16 23:27:54.000000000 +0800
++++ nettle-3.10/Makefile.in	2024-11-14 09:46:39.067349200 +0800
+@@ -26,7 +26,7 @@
+ PRE_CPPFLAGS = -I.
+ EXTRA_CFLAGS = $(CCPIC)
+ 
+-LIBTARGETS = @IF_STATIC@ libnettle.a @IF_HOGWEED@ libhogweed.a
++LIBTARGETS = @IF_STATIC@ @LIBNETTLE_ARCHIVE@ @IF_HOGWEED@ @LIBHOGWEED_ARCHIVE@
+ SHLIBTARGETS = @IF_SHARED@ $(LIBNETTLE_FORLINK) @IF_HOGWEED@ $(LIBHOGWEED_FORLINK)
+ 
+ getopt_SOURCES = getopt.c getopt1.c
+@@ -289,13 +289,13 @@
+ hogweed_OBJS = $(hogweed_SOURCES:.c=.$(OBJEXT)) \
+ 	       $(OPT_HOGWEED_OBJS) @IF_MINI_GMP@ mini-gmp.$(OBJEXT)
+ 
+-libnettle.a: $(nettle_OBJS)
++@LIBNETTLE_ARCHIVE@: $(nettle_OBJS)
+ 	-rm -f $@
+ 	$(AR) $(ARFLAGS) $@ $(nettle_OBJS)
+ 	$(RANLIB) $@
+ 	echo nettle > libnettle.stamp
+ 
+-libhogweed.a: $(hogweed_OBJS)
++@LIBHOGWEED_ARCHIVE@: $(hogweed_OBJS)
+ 	-rm -f $@
+ 	$(AR) $(ARFLAGS) $@ $(hogweed_OBJS)
+ 	$(RANLIB) $@
+@@ -303,14 +303,24 @@
+ 
+ %.$(OBJEXT): %.asm $(srcdir)/m4-utils.m4 $(srcdir)/asm.m4 config.m4 machine.m4
+ 	$(M4) $(srcdir)/m4-utils.m4 $(srcdir)/asm.m4 config.m4 machine.m4 $< >$*.s
+-	$(COMPILE) $(ASM_FLAGS) -c $*.s
++	$(COMPILE_AS) $*.s -o $@
+ 
+ %.$(OBJEXT): %.c
+ 	$(COMPILE) -c $< \
+ 	&& $(DEP_PROCESS)
+ 
++@LIBNETTLE_DEF@: $(nettle_OBJS)
++	echo 'EXPORTS' >$@ && \
++	{ \
++		for f in $(nettle_OBJS); do \
++		  sh $(srcdir)/exported.sh $$f 1>&5; \
++		done; \
++	} 5>&1 1>&2 \
++		| sed -e 's,.* ,,' -e 's/^/    /' | grep -v '@' | LC_ALL=C sort | LC_ALL=C uniq \
++		>>$@
++
+ # Rules building shared libraries.
+-$(LIBNETTLE_FORLINK): $(nettle_OBJS)
++$(LIBNETTLE_FORLINK): @LIBNETTLE_DEF@ $(nettle_OBJS)
+ 	$(LIBNETTLE_LINK) $(nettle_OBJS) @EXTRA_LINKER_FLAGS@ -o $@ $(LIBNETTLE_LIBS)
+ 	-mkdir .lib 2>/dev/null
+ 	(cd .lib \
+@@ -321,7 +331,17 @@
+ 	       && $(LN_S) $(LIBNETTLE_FORLINK) $(LIBNETTLE_SONAME) ; } )
+ 	echo nettle > libnettle.stamp
+ 
+-$(LIBHOGWEED_FORLINK): $(hogweed_OBJS) $(LIBNETTLE_FORLINK)
++@LIBHOGWEED_DEF@: $(hogweed_OBJS)
++	echo 'EXPORTS' >$@ && \
++	{ \
++		for f in $(hogweed_OBJS); do \
++		  sh $(srcdir)/exported.sh $$f 1>&5; \
++		done; \
++	} 5>&1 1>&2 \
++		| sed -e 's,.* ,,' -e 's/^/    /' | grep -v '@' | LC_ALL=C sort | LC_ALL=C uniq \
++		>>$@
++
++$(LIBHOGWEED_FORLINK): @LIBHOGWEED_DEF@ $(hogweed_OBJS) $(LIBNETTLE_FORLINK)
+ 	$(LIBHOGWEED_LINK) $(hogweed_OBJS) @EXTRA_HOGWEED_LINKER_FLAGS@ -o $@ $(LIBHOGWEED_LIBS)
+ 	-mkdir .lib 2>/dev/null
+ 	(cd .lib \
+@@ -334,7 +354,7 @@
+ 
+ # For building the various *data.c programs. -lm needed for shadata.
+ %$(EXEEXT_FOR_BUILD): %.c
+-	$(CC_FOR_BUILD) $< -lm -o $@
++	$(COMPILE) $(PRE_LDFLAGS) $(LDFLAGS) $(LIBS) $< -o $@
+ 
+ # Explicit dependency.
+ eccdata$(EXEEXT_FOR_BUILD): mini-gmp.c mini-gmp.h
+@@ -501,8 +521,8 @@
+ 	done
+ 
+ install-dll-nettle:
+-	$(MKDIR_P) $(DESTDIR)$(bindir)
+-	$(INSTALL_DATA) $(LIBNETTLE_FORLINK) $(DESTDIR)$(bindir)/$(LIBNETTLE_FORLINK)
++	$(MKDIR_P) $(DESTDIR)$(libdir)/../bin
++	$(INSTALL_DATA) $(LIBNETTLE_FORLINK) $(DESTDIR)$(libdir)/../bin/$(LIBNETTLE_FORLINK)
+ 
+ install-shared-nettle: $(LIBNETTLE_FORLINK) @IF_DLL@ install-dll-nettle
+ 	$(MKDIR_P) $(DESTDIR)$(libdir)
+@@ -514,8 +534,8 @@
+ 		&& $(LN_S) $(LIBNETTLE_FILE) $(LIBNETTLE_FORLINK))
+ 
+ install-dll-hogweed:
+-	$(MKDIR_P) $(DESTDIR)$(bindir)
+-	$(INSTALL_DATA) $(LIBHOGWEED_FORLINK) $(DESTDIR)$(bindir)/$(LIBHOGWEED_FORLINK)
++	$(MKDIR_P) $(DESTDIR)$(libdir)/../bin
++	$(INSTALL_DATA) $(LIBHOGWEED_FORLINK) $(DESTDIR)$(libdir)/../bin/$(LIBHOGWEED_FORLINK)
+ 
+ install-shared-hogweed: $(LIBHOGWEED_FORLINK) @IF_DLL@ install-dll-hogweed
+ 	$(MKDIR_P) $(DESTDIR)$(libdir)
+diff -urN nettle-3.10-orig/testsuite/testutils.c nettle-3.10/testsuite/testutils.c
+--- nettle-3.10-orig/testsuite/testutils.c	2024-06-16 23:27:54.000000000 +0800
++++ nettle-3.10/testsuite/testutils.c	2024-11-14 10:06:56.289912100 +0800
+@@ -13,7 +13,11 @@
+ #include <assert.h>
+ #include <errno.h>
+ #include <ctype.h>
++#ifdef HAVE_SYS_TIME_H
+ #include <sys/time.h>
++#else
++#include <time.h>
++#endif
+ 
+ #if HAVE_VALGRIND_MEMCHECK_H
+ # include <valgrind/memcheck.h>
+diff -urN nettle-3.10-orig/x86_64/aes.m4 nettle-3.10/x86_64/aes.m4
+--- nettle-3.10-orig/x86_64/aes.m4	2024-06-16 23:27:54.000000000 +0800
++++ nettle-3.10/x86_64/aes.m4	2024-11-14 09:46:39.067349200 +0800
+@@ -77,9 +77,9 @@
+ dnl AES_ROUND(table,a,b,c,d,out,ptr)
+ dnl Computes one word of the AES round. Leaves result in $6.
+ define(`AES_ROUND', `
+-	movzb	LREG($2), $7
++	movzbq	LREG($2), $7
+ 	movl	AES_TABLE0 ($1, $7, 4),$6
+-	movzb	HREG($3), XREG($7)
++	movzbq	HREG($3), XREG($7)
+ 	xorl	AES_TABLE1 ($1, $7, 4),$6
+ 	movl	$4,XREG($7)
+ 	shr	`$'16,$7
+@@ -94,7 +94,7 @@
+ dnl performs the first substitution step, on the least significant
+ dnl byte, and rotates 8 bits.
+ define(`AES_FINAL_ROUND', `
+-	movzb	LREG($1),$7
++	movzbq	LREG($1),$7
+ 	movzbl	($5, $7), $6
+ 	movl	$2,XREG($7)
+ 	andl	`$'0x0000ff00,XREG($7)
+@@ -113,18 +113,18 @@
+ dnl the words one byte to the left.
+ dnl Uses that AES_SBOX == 0
+ define(`AES_SUBST_BYTE', `
+-	movzb	LREG($1),$6
++	movzbq	LREG($1),$6
+ 	movb	($5, $6),LREG($1)
+ 	roll	`$'8,$1
+ 
+-	movzb  LREG($2),$6
++	movzbq  LREG($2),$6
+ 	movb	($5, $6),LREG($2)
+ 	roll	`$'8,$2
+ 
+-	movzb  LREG($3),$6
++	movzbq  LREG($3),$6
+ 	movb	($5, $6),LREG($3)
+ 	roll	`$'8,$3
+ 
+-	movzb  LREG($4),$6
++	movzbq  LREG($4),$6
+ 	movb	($5, $6),LREG($4)
+ 	roll	`$'8,$4')dnl

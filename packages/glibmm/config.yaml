@@ -1,0 +1,12 @@
+name: glibmm
+version: 2.82.0
+url: https://download.gnome.org/sources/glibmm/2.82/glibmm-2.82.0.tar.xz
+steps:
+  one:
+    dependencies:
+      - doxygen
+      - mm-common
+      - pkg-config
+      - glib
+      - libsigc++
+    run: build.bat

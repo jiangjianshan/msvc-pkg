@@ -1,0 +1,9 @@
+name: pcre
+version: 8.45
+url: https://sourceforge.net/projects/pcre/files/pcre/8.45/pcre-8.45.tar.bz2
+steps:
+  one:
+    dependencies:
+      - bzip2
+      - zlib
+    run: build.bat

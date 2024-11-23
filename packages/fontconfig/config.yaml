@@ -1,0 +1,12 @@
+name: fontconfig
+version: 2.15.0
+url: https://www.freedesktop.org/software/fontconfig/release/fontconfig-2.15.0.tar.xz
+steps:
+  one:
+    dependencies:
+      - pkg-config
+      - gettext
+      - glib
+      - freetype
+      - expat
+    run: build.bat

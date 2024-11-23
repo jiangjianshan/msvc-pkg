@@ -1,0 +1,11 @@
+name: spdlog
+version: 1.15.0
+url: https://github.com/gabime/spdlog/archive/refs/tags/v1.15.0.tar.gz
+steps:
+  one:
+    dependencies:
+      - Catch2
+      - fmt
+      - benchmark
+      - winpthreads
+    run: build.bat

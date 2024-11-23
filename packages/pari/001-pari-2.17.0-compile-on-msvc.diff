@@ -1,0 +1,365 @@
+diff -urN pari-2.17.0-orig/config/get_dlld pari-2.17.0/config/get_dlld
+--- pari-2.17.0-orig/config/get_dlld	2024-09-28 14:31:21.000000000 +0800
++++ pari-2.17.0/config/get_dlld	2024-11-15 14:13:13.957852100 +0800
+@@ -41,7 +41,7 @@
+ 
+ # if DLLD is defined at this point, respect it, even if do_dll=no
+ if test $do_dll = yes -a -z "$DLLD"; then
+-  if test -n "$__gnuc__" -o "$osname" = "solaris"; then
++  if test -n "$__gnuc__" -o "$osname" = "solaris" -o "$osname" = "mingw"; then
+     DLLD="$CC"
+   else
+     DLLD=$ld # don't take risks
+@@ -79,7 +79,7 @@
+       freebsd) DLLDFLAGS='-Bshareable -x' ;;
+       hpux)    DLLDFLAGS='-b' ;;
+       irix)    DLLDFLAGS='-shared -elf -no_unresolved -all' ;;
+-      osf1)    DLLDFLAGS='-shared' ;;
++      osf1|cygwin|mingw)    DLLDFLAGS='-shared' ;;
+       solaris) DLLDFLAGS="-G -h \$(LIBPARI_SONAME)" ;;
+       sunos)   DLLDFLAGS='-assert nodefinitions' ;;
+       os2)     ;; # see below
+@@ -92,8 +92,8 @@
+   fi
+   case "$osname" in
+     os2) DLLDFLAGS="$CFLAGS -Zdll" ;; # assume DLLD = gcc
+-    cygwin) DLLDFLAGS="-Wl,--out-implib=\$(LIBPARI_SO)\$(_A),--export-all-symbols";;
+-    mingw) DLLDFLAGS="-Wl,--out-implib=\$(LIBPARI_SO)\$(_A)";;
++    cygwin) DLLDFLAGS="-Wl,--out-implib=\$(LIBPARI_SO:.dll=.lib),--export-all-symbols";;
++    mingw) DLLDFLAGS="-Wl,--out-implib=\$(LIBPARI_SO:.dll=.lib)";;
+   esac
+   if test -n "$DLLDisGCC"; then
+     case "$arch-$osname" in
+diff -urN pari-2.17.0-orig/config/get_ld pari-2.17.0/config/get_ld
+--- pari-2.17.0-orig/config/get_ld	2024-09-28 14:31:21.000000000 +0800
++++ pari-2.17.0/config/get_ld	2024-11-15 14:13:13.957852100 +0800
+@@ -3,6 +3,7 @@
+ _ld_list='LD LDFLAGS LIBS runpathprexix LDneedsWl LDused GNULDused'
+ case "$osname" in
+   darwin) LIBS= ;;
++  cygwin|mingw) LIBS='-lAdvapi32' ;;
+   osf1)   LIBS='-lm -lots';;
+   *)      LIBS=-lm;;
+ esac
+diff -urN pari-2.17.0-orig/config/get_modld pari-2.17.0/config/get_modld
+--- pari-2.17.0-orig/config/get_modld	2024-09-28 14:31:21.000000000 +0800
++++ pari-2.17.0/config/get_modld	2024-11-15 14:13:13.957852100 +0800
+@@ -20,7 +20,7 @@
+ *)      MODLD="$DLLD";
+         MODLDFLAGS=`echo "$DLLDFLAGS" | \
+    sed -e 's/,*-[^ \t-]*[ \t,=]*\\$(LIBPARI_SONAME)//' \
+-       -e 's/,--out-implib=\$(LIBPARI_SO)\$(_A)//'`;;
++       -e 's/,--out-implib=\$(LIBPARI_SO:.dll=.lib)//'`;;
+ esac;
+ 
+ modules_build=`echo "$CC -c -o %s.o $CFLAGS $DLCFLAGS -I\"$includedir\" %s.c \
+diff -urN pari-2.17.0-orig/config/Makefile.SH pari-2.17.0/config/Makefile.SH
+--- pari-2.17.0-orig/config/Makefile.SH	2024-09-28 14:31:21.000000000 +0800
++++ pari-2.17.0/config/Makefile.SH	2024-11-15 14:21:04.574612700 +0800
+@@ -55,6 +55,8 @@
+ 	# Actually, the build will fail until the switch to -Zomf
+ 	dlld_ignore=- ;;
+   mingw)
++    shortlib_prefix=
++    dllib_prefix=
+     export_file='$(LIBPARI).def';
+     export_exe='$(LIBPARI)_exe.def';;
+   darwin)
+@@ -62,7 +64,7 @@
+ esac
+ case "$osname" in
+   mingw|cygwin)
+-    install_implib="\$(INSTALL_DATA) \$(LIBPARI_SO)\$(_A) \$(LIBDIR)/\$(LIBPARI_SO)\$(_A)";;
++    install_implib="\$(INSTALL) \$(LIBPARI_SO:.dll=.lib) \$(LIBDIR)/\$(LIBPARI_SO:.dll=.lib)";;
+   *)
+     install_implib="";;
+ esac
+@@ -166,8 +168,8 @@
+ SHELL      = $make_sh
+ PERL       = $perl
+ BISON      = bison
+-AR         = ar
+-RANLIB     = ranlib
++AR         = $AR
++RANLIB     = $RANLIB
+ 
+ SIZEOF_LONG= $sizeof_long
+ 
+@@ -201,8 +203,8 @@
+ #the following line
+ #GMPO2 = \$(GMP)/sparcv9.o
+ 
+-_O	   = .o
+-_A	   = .a
++_O	   = .obj
++_A	   = .lib
+ LIB_PREFIX = $lib_prefix
+ DLLIB_PREFIX = $dllib_prefix
+ LIBPARI_BASE = $libpari_base
+@@ -240,7 +242,7 @@
+ MV = mv -f
+ LN = $ln_s
+ CP_F = cp -f
+-STRIP      = strip
++STRIP      = $STRIP
+ STRIPFLAGS =
+ 
+ # Change these installation directories to suit your needs.
+@@ -336,7 +338,7 @@
+ 
+ gp-sta$exe_suff: $add_funclist \$(OBJS) \$(OBJSGP) \$(EXPORT_EXE)
+ 	\$(RM) \$@
+-	\$(LD) -o \$@ \$(LDFLAGS) \$(OBJS) \$(OBJSGP) \$(RUNPTH) \$(RLLIBS) \$(PLOTLIBS) \$(STA_LIBS) \$(EXPORT_EXE)
++	\$(LD) -o \$@ \$(LDFLAGS) \$(OBJS) \$(OBJSGP) \$(RUNPTH) \$(RLLIBS) \$(PLOTLIBS) \$(STA_LIBS) -Wl,--output-def,\$(EXPORT_EXE)
+ 	$postconfig gp-sta$exe_suff
+ 
+ clean_pari_ps::
+@@ -376,23 +378,24 @@
+ 	-for i in $headerlist; do \\
+ 	   \$(INSTALL_DATA) $src/headers/\$\$i.h  \$(INCLUDEDIR)/pari; done
+ 	-\$(RM) \$(INCLUDEDIR)/pari/genpari.h
+-	-\$(LN) pari.h \$(INCLUDEDIR)/pari/genpari.h
++	-\$(LN) \$(INCLUDEDIR)/pari/pari.h \$(INCLUDEDIR)/pari/genpari.h
+ 
+ install-bin: install-bin-$dft
+ 
+ install-bin-dyn: gp-dyn$exe_suff install-lib-dyn
+ 	-mkdir -p \$(BINDIR)
+ 	-\$(RM) \$(BINDIR)/gp-$version$exe_suff \$(BINDIR)/gp$exe_suff
+-	\$(LD) -o \$(BINDIR)/gp-$version$exe_suff -L\$(LIBDIR) \$(LDFLAGS) \$(OBJSGP) \$(RUNPTH_FINAL) \$(LDDYN) \$(RLLIBS) \$(PLOTLIBS) \$(LIBS)
++	\$(LD) -o gp-$version$exe_suff -L\$(LIBDIR) \$(LDFLAGS) \$(OBJSGP) \$(RUNPTH_FINAL) \$(LDDYN) \$(RLLIBS) \$(PLOTLIBS) \$(LIBS)
++	\$(INSTALL_PROGRAM) gp-$version$exe_suff \$(BINDIR)/gp-$version$exe_suff
+ 	-\$(STRIP) \$(STRIPFLAGS) \$(BINDIR)/gp-$version$exe_suff
+ 	-cd \$(BINDIR); $postconfig gp-$version$exe_suff
+-	-\$(LN) gp-$version$exe_suff \$(BINDIR)/gp$exe_suff
++	-\$(LN) \$(BINDIR)/gp-$version$exe_suff \$(BINDIR)/gp$exe_suff
+ 
+ install-bin-sta: gp-sta$exe_suff
+ 	-mkdir -p \$(BINDIR)
+ 	-\$(RM) \$(BINDIR)/gp-$version$exe_suff \$(BINDIR)/gp$exe_suff
+ 	\$(INSTALL_PROGRAM) gp-sta$exe_suff \$(BINDIR)/gp-$version$exe_suff
+-	-\$(LN) gp-$version$exe_suff \$(BINDIR)/gp$exe_suff
++	-\$(LN) \$(BINDIR)/gp-$version$exe_suff \$(BINDIR)/gp$exe_suff
+ # Can't strip it if we want install() to work on OSF.
+ #	-\$(STRIP) \$(STRIPFLAGS)  \$(BINDIR)/gp-$version
+ 	-cd \$(BINDIR); $postconfig gp-$version$exe_suff
+@@ -402,8 +405,8 @@
+ 	-\$(RM) \$(MANDIR)/pari.1 \$(MANDIR)/gp.1 \$(MANDIR)/gp-$version.1
+ 	\$(INSTALL_DATA) $doc/gphelp.1 \$(MANDIR)
+ 	\$(INSTALL_DATA) $doc/gp.1 \$(MANDIR)/gp-$version.1
+-	-\$(LN) gp.1 \$(MANDIR)/pari.1
+-	-\$(LN) gp-$version.1 \$(MANDIR)/gp.1
++	\$(INSTALL_DATA) $doc/gp.1 \$(MANDIR)/pari.1
++	-\$(LN) \$(MANDIR)/gp-$version.1 \$(MANDIR)/gp.1
+ 
+ install-misc:
+ 	-mkdir -p \$(MISCDIR) \$(BINDIR)
+@@ -489,26 +492,25 @@
+ 	mkdir -p \$(DATADIR); \
+ 	if test -d $data; then cd $data; \
+ 	  for d in \`ls\`; do \
+-	    \$(LN) \$(TOPDIR)/$data_dir/\$\$d \$(DATADIR)/; \
++	    \$(INSTALL_DATA) \$(TOPDIR)/$data_dir/\$\$d \$(DATADIR)/; \
+ 	  done; \
+ 	fi;
+ 
+ install-lib-sta: \$(LIBPARI_STA)
+ 	-mkdir -p \$(LIBDIR)
+ 	-\$(RM) \$(LIBDIR)/\$(LIBPARI_STA)
+-	\$(INSTALL_DATA) \$(LIBPARI_STA) \$(LIBDIR)/\$(LIBPARI_STA)
++	\$(INSTALL) \$(LIBPARI_STA) \$(LIBDIR)/\$(LIBPARI_STA)
+ 
+ install-lib-dyn-base:
+ 	-mkdir -p \$(LIBDIR)
+-	-\$(RM) \$(LIBDIR)/\$(LIBPARI_DYN) \$(LIBDIR)/\$(LIBPARI_SONAME) \$(LIBDIR)/\$(LIBPARI_SO)
+-	\$(DLLD_IGNORE)\$(DLLD) -o \$(LIBDIR)/\$(LIBPARI_DYN) \$(DLLDFLAGS) \$(OBJS) \$(EXTRADLLDFLAGS) \$(DYN_LIBS) \$(EXPORT_FILE) \$(LD_INSTALL_NAME)
++	-\$(RM) \$(BINDIR)/\$(LIBPARI_DYN) \$(BINDIR)/\$(LIBPARI_SONAME) \$(BINDIR)/\$(LIBPARI_SO)
++	\$(DLLD_IGNORE)\$(DLLD) -o \$(LIBPARI_DYN) \$(DLLDFLAGS) \$(OBJS) \$(EXTRADLLDFLAGS) \$(DYN_LIBS) -Wl,--output-def,\$(EXPORT_FILE) \$(LD_INSTALL_NAME)
++	\$(INSTALL) \$(LIBPARI_DYN) \$(BINDIR)/\$(LIBPARI_DYN)
+ 	$install_implib
+ 
+ install-lib-dyn-link: install-lib-dyn-base
+-	-if test "\$(LIBPARI_DYN)" != "\$(LIBDIR)/\$(LIBPARI_SO)"; then \
+-          \$(LN) \$(LIBPARI_DYN) \$(LIBDIR)/\$(LIBPARI_SO); fi
+-	-if test "\$(LIBPARI_SONAME)" != "\$(LIBPARI_SO)"; then \
+-	  \$(LN) \$(LIBPARI_DYN) \$(LIBDIR)/\$(LIBPARI_SONAME); fi
++	-if test "\$(BINDIR)/\$(LIBPARI_DYN)" != "\$(BINDIR)/\$(LIBPARI_SO)"; then \
++	  \$(LN) \$(BINDIR)/\$(LIBPARI_DYN) \$(BINDIR)/\$(LIBPARI_SO); fi
+ install-lib-dyn: \$(LIBPARI_DYN) install-lib-dyn-link
+ 
+ nsis: gp
+@@ -605,14 +607,25 @@
+     cat >> $file << EOT
+ 
+ \$(EXPORT_EXE): \$(OBJS)
+-	\$(DLLTOOL) --export-all-symbols -k -z \$@.tmp \$(OBJS)
+-	echo "NAME \$(LIBPARI)_exe" > \$@ && cat \$@.tmp >> \$@
+-	rm \$@.tmp
++	echo 'EXPORTS' >\$@ && \\
++	{ \\
++		for f in \$(OBJS); do \\
++		  sh ../exported.sh \$\$f 1>&5; \\
++		done; \\
++	} 5>&1 1>&2 \\
++	| sed -e 's,.* ,,' -e 's/^/    /' | grep -v '@' | LC_ALL=C sort | LC_ALL=C uniq \\
++	>>\$@
+ 
+ \$(EXPORT_FILE): \$(OBJS)
+-	\$(DLLTOOL) --export-all-symbols -k -z \$@.tmp \$(OBJS)
+-	echo "LIBRARY \$(LIBPARI)" > \$@ && cat \$@.tmp >> \$@
+-	rm \$@.tmp
++	echo 'EXPORTS' >\$@ && \\
++	{ \\
++		for f in \$(OBJS); do \\
++		  sh ../exported.sh \$\$f 1>&5; \\
++		done; \\
++	} 5>&1 1>&2 \\
++	| sed -e 's,.* ,,' -e 's/^/    /' | grep -v '@' | LC_ALL=C sort | LC_ALL=C uniq \\
++	>>\$@
++
+ EOT
+     ;;
+     esac
+@@ -626,7 +639,7 @@
+ 
+ \$(LIBPARI_DYN): $add_funclist \$(OBJS) \$(EXPORT_FILE)
+ 	-\$(RM) \$(LIBPARI_DYN)
+-	\$(DLLD_IGNORE)\$(DLLD) -o \$(TOPLDDYN)/\$(LIBPARI_DYN) \$(DLLDFLAGS) \$(OBJS) \$(EXTRADLLDFLAGS) \$(DYN_LIBS) \$(EXPORT_FILE)
++	\$(DLLD_IGNORE)\$(DLLD) -o \$(LIBPARI_DYN) \$(DLLDFLAGS) \$(OBJS) \$(EXTRADLLDFLAGS) \$(DYN_LIBS) -Wl,--output-def,\$(EXPORT_FILE)
+ 	-if test "\$(LIBPARI_DYN)" != "\$(LIBPARI_SO)"; then \
+ 	  \$(RM) \$(LIBPARI_SO);\
+ 	  \$(LN) \$(LIBPARI_DYN) \$(LIBPARI_SO); fi
+diff -urN pari-2.17.0-orig/config/paricfg.h.SH pari-2.17.0/config/paricfg.h.SH
+--- pari-2.17.0-orig/config/paricfg.h.SH	2024-09-28 14:31:21.000000000 +0800
++++ pari-2.17.0/config/paricfg.h.SH	2024-11-15 14:13:13.973500900 +0800
+@@ -29,7 +29,6 @@
+ EOT
+ 
+ cat >> $file << EOT
+-#define UNIX
+ #define GPHELP "$gphelp"
+ #define GPDATADIR "$datadir"
+ #define SHELL_Q '\\$shell_q'
+diff -urN pari-2.17.0-orig/exported.sh pari-2.17.0/exported.sh
+--- pari-2.17.0-orig/exported.sh	1970-01-01 08:00:00.000000000 +0800
++++ pari-2.17.0/exported.sh	2024-11-15 14:13:13.973500900 +0800
+@@ -0,0 +1,23 @@
++#! /bin/sh
++#
++# Copyright (C) 2006, 2009, 2019 Free Software Foundation, Inc.
++#
++# This program is free software: you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 3 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <https://www.gnu.org/licenses/>.
++#
++
++# This is a script that determines the exported symbols of an object file.
++# This is a separate script because $(GLOBAL_SYMBOL_PIPE) cannot be used in a
++# Makefile, since it may contain dollar signs.
++
++dumpbin -nologo -symbols "$1" | gawk '     {last_section=section; section=$ 3};     /^COFF SYMBOL TABLE/{for(i in hide) delete hide[i]};     /Section length .*#relocs.*(pick any)/{hide[last_section]=1};     /^ *Symbol name *: /{split($ 0,sn,":"); si=substr(sn[2],2)};     /^ *Type *: code/{print "T",si,substr(si,length(prfx))};     /^ *Type *: data/{print "I",si,substr(si,length(prfx))};     $ 0!~/External *\|/{next};     / 0+ UNDEF /{next}; / UNDEF \([^|]\)*()/{next};     {if(hide[section]) next};     {f="D"}; $ 0~/\(\).*\|/{f="T"};     {split($ 0,a,/\||\r/); split(a[2],s)};     s[1]~/^[@?]/{print f,s[1],s[1]; next};     s[1]~prfx {split(s[1],t,"@"); print f,t[1],substr(t[1],length(prfx))}     ' prfx=^ | /usr/bin/sed '/ __gnu_lto/d'
+diff -urN pari-2.17.0-orig/src/basemath/lfun.c pari-2.17.0/src/basemath/lfun.c
+--- pari-2.17.0-orig/src/basemath/lfun.c	2024-09-28 15:04:41.000000000 +0800
++++ pari-2.17.0/src/basemath/lfun.c	2024-11-15 14:13:13.973500900 +0800
+@@ -1106,7 +1106,11 @@
+   double sig0 = rtodbl(gel(dr,1)), sub2 = rtodbl(gel(dr,2));
+   double k1 = rtodbl(gel(dr,3)), MAXs = rtodbl(gel(dr,4));
+   long D = di[1], M = di[2], m0 = di[3];
++#ifdef _MSC_VER
++  double M0 = sig0? sub2 / sig0: INFINITY;
++#else
+   double M0 = sig0? sub2 / sig0: 1./0.;
++#endif
+   GEN AB, A, B, vK = cgetg(M/m0 + 2, t_VEC);
+ 
+   for (q = 0, m = r; m <= M; m += m0, q++)
+diff -urN pari-2.17.0-orig/src/graph/plotport.c pari-2.17.0/src/graph/plotport.c
+--- pari-2.17.0-orig/src/graph/plotport.c	2024-09-28 15:04:41.000000000 +0800
++++ pari-2.17.0/src/graph/plotport.c	2024-11-15 14:13:13.989094900 +0800
+@@ -1267,7 +1267,11 @@
+ plotrecthin(void *E, GEN(*eval)(void*, GEN), GEN a, GEN b, ulong flags,
+             long N, long prec)
+ {
++#ifdef _MSC_VER
++  const double INF = INFINITY;
++#else
+   const double INF = 1.0/0.0;
++#endif
+   const long param = flags & (PLOT_PARAMETRIC|PLOT_COMPLEX);
+   const long recur = flags & PLOT_RECURSIVE;
+   const long cplx = flags & PLOT_COMPLEX;
+diff -urN pari-2.17.0-orig/src/language/es.c pari-2.17.0/src/language/es.c
+--- pari-2.17.0-orig/src/language/es.c	2024-09-28 14:31:21.000000000 +0800
++++ pari-2.17.0/src/language/es.c	2024-11-15 14:13:13.989094900 +0800
+@@ -3388,7 +3388,11 @@
+       if (unlink(f->name)) pari_warn(warnfile, "delete", f->name);
+     }
+     else
++#ifdef _MSC_VER
++      if (_pclose(f->file) < 0) pari_warn(warnfile, "close pipe", f->name);
++#else
+       if (pclose(f->file) < 0) pari_warn(warnfile, "close pipe", f->name);
++#endif
+   }
+ #endif
+   if (DEBUGLEVEL)
+@@ -3643,7 +3647,11 @@
+   else
+ #  endif
+   {
++#ifdef _MSC_VER
++    file = (FILE *) _popen(cmd, (flag & mf_OUT)? "w": "r");
++#else
+     file = (FILE *) popen(cmd, (flag & mf_OUT)? "w": "r");
++#endif
+     if (flag & mf_OUT) {
+       if (!ok_pipe(file)) return NULL;
+       flag |= mf_PERM;
+@@ -5043,7 +5051,11 @@
+ #else
+   FILE *f;
+   check_secure(s);
++#ifdef _MSC_VER
++  f = _popen(s, "r");
++#else
+   f = popen(s, "r");
++#endif
+   if (!f) pari_err(e_MISC,"[pipe:] '%s' failed",s);
+   return new_gp_file(s,f, mf_PIPE);
+ #endif
+@@ -5055,7 +5067,11 @@
+   check_gp_file("fileclose", n);
+   if (DEBUGLEVEL) err_printf("fileclose(%ld)\n",n);
+   if (gp_file[n].type == mf_PIPE)
++#ifdef _MSC_VER
++    _pclose(gp_file[n].fp);
++#else
+     pclose(gp_file[n].fp);
++#endif
+   else
+     fclose(gp_file[n].fp);
+   pari_free((void*)gp_file[n].name);
+diff -urN pari-2.17.0-orig/src/systems/mingw/mingw.c pari-2.17.0/src/systems/mingw/mingw.c
+--- pari-2.17.0-orig/src/systems/mingw/mingw.c	2024-09-28 14:31:21.000000000 +0800
++++ pari-2.17.0/src/systems/mingw/mingw.c	2024-11-15 14:13:14.004716100 +0800
+@@ -151,7 +151,11 @@
+     HKEY handle;
+     const char *key = "AcroExch.Document\\shell\\open\\command";
+     const long SZ = 512;
++#ifdef _MSC_VER
++    char str[512], *buf;
++#else
+     char str[SZ], *buf;
++#endif
+     int status;
+     DWORD L = SZ;
+ 

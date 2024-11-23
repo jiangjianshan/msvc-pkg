@@ -1,0 +1,7 @@
+name: libtasn1
+version: 4.19.0
+url: https://ftp.gnu.org/pub/gnu/libtasn1/libtasn1-4.19.0.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.sh

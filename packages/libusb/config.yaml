@@ -1,0 +1,7 @@
+name: libusb
+version: 1.0.27
+url: https://github.com/libusb/libusb/archive/refs/tags/v1.0.27.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.bat

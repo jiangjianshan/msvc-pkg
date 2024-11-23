@@ -1,0 +1,7 @@
+name: LightGBM
+version: 4.4.0
+url: https://github.com/microsoft/LightGBM.git
+steps:
+  one:
+    dependencies:
+    run: build.bat

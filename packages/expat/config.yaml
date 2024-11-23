@@ -1,0 +1,7 @@
+name: expat
+version: 2.6.2
+url: https://github.com/libexpat/libexpat/releases/download/R_2_6_2/expat-2.6.2.tar.bz2
+steps:
+  one:
+    dependencies:
+    run: build.bat

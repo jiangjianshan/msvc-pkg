@@ -1,0 +1,11 @@
+name: ccls
+version: 0.20240505
+url: https://github.com/MaskRay/ccls.git
+steps:
+  one:
+    dependencies:
+      - libxml2
+      - llvm-project
+      - zlib
+      - winpthreads
+    run: build.bat

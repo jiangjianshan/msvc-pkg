@@ -1,0 +1,9 @@
+name: perl
+version: 5.40.0
+url: https://www.cpan.org/src/5.0/perl-5.40.0.tar.gz
+steps:
+  one:
+    dependencies:
+      - bzip2
+      - zlib
+    run: build.bat

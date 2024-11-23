@@ -1,0 +1,12 @@
+name: freetype
+version: 2.13.2
+url: https://download.savannah.gnu.org/releases/freetype/freetype-2.13.2.tar.xz
+steps:
+  one:
+    dependencies:
+      - brotli
+      - bzip2
+      - harfbuzz
+      - libpng
+      - zlib
+    run: build.bat

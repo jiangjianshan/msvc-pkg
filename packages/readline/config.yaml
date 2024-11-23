@@ -1,0 +1,9 @@
+name: readline
+version: 8.2.13
+url: https://ftp.gnu.org/gnu/readline/readline-8.2.13.tar.gz
+steps:
+  one:
+    dependencies:
+      - ncurses
+      - pcre
+    run: build.sh

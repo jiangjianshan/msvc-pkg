@@ -1,0 +1,7 @@
+name: fdk-aac
+version: 2.0.3
+url: https://github.com/mstorsjo/fdk-aac/archive/refs/tags/v2.0.3.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.bat

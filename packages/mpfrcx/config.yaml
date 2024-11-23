@@ -1,0 +1,11 @@
+name: mpfrcx
+version: 0.6.3
+url: https://www.multiprecision.org/downloads/mpfrcx-0.6.3.tar.gz
+steps:
+  one:
+    dependencies:
+      - yasm
+      - gmp:two
+      - mpfr
+      - mpc
+    run: build.sh

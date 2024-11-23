@@ -1,0 +1,9 @@
+name: mm-common
+version: 1.0.6
+url: https://download.gnome.org/sources/mm-common/1.0/mm-common-1.0.6.tar.xz
+steps:
+  one:
+    dependencies:
+      - doxygen
+      - pkg-config
+    run: build.bat

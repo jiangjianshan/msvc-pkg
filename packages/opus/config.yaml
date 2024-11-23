@@ -1,0 +1,7 @@
+name: opus
+version: 1.5.2
+url: https://downloads.xiph.org/releases/opus/opus-1.5.2.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.bat

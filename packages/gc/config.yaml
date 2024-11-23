@@ -1,0 +1,9 @@
+name: gc
+version: 8.2.8
+url: https://github.com/ivmai/bdwgc/releases/download/v8.2.8/gc-8.2.8.tar.gz
+steps:
+  one:
+    dependencies:
+      - libatomic_ops
+      - winpthreads
+    run: build.bat

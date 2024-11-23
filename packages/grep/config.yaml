@@ -1,0 +1,12 @@
+name: grep
+version: 3.11
+url: https://ftp.gnu.org/gnu/grep/grep-3.11.tar.xz
+steps:
+  one:
+    dependencies:
+      - libsigsegv
+      - libiconv
+      - gettext
+      - pcre2
+      - winpthreads
+    run: build.sh

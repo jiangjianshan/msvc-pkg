@@ -1,0 +1,8 @@
+name: filament
+version: 1.56.0
+url: https://github.com/google/filament/archive/refs/tags/v1.56.0.tar.gz
+steps:
+  one:
+    dependencies:
+      - gc
+    run: build.bat

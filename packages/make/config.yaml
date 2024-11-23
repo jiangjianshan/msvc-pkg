@@ -1,0 +1,7 @@
+name: make
+version: 4.4
+url: https://ftp.gnu.org/pub/gnu/make/make-4.4.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.bat
