@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Set build environment of Visutal C++ Build Tools and Intel OneAPI
+# Set build environment of Visutal C++ Build Tools
 #
 
 LANG=en_US
@@ -121,8 +121,20 @@ tionFolder\s{4}REG_SZ\s{4}).*')
     _p=$(cygpath -u "${p}")
     [[ -d "${_p}/include" ]] && INCLUDE="${p}"'\include;'"${INCLUDE}"
     [[ -d "${_p}/lib" ]] && LIB="${p}"'\lib;'"${LIB}"
-    [[ -d "${_p}/lib/cmake" ]] && CMAKE_PREFIX_PATH="${_p}"/lib/cmake:"${CMAKE_PREFIX_PATH}"
-    [[ -d "${_p}/lib/pkgconfig" ]] && PKG_CONFIG_PATH="${_p}"/lib/pkgconfig:"${PKG_CONFIG_PATH}"
+    if [[ -d "${_p}/lib/cmake" ]]; then
+      if [[ -n "${CMAKE_PREFIX_PATH}" ]]; then
+        CMAKE_PREFIX_PATH="${_p}"/lib/cmake:"${CMAKE_PREFIX_PATH}"
+      else
+        CMAKE_PREFIX_PATH="${_p}"/lib/cmake
+      fi
+    fi
+    if [[ -d "${_p}/lib/pkgconfig" ]]; then
+      if [[ -n "${PKG_CONFIG_PATH}" ]]; then
+        PKG_CONFIG_PATH="${_p}"/lib/pkgconfig:"${PKG_CONFIG_PATH}"
+      else
+        PKG_CONFIG_PATH="${_p}"/lib/pkgconfig
+      fi
+    fi
   done
 
 fi

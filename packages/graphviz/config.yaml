@@ -1,0 +1,18 @@
+name: graphviz
+version: 12.2.0
+url: https://gitlab.com/graphviz/graphviz/-/archive/12.2.0/graphviz-12.2.0.tar.bz2
+steps:
+  one:
+    dependencies:
+      - getopt
+      - pkg-config
+      - pango
+      - cairo
+      - glib:two
+      - fontconfig
+      - libgd
+      - libpng
+      - libjpeg-turbo
+      - zlib
+      - FreeGLUT
+    run: build.bat

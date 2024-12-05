@@ -4,6 +4,8 @@ url: https://ftp.gnu.org/gnu/nettle/nettle-3.10.tar.gz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
+      - getopt
       - gmp:two
       - openssl
       - yasm

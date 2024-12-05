@@ -4,4 +4,5 @@ url: https://github.com/mingw-w64/mingw-w64/archive/refs/tags/v12.0.0.tar.gz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
     run: build.sh

@@ -1,6 +1,6 @@
 # msvc-pkg
 
-🚀 ***msvc-pkg*** is a very lightweight build manager using MSVC or MSVC-like command line toolset for C/C++ open source libraries. There are more than 150+ open source libraries available on👝 ***packages*** folder. More libraries are comming. If you found the pacakge you want is not there, you can send an request.
+🚀 ***msvc-pkg*** is a very lightweight build manager using MSVC or MSVC-like command line toolset for C/C++ open source libraries. There are more than 180+ open source libraries available on👝 ***packages*** folder. More libraries are comming. If you found the pacakge you want is not there, you can send an request.
 
 ## What kinds of features?
 
@@ -15,6 +15,9 @@
 ## Dependencies
 
 - [Visual C++ Build Tools and Windows 10/11 SDK](https://visualstudio.microsoft.com/zh-hans/downloads/?q=build+tools)
+- [Intel Fortran Compiler Classic and Intel Fortran Compiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler-download.html)
+- [Intel oneAPI Math Kernel Library](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html)
+- [Intel MPI Library](https://www.intel.com/content/www/us/en/developer/tools/oneapi/mpi-library-download.html)
 - [Git for Windows](https://git-scm.com/download/win)
 - [Python 3](https://www.python.org/downloads/)
 - [CMake](https://cmake.org/download/)

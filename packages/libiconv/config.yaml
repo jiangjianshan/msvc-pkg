@@ -4,5 +4,6 @@ url: https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.17.tar.gz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
       - winpthreads
     run: build.sh

@@ -13,8 +13,8 @@ for /f "delims=" %%i in ('yq -r ".version" config.yaml') do set PKG_VER=%%i
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
-set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -openmp:llvm
-set DEFINES=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS
+set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -fp:precise -openmp:llvm
+set DEFINES=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -DFREEGLUT
 
 
 call :configure_stage
@@ -30,12 +30,15 @@ rem ============================================================================
 call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
+if not defined FREEGLUT_PREFIX set FREEGLUT_PREFIX=%PREFIX%
 cmake -G "Ninja"                                                               ^
   -DBUILD_SHARED_LIBS=ON                                                       ^
   -DCMAKE_BUILD_TYPE=Release                                                   ^
   -DCMAKE_C_COMPILER=cl                                                        ^
   -DCMAKE_C_FLAGS="%OPTIONS% %DEFINES%"                                        ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
+  -DWEBP_ENABLE_SWAP_16BIT_CSP=ON                                              ^
+  -DGLUT_INCLUDE_DIR="!FREEGLUT_PREFIX!/include"                               ^
   ..
 if %errorlevel% neq 0 exit 1
 exit /b 0

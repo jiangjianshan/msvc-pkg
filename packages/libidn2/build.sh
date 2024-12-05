@@ -14,7 +14,7 @@ PKG_VER=$(yq -r '.version' config.yaml)
 RELS_DIR=$ROOT_DIR/releases
 SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
-OPTIONS='-nologo -MD -diagnostics:column -wd4819 -openmp:llvm'
+OPTIONS='-nologo -MD -diagnostics:column -wd4819 -fp:precise -openmp:llvm'
 DEFINES='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS'
 
 
@@ -56,6 +56,7 @@ configure_stage()
   CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
   DLLTOOL="link.exe -verbose -dll"                                             \
   LD="link -nologo"                                                            \
+  LIBS="-lgetopt"                                                              \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
   RANLIB=":"                                                                   \
@@ -77,6 +78,8 @@ configure_stage()
     --with-libiconv-prefix="$(cygpath -u "${LIBICONV_PREFIX:-$PREFIX}")"       \
     --with-libintl-prefix="$(cygpath -u "${GETTEXT_PREFIX:-$PREFIX}")"         \
     gl_cv_ld_output_def=no                                                     \
+    gl_cv_func_getopt_posix=yes                                                \
+    ac_cv_func_getopt_long_only=yes                                            \
     gt_cv_locale_zh_CN=none
   [[ $? -ne 0 ]] && exit 1
 }

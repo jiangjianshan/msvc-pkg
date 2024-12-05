@@ -4,4 +4,5 @@ url: https://www.oberhumer.com/opensource/lzo/download/lzo-2.10.tar.gz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
     run: build.sh

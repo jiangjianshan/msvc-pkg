@@ -1,6 +1,6 @@
 diff -urN readline-8.2.13-orig/colors.c readline-8.2.13/colors.c
 --- readline-8.2.13-orig/colors.c	2023-11-20 22:29:09.000000000 +0800
-+++ readline-8.2.13/colors.c	2024-11-17 17:15:36.917635700 +0800
++++ readline-8.2.13/colors.c	2024-11-26 16:26:40.406456400 +0800
 @@ -39,6 +39,10 @@
  #  include <sys/stat.h>
  #endif
@@ -14,7 +14,7 @@ diff -urN readline-8.2.13-orig/colors.c readline-8.2.13/colors.c
  #include "posixstat.h" // stat related macros (S_ISREG, ...)
 diff -urN readline-8.2.13-orig/dirent.c readline-8.2.13/dirent.c
 --- readline-8.2.13-orig/dirent.c	1970-01-01 08:00:00.000000000 +0800
-+++ readline-8.2.13/dirent.c	2024-11-17 17:15:36.917635700 +0800
++++ readline-8.2.13/dirent.c	2024-11-26 16:26:40.406456400 +0800
 @@ -0,0 +1,325 @@
 +/*
 + * dirent.c
@@ -343,7 +343,7 @@ diff -urN readline-8.2.13-orig/dirent.c readline-8.2.13/dirent.c
 +
 diff -urN readline-8.2.13-orig/dirent.h readline-8.2.13/dirent.h
 --- readline-8.2.13-orig/dirent.h	1970-01-01 08:00:00.000000000 +0800
-+++ readline-8.2.13/dirent.h	2024-11-17 17:15:36.933203900 +0800
++++ readline-8.2.13/dirent.h	2024-11-26 16:26:40.406456400 +0800
 @@ -0,0 +1,148 @@
 +/*
 + * DIRENT.H (formerly DIRLIB.H)
@@ -495,7 +495,7 @@ diff -urN readline-8.2.13-orig/dirent.h readline-8.2.13/dirent.h
 +
 diff -urN readline-8.2.13-orig/display.c readline-8.2.13/display.c
 --- readline-8.2.13-orig/display.c	2023-11-20 22:29:21.000000000 +0800
-+++ readline-8.2.13/display.c	2024-11-17 17:15:36.933203900 +0800
++++ readline-8.2.13/display.c	2024-11-26 16:26:40.422078500 +0800
 @@ -3245,7 +3245,7 @@
  static void
  open_some_spaces (int col)
@@ -532,698 +532,39 @@ diff -urN readline-8.2.13-orig/display.c readline-8.2.13/display.c
  }
  
  void
-diff -urN readline-8.2.13-orig/examples/getopt.c readline-8.2.13/examples/getopt.c
---- readline-8.2.13-orig/examples/getopt.c	1970-01-01 08:00:00.000000000 +0800
-+++ readline-8.2.13/examples/getopt.c	2024-11-17 17:15:36.948826600 +0800
-@@ -0,0 +1,556 @@
-+/*	$OpenBSD: getopt_long.c,v 1.23 2007/10/31 12:34:57 chl Exp $	*/
-+/*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
-+
-+/*
-+ * Copyright (c) 2002 Todd C. Miller <Todd.Miller@courtesan.com>
-+ *
-+ * Permission to use, copy, modify, and distribute this software for any
-+ * purpose with or without fee is hereby granted, provided that the above
-+ * copyright notice and this permission notice appear in all copies.
-+ *
-+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-+ *
-+ * Sponsored in part by the Defense Advanced Research Projects
-+ * Agency (DARPA) and Air Force Research Laboratory, Air Force
-+ * Materiel Command, USAF, under agreement number F39502-99-1-0512.
-+ */
-+/*-
-+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
-+ * All rights reserved.
-+ *
-+ * This code is derived from software contributed to The NetBSD Foundation
-+ * by Dieter Baron and Thomas Klausner.
-+ *
-+ * Redistribution and use in source and binary forms, with or without
-+ * modification, are permitted provided that the following conditions
-+ * are met:
-+ * 1. Redistributions of source code must retain the above copyright
-+ *    notice, this list of conditions and the following disclaimer.
-+ * 2. Redistributions in binary form must reproduce the above copyright
-+ *    notice, this list of conditions and the following disclaimer in the
-+ *    documentation and/or other materials provided with the distribution.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
-+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
-+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-+ * POSSIBILITY OF SUCH DAMAGE.
-+ */
-+
-+#include <errno.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <getopt.h>
-+#include <stdarg.h>
-+#include <stdio.h>
-+#include <windows.h>
-+
-+#define	REPLACE_GETOPT		/* use this getopt as the system getopt(3) */
-+
-+#ifdef REPLACE_GETOPT
-+int	opterr = 1;		/* if error message should be printed */
-+int	optind = 1;		/* index into parent argv vector */
-+int	optopt = '?';		/* character checked for validity */
-+#undef	optreset		/* see getopt.h */
-+#define	optreset		__mingw_optreset
-+int	optreset;		/* reset getopt */
-+char    *optarg;		/* argument associated with option */
-+#endif
-+
-+#define PRINT_ERROR	((opterr) && (*options != ':'))
-+
-+#define FLAG_PERMUTE	0x01	/* permute non-options to the end of argv */
-+#define FLAG_ALLARGS	0x02	/* treat non-options as args to option "-1" */
-+#define FLAG_LONGONLY	0x04	/* operate as getopt_long_only */
-+
-+/* return values */
-+#define	BADCH		(int)'?'
-+#define	BADARG		((*options == ':') ? (int)':' : (int)'?')
-+#define	INORDER 	(int)1
-+
-+#ifdef __CYGWIN__
-+static char EMSG[] = "";
-+#else
-+#define	EMSG		""
-+#endif
-+
-+static int getopt_internal(int, char * const *, const char *,
-+			   const struct option *, int *, int);
-+static int parse_long_options(char * const *, const char *,
-+			      const struct option *, int *, int);
-+static int gcd(int, int);
-+static void permute_args(int, int, int, char * const *);
-+
-+static char *place = EMSG; /* option letter processing */
-+
-+/* XXX: set optreset to 1 rather than these two */
-+static int nonopt_start = -1; /* first non option argument (for permute) */
-+static int nonopt_end = -1;   /* first option after non options (for permute) */
-+
-+/* Error messages */
-+static const char recargchar[] = "option requires an argument -- %c";
-+static const char recargstring[] = "option requires an argument -- %s";
-+static const char ambig[] = "ambiguous option -- %.*s";
-+static const char noarg[] = "option doesn't take an argument -- %.*s";
-+static const char illoptchar[] = "unknown option -- %c";
-+static const char illoptstring[] = "unknown option -- %s";
-+
-+static void
-+_vwarnx(const char *argv0,const char *fmt,va_list ap)
-+{
-+  (void)fprintf(stderr,"%s: ",argv0);
-+  if (fmt != NULL)
-+    (void)vfprintf(stderr,fmt,ap);
-+  (void)fprintf(stderr,"\n");
-+}
-+
-+static void
-+warnx(const char *argv0,const char *fmt,...)
-+{
-+  va_list ap;
-+  va_start(ap,fmt);
-+  _vwarnx(argv0,fmt,ap);
-+  va_end(ap);
-+}
-+
-+/*
-+ * Compute the greatest common divisor of a and b.
-+ */
-+static int
-+gcd(int a, int b)
-+{
-+	int c;
-+
-+	c = a % b;
-+	while (c != 0) {
-+		a = b;
-+		b = c;
-+		c = a % b;
-+	}
-+
-+	return (b);
-+}
-+
-+/*
-+ * Exchange the block from nonopt_start to nonopt_end with the block
-+ * from nonopt_end to opt_end (keeping the same order of arguments
-+ * in each block).
-+ */
-+static void
-+permute_args(int panonopt_start, int panonopt_end, int opt_end,
-+	char * const *nargv)
-+{
-+	int cstart, cyclelen, i, j, ncycle, nnonopts, nopts, pos;
-+	char *swap;
-+
-+	/*
-+	 * compute lengths of blocks and number and size of cycles
-+	 */
-+	nnonopts = panonopt_end - panonopt_start;
-+	nopts = opt_end - panonopt_end;
-+	ncycle = gcd(nnonopts, nopts);
-+	cyclelen = (opt_end - panonopt_start) / ncycle;
-+
-+	for (i = 0; i < ncycle; i++) {
-+		cstart = panonopt_end+i;
-+		pos = cstart;
-+		for (j = 0; j < cyclelen; j++) {
-+			if (pos >= panonopt_end)
-+				pos -= nnonopts;
-+			else
-+				pos += nopts;
-+			swap = nargv[pos];
-+			/* LINTED const cast */
-+			((char **) nargv)[pos] = nargv[cstart];
-+			/* LINTED const cast */
-+			((char **)nargv)[cstart] = swap;
-+		}
-+	}
-+}
-+
-+/*
-+ * parse_long_options --
-+ *	Parse long options in argc/argv argument vector.
-+ * Returns -1 if short_too is set and the option does not match long_options.
-+ */
-+static int
-+parse_long_options(char * const *nargv, const char *options,
-+	const struct option *long_options, int *idx, int short_too)
-+{
-+	char *current_argv, *has_equal;
-+	size_t current_argv_len;
-+	int i, ambiguous, match;
-+
-+#define IDENTICAL_INTERPRETATION(_x, _y)                                \
-+	(long_options[(_x)].has_arg == long_options[(_y)].has_arg &&    \
-+	 long_options[(_x)].flag == long_options[(_y)].flag &&          \
-+	 long_options[(_x)].val == long_options[(_y)].val)
-+
-+	current_argv = place;
-+	match = -1;
-+	ambiguous = 0;
-+
-+	optind++;
-+
-+	if ((has_equal = strchr(current_argv, '=')) != NULL) {
-+		/* argument found (--option=arg) */
-+		current_argv_len = has_equal - current_argv;
-+		has_equal++;
-+	} else
-+		current_argv_len = strlen(current_argv);
-+
-+	for (i = 0; long_options[i].name; i++) {
-+		/* find matching long option */
-+		if (strncmp(current_argv, long_options[i].name,
-+		    current_argv_len))
-+			continue;
-+
-+		if (strlen(long_options[i].name) == current_argv_len) {
-+			/* exact match */
-+			match = i;
-+			ambiguous = 0;
-+			break;
-+		}
-+		/*
-+		 * If this is a known short option, don't allow
-+		 * a partial match of a single character.
-+		 */
-+		if (short_too && current_argv_len == 1)
-+			continue;
-+
-+		if (match == -1)	/* partial match */
-+			match = i;
-+		else if (!IDENTICAL_INTERPRETATION(i, match))
-+			ambiguous = 1;
-+	}
-+	if (ambiguous) {
-+		/* ambiguous abbreviation */
-+		if (PRINT_ERROR)
-+			warnx(nargv[0], ambig, (int)current_argv_len,
-+			     current_argv);
-+		optopt = 0;
-+		return (BADCH);
-+	}
-+	if (match != -1) {		/* option found */
-+		if (long_options[match].has_arg == no_argument
-+		    && has_equal) {
-+			if (PRINT_ERROR)
-+				warnx(nargv[0], noarg, (int)current_argv_len,
-+				     current_argv);
-+			/*
-+			 * XXX: GNU sets optopt to val regardless of flag
-+			 */
-+			if (long_options[match].flag == NULL)
-+				optopt = long_options[match].val;
-+			else
-+				optopt = 0;
-+			return (BADARG);
-+		}
-+		if (long_options[match].has_arg == required_argument ||
-+		    long_options[match].has_arg == optional_argument) {
-+			if (has_equal)
-+				optarg = has_equal;
-+			else if (long_options[match].has_arg ==
-+			    required_argument) {
-+				/*
-+				 * optional argument doesn't use next nargv
-+				 */
-+				optarg = nargv[optind++];
-+			}
-+		}
-+		if ((long_options[match].has_arg == required_argument)
-+		    && (optarg == NULL)) {
-+			/*
-+			 * Missing argument; leading ':' indicates no error
-+			 * should be generated.
-+			 */
-+			if (PRINT_ERROR)
-+				warnx(nargv[0], recargstring,
-+				    current_argv);
-+			/*
-+			 * XXX: GNU sets optopt to val regardless of flag
-+			 */
-+			if (long_options[match].flag == NULL)
-+				optopt = long_options[match].val;
-+			else
-+				optopt = 0;
-+			--optind;
-+			return (BADARG);
-+		}
-+	} else {			/* unknown option */
-+		if (short_too) {
-+			--optind;
-+			return (-1);
-+		}
-+		if (PRINT_ERROR)
-+			warnx(nargv[0], illoptstring, current_argv);
-+		optopt = 0;
-+		return (BADCH);
-+	}
-+	if (idx)
-+		*idx = match;
-+	if (long_options[match].flag) {
-+		*long_options[match].flag = long_options[match].val;
-+		return (0);
-+	} else
-+		return (long_options[match].val);
-+#undef IDENTICAL_INTERPRETATION
-+}
-+
-+/*
-+ * getopt_internal --
-+ *	Parse argc/argv argument vector.  Called by user level routines.
-+ */
-+static int
-+getopt_internal(int nargc, char * const *nargv, const char *options,
-+	const struct option *long_options, int *idx, int flags)
-+{
-+	char *oli;				/* option letter list index */
-+	int optchar, short_too;
-+	static int posixly_correct = -1;
-+
-+	if (options == NULL)
-+		return (-1);
-+
-+	/*
-+	 * XXX Some GNU programs (like cvs) set optind to 0 instead of
-+	 * XXX using optreset.  Work around this braindamage.
-+	 */
-+	if (optind == 0)
-+		optind = optreset = 1;
-+
-+	/*
-+	 * Disable GNU extensions if POSIXLY_CORRECT is set or options
-+	 * string begins with a '+'.
-+	 *
-+	 * CV, 2009-12-14: Check POSIXLY_CORRECT anew if optind == 0 or
-+	 *                 optreset != 0 for GNU compatibility.
-+	 */
-+	if (posixly_correct == -1 || optreset != 0)
-+		posixly_correct = (GetEnvironmentVariableW(L"POSIXLY_CORRECT", NULL, 0) != 0);
-+	if (*options == '-')
-+		flags |= FLAG_ALLARGS;
-+	else if (posixly_correct || *options == '+')
-+		flags &= ~FLAG_PERMUTE;
-+	if (*options == '+' || *options == '-')
-+		options++;
-+
-+	optarg = NULL;
-+	if (optreset)
-+		nonopt_start = nonopt_end = -1;
-+start:
-+	if (optreset || !*place) {		/* update scanning pointer */
-+		optreset = 0;
-+		if (optind >= nargc) {          /* end of argument vector */
-+			place = EMSG;
-+			if (nonopt_end != -1) {
-+				/* do permutation, if we have to */
-+				permute_args(nonopt_start, nonopt_end,
-+				    optind, nargv);
-+				optind -= nonopt_end - nonopt_start;
-+			}
-+			else if (nonopt_start != -1) {
-+				/*
-+				 * If we skipped non-options, set optind
-+				 * to the first of them.
-+				 */
-+				optind = nonopt_start;
-+			}
-+			nonopt_start = nonopt_end = -1;
-+			return (-1);
-+		}
-+		if (*(place = nargv[optind]) != '-' ||
-+		    (place[1] == '\0' && strchr(options, '-') == NULL)) {
-+			place = EMSG;		/* found non-option */
-+			if (flags & FLAG_ALLARGS) {
-+				/*
-+				 * GNU extension:
-+				 * return non-option as argument to option 1
-+				 */
-+				optarg = nargv[optind++];
-+				return (INORDER);
-+			}
-+			if (!(flags & FLAG_PERMUTE)) {
-+				/*
-+				 * If no permutation wanted, stop parsing
-+				 * at first non-option.
-+				 */
-+				return (-1);
-+			}
-+			/* do permutation */
-+			if (nonopt_start == -1)
-+				nonopt_start = optind;
-+			else if (nonopt_end != -1) {
-+				permute_args(nonopt_start, nonopt_end,
-+				    optind, nargv);
-+				nonopt_start = optind -
-+				    (nonopt_end - nonopt_start);
-+				nonopt_end = -1;
-+			}
-+			optind++;
-+			/* process next argument */
-+			goto start;
-+		}
-+		if (nonopt_start != -1 && nonopt_end == -1)
-+			nonopt_end = optind;
-+
-+		/*
-+		 * If we have "-" do nothing, if "--" we are done.
-+		 */
-+		if (place[1] != '\0' && *++place == '-' && place[1] == '\0') {
-+			optind++;
-+			place = EMSG;
-+			/*
-+			 * We found an option (--), so if we skipped
-+			 * non-options, we have to permute.
-+			 */
-+			if (nonopt_end != -1) {
-+				permute_args(nonopt_start, nonopt_end,
-+				    optind, nargv);
-+				optind -= nonopt_end - nonopt_start;
-+			}
-+			nonopt_start = nonopt_end = -1;
-+			return (-1);
-+		}
-+	}
-+
-+	/*
-+	 * Check long options if:
-+	 *  1) we were passed some
-+	 *  2) the arg is not just "-"
-+	 *  3) either the arg starts with -- we are getopt_long_only()
-+	 */
-+	if (long_options != NULL && place != nargv[optind] &&
-+	    (*place == '-' || (flags & FLAG_LONGONLY))) {
-+		short_too = 0;
-+		if (*place == '-')
-+			place++;		/* --foo long option */
-+		else if (*place != ':' && strchr(options, *place) != NULL)
-+			short_too = 1;		/* could be short option too */
-+
-+		optchar = parse_long_options(nargv, options, long_options,
-+		    idx, short_too);
-+		if (optchar != -1) {
-+			place = EMSG;
-+			return (optchar);
-+		}
-+	}
-+
-+	if ((optchar = (int)*place++) == (int)':' ||
-+	    (optchar == (int)'-' && *place != '\0') ||
-+	    (oli = strchr(options, optchar)) == NULL) {
-+		/*
-+		 * If the user specified "-" and  '-' isn't listed in
-+		 * options, return -1 (non-option) as per POSIX.
-+		 * Otherwise, it is an unknown option character (or ':').
-+		 */
-+		if (optchar == (int)'-' && *place == '\0')
-+			return (-1);
-+		if (!*place)
-+			++optind;
-+		if (PRINT_ERROR)
-+			warnx(nargv[0], illoptchar, optchar);
-+		optopt = optchar;
-+		return (BADCH);
-+	}
-+	if (long_options != NULL && optchar == 'W' && oli[1] == ';') {
-+		/* -W long-option */
-+		if (*place)			/* no space */
-+			/* NOTHING */;
-+		else if (++optind >= nargc) {	/* no arg */
-+			place = EMSG;
-+			if (PRINT_ERROR)
-+				warnx(nargv[0], recargchar, optchar);
-+			optopt = optchar;
-+			return (BADARG);
-+		} else				/* white space */
-+			place = nargv[optind];
-+		optchar = parse_long_options(nargv, options, long_options,
-+		    idx, 0);
-+		place = EMSG;
-+		return (optchar);
-+	}
-+	if (*++oli != ':') {			/* doesn't take argument */
-+		if (!*place)
-+			++optind;
-+	} else {				/* takes (optional) argument */
-+		optarg = NULL;
-+		if (*place)			/* no white space */
-+			optarg = place;
-+		else if (oli[1] != ':') {	/* arg not optional */
-+			if (++optind >= nargc) {	/* no arg */
-+				place = EMSG;
-+				if (PRINT_ERROR)
-+					warnx(nargv[0], recargchar, optchar);
-+				optopt = optchar;
-+				return (BADARG);
-+			} else
-+				optarg = nargv[optind];
-+		}
-+		place = EMSG;
-+		++optind;
-+	}
-+	/* dump back option letter */
-+	return (optchar);
-+}
-+
-+#ifdef REPLACE_GETOPT
-+/*
-+ * getopt --
-+ *	Parse argc/argv argument vector.
-+ *
-+ * [eventually this will replace the BSD getopt]
-+ */
-+int
-+getopt(int nargc, char * const *nargv, const char *options)
-+{
-+
-+	/*
-+	 * We don't pass FLAG_PERMUTE to getopt_internal() since
-+	 * the BSD getopt(3) (unlike GNU) has never done this.
-+	 *
-+	 * Furthermore, since many privileged programs call getopt()
-+	 * before dropping privileges it makes sense to keep things
-+	 * as simple (and bug-free) as possible.
-+	 */
-+	return (getopt_internal(nargc, nargv, options, NULL, NULL, 0));
-+}
-+#endif /* REPLACE_GETOPT */
-+
-+/*
-+ * getopt_long --
-+ *	Parse argc/argv argument vector.
-+ */
-+int
-+getopt_long(int nargc, char * const *nargv, const char *options,
-+    const struct option *long_options, int *idx)
-+{
-+
-+	return (getopt_internal(nargc, nargv, options, long_options, idx,
-+	    FLAG_PERMUTE));
-+}
-+
-+/*
-+ * getopt_long_only --
-+ *	Parse argc/argv argument vector.
-+ */
-+int
-+getopt_long_only(int nargc, char * const *nargv, const char *options,
-+    const struct option *long_options, int *idx)
-+{
-+
-+	return (getopt_internal(nargc, nargv, options, long_options, idx,
-+	    FLAG_PERMUTE|FLAG_LONGONLY));
-+}
-diff -urN readline-8.2.13-orig/examples/getopt.h readline-8.2.13/examples/getopt.h
---- readline-8.2.13-orig/examples/getopt.h	1970-01-01 08:00:00.000000000 +0800
-+++ readline-8.2.13/examples/getopt.h	2024-11-17 17:15:36.948826600 +0800
-@@ -0,0 +1,97 @@
-+#ifndef __GETOPT_H__
-+/**
-+ * DISCLAIMER
-+ * This file has no copyright assigned and is placed in the Public Domain.
-+ * This file is part of the mingw-w64 runtime package.
-+ *
-+ * The mingw-w64 runtime package and its code is distributed in the hope that it 
-+ * will be useful but WITHOUT ANY WARRANTY.  ALL WARRANTIES, EXPRESSED OR 
-+ * IMPLIED ARE HEREBY DISCLAIMED.  This includes but is not limited to 
-+ * warranties of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-+ */
-+
-+#define __GETOPT_H__
-+
-+/* All the headers include this file. */
-+#include <corecrt.h>
-+
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
-+
-+int optind;		/* index of first non-option in argv      */
-+int optopt;		/* single option character, as parsed     */
-+int opterr;		/* flag to enable built-in diagnostics... */
-+				/* (user may set to zero, to suppress)    */
-+
-+char *optarg;		/* pointer to argument of current option  */
-+
-+int getopt(int nargc, char * const *nargv, const char *options);
-+
-+#ifdef __cplusplus
-+}
-+#endif
-+/*
-+ * POSIX requires the `getopt' API to be specified in `unistd.h';
-+ * thus, `unistd.h' includes this header.  However, we do not want
-+ * to expose the `getopt_long' or `getopt_long_only' APIs, when
-+ * included in this manner.  Thus, close the standard __GETOPT_H__
-+ * declarations block, and open an additional __GETOPT_LONG_H__
-+ * specific block, only when *not* __UNISTD_H_SOURCED__, in which
-+ * to declare the extended API.
-+ */
-+#endif /* !defined(__GETOPT_H__) */
-+
-+#if !defined(__GETOPT_BSD_H__) && defined(_BSD_SOURCE)
-+#define __GETOPT_BSD_H__
-+/*
-+ * BSD adds the non-standard `optreset' feature, for reinitialisation
-+ * of `getopt' parsing.  We support this feature, for applications which
-+ * proclaim their BSD heritage, before including this header; however,
-+ * to maintain portability, developers are advised to avoid it.
-+ */
-+# define optreset  __mingw_optreset
-+extern int optreset;
-+#endif /* !defined(__GETOPT_BSD_H__) && defined(_BSD_SOURCE) */
-+
-+#if !defined(__UNISTD_H_SOURCED__) && !defined(__GETOPT_LONG_H__)
-+#define __GETOPT_LONG_H__
-+
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
-+
-+struct option		/* specification for a long form option...	*/
-+{
-+  const char *name;		/* option name, without leading hyphens */
-+  int         has_arg;		/* does it take an argument?		*/
-+  int        *flag;		/* where to save its status, or NULL	*/
-+  int         val;		/* its associated status value		*/
-+};
-+
-+enum    		/* permitted values for its `has_arg' field...	*/
-+{
-+  no_argument = 0,      	/* option never takes an argument	*/
-+  required_argument,		/* option always requires an argument	*/
-+  optional_argument		/* option may take an argument		*/
-+};
-+
-+int getopt_long(int nargc, char * const *nargv, const char *options,
-+    const struct option *long_options, int *idx);
-+int getopt_long_only(int nargc, char * const *nargv, const char *options,
-+    const struct option *long_options, int *idx);
-+/*
-+ * Previous MinGW implementation had...
-+ */
-+#ifndef HAVE_DECL_GETOPT
-+/*
-+ * ...for the long form API only; keep this for compatibility.
-+ */
-+# define HAVE_DECL_GETOPT	1
-+#endif
-+
-+#ifdef __cplusplus
-+}
-+#endif
-+
-+#endif /* !defined(__UNISTD_H_SOURCED__) && !defined(__GETOPT_LONG_H__) */
 diff -urN readline-8.2.13-orig/examples/hist_erasedups.c readline-8.2.13/examples/hist_erasedups.c
 --- readline-8.2.13-orig/examples/hist_erasedups.c	2018-05-21 23:02:04.000000000 +0800
-+++ readline-8.2.13/examples/hist_erasedups.c	2024-11-17 17:15:36.948826600 +0800
-@@ -22,7 +22,10 @@
++++ readline-8.2.13/examples/hist_erasedups.c	2024-11-26 16:26:40.422078500 +0800
+@@ -22,7 +22,11 @@
  #define READLINE_LIBRARY 1
  #endif
  
 +#ifdef HAVE_UNISTD_H
  #include <unistd.h>
-+#endif
++#else
 +#include "getopt.h"
++#endif
  #include <stdlib.h>
  #include <stdio.h>
  
 diff -urN readline-8.2.13-orig/examples/hist_purgecmd.c readline-8.2.13/examples/hist_purgecmd.c
 --- readline-8.2.13-orig/examples/hist_purgecmd.c	2018-05-21 23:00:08.000000000 +0800
-+++ readline-8.2.13/examples/hist_purgecmd.c	2024-11-17 17:15:36.948826600 +0800
-@@ -23,7 +23,10 @@
++++ readline-8.2.13/examples/hist_purgecmd.c	2024-11-26 16:26:40.422078500 +0800
+@@ -23,7 +23,11 @@
  #define READLINE_LIBRARY 1
  #endif
  
 +#ifdef HAVE_UNISTD_H
  #include <unistd.h>
-+#endif
++#else
 +#include "getopt.h"
++#endif
  #include <stdlib.h>
  #include <stdio.h>
  
 diff -urN readline-8.2.13-orig/examples/histexamp.c readline-8.2.13/examples/histexamp.c
 --- readline-8.2.13-orig/examples/histexamp.c	2018-05-21 23:02:45.000000000 +0800
-+++ readline-8.2.13/examples/histexamp.c	2024-11-17 17:15:36.948826600 +0800
++++ readline-8.2.13/examples/histexamp.c	2024-11-26 16:26:40.437699400 +0800
 @@ -27,7 +27,9 @@
  #  include <readline/history.h>
  #endif
@@ -1236,7 +577,7 @@ diff -urN readline-8.2.13-orig/examples/histexamp.c readline-8.2.13/examples/his
  
 diff -urN readline-8.2.13-orig/examples/Makefile.in readline-8.2.13/examples/Makefile.in
 --- readline-8.2.13-orig/examples/Makefile.in	2021-03-12 00:50:36.000000000 +0800
-+++ readline-8.2.13/examples/Makefile.in	2024-11-17 17:15:36.964446600 +0800
++++ readline-8.2.13/examples/Makefile.in	2024-11-26 16:26:40.437699400 +0800
 @@ -60,18 +60,20 @@
  ASAN_XCFLAGS = -fsanitize=address -fno-omit-frame-pointer
  ASAN_XLDFLAGS = -fsanitize=address
@@ -1271,7 +612,7 @@ diff -urN readline-8.2.13-orig/examples/Makefile.in readline-8.2.13/examples/Mak
 -	  rlkeymaps.o rl-timeout.o
 +OBJECTS = fileman.$(OBJEXT) rltest.$(OBJEXT) rl.$(OBJEXT) rlevent.$(OBJEXT) rlcat.$(OBJEXT) rlversion.$(OBJEXT) histexamp.$(OBJEXT) \
 +	  rl-callbacktest.$(OBJEXT) rlbasic.$(OBJEXT) hist_erasedups.$(OBJEXT) hist_purgecmd.$(OBJEXT) \
-+	  rlkeymaps.$(OBJEXT) rl-timeout.$(OBJEXT) getopt.$(OBJEXT)
++	  rlkeymaps.$(OBJEXT) rl-timeout.$(OBJEXT)
  
  OTHEREXE = rlptytest$(EXEEXT)
 -OTHEROBJ = rlptytest.o
@@ -1288,8 +629,8 @@ diff -urN readline-8.2.13-orig/examples/Makefile.in readline-8.2.13/examples/Mak
 -
 -rlbasic$(EXEEXT): rlbasic.o $(READLINE_LIB)
 -	$(CC) $(LDFLAGS) -o $@ rlbasic.o $(READLINE_LIB) $(TERMCAP_LIB)
-+rl$(EXEEXT): rl.$(OBJEXT) $(READLINE_LIB) getopt.$(OBJEXT)
-+	$(CC) $(LDFLAGS) -o $@ rl.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB) getopt.$(OBJEXT)
++rl$(EXEEXT): rl.$(OBJEXT) $(READLINE_LIB)
++	$(CC) $(LDFLAGS) -o $@ rl.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB) -lgetopt
  
 -rlcat$(EXEEXT): rlcat.o $(READLINE_LIB)
 -	$(CC) $(LDFLAGS) -o $@ rlcat.o $(READLINE_LIB) $(TERMCAP_LIB)
@@ -1298,13 +639,13 @@ diff -urN readline-8.2.13-orig/examples/Makefile.in readline-8.2.13/examples/Mak
  
 -rlevent$(EXEEXT): rlevent.o $(READLINE_LIB)
 -	$(CC) $(LDFLAGS) -o $@ rlevent.o $(READLINE_LIB) $(TERMCAP_LIB)
-+rlcat$(EXEEXT): rlcat.$(OBJEXT) $(READLINE_LIB) getopt.$(OBJEXT)
-+	$(CC) $(LDFLAGS) -o $@ rlcat.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB) getopt.$(OBJEXT)
++rlcat$(EXEEXT): rlcat.$(OBJEXT) $(READLINE_LIB)
++	$(CC) $(LDFLAGS) -o $@ rlcat.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB) -lgetopt
  
 -rlkeymaps$(EXEEXT): rlkeymaps.o $(READLINE_LIB)
 -	$(CC) $(LDFLAGS) -o $@ rlkeymaps.o $(READLINE_LIB) $(TERMCAP_LIB)
-+rlevent$(EXEEXT): rlevent.$(OBJEXT) $(READLINE_LIB) getopt.$(OBJEXT)
-+	$(CC) $(LDFLAGS) -o $@ rlevent.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB) getopt.$(OBJEXT)
++rlevent$(EXEEXT): rlevent.$(OBJEXT) $(READLINE_LIB)
++	$(CC) $(LDFLAGS) -o $@ rlevent.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB) -lgetopt
  
 -fileman$(EXEEXT): fileman.o $(READLINE_LIB)
 -	$(CC) $(LDFLAGS) -o $@ fileman.o $(READLINE_LIB) $(TERMCAP_LIB)
@@ -1348,17 +689,17 @@ diff -urN readline-8.2.13-orig/examples/Makefile.in readline-8.2.13/examples/Mak
  
 -hist_erasedups$(EXEEXT): hist_erasedups.o $(HISTORY_LIB)
 -	$(CC) $(LDFLAGS) -o $@ hist_erasedups.o -lhistory $(TERMCAP_LIB)
-+hist_erasedups$(EXEEXT): hist_erasedups.$(OBJEXT) $(HISTORY_LIB) getopt.$(OBJEXT)
-+	$(CC) $(LDFLAGS) -o $@ hist_erasedups.$(OBJEXT) $(HISTORY_LIB) $(TERMCAP_LIB) getopt.$(OBJEXT)
++hist_erasedups$(EXEEXT): hist_erasedups.$(OBJEXT) $(HISTORY_LIB)
++	$(CC) $(LDFLAGS) -o $@ hist_erasedups.$(OBJEXT) $(HISTORY_LIB) $(TERMCAP_LIB) -lgetopt
  
 -hist_purgecmd$(EXEEXT): hist_purgecmd.o $(HISTORY_LIB)
 -	$(CC) $(LDFLAGS) -o $@ hist_purgecmd.o -lhistory $(TERMCAP_LIB)
-+hist_purgecmd$(EXEEXT): hist_purgecmd.$(OBJEXT) $(HISTORY_LIB) getopt.$(OBJEXT)
-+	$(CC) $(LDFLAGS) -o $@ hist_purgecmd.$(OBJEXT) $(HISTORY_LIB) $(TERMCAP_LIB) getopt.$(OBJEXT) -lpcreposix
++hist_purgecmd$(EXEEXT): hist_purgecmd.$(OBJEXT) $(HISTORY_LIB)
++	$(CC) $(LDFLAGS) -o $@ hist_purgecmd.$(OBJEXT) $(HISTORY_LIB) $(TERMCAP_LIB) -lgetopt -lpcreposix
  
  clean mostlyclean:
  	$(RM) $(OBJECTS) $(OTHEROBJ)
-@@ -163,31 +162,31 @@
+@@ -163,31 +162,29 @@
  distclean maintainer-clean: clean
  	$(RM) Makefile
  
@@ -1403,7 +744,6 @@ diff -urN readline-8.2.13-orig/examples/Makefile.in readline-8.2.13/examples/Mak
 +rlptytest.$(OBJEXT): rlptytest.c
 +rl-callbacktest.$(OBJEXT): rl-callbacktest.c
 +rl-timeout.$(OBJEXT): rl-timeout.c
-+getopt.$(OBJEXT): getopt.c
 +
 +fileman.$(OBJEXT): $(top_srcdir)/readline.h
 +rltest.$(OBJEXT): $(top_srcdir)/readline.h
@@ -1417,24 +757,34 @@ diff -urN readline-8.2.13-orig/examples/Makefile.in readline-8.2.13/examples/Mak
 +rlptytest.$(OBJEXT): $(top_srcdir)/readline.h $(top_srcdir)/history.h
 +rl-callbacktest.$(OBJEXT): $(top_srcdir)/readline.h $(top_srcdir)/history.h
 +rl-timeout.$(OBJEXT): $(top_srcdir)/readline.h $(top_srcdir)/history.h
-+getopt.$(OBJEXT): getopt.h
 diff -urN readline-8.2.13-orig/examples/rl.c readline-8.2.13/examples/rl.c
 --- readline-8.2.13-orig/examples/rl.c	2022-04-21 03:34:10.000000000 +0800
-+++ readline-8.2.13/examples/rl.c	2024-11-17 17:15:36.964446600 +0800
-@@ -28,7 +28,10 @@
++++ readline-8.2.13/examples/rl.c	2024-11-26 16:26:40.437699400 +0800
+@@ -28,7 +28,11 @@
  #  include <config.h>
  #endif
  
 +#ifdef HAVE_UNISTD_H
  #include <unistd.h>
-+#endif
++#else
 +#include "getopt.h"
++#endif
  #include <stdio.h>
  #include <sys/types.h>
  
+@@ -52,9 +56,6 @@
+ #  include <readline/history.h>
+ #endif
+ 
+-extern int optind;
+-extern char *optarg;
+-
+ #if !defined (strchr) && !defined (__STDC__)
+ extern char *strrchr();
+ #endif
 diff -urN readline-8.2.13-orig/examples/rlbasic.c readline-8.2.13/examples/rlbasic.c
 --- readline-8.2.13-orig/examples/rlbasic.c	2022-04-21 03:36:43.000000000 +0800
-+++ readline-8.2.13/examples/rlbasic.c	2024-11-17 17:15:36.964446600 +0800
++++ readline-8.2.13/examples/rlbasic.c	2024-11-26 16:26:40.437699400 +0800
 @@ -1,5 +1,7 @@
  #include <stdlib.h>
 +#ifdef HAVE_UNISTD_H
@@ -1445,7 +795,7 @@ diff -urN readline-8.2.13-orig/examples/rlbasic.c readline-8.2.13/examples/rlbas
  
 diff -urN readline-8.2.13-orig/examples/rl-callbacktest.c readline-8.2.13/examples/rl-callbacktest.c
 --- readline-8.2.13-orig/examples/rl-callbacktest.c	2022-06-14 23:49:56.000000000 +0800
-+++ readline-8.2.13/examples/rl-callbacktest.c	2024-11-17 17:15:36.964446600 +0800
++++ readline-8.2.13/examples/rl-callbacktest.c	2024-11-26 16:39:33.240205700 +0800
 @@ -1,11 +1,17 @@
  /* Standard include files. stdio.h is required. */
  #include <stdlib.h>
@@ -1458,7 +808,7 @@ diff -urN readline-8.2.13-orig/examples/rl-callbacktest.c readline-8.2.13/exampl
  #include <sys/types.h>
 +#ifdef HAVE_SYS_SELECT_H
  #include <sys/select.h>
-+#else
++#elif _WIN32
 +#include <winsock2.h>
 +#endif
  
@@ -1487,22 +837,35 @@ diff -urN readline-8.2.13-orig/examples/rl-callbacktest.c readline-8.2.13/exampl
    rl_callback_handler_install (prompt, cb_linehandler);
 diff -urN readline-8.2.13-orig/examples/rlcat.c readline-8.2.13/examples/rlcat.c
 --- readline-8.2.13-orig/examples/rlcat.c	2022-06-14 23:48:09.000000000 +0800
-+++ readline-8.2.13/examples/rlcat.c	2024-11-17 17:15:36.980102500 +0800
-@@ -30,6 +30,7 @@
++++ readline-8.2.13/examples/rlcat.c	2024-11-26 16:35:28.746915700 +0800
+@@ -29,6 +29,8 @@
+ 
  #ifdef HAVE_UNISTD_H
  #  include <unistd.h>
++#else
++#  include "getopt.h"
  #endif
-+#include "getopt.h"
  
  #include <sys/types.h>
- #include "posixstat.h"
+@@ -61,9 +63,6 @@
+ #  include <readline/history.h>
+ #endif
+ 
+-extern int optind;
+-extern char *optarg;
+-
+ static int stdcat();
+ 
+ static char *progname;
 diff -urN readline-8.2.13-orig/examples/rlevent.c readline-8.2.13/examples/rlevent.c
 --- readline-8.2.13-orig/examples/rlevent.c	2022-04-21 03:37:28.000000000 +0800
-+++ readline-8.2.13/examples/rlevent.c	2024-11-17 17:15:36.980102500 +0800
-@@ -32,8 +32,12 @@
++++ readline-8.2.13/examples/rlevent.c	2024-11-26 16:38:04.707087300 +0800
+@@ -31,9 +31,13 @@
+ #ifdef HAVE_UNISTD_H
  #  include <unistd.h>
  #else
- extern int getopt();
+-extern int getopt();
++#  include "getopt.h"
 +#ifdef _MSC_VER
 +extern void Sleep();
 +#else
@@ -1512,7 +875,17 @@ diff -urN readline-8.2.13-orig/examples/rlevent.c readline-8.2.13/examples/rleve
  
  #include <stdio.h>
  #include <sys/types.h>
-@@ -72,7 +76,11 @@
+@@ -58,9 +62,6 @@
+ #  include <readline/history.h>
+ #endif
+ 
+-extern int optind;
+-extern char *optarg;
+-
+ #if !defined (strchr) && !defined (__STDC__)
+ extern char *strrchr();
+ #endif
+@@ -72,7 +73,11 @@
  event_hook ()
  {
    fprintf (stderr, "ding!\n");
@@ -1526,7 +899,7 @@ diff -urN readline-8.2.13-orig/examples/rlevent.c readline-8.2.13/examples/rleve
  
 diff -urN readline-8.2.13-orig/examples/rlfe/Makefile.in readline-8.2.13/examples/rlfe/Makefile.in
 --- readline-8.2.13-orig/examples/rlfe/Makefile.in	2009-02-23 06:27:18.000000000 +0800
-+++ readline-8.2.13/examples/rlfe/Makefile.in	2024-11-17 17:15:36.980102500 +0800
++++ readline-8.2.13/examples/rlfe/Makefile.in	2024-11-26 16:26:40.453320100 +0800
 @@ -20,6 +20,10 @@
  VERSION = @VERSION@
  SCREEN = screen-$(VERSION)
@@ -1573,7 +946,7 @@ diff -urN readline-8.2.13-orig/examples/rlfe/Makefile.in readline-8.2.13/example
 +pty.$(OBJEXT): pty.c config.h
 diff -urN readline-8.2.13-orig/examples/rlfe/pty.c readline-8.2.13/examples/rlfe/pty.c
 --- readline-8.2.13-orig/examples/rlfe/pty.c	2006-11-09 23:55:10.000000000 +0800
-+++ readline-8.2.13/examples/rlfe/pty.c	2024-11-17 17:15:36.980102500 +0800
++++ readline-8.2.13/examples/rlfe/pty.c	2024-11-26 16:26:40.453320100 +0800
 @@ -27,7 +27,9 @@
  #include <fcntl.h>
  #include <signal.h>
@@ -1586,7 +959,7 @@ diff -urN readline-8.2.13-orig/examples/rlfe/pty.c readline-8.2.13/examples/rlfe
  
 diff -urN readline-8.2.13-orig/examples/rlfe/rlfe.c readline-8.2.13/examples/rlfe/rlfe.c
 --- readline-8.2.13-orig/examples/rlfe/rlfe.c	2011-05-27 23:54:03.000000000 +0800
-+++ readline-8.2.13/examples/rlfe/rlfe.c	2024-11-17 17:15:36.995689300 +0800
++++ readline-8.2.13/examples/rlfe/rlfe.c	2024-11-26 16:26:40.468986000 +0800
 @@ -68,7 +68,9 @@
  #include <grp.h>
  #include <string.h>
@@ -1599,7 +972,7 @@ diff -urN readline-8.2.13-orig/examples/rlfe/rlfe.c readline-8.2.13/examples/rlf
  
 diff -urN readline-8.2.13-orig/examples/rl-fgets.c readline-8.2.13/examples/rl-fgets.c
 --- readline-8.2.13-orig/examples/rl-fgets.c	2004-04-23 04:52:17.000000000 +0800
-+++ readline-8.2.13/examples/rl-fgets.c	2024-11-17 17:15:36.995689300 +0800
++++ readline-8.2.13/examples/rl-fgets.c	2024-11-26 16:26:40.468986000 +0800
 @@ -121,7 +121,9 @@
  #include <stdio.h>
  #include <strings.h>
@@ -1612,7 +985,7 @@ diff -urN readline-8.2.13-orig/examples/rl-fgets.c readline-8.2.13/examples/rl-f
  #include <readline/history.h>
 diff -urN readline-8.2.13-orig/examples/rlkeymaps.c readline-8.2.13/examples/rlkeymaps.c
 --- readline-8.2.13-orig/examples/rlkeymaps.c	2018-09-19 01:14:29.000000000 +0800
-+++ readline-8.2.13/examples/rlkeymaps.c	2024-11-17 17:15:36.995689300 +0800
++++ readline-8.2.13/examples/rlkeymaps.c	2024-11-26 16:26:40.468986000 +0800
 @@ -1,5 +1,7 @@
  #include <stdlib.h>
 +#ifdef HAVE_UNISTD_H
@@ -1623,7 +996,7 @@ diff -urN readline-8.2.13-orig/examples/rlkeymaps.c readline-8.2.13/examples/rlk
  
 diff -urN readline-8.2.13-orig/examples/rlptytest.c readline-8.2.13/examples/rlptytest.c
 --- readline-8.2.13-orig/examples/rlptytest.c	2022-07-26 22:23:57.000000000 +0800
-+++ readline-8.2.13/examples/rlptytest.c	2024-11-17 17:15:36.995689300 +0800
++++ readline-8.2.13/examples/rlptytest.c	2024-11-26 16:26:40.468986000 +0800
 @@ -15,7 +15,9 @@
  #include <curses.h>
  
@@ -1636,7 +1009,7 @@ diff -urN readline-8.2.13-orig/examples/rlptytest.c readline-8.2.13/examples/rlp
  
 diff -urN readline-8.2.13-orig/examples/rl-timeout.c readline-8.2.13/examples/rl-timeout.c
 --- readline-8.2.13-orig/examples/rl-timeout.c	2021-03-12 00:47:57.000000000 +0800
-+++ readline-8.2.13/examples/rl-timeout.c	2024-11-17 17:15:37.011311900 +0800
++++ readline-8.2.13/examples/rl-timeout.c	2024-11-26 16:39:52.339639100 +0800
 @@ -21,13 +21,19 @@
  
  /* Standard include files. stdio.h is required. */
@@ -1651,8 +1024,8 @@ diff -urN readline-8.2.13-orig/examples/rl-timeout.c readline-8.2.13/examples/rl
  #include <sys/types.h>
 +#ifdef HAVE_SYS_SELECT_H
  #include <sys/select.h>
-+#else
-+#include <WinSock2.h>
++#elif _WIN32
++#include <winsock2.h>
 +#endif
  
  #include <errno.h>
@@ -1669,7 +1042,7 @@ diff -urN readline-8.2.13-orig/examples/rl-timeout.c readline-8.2.13/examples/rl
  
 diff -urN readline-8.2.13-orig/gettimeofday.c readline-8.2.13/gettimeofday.c
 --- readline-8.2.13-orig/gettimeofday.c	1970-01-01 08:00:00.000000000 +0800
-+++ readline-8.2.13/gettimeofday.c	2024-11-17 17:15:37.011311900 +0800
++++ readline-8.2.13/gettimeofday.c	2024-11-26 16:26:40.484587200 +0800
 @@ -0,0 +1,120 @@
 +/* Port from gnulib
 +   Provide gettimeofday for systems that don't have it or for which it's broken.
@@ -1793,7 +1166,7 @@ diff -urN readline-8.2.13-orig/gettimeofday.c readline-8.2.13/gettimeofday.c
 +}
 diff -urN readline-8.2.13-orig/input.c readline-8.2.13/input.c
 --- readline-8.2.13-orig/input.c	2023-11-20 22:29:14.000000000 +0800
-+++ readline-8.2.13/input.c	2024-11-17 17:15:37.011311900 +0800
++++ readline-8.2.13/input.c	2024-11-26 16:26:40.484587200 +0800
 @@ -140,7 +140,7 @@
  
  /* I don't know how to set a timeout for _getch() in MinGW32, so we use
@@ -1889,7 +1262,7 @@ diff -urN readline-8.2.13-orig/input.c readline-8.2.13/input.c
        result = 0;
 diff -urN readline-8.2.13-orig/Makefile.in readline-8.2.13/Makefile.in
 --- readline-8.2.13-orig/Makefile.in	2021-11-26 02:32:47.000000000 +0800
-+++ readline-8.2.13/Makefile.in	2024-11-17 17:21:29.164542800 +0800
++++ readline-8.2.13/Makefile.in	2024-11-26 16:26:40.500184200 +0800
 @@ -37,6 +37,8 @@
  INSTALL_PROGRAM = @INSTALL_PROGRAM@
  INSTALL_DATA = @INSTALL_DATA@
@@ -2533,7 +1906,7 @@ diff -urN readline-8.2.13-orig/Makefile.in readline-8.2.13/Makefile.in
 +histsearch.$(OBJEXT): histsearch.c
 diff -urN readline-8.2.13-orig/posixselect.h readline-8.2.13/posixselect.h
 --- readline-8.2.13-orig/posixselect.h	2009-04-20 00:59:16.000000000 +0800
-+++ readline-8.2.13/posixselect.h	2024-11-17 17:15:37.026932300 +0800
++++ readline-8.2.13/posixselect.h	2024-11-26 16:26:40.500184200 +0800
 @@ -27,7 +27,18 @@
  
  #if defined (HAVE_SELECT)
@@ -2556,7 +1929,7 @@ diff -urN readline-8.2.13-orig/posixselect.h readline-8.2.13/posixselect.h
  #if defined (HAVE_SYS_SELECT_H)
 diff -urN readline-8.2.13-orig/posixtime.h readline-8.2.13/posixtime.h
 --- readline-8.2.13-orig/posixtime.h	2021-11-05 21:54:58.000000000 +0800
-+++ readline-8.2.13/posixtime.h	2024-11-17 17:15:37.026932300 +0800
++++ readline-8.2.13/posixtime.h	2024-11-26 16:26:40.500184200 +0800
 @@ -48,6 +48,8 @@
  };
  #endif
@@ -2568,7 +1941,7 @@ diff -urN readline-8.2.13-orig/posixtime.h readline-8.2.13/posixtime.h
  #endif
 diff -urN readline-8.2.13-orig/readline.c readline-8.2.13/readline.c
 --- readline-8.2.13-orig/readline.c	2024-08-03 02:53:58.000000000 +0800
-+++ readline-8.2.13/readline.c	2024-11-17 17:15:37.026932300 +0800
++++ readline-8.2.13/readline.c	2024-11-26 16:26:40.500184200 +0800
 @@ -1401,7 +1401,7 @@
    rl_bind_keyseq_if_unbound ("\033[1;3C", rl_forward_word);
    rl_bind_keyseq_if_unbound ("\033[1;3D", rl_backward_word);
@@ -2580,7 +1953,7 @@ diff -urN readline-8.2.13-orig/readline.c readline-8.2.13/readline.c
    rl_bind_keyseq_if_unbound ("\340M", rl_forward_char);
 diff -urN readline-8.2.13-orig/rldefs.h readline-8.2.13/rldefs.h
 --- readline-8.2.13-orig/rldefs.h	2021-01-22 23:06:31.000000000 +0800
-+++ readline-8.2.13/rldefs.h	2024-11-17 17:15:37.042554200 +0800
++++ readline-8.2.13/rldefs.h	2024-11-26 16:26:40.515832600 +0800
 @@ -40,7 +40,7 @@
  #  if defined (HAVE_TERMIO_H)
  #    define TERMIO_TTY_DRIVER
@@ -2592,7 +1965,7 @@ diff -urN readline-8.2.13-orig/rldefs.h readline-8.2.13/rldefs.h
  #      define NO_TTY_DRIVER
 diff -urN readline-8.2.13-orig/rlprivate.h readline-8.2.13/rlprivate.h
 --- readline-8.2.13-orig/rlprivate.h	2022-08-12 06:35:16.000000000 +0800
-+++ readline-8.2.13/rlprivate.h	2024-11-17 17:15:37.042554200 +0800
++++ readline-8.2.13/rlprivate.h	2024-11-26 16:26:40.515832600 +0800
 @@ -303,7 +303,7 @@
  
  extern int _rl_timeout_init (void);
@@ -2604,7 +1977,7 @@ diff -urN readline-8.2.13-orig/rlprivate.h readline-8.2.13/rlprivate.h
  #endif
 diff -urN readline-8.2.13-orig/rlstdc.h readline-8.2.13/rlstdc.h
 --- readline-8.2.13-orig/rlstdc.h	2011-03-27 03:00:21.000000000 +0800
-+++ readline-8.2.13/rlstdc.h	2024-11-17 17:15:37.042554200 +0800
++++ readline-8.2.13/rlstdc.h	2024-11-26 16:26:40.515832600 +0800
 @@ -29,7 +29,7 @@
  	extern char *func PARAMS((char *, char *, int)); */
  
@@ -2616,7 +1989,7 @@ diff -urN readline-8.2.13-orig/rlstdc.h readline-8.2.13/rlstdc.h
  #    define PARAMS(protos) ()
 diff -urN readline-8.2.13-orig/rltty.c readline-8.2.13/rltty.c
 --- readline-8.2.13-orig/rltty.c	2024-08-03 02:52:42.000000000 +0800
-+++ readline-8.2.13/rltty.c	2024-11-17 17:15:37.042554200 +0800
++++ readline-8.2.13/rltty.c	2024-11-26 16:26:40.515832600 +0800
 @@ -738,9 +738,9 @@
  int
  rl_restart_output (int count, int key)
@@ -2649,7 +2022,7 @@ diff -urN readline-8.2.13-orig/rltty.c readline-8.2.13/rltty.c
  /* **************************************************************** */
 diff -urN readline-8.2.13-orig/shlib/exported.sh readline-8.2.13/shlib/exported.sh
 --- readline-8.2.13-orig/shlib/exported.sh	1970-01-01 08:00:00.000000000 +0800
-+++ readline-8.2.13/shlib/exported.sh	2024-11-17 17:15:37.058202800 +0800
++++ readline-8.2.13/shlib/exported.sh	2024-11-26 16:26:40.531476800 +0800
 @@ -0,0 +1,23 @@
 +#! /bin/sh
 +#
@@ -2676,7 +2049,7 @@ diff -urN readline-8.2.13-orig/shlib/exported.sh readline-8.2.13/shlib/exported.
 +dumpbin -nologo -symbols "$1" | gawk '     {last_section=section; section=$ 3};     /^COFF SYMBOL TABLE/{for(i in hide) delete hide[i]};     /Section length .*#relocs.*(pick any)/{hide[last_section]=1};     /^ *Symbol name *: /{split($ 0,sn,":"); si=substr(sn[2],2)};     /^ *Type *: code/{print "T",si,substr(si,length(prfx))};     /^ *Type *: data/{print "I",si,substr(si,length(prfx))};     $ 0!~/External *\|/{next};     / 0+ UNDEF /{next}; / UNDEF \([^|]\)*()/{next};     {if(hide[section]) next};     {f="D"}; $ 0~/\(\).*\|/{f="T"};     {split($ 0,a,/\||\r/); split(a[2],s)};     s[1]~/^[@?]/{print f,s[1],s[1]; next};     s[1]~prfx {split(s[1],t,"@"); print f,t[1],substr(t[1],length(prfx))}     ' prfx=^ | /usr/bin/sed '/ __gnu_lto/d'
 diff -urN readline-8.2.13-orig/shlib/Makefile.in readline-8.2.13/shlib/Makefile.in
 --- readline-8.2.13-orig/shlib/Makefile.in	2020-10-30 03:47:57.000000000 +0800
-+++ readline-8.2.13/shlib/Makefile.in	2024-11-17 17:15:37.058202800 +0800
++++ readline-8.2.13/shlib/Makefile.in	2024-11-26 16:26:40.531476800 +0800
 @@ -38,6 +38,8 @@
  INSTALL_PROGRAM = @INSTALL_PROGRAM@
  INSTALL_DATA = @INSTALL_DATA@
@@ -3355,7 +2728,7 @@ diff -urN readline-8.2.13-orig/shlib/Makefile.in readline-8.2.13/shlib/Makefile.
 +histsearch.$(OBJEXT): histsearch.c
 diff -urN readline-8.2.13-orig/support/shlib-install readline-8.2.13/support/shlib-install
 --- readline-8.2.13-orig/support/shlib-install	2019-12-13 22:46:13.000000000 +0800
-+++ readline-8.2.13/support/shlib-install	2024-11-17 17:15:37.058202800 +0800
++++ readline-8.2.13/support/shlib-install	2024-11-26 16:26:40.531476800 +0800
 @@ -77,7 +77,7 @@
  	fi ;;
  cygwin*|mingw*)
@@ -3376,7 +2749,7 @@ diff -urN readline-8.2.13-orig/support/shlib-install readline-8.2.13/support/shl
  		${echo} ${RM} ${BINDIR}/${LIBNAME}
 diff -urN readline-8.2.13-orig/support/shobj-conf readline-8.2.13/support/shobj-conf
 --- readline-8.2.13-orig/support/shobj-conf	2021-12-03 23:54:46.000000000 +0800
-+++ readline-8.2.13/support/shobj-conf	2024-11-17 17:15:37.073796900 +0800
++++ readline-8.2.13/support/shobj-conf	2024-11-26 16:26:40.547049000 +0800
 @@ -478,7 +478,7 @@
  
  cygwin*)
@@ -3398,7 +2771,7 @@ diff -urN readline-8.2.13-orig/support/shobj-conf readline-8.2.13/support/shobj-
  	SHLIB_LIBS='$(TERMCAP_LIB)'
 diff -urN readline-8.2.13-orig/terminal.c readline-8.2.13/terminal.c
 --- readline-8.2.13-orig/terminal.c	2022-04-05 22:44:17.000000000 +0800
-+++ readline-8.2.13/terminal.c	2024-11-17 17:15:37.073796900 +0800
++++ readline-8.2.13/terminal.c	2024-11-26 16:26:40.547049000 +0800
 @@ -69,7 +69,7 @@
  #include "rlshell.h"
  #include "xmalloc.h"

@@ -1,0 +1,12 @@
+diff -urN FreeGLUT-3.6.0-orig/src/mswin/fg_spaceball_mswin.c FreeGLUT-3.6.0/src/mswin/fg_spaceball_mswin.c
+--- FreeGLUT-3.6.0-orig/src/mswin/fg_spaceball_mswin.c	2024-06-10 01:44:13.000000000 +0800
++++ FreeGLUT-3.6.0/src/mswin/fg_spaceball_mswin.c	2024-11-28 17:25:30.863929100 +0800
+@@ -36,7 +36,7 @@
+  * six degree of freedom navigator.
+  */
+ 
+-#if(_WIN32_WINNT >= 0x0501)
++#if(_WIN32_WINNT >= _WIN32_WINNT_WINXP)
+ 
+ #include <GL/freeglut.h>
+ #include <stdlib.h>

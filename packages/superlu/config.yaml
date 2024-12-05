@@ -7,5 +7,4 @@ steps:
       - doxygen
       - GKlib
       - METIS
-      - openblas
     run: build.bat

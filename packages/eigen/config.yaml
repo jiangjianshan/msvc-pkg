@@ -8,5 +8,4 @@ steps:
       - SuiteSparse
       - superlu
       - sparsehash
-      - llvm-project
     run: build.bat

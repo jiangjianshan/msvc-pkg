@@ -13,7 +13,7 @@ for /f "delims=" %%i in ('yq -r ".version" config.yaml') do set PKG_VER=%%i
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\win
-set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -openmp:llvm
+set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -fp:precise -openmp:llvm
 set DEFINES=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS
 
 
@@ -38,6 +38,26 @@ rem ============================================================================
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && nmake -f makefile.vc install INSTALLDIR=%PREFIX%
 if %errorlevel% neq 0 exit 1
+echo "Generating tcl.pc to %PREFIX%\lib\pkgconfig"
+set PC_FILE="%PREFIX%\lib\pkgconfig\tcl.pc"
+if not exist "%PREFIX%\lib\pkgconfig" mkdir "%PREFIX%\lib\pkgconfig"
+echo # tcl pkg-config source file> %PC_FILE%
+echo:>> %PC_FILE%
+echo prefix=%PREFIX:\=/%>> %PC_FILE%
+echo exec_prefix=%PREFIX:\=/%>> %PC_FILE%
+echo libdir=%PREFIX:\=/%/lib>> %PC_FILE%
+echo includedir=%PREFIX:\=/%/include>> %PC_FILE%
+echo libfile=tcl86t.lib>> %PC_FILE%
+echo:>> %PC_FILE%
+echo Name: Tool Command Language>> %PC_FILE%
+echo Description: Tcl is a powerful, easy-to-learn dynamic programming language, suitable for a wide range of uses.>> %PC_FILE%
+echo URL: https://www.tcl-lang.org/>> %PC_FILE%
+echo Version: 8.6.15>> %PC_FILE%
+echo Requires.private: zlib>= 1.2.3>> %PC_FILE%
+echo Libs: -L${libdir} -ltcl86t -ltclstub86>> %PC_FILE%
+echo Libs.private: -lzdll>> %PC_FILE%
+echo Cflags: -I${includedir}>> %PC_FILE%
+echo "Done"
 call :clean_build
 exit /b 0
 

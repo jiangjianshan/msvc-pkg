@@ -5,6 +5,8 @@ steps:
   one:
     dependencies:
       - bzip2
+      - dlfcn-win32
+      - getopt
       - libiconv
       - xz
       - winpthreads

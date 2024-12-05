@@ -4,4 +4,5 @@ url: https://ftp.gnu.org/pub/gnu/make/make-4.4.tar.gz
 steps:
   one:
     dependencies:
+      - getopt
     run: build.bat

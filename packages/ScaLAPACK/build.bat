@@ -13,9 +13,9 @@ for /f "delims=" %%i in ('yq -r ".version" config.yaml') do set PKG_VER=%%i
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
-set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -openmp:llvm
+set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -fp:precise -openmp:llvm
 set DEFINES=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS
-
+set F_OPTIONS=-nologo -Qdiag-disable:10448
 
 call :configure_stage
 call :build_stage
@@ -30,16 +30,19 @@ rem ============================================================================
 call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
+rem TODO:
+rem 1. If set '-DBUILD_SHARED_LIBS=ON', then will have the issues of
+rem    'error LNK2001: unresolved external symbol'
 cmake -G "Ninja"                                                               ^
-  -DBUILD_SHARED_LIBS=ON                                                       ^
   -DCMAKE_BUILD_TYPE=Release                                                   ^
   -DCMAKE_C_COMPILER=cl                                                        ^
   -DCMAKE_C_FLAGS="%OPTIONS% %DEFINES%"                                        ^
   -DCMAKE_CXX_COMPILER=cl                                                      ^
-  -DCMAKE_CXX_FLAGS="-EHsc %OPTIONS% %DEFINES%"                                ^
+  -DCMAKE_Fortran_COMPILER=ifort                                               ^
+  -DCMAKE_Fortran_FLAGS="%F_OPTIONS%"                                          ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
-  -Dtiff-tests=OFF                                                             ^
-  -Dtiff-docs=OFF                                                              ^
+  -DCMAKE_POSITION_INDEPENDENT_CODE=ON                                         ^
+  -DSCALAPACK_BUILD_TESTS=OFF                                                  ^
   ..
 if %errorlevel% neq 0 exit 1
 exit /b 0
@@ -61,6 +64,9 @@ rem ============================================================================
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install
 if %errorlevel% neq 0 exit 1
+if not exist "%PREFIX%/lib/cmake/scalapack" (
+  mklink /D "%PREFIX%/lib/cmake/scalapack" "%PREFIX%/lib/cmake/scalapack-2.1.0"
+)
 call :clean_build
 exit /b 0
 
@@ -70,7 +76,15 @@ rem  Clean files generated during build procedure
 rem ==============================================================================
 :clean_build
 echo "Cleaning %PKG_NAME% %PKG_VER%"
-cd "%SRC_DIR%" && if exist "%BUILD_DIR%" rmdir /s /q "%BUILD_DIR%"
+cd "%SRC_DIR%"
+if exist "%BUILD_DIR%" rmdir /s /q "%BUILD_DIR%"
+rmdir /s /q BLACS\INSTALL\CMakeFiles
+del /q BLACS\INSTALL\CMakeCache.txt
+del /q BLACS\INSTALL\.ninja_deps
+del /q BLACS\INSTALL\.ninja_log
+del /q BLACS\INSTALL\build.ninja
+del /q BLACS\INSTALL\cmake_install.cmake
+del /q BLACS\INSTALL\*.exe
 exit /b 0
 
 

@@ -4,4 +4,5 @@ url: https://github.com/libexpat/libexpat/releases/download/R_2_6_2/expat-2.6.2.
 steps:
   one:
     dependencies:
+      - dlfcn-win32
     run: build.bat

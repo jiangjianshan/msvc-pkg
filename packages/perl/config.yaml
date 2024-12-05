@@ -1,6 +1,6 @@
 name: perl
-version: 5.40.0
-url: https://www.cpan.org/src/5.0/perl-5.40.0.tar.gz
+version: 5.41.6
+url: https://www.cpan.org/src/5.0/perl-5.41.6.tar.gz
 steps:
   one:
     dependencies:

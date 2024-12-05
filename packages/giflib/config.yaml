@@ -4,4 +4,5 @@ url: https://sourceforge.net/projects/giflib/files/giflib-5.2.2.tar.gz
 steps:
   one:
     dependencies:
+      - getopt
     run: build.bat

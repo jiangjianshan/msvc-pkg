@@ -4,5 +4,6 @@ url: https://ftp.gnu.org/gnu/gsl/gsl-2.8.tar.gz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
       - libiconv
     run: build.sh

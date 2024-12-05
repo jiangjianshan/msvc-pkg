@@ -4,6 +4,7 @@ url: https://ftp.gnu.org/gnu/readline/readline-8.2.13.tar.gz
 steps:
   one:
     dependencies:
+      - getopt
       - ncurses
       - pcre
     run: build.sh

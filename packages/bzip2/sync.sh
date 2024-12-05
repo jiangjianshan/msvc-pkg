@@ -20,6 +20,7 @@ patch_package()
   cd "$SRC_DIR"
   sed                                                                          \
     -e '/DESCRIPTION/d'                                                        \
+    -e 's|LIBBZ2|BZ2|g'                                                        \
     -i libbz2.def
 }
 

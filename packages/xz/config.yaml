@@ -4,5 +4,6 @@ url: https://github.com/tukaani-project/xz/archive/refs/tags/v5.4.6.tar.gz
 steps:
   one:
     dependencies:
+      - getopt
       - winpthreads
     run: build.bat

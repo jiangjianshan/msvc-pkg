@@ -4,6 +4,7 @@ url: https://ftp.gnu.org/gnu/grep/grep-3.11.tar.xz
 steps:
   one:
     dependencies:
+      - getopt
       - libsigsegv
       - libiconv
       - gettext

@@ -5,8 +5,8 @@ steps:
   one:
     dependencies:
       - sqlite
-      - tiff
       - curl
       - googletest
+      - libtiff
       - winpthreads
     run: build.bat

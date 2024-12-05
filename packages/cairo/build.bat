@@ -13,7 +13,7 @@ for /f "delims=" %%i in ('yq -r ".version" config.yaml') do set PKG_VER=%%i
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
-set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -openmp:llvm
+set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -fp:precise -openmp:llvm
 set DEFINES=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS
 
 
@@ -39,8 +39,8 @@ meson setup "%BUILD_DIR%"                                                      ^
   -Dc_args="%OPTIONS% %DEFINES%"                                               ^
   -Dcpp_std=c++17                                                              ^
   -Dcpp_args="-EHsc %OPTIONS% %DEFINES%"                                       ^
-  -Dc_winlibs="Ole32.lib,User32.lib"                                           ^
-  -Dcpp_winlibs="Ole32.lib,User32.lib"                                         ^
+  -Dc_winlibs="Ole32.lib,User32.lib,libpng.lib,zlib.lib"                       ^
+  -Dcpp_winlibs="Ole32.lib,User32.lib,libpng.lib,zlib.lib"                     ^
   -Ddefault_library=shared                                                     ^
   -Dfontconfig=enabled                                                         ^
   -Dfreetype=enabled                                                           ^

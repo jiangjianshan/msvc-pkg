@@ -13,8 +13,9 @@ for /f "delims=" %%i in ('yq -r ".version" config.yaml') do set PKG_VER=%%i
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
-set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -openmp:llvm
+set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -fp:precise -openmp:llvm
 set DEFINES=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS
+set F_OPTIONS=-nologo -Qdiag-disable:10448
 
 
 call :configure_stage
@@ -37,12 +38,16 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_C_FLAGS="%OPTIONS% %DEFINES%"                                        ^
   -DCMAKE_CXX_COMPILER=cl                                                      ^
   -DCMAKE_CXX_FLAGS="-EHsc %OPTIONS% %DEFINES%"                                ^
-  -DCMAKE_Fortran_COMPILER=flang-new                                           ^
+  -DCMAKE_Fortran_COMPILER=ifort                                               ^
+  -DCMAKE_Fortran_FLAGS="%F_OPTIONS%"                                          ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
+  -DBUILD_DEPRECATED=ON                                                        ^
   -DBUILD_INDEX64=ON                                                           ^
   -DCBLAS=ON                                                                   ^
   -DLAPACKE=ON                                                                 ^
   -DLAPACKE_WITH_TMG=ON                                                        ^
+  -DUSE_OPTIMIZED_BLAS=OFF                                                     ^
+  -DUSE_OPTIMIZED_LAPACK=OFF                                                   ^
   ..
 if %errorlevel% neq 0 exit 1
 exit /b 0

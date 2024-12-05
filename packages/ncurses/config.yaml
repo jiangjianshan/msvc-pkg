@@ -4,6 +4,7 @@ url: https://ftp.gnu.org/gnu/ncurses/ncurses-6.5.tar.gz
 steps:
   one:
     dependencies:
+      - getopt
       - pcre2
       - winpthreads
     run: build.sh

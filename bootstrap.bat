@@ -24,6 +24,7 @@ cd tmp
 call :check_wget || goto :end
 call :check_vcbuildtools || goto :end
 call :check_cuda || goto :end
+call :check_oneapi || goto :end
 call :check_python || goto :end
 call :check_git || goto :end
 
@@ -140,6 +141,50 @@ exit /b 0
 
 
 rem ==============================================================================
+rem  Check Intel OneAPI whether has been installed. If not, install it automatically
+rem ==============================================================================
+:check_oneapi
+set ONEAPI_ROOT="C:\Program Files (x86)\Intel\oneAPI"
+if not exist "!ONEAPI_ROOT!" (
+  for /f "usebackq tokens=*" %%i in (`wmic cpu get name ^| findstr "Intel"`) do (
+    set intel_cpu=%%i
+  )
+  if "!intel_cpu!" == "" (
+    echo You don't have Intel CPU on your PC, but use Intel OneAPI should be OK.
+  )
+  :: https://www.intel.com/content/www/us/en/developer/articles/tool/oneapi-standalone-components.html
+  if not exist "w_dpcpp-cpp-compiler_p_2024.2.0.491_offline.exe" (
+    echo [%~nx0] Downloading Intel oneAPI DPC++/C++ Compiler
+    wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/7991e201-ca0f-4689-bdb6-1ed73a8246fd/w_dpcpp-cpp-compiler_p_2024.2.0.491_offline.exe || goto :end
+  )
+  echo [%~nx0] Installing Intel oneAPI DPC++/C++ Compiler
+  w_dpcpp-cpp-compiler_p_2024.2.0.491_offline.exe -a --silent --eula accept
+
+  if not exist "w_fortran-compiler_p_2024.2.0.424_offline.exe" (
+    echo [%~nx0] Downloading Intel Fortran Compiler Classic and Intel Fortran Compiler
+    wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/7feb5647-59dd-420d-8753-345d31e177dc/w_fortran-compiler_p_2024.2.0.424_offline.exe || goto :end
+  )
+  echo [%~nx0] Installing Intel Fortran Compiler Classic and Intel Fortran Compiler
+  w_fortran-compiler_p_2024.2.0.424_offline.exe -a --silent --eula accept
+
+  if not exist "w_onemkl_p_2024.2.0.662_offline.exe" (
+    echo [%~nx0] Downloading Intel MKL Library
+    wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/7816a8cf-2378-4d49-bfa6-6013a3d7be6a/w_onemkl_p_2024.2.0.662_offline.exe || goto :end
+  )
+  echo [%~nx0] Installing Intel MKL Library
+  w_onemkl_p_2024.2.0.662_offline.exe -a --silent --eula accept
+
+  if not exist "w_mpi_oneapi_p_2021.13.0.717_offline.exe" (
+    echo [%~nx0] Downloading Intel MPI Library
+    wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/e20e3226-9264-41a0-bc18-6026d297e10d/w_mpi_oneapi_p_2021.13.0.717_offline.exe || goto :end
+  )
+  echo [%~nx0] Installing Intel MPI Library
+  w_mpi_oneapi_p_2021.13.0.717_offline.exe -a --silent --eula accept
+)
+exit /b 0
+
+
+rem ==============================================================================
 rem Check wget whether has been installed
 rem ==============================================================================
 :check_wget
@@ -199,7 +244,7 @@ if "%errorlevel%" neq "0" (
 )
 echo Installing 3rd party libraries for Python ...
 set PATH=C:\Python312\Scripts;C:\Python312;%PATH%
-python -m pip install --upgrade pip
+python -m pip install --upgrade pip setuptools
 python -m pip install --upgrade meson pygments pyyaml requests rich yamllint psutil || goto :end
 echo Done
 exit /b 0

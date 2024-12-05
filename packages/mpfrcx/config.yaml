@@ -4,6 +4,7 @@ url: https://www.multiprecision.org/downloads/mpfrcx-0.6.3.tar.gz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
       - yasm
       - gmp:two
       - mpfr

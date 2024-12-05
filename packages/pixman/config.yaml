@@ -6,7 +6,7 @@ steps:
     dependencies:
       - pkg-config
       - libpng
-      - glib
+      - glib:two
       - zlib
       - winpthreads
     run: build.bat

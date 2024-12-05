@@ -1,0 +1,11 @@
+name: CoinUtils
+version: 2.11.12
+url: https://github.com/coin-or/CoinUtils/archive/refs/tags/releases/2.11.12.tar.gz
+steps:
+  one:
+    dependencies:
+      - bzip2
+      - glpk
+      - lapack
+      - zlib
+    run: build.sh

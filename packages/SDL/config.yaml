@@ -1,0 +1,8 @@
+name: SDL
+version: 2.30.9
+url: https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.30.9.tar.gz
+steps:
+  one:
+    dependencies:
+      - libiconv
+    run: build.bat

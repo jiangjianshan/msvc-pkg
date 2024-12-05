@@ -13,7 +13,7 @@ for /f "delims=" %%i in ('yq -r ".version" config.yaml') do set PKG_VER=%%i
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
-set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -openmp:llvm
+set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -fp:precise -openmp:llvm
 set DEFINES=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS
 
 
@@ -57,8 +57,8 @@ rem ============================================================================
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install
 if %errorlevel% neq 0 exit 1
-if not exist "%PREFIX%\bin\zdll.dll" (
-  mklink "%PREFIX%\bin\zdll.dll" "%PREFIX%\bin\zlib1.dll"
+if not exist "%PREFIX%\lib\zdll.lib" (
+  mklink "%PREFIX%\lib\zdll.lib" "%PREFIX%\lib\zlib.lib"
 )
 if not exist "%PREFIX%\lib\z.lib" (
   mklink "%PREFIX%\lib\z.lib" "%PREFIX%\lib\zlib.lib"

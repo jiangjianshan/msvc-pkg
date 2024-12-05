@@ -13,7 +13,7 @@ for /f "delims=" %%i in ('yq -r ".version" config.yaml') do set PKG_VER=%%i
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
-set OPTIONS=-nologo -diagnostics:column -wd4819 -openmp:llvm
+set OPTIONS=-nologo -diagnostics:column -wd4819 -fp:precise -openmp:llvm
 set DEFINES=-DWIN32 -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_SILENCE_NONFLOATING_COMPLEX_DEPRECATION_WARNING
 set BOOTSTRAP_OPTIONS=-Xclang -O3 -march=native -fms-extensions -fms-compatibility -fms-compatibility-version=19.41
 

@@ -1,0 +1,9 @@
+name: libvideogfx
+version: 1.0.8
+url: http://dirk-farin.net/software/libvideogfx/data/libvideogfx-1.0.8.tar.gz
+steps:
+  one:
+    dependencies:
+      - libjpeg-turbo
+      - libpng
+    run: build.sh

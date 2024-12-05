@@ -13,7 +13,7 @@ for /f "delims=" %%i in ('yq -r ".version" config.yaml') do set PKG_VER=%%i
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%
-set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -openmp:llvm
+set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -fp:precise -openmp:llvm
 set DEFINES=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS
 
 
@@ -30,9 +30,10 @@ echo "Building %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%"
 set base_source=blocksort.c huffman.c crctable.c randtable.c compress.c decompress.c bzlib.c
 cl %OPTIONS% %DEFINES% /c %base_source%
-link /nologo /DLL /DEF:libbz2.def /OUT:libbz2.dll %base_source:.c=.obj%
+link /nologo /DLL /IMPLIB:bz2.lib /DEF:libbz2.def /OUT:bz2.dll %base_source:.c=.obj%
 cl %OPTIONS% %DEFINES% /c bzip2.c
-link /nologo /OUT:bzip2.exe bzip2.obj libbz2.lib
+link /nologo /OUT:bzip2.exe bzip2.obj bz2.lib
+lib /OUT:libbz2.lib %base_source:.c=.obj%
 cl %OPTIONS% %DEFINES% /c bzip2recover.c
 link /nologo /OUT:bzip2recover.exe bzip2recover.obj
 exit /b 0
@@ -77,25 +78,23 @@ cd "%BUILD_DIR%" && (
 	echo .dll man1\bzmore.1> "%PREFIX%\share\man\man1\bzless.1"
 	echo .dll man1\bzdiff.1> "%PREFIX%\share\man\man1\bzcmp.1"
 )
-echo "Generating bzip2.pc"
+echo "Generating bzip2.pc to %PREFIX%\lib\pkgconfig"
+set PC_FILE=%PREFIX%\lib\pkgconfig\bzip2.pc
 if not exist "%PREFIX%\lib\pkgconfig" mkdir "%PREFIX%\lib\pkgconfig"
-echo prefix=%PREFIX:\=/%> "%PREFIX%\lib\pkgconfig\bzip2.pc"
-echo exec_prefix=%PREFIX:\=/%>> %PREFIX%\lib\pkgconfig\bzip2.pc"
-echo libdir=%PREFIX:\=/%/lib>> %PREFIX%\lib\pkgconfig\bzip2.pc"
-echo sharedlibdir=%PREFIX:\=/%/lib>> %PREFIX%\lib\pkgconfig\bzip2.pc"
-echo includedir=%PREFIX:\=/%/include>> %PREFIX%\lib\pkgconfig\bzip2.pc"
-echo:>> %PREFIX%\lib\pkgconfig\bzip2.pc"
-echo Name: bzip2>> "%PREFIX%\lib\pkgconfig\bzip2.pc"
-echo Description: bzip2 compression library>> "%PREFIX%\lib\pkgconfig\bzip2.pc"
-echo Version: 1.0.8>> "%PREFIX%\lib\pkgconfig\bzip2.pc"
-echo:>> %PREFIX%\lib\pkgconfig\bzip2.pc"
-echo Requires:>> %PREFIX%\lib\pkgconfig\bzip2.pc"
-echo Libs: -L${libdir} -L${sharedlibdir} -lbz2>> %PREFIX%\lib\pkgconfig\bzip2.pc"
-echo Cflags: -I${includedir}>> %PREFIX%\lib\pkgconfig\bzip2.pc"
+echo prefix=%PREFIX:\=/%> %PC_FILE%
+echo exec_prefix=%PREFIX:\=/%>> %PC_FILE%
+echo libdir=%PREFIX:\=/%/lib>> %PC_FILE%
+echo sharedlibdir=%PREFIX:\=/%/lib>> %PC_FILE%
+echo includedir=%PREFIX:\=/%/include>> %PC_FILE%
+echo:>> %PC_FILE%
+echo Name: bzip2>> %PC_FILE%
+echo Description: bzip2 compression library>> %PC_FILE%
+echo Version: 1.0.8>> %PC_FILE%
+echo:>> %PC_FILE%
+echo Requires:>> %PC_FILE%
+echo Libs: -L${libdir} -L${sharedlibdir} -lbz2>> %PC_FILE%
+echo Cflags: -I${includedir}>> %PC_FILE%
 echo "Done"
-if not exist "%PREFIX%\lib\bz2.lib" (
-  mklink "%PREFIX%\lib\bz2.lib" "%PREFIX%\lib\libz2.lib"
-)
 call :clean_build
 exit /b 0
 

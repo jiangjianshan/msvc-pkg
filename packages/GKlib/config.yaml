@@ -4,4 +4,5 @@ url: https://github.com/KarypisLab/GKlib/archive/refs/tags/METIS-v5.1.1-DistDGL-
 steps:
   one:
     dependencies:
+      - getopt
     run: build.bat

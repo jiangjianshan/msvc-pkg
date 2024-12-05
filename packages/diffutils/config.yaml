@@ -4,6 +4,7 @@ url: https://ftp.gnu.org/gnu/diffutils/diffutils-3.10.tar.xz
 steps:
   one:
     dependencies:
+      - getopt
       - libiconv
       - libsigsegv
       - gettext

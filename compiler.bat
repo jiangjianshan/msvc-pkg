@@ -18,16 +18,13 @@ if not exist "%vcvarsall%" (
 echo Visual C++ Tools Version     : %vsversion%
 call "%vcvarsall%" %1
 
+rem Set Intel OneAPI environments
 set "ONEAPI_ROOT=%ProgramFiles(x86)%\Intel\oneAPI"
 if exist "%ONEAPI_ROOT%" (
-  rem Set Intel OneAPI environments
-  if "%1" == "x64" call "%ONEAPI_ROOT%\setvars.bat" intel64
-  if "%1" == "x86" (
-    rem https://www.intel.com/content/www/us/en/developer/articles/release-notes/intel-oneapi-toolkit-release-notes.html
-    echo "Warnings: The oneAPI toolkits no longer support 32-bit libraries, starting with the 2025.0 toolkit release"
-    echo "Warnings: Ignore Intel OneAPI initialization"
-  )
+  if "%1" == "x64" call "%ONEAPI_ROOT%\setvars.bat" intel64 vs2022 --include-intel-llvm
+  if "%1" == "x86" call "%ONEAPI_ROOT%\setvars.bat" ia32 vs2022 --include-intel-llvm
 )
+
 rem NOTE:
 rem 1. There may have name conflict between third-party libraries and compiler's one, e.g. icuuc.lib.
 rem    In order to link the correct one. The paths of some third-party libraries must be placed in

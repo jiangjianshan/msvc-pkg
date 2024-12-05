@@ -4,6 +4,8 @@ url: https://ftp.gnu.org/gnu/libidn/libidn2-2.3.7.tar.gz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
+      - getopt
       - gettext
       - libiconv
       - libunistring

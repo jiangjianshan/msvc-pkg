@@ -1,0 +1,121 @@
+diff -urN xz-5.4.6-orig/debug/known_sizes.c xz-5.4.6/debug/known_sizes.c
+--- xz-5.4.6-orig/debug/known_sizes.c	2024-01-26 19:41:20.000000000 +0800
++++ xz-5.4.6/debug/known_sizes.c	2024-12-03 08:41:11.071087400 +0800
+@@ -18,7 +18,11 @@
+ #include "lzma.h"
+ #include <sys/types.h>
+ #include <sys/stat.h>
++#ifdef HAVE_UNISTD_H
+ #include <sys/unistd.h>
++#else
++#include <io.h>
++#endif
+ #include <stdio.h>
+ 
+ 
+diff -urN xz-5.4.6-orig/lib/getopt.c xz-5.4.6/lib/getopt.c
+--- xz-5.4.6-orig/lib/getopt.c	2024-01-26 19:41:20.000000000 +0800
++++ xz-5.4.6/lib/getopt.c	2024-12-03 08:38:15.702218900 +0800
+@@ -29,7 +29,11 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ 
+ #ifdef __VMS
+ # include <unixlib.h>
+diff -urN xz-5.4.6-orig/lib/getopt.in.h xz-5.4.6/lib/getopt.in.h
+--- xz-5.4.6-orig/lib/getopt.in.h	2024-01-26 19:41:20.000000000 +0800
++++ xz-5.4.6/lib/getopt.in.h	2024-12-03 08:41:37.075390900 +0800
+@@ -34,7 +34,11 @@
+ #if defined __GETOPT_PREFIX && !defined __need_getopt
+ # include <stdlib.h>
+ # include <stdio.h>
++#ifdef HAVE_UNISTD_H
+ # include <unistd.h>
++#else
++# include <io.h>
++#endif
+ # undef __need_getopt
+ # undef getopt
+ # undef getopt_long
+diff -urN xz-5.4.6-orig/src/common/tuklib_cpucores.c xz-5.4.6/src/common/tuklib_cpucores.c
+--- xz-5.4.6-orig/src/common/tuklib_cpucores.c	2024-01-26 19:41:20.000000000 +0800
++++ xz-5.4.6/src/common/tuklib_cpucores.c	2024-12-03 08:42:23.118192500 +0800
+@@ -34,7 +34,11 @@
+ #	include <sys/sysctl.h>
+ 
+ #elif defined(TUKLIB_CPUCORES_SYSCONF)
+-#	include <unistd.h>
++#   ifdef HAVE_UNISTD_H
++#	    include <unistd.h>
++#   else
++#       include <io.h>
++#   endif
+ 
+ // HP-UX
+ #elif defined(TUKLIB_CPUCORES_PSTAT_GETDYNAMIC)
+diff -urN xz-5.4.6-orig/src/common/tuklib_open_stdxxx.c xz-5.4.6/src/common/tuklib_open_stdxxx.c
+--- xz-5.4.6-orig/src/common/tuklib_open_stdxxx.c	2024-01-26 19:41:20.000000000 +0800
++++ xz-5.4.6/src/common/tuklib_open_stdxxx.c	2024-12-03 08:42:35.293025900 +0800
+@@ -16,7 +16,11 @@
+ #	include <stdlib.h>
+ #	include <errno.h>
+ #	include <fcntl.h>
++#ifdef HAVE_UNISTD_H
+ #	include <unistd.h>
++#else
++#   include <io.h>
++#endif
+ #endif
+ 
+ 
+diff -urN xz-5.4.6-orig/src/common/tuklib_physmem.c xz-5.4.6/src/common/tuklib_physmem.c
+--- xz-5.4.6-orig/src/common/tuklib_physmem.c	2024-01-26 19:41:20.000000000 +0800
++++ xz-5.4.6/src/common/tuklib_physmem.c	2024-12-03 08:42:41.417795900 +0800
+@@ -45,7 +45,11 @@
+ #	include <sys/systemcfg.h>
+ 
+ #elif defined(TUKLIB_PHYSMEM_SYSCONF)
++#ifdef HAVE_UNISTD_H
+ #	include <unistd.h>
++#else
++#   include <io.h>
++#endif
+ 
+ #elif defined(TUKLIB_PHYSMEM_SYSCTL)
+ #	ifdef HAVE_SYS_PARAM_H
+diff -urN xz-5.4.6-orig/src/xz/private.h xz-5.4.6/src/xz/private.h
+--- xz-5.4.6-orig/src/xz/private.h	2024-01-26 19:41:20.000000000 +0800
++++ xz-5.4.6/src/xz/private.h	2024-12-03 08:37:20.533795800 +0800
+@@ -21,7 +21,11 @@
+ #include <signal.h>
+ #include <locale.h>
+ #include <stdio.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ 
+ #include "tuklib_gettext.h"
+ #include "tuklib_progname.h"
+diff -urN xz-5.4.6-orig/src/xzdec/xzdec.c xz-5.4.6/src/xzdec/xzdec.c
+--- xz-5.4.6-orig/src/xzdec/xzdec.c	2024-01-26 19:41:20.000000000 +0800
++++ xz-5.4.6/src/xzdec/xzdec.c	2024-12-03 08:43:01.038733700 +0800
+@@ -16,7 +16,11 @@
+ #include <stdarg.h>
+ #include <errno.h>
+ #include <stdio.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ 
+ #include "getopt.h"
+ #include "tuklib_progname.h"

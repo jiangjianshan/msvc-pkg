@@ -1,0 +1,7 @@
+name: random123
+version: 1.14.0
+url: https://github.com/DEShawResearch/random123/archive/refs/tags/v1.14.0.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.bat

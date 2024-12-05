@@ -4,9 +4,20 @@ url: https://download.gnome.org/sources/glib/2.82/glib-2.82.1.tar.xz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
       - pkg-config
       - gettext
       - libffi
+      - pcre2
+      - zlib
+    run: build.bat
+  two:
+    dependencies:
+      - dlfcn-win32
+      - pkg-config
+      - gettext
+      - libffi
+      - gobject-introspection
       - pcre2
       - zlib
     run: build.bat

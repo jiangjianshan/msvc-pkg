@@ -40,6 +40,9 @@ download_extract()
         fi
         [[ $? -ne 0 ]] && exit 1
         ;;
+      *.zip)
+        unzip "$TAGS_DIR/$archive" -d "$SRC_DIR" >/dev/null
+        ;;
       *.*)
         if [[ -z $inner_dir ]]; then
           tar --strip-components=$strip_level -xvf "$TAGS_DIR/$archive" -C "$SRC_DIR" >/dev/null
@@ -102,26 +105,31 @@ git_rescure()
     [[ $? -ne 0 ]] && exit 1
   else
     cd "$SRC_DIR"
-    local branch_ver
-    branch_ver=$(git name-rev --name-only HEAD | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
-    if [ "$PKG_VER" == "$branch_ver" ]; then
-      echo "Branch version is $branch_ver"
-      for m in $(git status | grep -oP '(?<=modified:\s{3}).*(?=\s{1}\(.*\))'); do
-        rm -rfv "$m"
-      done
+    if [[ "$PKG_VER" == "master" ]] || [[ $PKG_VER == "main" ]]; then
       echo "Updating $branch_ver of repository $PKG_NAME"
-      # TODO:
-      # 1. Sometimes the network is not really good and git sync will often fail.
-      #    This may cause build procedure will break here during synchronization.
-      #    Temporary remove 'exit 1' here
       git submodule update --init --recursive
     else
-      cd "$RELS_DIR"
-      echo "Deleting the old branch version $branch_ver of respository $PKG_NAME"
-      rm -rf "$SRC_DIR"
-      echo "Cloning the new branch version $PKG_VER of respository $PKG_NAME"
-      git clone --recurse-submodules --shallow-submodules -b "$branch" "$PKG_URL" "$PKG_NAME"
-      [[ $? -ne 0 ]] && exit 1
+      local branch_ver
+      branch_ver=$(git name-rev --name-only HEAD | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
+      if [ "$PKG_VER" == "$branch_ver" ]; then
+        echo "Branch version is $branch_ver"
+        for m in $(git status | grep -oP '(?<=modified:\s{3}).*(?=\s{1}\(.*\))'); do
+          rm -rfv "$m"
+        done
+        echo "Updating $branch_ver of repository $PKG_NAME"
+        # TODO:
+        # 1. Sometimes the network is not really good and git sync will often fail.
+        #    This may cause build procedure will break here during synchronization.
+        #    Temporary remove 'exit 1' here
+        git submodule update --init --recursive
+      else
+        cd "$RELS_DIR"
+        echo "Deleting the old branch version $branch_ver of respository $PKG_NAME"
+        rm -rf "$SRC_DIR"
+        echo "Cloning the new branch version $PKG_VER of respository $PKG_NAME"
+        git clone --recurse-submodules --shallow-submodules -b "$branch" "$PKG_URL" "$PKG_NAME"
+        [[ $? -ne 0 ]] && exit 1
+      fi
     fi
   fi
   if [[ $(type -t patch_package) == function ]]; then

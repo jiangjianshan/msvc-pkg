@@ -1,0 +1,853 @@
+diff -urN libvideogfx-1.0.8-orig/examples/audioout.cc libvideogfx-1.0.8/examples/audioout.cc
+--- libvideogfx-1.0.8-orig/examples/audioout.cc	2013-06-24 20:45:15.000000000 +0800
++++ libvideogfx-1.0.8/examples/audioout.cc	2024-11-27 21:23:32.342040700 +0800
+@@ -1,8 +1,12 @@
+ 
+ #include <math.h>
+ #include <iostream>
+-#include "../libvideogfx/libvideogfx.hh"
++#include "libvideogfx/libvideogfx.hh"
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ 
+ using namespace std;
+ using namespace videogfx;
+diff -urN libvideogfx-1.0.8-orig/examples/chromaspaces.cc libvideogfx-1.0.8/examples/chromaspaces.cc
+--- libvideogfx-1.0.8-orig/examples/chromaspaces.cc	2013-06-24 20:45:15.000000000 +0800
++++ libvideogfx-1.0.8/examples/chromaspaces.cc	2024-11-27 21:06:34.769317600 +0800
+@@ -3,7 +3,11 @@
+ #include "../libvideogfx/x11/imgwin.hh"
+ #include "../libvideogfx/graphics/color/colorspace.hh"
+ #include "../libvideogfx/graphics/draw/draw.hh"
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ using namespace videogfx;
+ 
+ 
+diff -urN libvideogfx-1.0.8-orig/examples/convfile.cc libvideogfx-1.0.8/examples/convfile.cc
+--- libvideogfx-1.0.8-orig/examples/convfile.cc	2013-06-24 20:45:17.000000000 +0800
++++ libvideogfx-1.0.8/examples/convfile.cc	2024-11-27 21:06:34.769317600 +0800
+@@ -3,7 +3,11 @@
+ #include "libvideogfx/graphics/fileio/unified_reader.hh"
+ #include "libvideogfx/graphics/fileio/unified_writer.hh"
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ #include <iostream>
+ using namespace videogfx;
+ using namespace std;
+diff -urN libvideogfx-1.0.8-orig/examples/copytest.cc libvideogfx-1.0.8/examples/copytest.cc
+--- libvideogfx-1.0.8-orig/examples/copytest.cc	2013-06-24 20:45:15.000000000 +0800
++++ libvideogfx-1.0.8/examples/copytest.cc	2024-11-27 21:06:34.769317600 +0800
+@@ -6,7 +6,11 @@
+ #include "../libvideogfx/graphics/draw/scale.hh"
+ using namespace videogfx;
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ #include <time.h>
+ #include <stdlib.h>
+ 
+diff -urN libvideogfx-1.0.8-orig/examples/cputest.cc libvideogfx-1.0.8/examples/cputest.cc
+--- libvideogfx-1.0.8-orig/examples/cputest.cc	2013-06-24 20:45:15.000000000 +0800
++++ libvideogfx-1.0.8/examples/cputest.cc	2024-11-27 21:06:34.769317600 +0800
+@@ -1,7 +1,11 @@
+ 
+ #include "../libvideogfx/arch/cpu.hh"
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ #include <iostream>
+ using namespace std;
+ using namespace videogfx;
+diff -urN libvideogfx-1.0.8-orig/examples/drawingtest.cc libvideogfx-1.0.8/examples/drawingtest.cc
+--- libvideogfx-1.0.8-orig/examples/drawingtest.cc	2013-06-24 20:45:15.000000000 +0800
++++ libvideogfx-1.0.8/examples/drawingtest.cc	2024-11-27 21:06:34.784938900 +0800
+@@ -4,7 +4,11 @@
+ #include "../libvideogfx/graphics/draw/pixelops.hh"
+ using namespace videogfx;
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ #include <time.h>
+ #include <stdlib.h>
+ 
+diff -urN libvideogfx-1.0.8-orig/examples/dynarray.cc libvideogfx-1.0.8/examples/dynarray.cc
+--- libvideogfx-1.0.8-orig/examples/dynarray.cc	2013-06-24 20:45:15.000000000 +0800
++++ libvideogfx-1.0.8/examples/dynarray.cc	2024-11-27 21:23:40.365128800 +0800
+@@ -1,5 +1,5 @@
+ 
+-#include "../libvideogfx/libvideogfx.hh"
++#include "libvideogfx/libvideogfx.hh"
+ #include <iostream>
+ 
+ using namespace videogfx;
+diff -urN libvideogfx-1.0.8-orig/examples/filedisplay.cc libvideogfx-1.0.8/examples/filedisplay.cc
+--- libvideogfx-1.0.8-orig/examples/filedisplay.cc	2013-06-24 20:45:17.000000000 +0800
++++ libvideogfx-1.0.8/examples/filedisplay.cc	2024-11-27 21:06:34.784938900 +0800
+@@ -3,7 +3,11 @@
+ #include "../libvideogfx/x11/imgwin.hh"
+ #include "../libvideogfx/graphics/fileio/yuv4mpeg.hh"
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ #include <iostream>
+ using namespace videogfx;
+ using namespace std;
+diff -urN libvideogfx-1.0.8-orig/examples/filtertest.cc libvideogfx-1.0.8/examples/filtertest.cc
+--- libvideogfx-1.0.8-orig/examples/filtertest.cc	2013-06-24 20:45:17.000000000 +0800
++++ libvideogfx-1.0.8/examples/filtertest.cc	2024-11-27 21:06:34.784938900 +0800
+@@ -4,7 +4,11 @@
+ #include "../libvideogfx/graphics/filters/linear.hh"
+ #include "../libvideogfx/graphics/draw/blit.hh"
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ #include <iostream>
+ #include <iomanip>
+ using namespace std;
+diff -urN libvideogfx-1.0.8-orig/examples/imagetest.cc libvideogfx-1.0.8/examples/imagetest.cc
+--- libvideogfx-1.0.8-orig/examples/imagetest.cc	2013-06-24 20:45:15.000000000 +0800
++++ libvideogfx-1.0.8/examples/imagetest.cc	2024-11-27 21:24:00.841402900 +0800
+@@ -1,8 +1,12 @@
+ // use option -xv to open image with Xv extension
+ 
+ #include "../libvideogfx/x11/imgwin.hh"
+-#include "../libvideogfx/libvideogfx.hh"
++#include "libvideogfx/libvideogfx.hh"
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ using namespace videogfx;
+ 
+ #include <iostream>
+diff -urN libvideogfx-1.0.8-orig/examples/Makefile.am libvideogfx-1.0.8/examples/Makefile.am
+--- libvideogfx-1.0.8-orig/examples/Makefile.am	2013-06-24 20:45:17.000000000 +0800
++++ libvideogfx-1.0.8/examples/Makefile.am	2024-11-27 21:24:58.260638600 +0800
+@@ -29,141 +29,141 @@
+ test_libvideogfx_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ test_libvideogfx_CFLAGS = $(X_CFLAGS)
+ test_libvideogfx_LDFLAGS = -g $(X_LDFLAGS)
+-test_libvideogfx_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++test_libvideogfx_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ test_libvideogfx_SOURCES = test-libvideogfx.cc
+ 
+ dynarray_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ dynarray_CFLAGS = $(X_CFLAGS)
+ dynarray_LDFLAGS = -g $(X_LDFLAGS)
+-dynarray_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++dynarray_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ dynarray_SOURCES = dynarray.cc
+ 
+ symmatrix_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ symmatrix_CFLAGS = $(X_CFLAGS)
+ symmatrix_LDFLAGS = -g $(X_LDFLAGS)
+-symmatrix_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++symmatrix_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ symmatrix_SOURCES = symmatrix.cc
+ 
+ bitstream_output_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ bitstream_output_CFLAGS = $(X_CFLAGS)
+ bitstream_output_LDFLAGS = -g $(X_LDFLAGS)
+-bitstream_output_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++bitstream_output_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ bitstream_output_SOURCES = bitstream_output.cc
+ 
+ #smartpointer_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ #smartpointer_CFLAGS = $(X_CFLAGS)
+ #smartpointer_LDFLAGS = -g $(X_LDFLAGS)
+-#smartpointer_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++#smartpointer_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ #smartpointer_SOURCES = smartpointer.cc
+ 
+ #ppm2avi_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ #ppm2avi_CFLAGS = $(X_CFLAGS)
+ #ppm2avi_LDFLAGS = -g $(X_LDFLAGS)
+-#ppm2avi_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++#ppm2avi_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ #ppm2avi_SOURCES = ppm2avi.cc
+ 
+ cputest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ cputest_CFLAGS = $(X_CFLAGS)
+ cputest_LDFLAGS = -g $(X_LDFLAGS)
+-cputest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++cputest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ cputest_SOURCES = cputest.cc
+ 
+ pixmaptest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ pixmaptest_CFLAGS = $(X_CFLAGS)
+ pixmaptest_LDFLAGS = -g $(X_LDFLAGS)
+-pixmaptest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++pixmaptest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ pixmaptest_SOURCES = pixmaptest.cc
+ 
+ filtertest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ filtertest_CFLAGS = $(X_CFLAGS)
+ filtertest_LDFLAGS = -g $(X_LDFLAGS)
+-filtertest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++filtertest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ filtertest_SOURCES = filtertest.cc
+ 
+ ppmflip_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ ppmflip_CFLAGS = $(X_CFLAGS)
+ ppmflip_LDFLAGS = -g $(X_LDFLAGS)
+-ppmflip_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++ppmflip_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ ppmflip_SOURCES = ppmflip.cc
+ 
+ chromatest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ chromatest_CFLAGS = $(X_CFLAGS)
+ chromatest_LDFLAGS = -g $(X_LDFLAGS)
+-chromatest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++chromatest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ chromatest_SOURCES = chromatest.cc
+ 
+ if HAVE_X11
+ x11test_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ x11test_CFLAGS = $(X_CFLAGS)
+ x11test_LDFLAGS = -g $(X_LDFLAGS)
+-x11test_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++x11test_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ x11test_SOURCES = x11test.cc
+ 
+ x11paint_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ x11paint_CFLAGS = $(X_CFLAGS)
+ x11paint_LDFLAGS = -g $(X_LDFLAGS)
+-x11paint_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++x11paint_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ x11paint_SOURCES = x11paint.cc
+ 
+ viewfile_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ viewfile_CFLAGS = $(X_CFLAGS)
+ viewfile_LDFLAGS = -g $(X_LDFLAGS)
+-viewfile_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++viewfile_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ viewfile_SOURCES = viewfile.cc
+ 
+ persptransform_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ persptransform_CFLAGS = $(X_CFLAGS)
+ persptransform_LDFLAGS = -g $(X_LDFLAGS)
+-persptransform_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++persptransform_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ persptransform_SOURCES = persptransform.cc
+ 
+ convfile_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ convfile_CFLAGS = $(X_CFLAGS)
+ convfile_LDFLAGS = -g $(X_LDFLAGS)
+-convfile_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++convfile_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ convfile_SOURCES = convfile.cc
+ 
+ median_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ median_CFLAGS = $(X_CFLAGS)
+ median_LDFLAGS = -g $(X_LDFLAGS)
+-median_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++median_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ median_SOURCES = median.cc
+ 
+ filedisplay_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ filedisplay_CFLAGS = $(X_CFLAGS)
+ filedisplay_LDFLAGS = -g $(X_LDFLAGS)
+-filedisplay_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++filedisplay_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ filedisplay_SOURCES = filedisplay.cc
+ 
+ chromaspaces_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ chromaspaces_CFLAGS = $(X_CFLAGS)
+ chromaspaces_LDFLAGS = -g $(X_LDFLAGS)
+-chromaspaces_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++chromaspaces_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ chromaspaces_SOURCES = chromaspaces.cc
+ 
+ imagetest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ imagetest_CFLAGS = $(X_CFLAGS)
+ imagetest_LDFLAGS = -g $(X_LDFLAGS)
+-imagetest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++imagetest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ imagetest_SOURCES = imagetest.cc
+ 
+ drawingtest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ drawingtest_CFLAGS = $(X_CFLAGS)
+ drawingtest_LDFLAGS = -g $(X_LDFLAGS)
+-drawingtest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++drawingtest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ drawingtest_SOURCES = drawingtest.cc
+ 
+ copytest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ copytest_CFLAGS = $(X_CFLAGS)
+ copytest_LDFLAGS = -g $(X_LDFLAGS)
+-copytest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++copytest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ copytest_SOURCES = copytest.cc
+ endif
+ 
+ audioout_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ audioout_CFLAGS = $(X_CFLAGS)
+ audioout_LDFLAGS = -g $(X_LDFLAGS)
+-audioout_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++audioout_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ audioout_SOURCES = audioout.cc
+ 
+ if LINUX
+@@ -171,13 +171,13 @@
+ v4ltest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ v4ltest_CFLAGS = $(X_CFLAGS)
+ v4ltest_LDFLAGS = -g $(X_LDFLAGS)
+-v4ltest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++v4ltest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ v4ltest_SOURCES = v4ltest.cc
+ 
+ v4ledges_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ v4ledges_CFLAGS = $(X_CFLAGS)
+ v4ledges_LDFLAGS = -g $(X_LDFLAGS)
+-v4ledges_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++v4ledges_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ v4ledges_SOURCES = v4ledges.cc
+ endif
+ endif
+diff -urN libvideogfx-1.0.8-orig/examples/Makefile.in libvideogfx-1.0.8/examples/Makefile.in
+--- libvideogfx-1.0.8-orig/examples/Makefile.in	2013-08-27 01:15:12.000000000 +0800
++++ libvideogfx-1.0.8/examples/Makefile.in	2024-11-27 21:24:58.260638600 +0800
+@@ -386,129 +386,129 @@
+ test_libvideogfx_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ test_libvideogfx_CFLAGS = $(X_CFLAGS)
+ test_libvideogfx_LDFLAGS = -g $(X_LDFLAGS)
+-test_libvideogfx_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++test_libvideogfx_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ test_libvideogfx_SOURCES = test-libvideogfx.cc
+ dynarray_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ dynarray_CFLAGS = $(X_CFLAGS)
+ dynarray_LDFLAGS = -g $(X_LDFLAGS)
+-dynarray_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++dynarray_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ dynarray_SOURCES = dynarray.cc
+ symmatrix_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ symmatrix_CFLAGS = $(X_CFLAGS)
+ symmatrix_LDFLAGS = -g $(X_LDFLAGS)
+-symmatrix_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++symmatrix_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ symmatrix_SOURCES = symmatrix.cc
+ bitstream_output_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ bitstream_output_CFLAGS = $(X_CFLAGS)
+ bitstream_output_LDFLAGS = -g $(X_LDFLAGS)
+-bitstream_output_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++bitstream_output_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ bitstream_output_SOURCES = bitstream_output.cc
+ 
+ #smartpointer_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ #smartpointer_CFLAGS = $(X_CFLAGS)
+ #smartpointer_LDFLAGS = -g $(X_LDFLAGS)
+-#smartpointer_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++#smartpointer_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ #smartpointer_SOURCES = smartpointer.cc
+ 
+ #ppm2avi_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ #ppm2avi_CFLAGS = $(X_CFLAGS)
+ #ppm2avi_LDFLAGS = -g $(X_LDFLAGS)
+-#ppm2avi_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++#ppm2avi_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ #ppm2avi_SOURCES = ppm2avi.cc
+ cputest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ cputest_CFLAGS = $(X_CFLAGS)
+ cputest_LDFLAGS = -g $(X_LDFLAGS)
+-cputest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++cputest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ cputest_SOURCES = cputest.cc
+ pixmaptest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ pixmaptest_CFLAGS = $(X_CFLAGS)
+ pixmaptest_LDFLAGS = -g $(X_LDFLAGS)
+-pixmaptest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++pixmaptest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ pixmaptest_SOURCES = pixmaptest.cc
+ filtertest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ filtertest_CFLAGS = $(X_CFLAGS)
+ filtertest_LDFLAGS = -g $(X_LDFLAGS)
+-filtertest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++filtertest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ filtertest_SOURCES = filtertest.cc
+ ppmflip_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ ppmflip_CFLAGS = $(X_CFLAGS)
+ ppmflip_LDFLAGS = -g $(X_LDFLAGS)
+-ppmflip_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++ppmflip_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ ppmflip_SOURCES = ppmflip.cc
+ chromatest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ chromatest_CFLAGS = $(X_CFLAGS)
+ chromatest_LDFLAGS = -g $(X_LDFLAGS)
+-chromatest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++chromatest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ chromatest_SOURCES = chromatest.cc
+ @HAVE_X11_TRUE@x11test_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ @HAVE_X11_TRUE@x11test_CFLAGS = $(X_CFLAGS)
+ @HAVE_X11_TRUE@x11test_LDFLAGS = -g $(X_LDFLAGS)
+-@HAVE_X11_TRUE@x11test_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++@HAVE_X11_TRUE@x11test_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ @HAVE_X11_TRUE@x11test_SOURCES = x11test.cc
+ @HAVE_X11_TRUE@x11paint_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ @HAVE_X11_TRUE@x11paint_CFLAGS = $(X_CFLAGS)
+ @HAVE_X11_TRUE@x11paint_LDFLAGS = -g $(X_LDFLAGS)
+-@HAVE_X11_TRUE@x11paint_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++@HAVE_X11_TRUE@x11paint_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ @HAVE_X11_TRUE@x11paint_SOURCES = x11paint.cc
+ @HAVE_X11_TRUE@viewfile_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ @HAVE_X11_TRUE@viewfile_CFLAGS = $(X_CFLAGS)
+ @HAVE_X11_TRUE@viewfile_LDFLAGS = -g $(X_LDFLAGS)
+-@HAVE_X11_TRUE@viewfile_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++@HAVE_X11_TRUE@viewfile_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ @HAVE_X11_TRUE@viewfile_SOURCES = viewfile.cc
+ @HAVE_X11_TRUE@persptransform_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ @HAVE_X11_TRUE@persptransform_CFLAGS = $(X_CFLAGS)
+ @HAVE_X11_TRUE@persptransform_LDFLAGS = -g $(X_LDFLAGS)
+-@HAVE_X11_TRUE@persptransform_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++@HAVE_X11_TRUE@persptransform_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ @HAVE_X11_TRUE@persptransform_SOURCES = persptransform.cc
+ @HAVE_X11_TRUE@convfile_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ @HAVE_X11_TRUE@convfile_CFLAGS = $(X_CFLAGS)
+ @HAVE_X11_TRUE@convfile_LDFLAGS = -g $(X_LDFLAGS)
+-@HAVE_X11_TRUE@convfile_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++@HAVE_X11_TRUE@convfile_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ @HAVE_X11_TRUE@convfile_SOURCES = convfile.cc
+ @HAVE_X11_TRUE@median_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ @HAVE_X11_TRUE@median_CFLAGS = $(X_CFLAGS)
+ @HAVE_X11_TRUE@median_LDFLAGS = -g $(X_LDFLAGS)
+-@HAVE_X11_TRUE@median_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++@HAVE_X11_TRUE@median_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ @HAVE_X11_TRUE@median_SOURCES = median.cc
+ @HAVE_X11_TRUE@filedisplay_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ @HAVE_X11_TRUE@filedisplay_CFLAGS = $(X_CFLAGS)
+ @HAVE_X11_TRUE@filedisplay_LDFLAGS = -g $(X_LDFLAGS)
+-@HAVE_X11_TRUE@filedisplay_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++@HAVE_X11_TRUE@filedisplay_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ @HAVE_X11_TRUE@filedisplay_SOURCES = filedisplay.cc
+ @HAVE_X11_TRUE@chromaspaces_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ @HAVE_X11_TRUE@chromaspaces_CFLAGS = $(X_CFLAGS)
+ @HAVE_X11_TRUE@chromaspaces_LDFLAGS = -g $(X_LDFLAGS)
+-@HAVE_X11_TRUE@chromaspaces_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++@HAVE_X11_TRUE@chromaspaces_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ @HAVE_X11_TRUE@chromaspaces_SOURCES = chromaspaces.cc
+ @HAVE_X11_TRUE@imagetest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ @HAVE_X11_TRUE@imagetest_CFLAGS = $(X_CFLAGS)
+ @HAVE_X11_TRUE@imagetest_LDFLAGS = -g $(X_LDFLAGS)
+-@HAVE_X11_TRUE@imagetest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++@HAVE_X11_TRUE@imagetest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ @HAVE_X11_TRUE@imagetest_SOURCES = imagetest.cc
+ @HAVE_X11_TRUE@drawingtest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ @HAVE_X11_TRUE@drawingtest_CFLAGS = $(X_CFLAGS)
+ @HAVE_X11_TRUE@drawingtest_LDFLAGS = -g $(X_LDFLAGS)
+-@HAVE_X11_TRUE@drawingtest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++@HAVE_X11_TRUE@drawingtest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ @HAVE_X11_TRUE@drawingtest_SOURCES = drawingtest.cc
+ @HAVE_X11_TRUE@copytest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ @HAVE_X11_TRUE@copytest_CFLAGS = $(X_CFLAGS)
+ @HAVE_X11_TRUE@copytest_LDFLAGS = -g $(X_LDFLAGS)
+-@HAVE_X11_TRUE@copytest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++@HAVE_X11_TRUE@copytest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ @HAVE_X11_TRUE@copytest_SOURCES = copytest.cc
+ audioout_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ audioout_CFLAGS = $(X_CFLAGS)
+ audioout_LDFLAGS = -g $(X_LDFLAGS)
+-audioout_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++audioout_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ audioout_SOURCES = audioout.cc
+ @HAVE_X11_TRUE@@LINUX_TRUE@v4ltest_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ @HAVE_X11_TRUE@@LINUX_TRUE@v4ltest_CFLAGS = $(X_CFLAGS)
+ @HAVE_X11_TRUE@@LINUX_TRUE@v4ltest_LDFLAGS = -g $(X_LDFLAGS)
+-@HAVE_X11_TRUE@@LINUX_TRUE@v4ltest_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++@HAVE_X11_TRUE@@LINUX_TRUE@v4ltest_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ @HAVE_X11_TRUE@@LINUX_TRUE@v4ltest_SOURCES = v4ltest.cc
+ @HAVE_X11_TRUE@@LINUX_TRUE@v4ledges_DEPENDENCIES = ../libvideogfx/libvideogfx.la
+ @HAVE_X11_TRUE@@LINUX_TRUE@v4ledges_CFLAGS = $(X_CFLAGS)
+ @HAVE_X11_TRUE@@LINUX_TRUE@v4ledges_LDFLAGS = -g $(X_LDFLAGS)
+-@HAVE_X11_TRUE@@LINUX_TRUE@v4ledges_LDADD = ../libvideogfx/libvideogfx.la -lstdc++ $(X_LIBS) $(jpeg_libs) $(png_libs)
++@HAVE_X11_TRUE@@LINUX_TRUE@v4ledges_LDADD = ../libvideogfx/libvideogfx.la $(X_LIBS) $(jpeg_libs) $(png_libs)
+ @HAVE_X11_TRUE@@LINUX_TRUE@v4ledges_SOURCES = v4ledges.cc
+ all: all-am
+ 
+diff -urN libvideogfx-1.0.8-orig/examples/median.cc libvideogfx-1.0.8/examples/median.cc
+--- libvideogfx-1.0.8-orig/examples/median.cc	2013-06-24 20:45:17.000000000 +0800
++++ libvideogfx-1.0.8/examples/median.cc	2024-11-27 21:06:34.800613700 +0800
+@@ -4,7 +4,11 @@
+ #include "../libvideogfx/graphics/fileio/unified_reader.hh"
+ #include "../libvideogfx/graphics/filters/median.hh"
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ #include <iostream>
+ using namespace videogfx;
+ using namespace std;
+diff -urN libvideogfx-1.0.8-orig/examples/persptransform.cc libvideogfx-1.0.8/examples/persptransform.cc
+--- libvideogfx-1.0.8-orig/examples/persptransform.cc	2013-06-24 20:45:15.000000000 +0800
++++ libvideogfx-1.0.8/examples/persptransform.cc	2024-11-27 21:24:05.517132200 +0800
+@@ -3,10 +3,14 @@
+   The superimposed line shows the horizont line (the image of the line at infinity).
+  */
+ 
+-#include "../libvideogfx/libvideogfx.hh"
++#include "libvideogfx/libvideogfx.hh"
+ #include <iostream>
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ 
+ using namespace videogfx;
+ using namespace std;
+diff -urN libvideogfx-1.0.8-orig/examples/pixmaptest.cc libvideogfx-1.0.8/examples/pixmaptest.cc
+--- libvideogfx-1.0.8-orig/examples/pixmaptest.cc	2013-06-24 20:45:17.000000000 +0800
++++ libvideogfx-1.0.8/examples/pixmaptest.cc	2024-11-27 21:06:34.816267500 +0800
+@@ -2,7 +2,11 @@
+ #include "../libvideogfx/types.hh"
+ #include "../libvideogfx/graphics/datatypes/bitmap.hh"
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ #include <iostream>
+ #include <iomanip>
+ using namespace std;
+diff -urN libvideogfx-1.0.8-orig/examples/symmatrix.cc libvideogfx-1.0.8/examples/symmatrix.cc
+--- libvideogfx-1.0.8-orig/examples/symmatrix.cc	2013-06-24 20:45:15.000000000 +0800
++++ libvideogfx-1.0.8/examples/symmatrix.cc	2024-11-27 21:24:09.957612600 +0800
+@@ -1,5 +1,5 @@
+ 
+-#include "../libvideogfx/libvideogfx.hh"
++#include "libvideogfx/libvideogfx.hh"
+ #include <iostream>
+ 
+ using namespace videogfx;
+diff -urN libvideogfx-1.0.8-orig/examples/test-libvideogfx.cc libvideogfx-1.0.8/examples/test-libvideogfx.cc
+--- libvideogfx-1.0.8-orig/examples/test-libvideogfx.cc	2013-06-24 20:45:15.000000000 +0800
++++ libvideogfx-1.0.8/examples/test-libvideogfx.cc	2024-11-27 21:24:14.464471300 +0800
+@@ -3,7 +3,7 @@
+  */
+ 
+ #include "config.h"
+-#include "../libvideogfx/libvideogfx.hh"
++#include "libvideogfx/libvideogfx.hh"
+ 
+ #include <iostream>
+ using namespace std;
+diff -urN libvideogfx-1.0.8-orig/examples/viewfile.cc libvideogfx-1.0.8/examples/viewfile.cc
+--- libvideogfx-1.0.8-orig/examples/viewfile.cc	2013-06-24 20:45:17.000000000 +0800
++++ libvideogfx-1.0.8/examples/viewfile.cc	2024-11-27 21:06:34.819837100 +0800
+@@ -3,7 +3,11 @@
+ #include "../libvideogfx/x11/imgwin.hh"
+ #include "../libvideogfx/graphics/fileio/unified_reader.hh"
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ #include <iostream>
+ using namespace videogfx;
+ using namespace std;
+diff -urN libvideogfx-1.0.8-orig/examples/x11test.cc libvideogfx-1.0.8/examples/x11test.cc
+--- libvideogfx-1.0.8-orig/examples/x11test.cc	2013-06-24 20:45:15.000000000 +0800
++++ libvideogfx-1.0.8/examples/x11test.cc	2024-11-27 21:06:34.822934500 +0800
+@@ -7,7 +7,11 @@
+ using namespace videogfx;
+ using namespace std;
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ 
+ 
+ int main(int argc,char** argv)
+diff -urN libvideogfx-1.0.8-orig/libvideogfx/audio/fileio/audiosink_linux.cc libvideogfx-1.0.8/libvideogfx/audio/fileio/audiosink_linux.cc
+--- libvideogfx-1.0.8-orig/libvideogfx/audio/fileio/audiosink_linux.cc	2013-06-24 20:55:00.000000000 +0800
++++ libvideogfx-1.0.8/libvideogfx/audio/fileio/audiosink_linux.cc	2024-11-27 21:06:34.826936800 +0800
+@@ -23,7 +23,11 @@
+ #include <sys/stat.h>
+ #include <sys/ioctl.h>
+ #include <fcntl.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ #include <stdio.h>
+ #include <stdlib.h>
+ 
+diff -urN libvideogfx-1.0.8-orig/libvideogfx/graphics/fileio/ffmpeg_writer.cc libvideogfx-1.0.8/libvideogfx/graphics/fileio/ffmpeg_writer.cc
+--- libvideogfx-1.0.8-orig/libvideogfx/graphics/fileio/ffmpeg_writer.cc	2013-06-24 20:55:00.000000000 +0800
++++ libvideogfx-1.0.8/libvideogfx/graphics/fileio/ffmpeg_writer.cc	2024-11-27 21:06:34.831454600 +0800
+@@ -59,7 +59,11 @@
+ #define av_guess_format guess_format
+ #endif
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ 
+ 
+ namespace videogfx
+diff -urN libvideogfx-1.0.8-orig/libvideogfx/graphics/fileio/mplayer.cc libvideogfx-1.0.8/libvideogfx/graphics/fileio/mplayer.cc
+--- libvideogfx-1.0.8-orig/libvideogfx/graphics/fileio/mplayer.cc	2013-06-24 20:55:00.000000000 +0800
++++ libvideogfx-1.0.8/libvideogfx/graphics/fileio/mplayer.cc	2024-11-27 21:06:34.836442400 +0800
+@@ -4,7 +4,11 @@
+ #include <sys/stat.h>
+ #include <string.h>
+ #include <stdlib.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ #include <stdio.h>
+ 
+ 
+diff -urN libvideogfx-1.0.8-orig/libvideogfx/graphics/fileio/mplayer.hh libvideogfx-1.0.8/libvideogfx/graphics/fileio/mplayer.hh
+--- libvideogfx-1.0.8-orig/libvideogfx/graphics/fileio/mplayer.hh	2013-06-24 20:55:00.000000000 +0800
++++ libvideogfx-1.0.8/libvideogfx/graphics/fileio/mplayer.hh	2024-11-27 21:06:34.840422200 +0800
+@@ -31,6 +31,17 @@
+ #include <sys/types.h>
+ #include <signal.h>
+ 
++#ifdef _MSC_VER
++# ifndef pid_t
++#  ifdef _WIN64
++typedef __int64 pid_t;
++#  else
++typedef int     pid_t;
++#  endif
++# endif
++#endif
++
++
+ namespace videogfx
+ {
+   class FileReader_MPlayer
+diff -urN libvideogfx-1.0.8-orig/libvideogfx/graphics/fileio/png.cc libvideogfx-1.0.8/libvideogfx/graphics/fileio/png.cc
+--- libvideogfx-1.0.8-orig/libvideogfx/graphics/fileio/png.cc	2013-06-24 20:55:00.000000000 +0800
++++ libvideogfx-1.0.8/libvideogfx/graphics/fileio/png.cc	2024-11-27 21:06:34.843964000 +0800
+@@ -87,8 +87,11 @@
+ 
+   void ReadImage_PNG(Image<Pixel>& img, istream& is)
+   {
++#ifdef _MSC_VER
++    assert(is);
++#else
+     assert(is != NULL); // , "Open stream first.");
+-
++#endif
+     png_structp png_ptr;
+     png_infop info_ptr;
+     png_uint_32 width, height;
+diff -urN libvideogfx-1.0.8-orig/libvideogfx/graphics/fileio/unified_reader.cc libvideogfx-1.0.8/libvideogfx/graphics/fileio/unified_reader.cc
+--- libvideogfx-1.0.8-orig/libvideogfx/graphics/fileio/unified_reader.cc	2013-06-24 20:55:00.000000000 +0800
++++ libvideogfx-1.0.8/libvideogfx/graphics/fileio/unified_reader.cc	2024-11-27 21:06:34.848578600 +0800
+@@ -39,7 +39,11 @@
+ 
+ #include <sys/types.h>
+ #include <sys/stat.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ #include <string.h>
+ #include <iostream>
+ #include <stdio.h>
+@@ -488,7 +492,7 @@
+     int  AskNFrames() const { return INT_MAX; }
+     bool IsEOF() const { return false; }
+ 
+-    bool SkipToImage(int nr) { id = (nr%3); }
++    bool SkipToImage(int nr) { id = (nr%3); return false; }
+     void ReadImage(Image<Pixel>& img)
+     {
+       ImageParam spec(d_w,d_h);
+diff -urN libvideogfx-1.0.8-orig/libvideogfx/graphics/fileio/v4l.cc libvideogfx-1.0.8/libvideogfx/graphics/fileio/v4l.cc
+--- libvideogfx-1.0.8-orig/libvideogfx/graphics/fileio/v4l.cc	2013-06-24 20:55:00.000000000 +0800
++++ libvideogfx-1.0.8/libvideogfx/graphics/fileio/v4l.cc	2024-11-27 21:06:34.854214500 +0800
+@@ -25,7 +25,11 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <sys/ioctl.h>
+diff -urN libvideogfx-1.0.8-orig/libvideogfx/libvideogfx.hh libvideogfx-1.0.8/libvideogfx/libvideogfx.hh
+--- libvideogfx-1.0.8-orig/libvideogfx/libvideogfx.hh	2013-08-27 01:15:37.000000000 +0800
++++ libvideogfx-1.0.8/libvideogfx/libvideogfx.hh	1970-01-01 08:00:00.000000000 +0800
+@@ -1,86 +0,0 @@
+-/********************************************************************************
+-  libvideogfx.hh  /  Dirk Farin, dirk.farin@gmx.de
+-
+-    This is a meta include file which includes every other include file.
+- ********************************************************************************
+-    LibVideoGfx - video processing library
+-    Copyright (C) 2002  Dirk Farin
+-
+-    This library is free software; you can redistribute it and/or
+-    modify it under the terms of the GNU Lesser General Public
+-    License as published by the Free Software Foundation; either
+-    version 2.1 of the License, or (at your option) any later version.
+-
+-    This library is distributed in the hope that it will be useful,
+-    but WITHOUT ANY WARRANTY; without even the implied warranty of
+-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-    Lesser General Public License for more details.
+-
+-    You should have received a copy of the GNU Lesser General Public
+-    License along with this library; if not, write to the Free Software
+-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+- ********************************************************************************/
+-
+-#ifndef LIBVIDEOGFX_LIBVIDEOGFX_HH
+-#define LIBVIDEOGFX_LIBVIDEOGFX_HH
+-
+-#include <libvideogfx/types.hh>
+-#include <libvideogfx/init.hh>
+-//#include <libvideogfx/error.hh>
+-#include <libvideogfx/arch/cpu.hh>
+-#include <libvideogfx/containers/array.hh>
+-#include <libvideogfx/containers/array2.hh>
+-#include <libvideogfx/containers/symmatrix.hh>
+-#include <libvideogfx/containers/dynarray.hh>
+-#include <libvideogfx/containers/heap.hh>
+-#include <libvideogfx/containers/queue.hh>
+-#include <libvideogfx/graphics/color/colorspace.hh>
+-#include <libvideogfx/graphics/color/img2raw.hh>
+-#include <libvideogfx/graphics/datatypes/bitmap.hh>
+-#include <libvideogfx/graphics/datatypes/image.hh>
+-#include <libvideogfx/graphics/datatypes/primitives.hh>
+-#include <libvideogfx/graphics/draw/draw.hh>
+-#include <libvideogfx/graphics/draw/blit.hh>
+-#include <libvideogfx/graphics/draw/format.hh>
+-#include <libvideogfx/graphics/draw/pixelops.hh>
+-#include <libvideogfx/graphics/draw/scale.hh>
+-#include <libvideogfx/graphics/geometry/matrix.hh>
+-#include <libvideogfx/graphics/geometry/transform.hh>
+-#include <libvideogfx/graphics/fileio/jpeg.hh>
+-#include <libvideogfx/graphics/fileio/png.hh>
+-#include <libvideogfx/graphics/fileio/mpeg.hh>
+-#include <libvideogfx/graphics/fileio/ppm.hh>
+-#include <libvideogfx/graphics/fileio/raw.hh>
+-#include <libvideogfx/graphics/fileio/uyvy.hh>
+-#include <libvideogfx/graphics/fileio/yuv.hh>
+-#include <libvideogfx/graphics/fileio/yuv4mpeg.hh>
+-#include <libvideogfx/graphics/fileio/yuv_vqeg.hh>
+-#include <libvideogfx/graphics/fileio/mplayer.hh>
+-#include <libvideogfx/graphics/fileio/imagesink.hh>
+-#include <libvideogfx/graphics/fileio/unified_reader.hh>
+-#include <libvideogfx/graphics/fileio/unified_writer.hh>
+-#include <libvideogfx/graphics/filters/linear.hh>
+-#include <libvideogfx/graphics/filters/median.hh>
+-#include <libvideogfx/graphics/filters/binomial.hh>
+-#include <libvideogfx/graphics/filters/scale.hh>
+-#include <libvideogfx/graphics/measure/snr.hh>
+-#include <libvideogfx/graphics/visualize/regions.hh>
+-#include <libvideogfx/audio/fileio/audiosink.hh>
+-#include <libvideogfx/audio/fileio/timedsink.hh>
+-#include <libvideogfx/utility/bitmanip.hh>
+-//#include <libvideogfx/utility/smartpointer.hh>
+-#include <libvideogfx/utility/math.hh>
+-#include <libvideogfx/utility/refcntr.hh>
+-#include <libvideogfx/utility/bitstream/bitbuffer.hh>
+-#include <libvideogfx/utility/bitstream/bitreader.hh>
+-#include <libvideogfx/utility/bitstream/bitreader_fast.hh>
+-#include <libvideogfx/utility/bitstream/inputstream.hh>
+-#include <libvideogfx/utility/bitstream/inputstream_istr.hh>
+-
+-#include <libvideogfx/x11/dispimg.hh>
+-#include <libvideogfx/x11/imgwin.hh>
+-#include <libvideogfx/x11/server.hh>
+-#include <libvideogfx/x11/draw_x11.hh>
+-#include <libvideogfx/audio/fileio/audiosink_linux.hh>
+-
+-#endif
+diff -urN libvideogfx-1.0.8-orig/libvideogfx/types.hh libvideogfx-1.0.8/libvideogfx/types.hh
+--- libvideogfx-1.0.8-orig/libvideogfx/types.hh	2013-06-24 20:45:17.000000000 +0800
++++ libvideogfx-1.0.8/libvideogfx/types.hh	2024-11-27 21:06:34.860298200 +0800
+@@ -35,7 +35,7 @@
+ #ifndef LIBVIDEOGFX_TYPES_HH
+ #define LIBVIDEOGFX_TYPES_HH
+ 
+-#if defined(__GCC__) && (__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ < 5)
++#if defined(__GCC__) && (__GNUC__ < 4) || (__GNUC__ == 4 && __GNUC_MINOR__ < 5) || defined(_MSC_VER)
+ #include <stdint.h>
+ #else
+ #include <cstdint>
+@@ -116,4 +116,10 @@
+ #define NULL 0
+ #endif
+ 
++#ifdef _WIN64
++typedef __int64 ssize_t;
++#else
++typedef int ssize_t;
++#endif
++
+ #endif
+diff -urN libvideogfx-1.0.8-orig/libvideogfx/utility/bitstream/bitbuffer.cc libvideogfx-1.0.8/libvideogfx/utility/bitstream/bitbuffer.cc
+--- libvideogfx-1.0.8-orig/libvideogfx/utility/bitstream/bitbuffer.cc	2013-06-24 20:55:00.000000000 +0800
++++ libvideogfx-1.0.8/libvideogfx/utility/bitstream/bitbuffer.cc	2024-11-27 21:06:34.864415200 +0800
+@@ -58,7 +58,7 @@
+ 
+   void BitBuffer::WriteBitsMasked(uint32 bits,int nBits)
+   {
+-    uint32 long mask=1;
++    uint32 mask=1;
+     mask<<=nBits;
+     mask--;
+ 
+diff -urN libvideogfx-1.0.8-orig/libvideogfx/x11/imgwin.cc libvideogfx-1.0.8/libvideogfx/x11/imgwin.cc
+--- libvideogfx-1.0.8-orig/libvideogfx/x11/imgwin.cc	2013-06-24 20:50:32.000000000 +0800
++++ libvideogfx-1.0.8/libvideogfx/x11/imgwin.cc	2024-11-27 21:06:34.868999300 +0800
+@@ -26,7 +26,11 @@
+ #include <errno.h>
+ #include <stdlib.h>
+ #include <stdio.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <io.h>
++#endif
+ 
+ #include <iostream>
+ #include <iomanip>

@@ -5,6 +5,7 @@ steps:
   one:
     dependencies:
       - doxygen
+      - getopt
       - pkg-config
       - nasm
       - winpthreads

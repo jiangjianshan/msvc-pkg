@@ -13,7 +13,7 @@ for /f "delims=" %%i in ('yq -r ".version" config.yaml') do set PKG_VER=%%i
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
-set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -openmp:llvm
+set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -fp:precise -openmp:llvm
 set DEFINES=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS
 
 
@@ -59,10 +59,11 @@ rem ============================================================================
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install
 if not exist "%PREFIX%\bin" mkdir "%PREFIX%\bin"
-move "%PREFIX%\data" "%PREFIX%\bin\data"
-move "%PREFIX%\win_bison.exe" "%PREFIX%\bin\win_bison.exe"
-move "%PREFIX%\win_flex.exe" "%PREFIX%\bin\win_flex.exe"
-move "%PREFIX%\FlexLexer.h" "%PREFIX%\bin\FlexLexer.h"
+if exist "%PREFIX%\bin\data" rmdir /s /q "%PREFIX%\bin\data"
+move /Y "%PREFIX%\data" "%PREFIX%\bin\data"
+move /Y "%PREFIX%\win_bison.exe" "%PREFIX%\bin\win_bison.exe"
+move /Y "%PREFIX%\win_flex.exe" "%PREFIX%\bin\win_flex.exe"
+move /Y "%PREFIX%\FlexLexer.h" "%PREFIX%\bin\FlexLexer.h"
 rmdir /s /q "%PREFIX%\custom_build_rules"
 del /q "%PREFIX%\changelog.md" "%PREFIX%\README.md"
 del /q "%PREFIX%\COPYING" "%PREFIX%\COPYING.DOC"

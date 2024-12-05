@@ -1,0 +1,7 @@
+name: ADOL-C
+version: 2.7.2
+url: https://github.com/coin-or/ADOL-C/archive/refs/tags/releases/2.7.2.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.sh

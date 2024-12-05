@@ -1,9 +1,10 @@
 name: llvm-project
-version: 19.1.2
-url: https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-19.1.2.tar.gz
+version: 19.1.4
+url: https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-19.1.4.tar.gz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
       - libffi
       - libxml2
       - lua

@@ -1,12 +1,13 @@
 name: pango
-version: 1.54.0
-url: https://download.gnome.org/sources/pango/1.54/pango-1.54.0.tar.xz
+version: 1.55.0
+url: https://download.gnome.org/sources/pango/1.55/pango-1.55.0.tar.xz
 steps:
   one:
     dependencies:
       - pkg-config
       - cairo
-      - glib
+      - gobject-introspection
+      - glib:two
       - fontconfig
       - freetype
       - fribidi

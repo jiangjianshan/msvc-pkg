@@ -7,6 +7,6 @@ steps:
       - doxygen
       - mm-common
       - pkg-config
-      - glib
+      - glib:two
       - libsigc++
     run: build.bat

@@ -1,0 +1,12 @@
+name: AVM
+version: 8.1.0
+url: https://gitlab.com/AOMediaCodec/avm/-/archive/research-v8.1.0/avm-research-v8.1.0.tar.bz2
+steps:
+  one:
+    dependencies:
+      - abseil-cpp
+      - perl
+      - winpthreads
+      - vmaf
+      - nasm
+    run: build.bat

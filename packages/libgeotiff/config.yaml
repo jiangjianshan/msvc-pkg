@@ -4,6 +4,7 @@ url: https://github.com/OSGeo/libgeotiff/archive/refs/tags/1.7.3.tar.gz
 steps:
   one:
     dependencies:
+      - getopt
       - proj
       - zlib
       - libjpeg-turbo

@@ -5,8 +5,9 @@ steps:
   one:
     dependencies:
       - pkg-config
+      - getopt
       - gettext
-      - glib
+      - glib:two
       - freetype
       - expat
     run: build.bat

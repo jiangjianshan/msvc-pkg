@@ -4,8 +4,9 @@ url: https://ftp.gnu.org/pub/gnu/sed/sed-4.9.tar.xz
 steps:
   one:
     dependencies:
+      - gettext
+      - getopt
       - gnulib
       - libiconv
-      - gettext
       - winpthreads
     run: build.sh

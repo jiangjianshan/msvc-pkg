@@ -4,5 +4,6 @@ url: https://github.com/google/filament/archive/refs/tags/v1.56.0.tar.gz
 steps:
   one:
     dependencies:
+      - getopt
       - gc
     run: build.bat

@@ -4,6 +4,7 @@ url: https://github.com/tlwg/libdatrie/archive/refs/tags/v0.2.13.tar.gz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
       - doxygen
       - libiconv
     run: build.sh

@@ -3,7 +3,13 @@ setlocal enabledelayedexpansion
 set LOGONSERVER=\\LOCALHOST
 set MSYS=winsymlinks:nativestrict
 set MSYS2_PATH_TYPE=inherit
-set MSYSTEM=MINGW64
+rem NOTE:
+rem 1. It's not necessary to set MSYSTEM because we don't use mingw-w64 toolchain.
+rem 2. The environment variable MSYSTEM will impact the build environment of some
+rem    packages, e.g. gobject-introspection. The ccompiler.py will get compiler_name
+rem    depend on this environment variable. But in fact all build.bat are not in
+rem    msys2 environment.
+rem set MSYSTEM=MINGW64
 
 goto begin
 

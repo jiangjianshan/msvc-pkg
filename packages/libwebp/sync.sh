@@ -18,7 +18,7 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
-  patch -Np1 -i "$PKG_DIR/001-libwebp-1.4.0-fix-cmake-files-output-location.diff"
+  patch -Np1 -i "$PKG_DIR/001-libwebp-1.4.0-compile-on-msvc.diff"
 }
 
 . $ROOT_DIR/common.sh

@@ -1,0 +1,40 @@
+diff -urN ADOL-C-2.7.2-orig/ADOL-C/src/tape_handling.cpp ADOL-C-2.7.2/ADOL-C/src/tape_handling.cpp
+--- ADOL-C-2.7.2-orig/ADOL-C/src/tape_handling.cpp	2020-02-02 04:29:37.000000000 +0800
++++ ADOL-C-2.7.2/ADOL-C/src/tape_handling.cpp	2024-11-19 13:45:36.892176600 +0800
+@@ -32,6 +32,9 @@
+ #include <vector>
+ #include <stack>
+ #include <errno.h>
++#ifdef _WIN32
++#include <windows.h>
++#endif
+ 
+ using namespace std;
+ 
+@@ -1227,7 +1230,7 @@
+         waitForMaster_begin = false;
+     } else 
+         while (waitForMaster_begin) {
+-            usleep(1000); /* if anyone knows a better value, ... :-) */
++            Sleep(1); /* if anyone knows a better value, ... :-) */
+         }
+ 
+     if (firstParallel) {
+@@ -1286,7 +1289,7 @@
+         bool firstIt = true;
+         do { /* wait until all slaves have left the parallel part */
+             if (firstIt) firstIt = false;
+-            else usleep(1000); /* no busy waiting */
++            else Sleep(1); /* no busy waiting */
+             num = 1;
+             for (int i = 1; i < numThreads; ++i)
+                 if (globalTapeVars[i].inParallelRegion == 0) ++num;
+@@ -1317,7 +1320,7 @@
+         waitForMaster_end = false;
+     } else
+         while (waitForMaster_end) {
+-            usleep(1000); // no busy waiting
++            Sleep(1); // no busy waiting
+         }
+ }
+ 

@@ -5,8 +5,10 @@ steps:
   one:
     dependencies:
       - pkg-config
-      - glib
+      - gobject-introspection
+      - glib:two
       - cairo
       - freetype
       - icu4c
+      - libpng
     run: build.bat

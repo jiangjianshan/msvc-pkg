@@ -4,9 +4,11 @@ url: https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
       - yasm
     run: build.sh
   two:
     dependencies:
+      - dlfcn-win32
       - yasm
     run: build-2.sh

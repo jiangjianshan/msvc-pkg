@@ -1,0 +1,12 @@
+name: libavif
+version: 1.1.1
+url: https://github.com/AOMediaCodec/libavif/archive/refs/tags/v1.1.1.tar.gz
+steps:
+  one:
+    dependencies:
+      - AVM
+      - dav1d
+      - libaom
+      - libyuv
+      - libgav1
+    run: build.bat

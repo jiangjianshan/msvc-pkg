@@ -43,6 +43,8 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
   -DCMAKE_MT=mt                                                                ^
   -DLAPACK_LIBRARIES="lapack!SUFFIX!.lib"                                      ^
+  -DSUITESPARSE_DEMOS=OFF                                                      ^
+  -DBUILD_TESTING=OFF                                                          ^
   ..
 if %errorlevel% neq 0 exit 1
 exit /b 0

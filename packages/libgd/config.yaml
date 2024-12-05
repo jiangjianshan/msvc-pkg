@@ -1,0 +1,19 @@
+name: libgd
+version: 2.3.3
+url: https://github.com/libgd/libgd/archive/refs/tags/gd-2.3.3.tar.gz
+steps:
+  one:
+    dependencies:
+      - fontconfig
+      - libavif
+      - libheif
+      - libiconv
+      - libwebp
+      - libjpeg-turbo
+      - libraqm
+      - freetype
+      - libpng
+      - getopt
+      - zlib
+      - winpthreads
+    run: build.bat

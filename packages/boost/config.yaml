@@ -10,7 +10,7 @@ steps:
       - libiconv
       - libjpeg-turbo
       - libpng
-      - tiff
+      - libtiff
       - openssl
       - xz
       - zlib

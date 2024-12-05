@@ -1,0 +1,7 @@
+name: libyuv
+version: main
+url: https://github.com/lemenkov/libyuv.git
+steps:
+  one:
+    dependencies:
+    run: build.bat

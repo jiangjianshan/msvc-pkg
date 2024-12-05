@@ -4,5 +4,6 @@ url: https://ftp.gnu.org/pub/gnu/libsigsegv/libsigsegv-2.14.tar.gz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
       - libiconv
     run: build.sh

@@ -5,4 +5,5 @@ steps:
   one:
     dependencies:
       - pkg-config
+      - getopt
     run: build.bat

@@ -7,7 +7,7 @@ steps:
       - pkg-config
       - fontconfig
       - freetype
-      - glib
+      - glib:two
       - libffi
       - libpng
       - libatomic_ops

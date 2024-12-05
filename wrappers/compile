@@ -162,6 +162,9 @@ func_cl_wrapper ()
         -fdiagnostics-show-option)
           # TODO
           ;;
+        -ffast-math)
+          # TODO
+          ;;
         -ffp-contract=fast)
           set x "$@" "-fp:fast"
           shift
@@ -292,6 +295,9 @@ func_cl_wrapper ()
         -g)
           set x "$@" "-Zi"
           shift
+          ;;
+        -mavx2)
+          # TODO
           ;;
         -municode)
           # TODO
@@ -525,6 +531,10 @@ func_cl_wrapper ()
             esac
           done
           IFS="$save_ifs"
+          ;;
+        -warn)
+          # TODO
+          eat=1
           ;;
         -W)
           # TODO

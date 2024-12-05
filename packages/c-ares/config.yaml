@@ -4,4 +4,5 @@ url: https://github.com/c-ares/c-ares/archive/refs/tags/v1.34.2.tar.gz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
     run: build.bat

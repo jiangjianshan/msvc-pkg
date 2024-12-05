@@ -1,0 +1,8 @@
+name: kvazaar
+version: 2.3.1
+url: https://github.com/ultravideo/kvazaar/archive/refs/tags/v2.3.1.tar.gz
+steps:
+  one:
+    dependencies:
+      - getopt
+    run: build.bat

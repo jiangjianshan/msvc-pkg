@@ -4,6 +4,7 @@ url: https://github.com/open-mpi/hwloc/archive/refs/tags/hwloc-2.11.2.tar.gz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
       - level-zero
       - libxml2
       - doxygen

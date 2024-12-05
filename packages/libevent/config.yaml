@@ -4,6 +4,7 @@ url: https://github.com/libevent/libevent/archive/refs/tags/release-2.1.12-stabl
 steps:
   one:
     dependencies:
+      - getopt
       - openssl
       - zlib
       - winpthreads

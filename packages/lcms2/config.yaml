@@ -4,8 +4,9 @@ url: https://github.com/mm2/Little-CMS/releases/download/lcms2.16/lcms2-2.16.tar
 steps:
   one:
     dependencies:
+      - dlfcn-win32
       - openjpeg
-      - tiff
+      - libtiff
       - zlib
       - winpthreads
     run: build.sh

@@ -1,0 +1,106 @@
+diff -urN vala-0.56.17-orig/ccode/valaccodewriter.c vala-0.56.17/ccode/valaccodewriter.c
+--- vala-0.56.17-orig/ccode/valaccodewriter.c	2024-04-19 19:03:33.000000000 +0800
++++ vala-0.56.17/ccode/valaccodewriter.c	2024-12-04 10:25:54.668711100 +0800
+@@ -32,7 +32,11 @@
+ #include <glib/gstdio.h>
+ #include <vala.h>
+ #include <sys/types.h>
++#ifdef _MSC_VER
++#include <sys/utime.h>
++#else
+ #include <utime.h>
++#endif
+ #include <gobject/gvaluecollector.h>
+ 
+ #if !defined(VALA_STRICT_C)
+diff -urN vala-0.56.17-orig/compiler/valacompiler.c vala-0.56.17/compiler/valacompiler.c
+--- vala-0.56.17-orig/compiler/valacompiler.c	2024-04-19 19:03:45.000000000 +0800
++++ vala-0.56.17/compiler/valacompiler.c	2024-12-04 10:29:08.263558300 +0800
+@@ -32,7 +32,9 @@
+ #include <valacodegen.h>
+ #include <valagee.h>
+ #include <glib/gstdio.h>
++#ifndef YY_NO_UNISTD_H
+ #include <unistd.h>
++#endif
+ #include <locale.h>
+ #include <config.h>
+ #include <gobject/gvaluecollector.h>
+diff -urN vala-0.56.17-orig/gobject-introspection/scanner.c vala-0.56.17/gobject-introspection/scanner.c
+--- vala-0.56.17-orig/gobject-introspection/scanner.c	2023-12-13 15:24:35.000000000 +0800
++++ vala-0.56.17/gobject-introspection/scanner.c	2024-12-04 10:28:24.765821300 +0800
+@@ -24,7 +24,9 @@
+ 
+ #include <string.h>
+ #include <stdlib.h>
++#ifndef YY_NO_UNISTD_H
+ #include <unistd.h>
++#endif
+ #include <ctype.h>
+ #include <errno.h>
+ #include <glib.h>
+diff -urN vala-0.56.17-orig/tests/dbus/filedescriptor_client.c-expected vala-0.56.17/tests/dbus/filedescriptor_client.c-expected
+--- vala-0.56.17-orig/tests/dbus/filedescriptor_client.c-expected	2024-04-19 18:31:36.000000000 +0800
++++ vala-0.56.17/tests/dbus/filedescriptor_client.c-expected	2024-12-04 10:29:30.092438500 +0800
+@@ -7,7 +7,9 @@
+ #include <glib.h>
+ #include <gio/gunixfdlist.h>
+ #include <string.h>
++#ifndef YY_NO_UNISTD_H
+ #include <unistd.h>
++#endif
+ 
+ #if !defined(VALA_STRICT_C)
+ #if !defined(__clang__) && defined(__GNUC__) && (__GNUC__ >= 14)
+diff -urN vala-0.56.17-orig/tests/dbus/filedescriptor_server.c-expected vala-0.56.17/tests/dbus/filedescriptor_server.c-expected
+--- vala-0.56.17-orig/tests/dbus/filedescriptor_server.c-expected	2024-04-19 18:31:42.000000000 +0800
++++ vala-0.56.17/tests/dbus/filedescriptor_server.c-expected	2024-12-04 10:29:49.636129900 +0800
+@@ -5,7 +5,9 @@
+ #include <gio/gio.h>
+ #include <gio/gunixinputstream.h>
+ #include <glib.h>
++#ifndef YY_NO_UNISTD_H
+ #include <unistd.h>
++#endif
+ #include <string.h>
+ #include <gio/gunixfdlist.h>
+ #include <stdlib.h>
+diff -urN vala-0.56.17-orig/tests/dbus/filedescriptor-async_client.c-expected vala-0.56.17/tests/dbus/filedescriptor-async_client.c-expected
+--- vala-0.56.17-orig/tests/dbus/filedescriptor-async_client.c-expected	2024-04-19 18:31:36.000000000 +0800
++++ vala-0.56.17/tests/dbus/filedescriptor-async_client.c-expected	2024-12-04 10:30:01.452440500 +0800
+@@ -7,7 +7,9 @@
+ #include <gio/gunixfdlist.h>
+ #include <string.h>
+ #include <glib.h>
++#ifndef YY_NO_UNISTD_H
+ #include <unistd.h>
++#endif
+ 
+ #if !defined(VALA_STRICT_C)
+ #if !defined(__clang__) && defined(__GNUC__) && (__GNUC__ >= 14)
+diff -urN vala-0.56.17-orig/tests/dbus/filedescriptor-async_server.c-expected vala-0.56.17/tests/dbus/filedescriptor-async_server.c-expected
+--- vala-0.56.17-orig/tests/dbus/filedescriptor-async_server.c-expected	2024-04-19 18:31:42.000000000 +0800
++++ vala-0.56.17/tests/dbus/filedescriptor-async_server.c-expected	2024-12-04 10:30:13.977101000 +0800
+@@ -5,7 +5,9 @@
+ #include <gio/gio.h>
+ #include <gio/gunixinputstream.h>
+ #include <glib.h>
++#ifndef YY_NO_UNISTD_H
+ #include <unistd.h>
++#endif
+ #include <string.h>
+ #include <gio/gunixfdlist.h>
+ #include <stdlib.h>
+diff -urN vala-0.56.17-orig/tests/dbus/filedescriptor-errors_client.c-expected vala-0.56.17/tests/dbus/filedescriptor-errors_client.c-expected
+--- vala-0.56.17-orig/tests/dbus/filedescriptor-errors_client.c-expected	2024-04-19 18:31:36.000000000 +0800
++++ vala-0.56.17/tests/dbus/filedescriptor-errors_client.c-expected	2024-12-04 10:30:27.787136200 +0800
+@@ -9,7 +9,9 @@
+ #include <glib.h>
+ #include <gio/gunixfdlist.h>
+ #include <gio/gunixinputstream.h>
++#ifndef YY_NO_UNISTD_H
+ #include <unistd.h>
++#endif
+ 
+ #if !defined(VALA_STRICT_C)
+ #if !defined(__clang__) && defined(__GNUC__) && (__GNUC__ >= 14)

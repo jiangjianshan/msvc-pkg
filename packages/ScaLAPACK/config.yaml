@@ -1,0 +1,7 @@
+name: ScaLAPACK
+version: 2.2.0
+url: https://github.com/Reference-ScaLAPACK/scalapack/archive/refs/tags/v2.2.0.tar.gz
+steps:
+  one:
+    dependencies:
+    run: build.bat

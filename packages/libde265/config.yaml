@@ -1,0 +1,10 @@
+name: libde265
+version: 1.0.15
+url: https://github.com/strukturag/libde265/archive/refs/tags/v1.0.15.tar.gz
+steps:
+  one:
+    dependencies:
+      - getopt
+      - libvideogfx
+      - SDL
+    run: build.bat

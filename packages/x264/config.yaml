@@ -5,5 +5,6 @@ steps:
   one:
     dependencies:
       - AviSynthPlus
+      - getopt
       - nasm
     run: build.sh

@@ -12,6 +12,8 @@ import yaml
 
 from datetime import datetime
 from pathlib import PureWindowsPath
+from pygments import highlight
+from pygments.formatters import TerminalFormatter
 from rich import print
 from rich.logging import RichHandler
 from rich.pretty import pprint
@@ -242,6 +244,14 @@ def build_pkg(arch, pkg, step, deps):
                             logger.debug(f"Updating settings.yaml")
                             yaml.safe_dump(settings_conf, f, indent=2)
                     else:
+                        if 'installed' in settings_conf.keys():
+                            if arch in settings_conf['installed'].keys():
+                                if pkg in settings_conf['installed'][arch]:
+                                    logger.debug(f"Delete installed information of {pkg}")
+                                    del settings_conf['installed'][arch][pkg]
+                                    with open(settings_file, 'w', newline='', encoding='utf-8') as f:
+                                        logger.debug(f"Updating settings.yaml")
+                                        yaml.safe_dump(settings_conf, f, indent=2)
                         logger.debug(f"Stop further build because build {pkg} failed")
                         return False
                 else:
@@ -289,14 +299,17 @@ def list_pkgs(arch):
         pkg_name = pkg_conf['name']
         pkg_ver = str(pkg_conf['version'])
         pkg_url = pkg_conf['url']
-        is_installed = 'No'
+        is_installed = '[bold red]No'
         if 'installed' in settings_conf.keys():
             if arch in settings_conf['installed'].keys():
               if pkg in settings_conf['installed'][arch].keys():
                   installed_ver = str(settings_conf['installed'][arch][pkg]['version'])
                   if pkg_ver == installed_ver:
                       is_installed = 'Yes'
-        table.add_row(str(i), pkg_name, pkg_ver, pkg_url, is_installed)
+        if is_installed != 'Yes':
+            table.add_row(str(i), '[bold red]'+pkg_name, '[bold red]'+pkg_ver, '[bold red]'+pkg_url, is_installed)
+        else:
+            table.add_row(str(i), pkg_name, pkg_ver, pkg_url, is_installed)
         i += 1
     console.print(table)
 
@@ -346,10 +359,7 @@ install(console=console, show_locals=True)
 if __name__ == '__main__':
     pkgs = []
     parser = argparse.ArgumentParser(usage='mpt --help', add_help=False)
-    parser.add_argument('--list',
-                        dest='list',
-                        default=None,
-                        action='store_true')
+    parser.add_argument('--list', dest='list', default=None, action='store_true')
     # Parse the given arguments. Don't signal an error if non-option arguments
     # occur between or after options.
     cmdargs, unhandled = parser.parse_known_args()

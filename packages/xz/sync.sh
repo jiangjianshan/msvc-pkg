@@ -19,6 +19,7 @@ patch_package()
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
   patch -Np1 -i "$PKG_DIR/001-xz-5.4.6-enable-install-pc-file-on-msvc.diff"
+  patch -Np1 -i "$PKG_DIR/002-xz-5.4.6-missing-unistd-h.diff"
 }
 
 . $ROOT_DIR/common.sh

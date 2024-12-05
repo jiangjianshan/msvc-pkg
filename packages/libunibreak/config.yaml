@@ -4,4 +4,5 @@ url: https://github.com/adah1972/libunibreak/archive/refs/tags/libunibreak_6_1.t
 steps:
   one:
     dependencies:
+      - dlfcn-win32
     run: build.sh

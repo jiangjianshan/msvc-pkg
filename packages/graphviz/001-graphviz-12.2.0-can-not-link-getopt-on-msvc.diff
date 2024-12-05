@@ -1,0 +1,155 @@
+diff -urN --no-dereference graphviz-12.2.0-orig/cmd/edgepaint/CMakeLists.txt graphviz-12.2.0/cmd/edgepaint/CMakeLists.txt
+--- graphviz-12.2.0-orig/cmd/edgepaint/CMakeLists.txt	2024-11-04 03:31:07.000000000 +0800
++++ graphviz-12.2.0/cmd/edgepaint/CMakeLists.txt	2024-11-26 09:31:31.111904500 +0800
+@@ -13,6 +13,7 @@
+     target_include_directories(edgepaint SYSTEM PRIVATE
+       ${GETOPT_INCLUDE_DIRS}
+     )
++    target_link_libraries(edgepaint PRIVATE ${GETOPT_LINK_LIBRARIES})
+   endif()
+ 
+   target_link_libraries(edgepaint PRIVATE
+@@ -26,10 +27,6 @@
+     sparse
+   )
+ 
+-  if(NOT HAVE_GETOPT_H)
+-    target_link_libraries(edgepaint PRIVATE ${GETOPT_LINK_LIBRARIES})
+-  endif()
+-
+   install(
+     TARGETS edgepaint
+     RUNTIME DESTINATION ${BINARY_INSTALL_DIR}
+diff -urN --no-dereference graphviz-12.2.0-orig/cmd/gvmap/CMakeLists.txt graphviz-12.2.0/cmd/gvmap/CMakeLists.txt
+--- graphviz-12.2.0-orig/cmd/gvmap/CMakeLists.txt	2024-11-04 03:31:07.000000000 +0800
++++ graphviz-12.2.0/cmd/gvmap/CMakeLists.txt	2024-11-26 09:31:56.144072800 +0800
+@@ -18,6 +18,7 @@
+     target_include_directories(cluster SYSTEM PRIVATE
+       ${GETOPT_INCLUDE_DIRS}
+     )
++    target_link_libraries(cluster PRIVATE ${GETOPT_LINK_LIBRARIES})
+   endif()
+ 
+   target_link_libraries(cluster PRIVATE
+@@ -30,10 +31,6 @@
+     sparse
+   )
+ 
+-  if(NOT HAVE_GETOPT_H)
+-    target_link_libraries(cluster PRIVATE ${GETOPT_LINK_LIBRARIES})
+-  endif()
+-
+   find_program(GZIP gzip)
+   if(GZIP)
+     add_custom_target(man-cluster ALL DEPENDS cluster.1.gz
+@@ -83,6 +80,7 @@
+     target_include_directories(gvmap SYSTEM PRIVATE
+       ${GETOPT_INCLUDE_DIRS}
+     )
++    target_link_libraries(gvmap PRIVATE ${GETOPT_LINK_LIBRARIES})
+   endif()
+ 
+   target_link_libraries(gvmap PRIVATE
+@@ -95,10 +93,6 @@
+     sparse
+   )
+ 
+-  if(NOT HAVE_GETOPT_H)
+-    target_link_libraries(gvmap PRIVATE ${GETOPT_LINK_LIBRARIES})
+-  endif()
+-
+   find_program(GZIP gzip)
+   if(GZIP)
+     add_custom_target(man-gvmap ALL DEPENDS gvmap.1.gz
+diff -urN --no-dereference graphviz-12.2.0-orig/cmd/mingle/CMakeLists.txt graphviz-12.2.0/cmd/mingle/CMakeLists.txt
+--- graphviz-12.2.0-orig/cmd/mingle/CMakeLists.txt	2024-11-04 03:31:07.000000000 +0800
++++ graphviz-12.2.0/cmd/mingle/CMakeLists.txt	2024-11-26 09:32:17.983088000 +0800
+@@ -17,6 +17,7 @@
+       SYSTEM PRIVATE
+         ${GETOPT_INCLUDE_DIRS}
+     )
++    target_link_libraries(mingle PRIVATE ${GETOPT_LINK_LIBRARIES})
+   endif()
+ 
+   target_link_libraries(mingle PRIVATE
+@@ -29,10 +30,7 @@
+     sparse
+     ${ANN_LIBRARIES}
+   )
+-  if(NOT HAVE_GETOPT_H)
+-    target_link_libraries(mingle PRIVATE ${GETOPT_LINK_LIBRARIES})
+-  endif()
+-
++  
+   install(
+     TARGETS mingle
+     RUNTIME DESTINATION ${BINARY_INSTALL_DIR}
+diff -urN --no-dereference graphviz-12.2.0-orig/cmd/tools/CMakeLists.txt graphviz-12.2.0/cmd/tools/CMakeLists.txt
+--- graphviz-12.2.0-orig/cmd/tools/CMakeLists.txt	2024-11-04 03:31:07.000000000 +0800
++++ graphviz-12.2.0/cmd/tools/CMakeLists.txt	2024-11-26 09:32:45.983628800 +0800
+@@ -3,7 +3,7 @@
+ # - installation of executable
+ # - installation of manpage
+ function(tool_defaults name)
+-  if(NOT HAVE_GETOPT_H)
++  if(GETOPT_FOUND)
+     target_link_libraries(${name} PRIVATE ${GETOPT_LINK_LIBRARIES})
+   endif()
+ 
+@@ -98,8 +98,6 @@
+ 
+ if(GETOPT_FOUND)
+   target_include_directories(gc_bin SYSTEM PRIVATE ${GETOPT_INCLUDE_DIRS})
+-endif()
+-if(NOT HAVE_GETOPT_H)
+   target_link_libraries(gc_bin PRIVATE ${GETOPT_LINK_LIBRARIES})
+ endif()
+ 
+@@ -225,11 +223,9 @@
+   target_include_directories(gv2gml SYSTEM PRIVATE
+     ${GETOPT_INCLUDE_DIRS}
+   )
+-endif()
+-target_link_libraries(gv2gml PRIVATE cgraph gvc)
+-if(NOT HAVE_GETOPT_H)
+   target_link_libraries(gv2gml PRIVATE ${GETOPT_LINK_LIBRARIES})
+ endif()
++target_link_libraries(gv2gml PRIVATE cgraph gvc)
+ install(TARGETS gv2gml RUNTIME DESTINATION ${BINARY_INSTALL_DIR})
+ 
+ # ================================= graphml2gv =================================
+diff -urN --no-dereference graphviz-12.2.0-orig/contrib/prune/CMakeLists.txt graphviz-12.2.0/contrib/prune/CMakeLists.txt
+--- graphviz-12.2.0-orig/contrib/prune/CMakeLists.txt	2024-11-04 03:31:07.000000000 +0800
++++ graphviz-12.2.0/contrib/prune/CMakeLists.txt	2024-11-26 09:30:44.851016600 +0800
+@@ -18,9 +18,6 @@
+   target_include_directories(prune SYSTEM PRIVATE
+     ${GETOPT_INCLUDE_DIRS}
+   )
+-endif()
+-
+-if(NOT HAVE_GETOPT_H)
+   target_link_libraries(prune PRIVATE ${GETOPT_LINK_LIBRARIES})
+ endif()
+ 
+diff -urN --no-dereference graphviz-12.2.0-orig/lib/gvpr/CMakeLists.txt graphviz-12.2.0/lib/gvpr/CMakeLists.txt
+--- graphviz-12.2.0-orig/lib/gvpr/CMakeLists.txt	2024-11-04 03:31:07.000000000 +0800
++++ graphviz-12.2.0/lib/gvpr/CMakeLists.txt	2024-11-26 09:31:01.914179300 +0800
+@@ -34,6 +34,7 @@
+   target_include_directories(gvpr SYSTEM PRIVATE
+     ${GETOPT_INCLUDE_DIRS}
+   )
++  target_link_libraries(gvpr PRIVATE ${GETOPT_LINK_LIBRARIES})
+ endif()
+ 
+ if(WIN32 AND NOT MINGW)
+@@ -47,8 +48,4 @@
+   expr
+   sfio
+   vmalloc
+-)
+-
+-if(NOT HAVE_GETOPT_H)
+-  target_link_libraries(gvpr PRIVATE ${GETOPT_LINK_LIBRARIES})
+-endif()
++)
+\ No newline at end of file

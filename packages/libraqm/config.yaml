@@ -1,0 +1,11 @@
+name: libraqm
+version: 0.10.2
+url: https://github.com/HOST-Oman/libraqm/archive/refs/tags/v0.10.2.tar.gz
+steps:
+  one:
+    dependencies:
+      - pkg-config
+      - freetype
+      - harfbuzz
+      - fribidi
+    run: build.bat

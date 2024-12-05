@@ -23,6 +23,24 @@ patch_package()
   WANT_AUTOCONF='2.72' WANT_AUTOMAKE='1.16' ./autogen.sh
   rm -rfv autom4te.cache
   find . -name "*~" -type f -print -exec rm -rfv {} \;
+
+  # XXX: libtool don't have options can set the naming style of static and
+  #      shared library. Here is only a workaround.
+
+  echo "Patching ltmain.sh in build-aux"
+  pushd build-aux
+  sed                                                                                                \
+    -e 's|old_library=$libname.$libext|old_library=lib$libname.$libext|g'                            \
+    -e 's|$output_objdir/$libname.$libext|$output_objdir/lib$libname.$libext|g'                      \
+    -i ltmain.sh
+  popd
+
+  echo "Patching configure in top level"
+  sed                                                                                                \
+    -e 's|.dll.def|.def|g'                                                                           \
+    -e 's|.dll.lib|.lib|g'                                                                           \
+    -i configure
+  chmod +x configure
 }
 
 . $ROOT_DIR/common.sh

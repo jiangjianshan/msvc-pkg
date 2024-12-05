@@ -4,4 +4,6 @@ url: https://ftp.gnu.org/pub/gnu/libtasn1/libtasn1-4.19.0.tar.gz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
+      - getopt
     run: build.sh

@@ -1,0 +1,7 @@
+name: getopt
+version: 2022-09-25
+url: https://www.codeproject.com/KB/Articles/getopt4win/getopt_mb_uni_src_2022.zip
+steps:
+  one:
+    dependencies:
+    run: build.bat

@@ -13,7 +13,7 @@ for /f "delims=" %%i in ('yq -r ".version" config.yaml') do set PKG_VER=%%i
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
-set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -openmp:llvm
+set OPTIONS=-nologo -MD -diagnostics:column -wd4819 -fp:precise -openmp:llvm
 set DEFINES=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS
 
 
@@ -43,7 +43,6 @@ cmake -G "Ninja"                                                               ^
   -Denable_doc=OFF                                                             ^
   -Denable_examples=OFF                                                        ^
   -Denable_tests=OFF                                                           ^
-  -DTPL_BLAS_LIBRARIES="openblas.lib"                                          ^
   -DTPL_ENABLE_METISLIB=ON                                                     ^
   -DTPL_METIS_INCLUDE_DIRS="%METIS_PREFIX%\include"                            ^
   -DTPL_METIS_LIBRARIES="metis.lib"                                            ^

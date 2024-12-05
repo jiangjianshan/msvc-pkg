@@ -18,15 +18,7 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
-
-  # Fix some files are missing installed on Win32 platform
-  echo "Patching CMakeLists.txt in top level"
-  sed                                                                          \
-    -e 's|NOT WIN32 OR CYGWIN|WIN32 OR CYGWIN|g'                               \
-    -e 's|NOT CMAKE_HOST_WIN32 OR CYGWIN|CMAKE_HOST_WIN32 OR CYGWIN|g'         \
-    -e 's|-lz -lm|-lz|g'                                                       \
-    CMakeLists.txt > CMakeLists.txt-t
-  mv CMakeLists.txt-t CMakeLists.txt
+  patch -Np1 -i "$PKG_DIR/001-libpng-1.6.44-compile-on-msvc.diff"
 }
 
 . $ROOT_DIR/common.sh

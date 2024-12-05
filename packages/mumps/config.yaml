@@ -1,0 +1,9 @@
+name: mumps
+version: 5.7.3.1
+url: https://github.com/scivision/mumps/archive/refs/tags/v5.7.3.1.tar.gz
+steps:
+  one:
+    dependencies:
+      - LAPACK
+      - ScaLAPACK
+    run: build.bat

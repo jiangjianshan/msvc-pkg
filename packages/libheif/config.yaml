@@ -1,0 +1,23 @@
+name: libheif
+version: 1.19.5
+url: https://github.com/strukturag/libheif/archive/refs/tags/v1.19.5.tar.gz
+steps:
+  one:
+    dependencies:
+      - dav1d
+      - doxygen
+      - getopt
+      - kvazaar
+      - libaom
+      - libde265
+      - libjpeg-turbo
+      - libpng
+      - SVT-AV1
+      - libtiff
+      - uvg266
+      - zlib
+      - OpenH264
+      - OpenJPH
+      - VVdeC
+      - VVenC
+    run: build.bat

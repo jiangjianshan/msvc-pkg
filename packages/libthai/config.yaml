@@ -4,6 +4,8 @@ url: https://github.com/tlwg/libthai/archive/refs/tags/v0.1.29.tar.gz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
+      - getopt
       - doxygen
       - libdatrie
     run: build.sh

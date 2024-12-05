@@ -5,6 +5,7 @@ steps:
   one:
     dependencies:
       - bzip2
+      - dlfcn-win32
       - libiconv
       - libxml2
       - lz4

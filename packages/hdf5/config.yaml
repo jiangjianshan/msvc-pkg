@@ -4,6 +4,7 @@ url: https://github.com/HDFGroup/hdf5/archive/refs/tags/hdf5_1.14.4.3.tar.gz
 steps:
   one:
     dependencies:
+      - dlfcn-win32
       - libaec
       - zlib
       - winpthreads
