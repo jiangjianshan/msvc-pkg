@@ -1,0 +1,24 @@
+name: glib
+version: 2.82.1
+url: https://download.gnome.org/sources/glib/2.82/glib-2.82.1.tar.xz
+sha256: 478634440bf52ee4ec4428d558787398c0be6b043c521beb308334b3db4489a6
+steps:
+  one:
+    dependencies:
+      - dlfcn-win32
+      - pkg-config
+      - gettext
+      - libffi
+      - pcre2:two
+      - zlib
+    run: build.bat
+  two:
+    dependencies:
+      - dlfcn-win32
+      - pkg-config
+      - gettext
+      - libffi
+      - gobject-introspection
+      - pcre2:two
+      - zlib
+    run: build.bat

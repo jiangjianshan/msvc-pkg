@@ -1,0 +1,37 @@
+diff -urN libgav1-0.19.0-orig/cmake/libgav1_install.cmake libgav1-0.19.0/cmake/libgav1_install.cmake
+--- libgav1-0.19.0-orig/cmake/libgav1_install.cmake	2023-11-01 04:45:12.000000000 +0800
++++ libgav1-0.19.0/cmake/libgav1_install.cmake	2024-11-26 11:50:50.637791000 +0800
+@@ -20,7 +20,7 @@
+ # Sets up the Libgav1 install targets. Must be called after the static library
+ # target is created.
+ macro(libgav1_setup_install_target)
+-  if(NOT (MSVC OR XCODE))
++  if(NOT XCODE)
+     include(GNUInstallDirs)
+ 
+     # pkg-config: libgav1.pc
+diff -urN libgav1-0.19.0-orig/cmake/libgav1_targets.cmake libgav1-0.19.0/cmake/libgav1_targets.cmake
+--- libgav1-0.19.0-orig/cmake/libgav1_targets.cmake	2023-11-01 04:45:12.000000000 +0800
++++ libgav1-0.19.0/cmake/libgav1_targets.cmake	2024-11-26 11:43:38.083675500 +0800
+@@ -172,7 +172,7 @@
+   endif()
+ 
+   if(BUILD_SHARED_LIBS AND (MSVC OR WIN32))
+-    target_compile_definitions(${exe_NAME} PRIVATE "LIBGAV1_BUILDING_DLL=0")
++    target_compile_definitions(${exe_NAME} PRIVATE "LIBGAV1_BUILDING_DLL=1")
+   endif()
+ 
+   if(exe_LIB_DEPS)
+@@ -362,11 +362,7 @@
+   endif()
+ 
+   if(BUILD_SHARED_LIBS AND (MSVC OR WIN32))
+-    if(lib_TYPE STREQUAL SHARED)
+-      target_compile_definitions(${lib_NAME} PRIVATE "LIBGAV1_BUILDING_DLL=1")
+-    else()
+-      target_compile_definitions(${lib_NAME} PRIVATE "LIBGAV1_BUILDING_DLL=0")
+-    endif()
++    target_compile_definitions(${lib_NAME} PRIVATE "LIBGAV1_BUILDING_DLL=1")
+   endif()
+ 
+   # Determine if $lib_NAME is a header only target.

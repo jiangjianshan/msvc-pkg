@@ -1,0 +1,41 @@
+diff -urN libwebp-1.4.0-orig/cmake/deps.cmake libwebp-1.4.0/cmake/deps.cmake
+--- libwebp-1.4.0-orig/cmake/deps.cmake	2024-04-13 04:48:48.000000000 +0800
++++ libwebp-1.4.0/cmake/deps.cmake	2024-11-28 17:52:00.913419500 +0800
+@@ -41,7 +41,9 @@
+   if(Threads_FOUND)
+     # work around cmake bug on QNX (https://cmake.org/Bug/view.php?id=11333)
+     if(CMAKE_USE_PTHREADS_INIT AND NOT CMAKE_SYSTEM_NAME STREQUAL "QNX")
+-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
++      if(NOT MSVC)
++        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
++      endif()
+     endif()
+     list(APPEND WEBP_DEP_LIBRARIES Threads::Threads)
+   endif()
+diff -urN libwebp-1.4.0-orig/CMakeLists.txt libwebp-1.4.0/CMakeLists.txt
+--- libwebp-1.4.0-orig/CMakeLists.txt	2024-04-13 04:48:48.000000000 +0800
++++ libwebp-1.4.0/CMakeLists.txt	2024-11-28 17:46:44.344557900 +0800
+@@ -781,7 +781,7 @@
+   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+-set(ConfigPackageLocation ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/cmake/)
++set(ConfigPackageLocation ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/)
+ install(EXPORT ${PROJECT_NAME}Targets NAMESPACE ${PROJECT_NAME}::
+         DESTINATION ${ConfigPackageLocation})
+ 
+diff -urN libwebp-1.4.0-orig/examples/vwebp.c libwebp-1.4.0/examples/vwebp.c
+--- libwebp-1.4.0-orig/examples/vwebp.c	2024-04-13 04:48:48.000000000 +0800
++++ libwebp-1.4.0/examples/vwebp.c	2024-11-28 17:46:44.350292800 +0800
+@@ -28,9 +28,10 @@
+ #if defined(HAVE_GLUT_GLUT_H)
+ #include <GLUT/glut.h>
+ #else
+-#include <GL/glut.h>
+ #ifdef FREEGLUT
+ #include <GL/freeglut.h>
++#else
++#include <GL/glut.h>
+ #endif
+ #endif
+ 

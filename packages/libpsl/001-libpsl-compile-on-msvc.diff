@@ -1,0 +1,15 @@
+diff -urN libpsl-0.21.5-orig/src/psl.c libpsl-0.21.5/src/psl.c
+--- libpsl-0.21.5-orig/src/psl.c	2024-01-14 03:08:10.000000000 +0800
++++ libpsl-0.21.5/src/psl.c	2024-11-09 11:59:37.690582800 +0800
+@@ -1827,7 +1827,11 @@
+ 		}
+ 
+ 		/* convert to UTF-8 */
++#ifdef _MSC_VER
++		if (_stricmp(encoding, "utf-8")) {
++#else
+ 		if (strcasecmp(encoding, "utf-8")) {
++#endif
+ 			iconv_t cd = iconv_open("utf-8", encoding);
+ 
+ 			if (cd != (iconv_t)-1) {

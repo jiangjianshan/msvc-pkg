@@ -1,0 +1,16 @@
+diff -urN lapackpp-2024.10.26-orig/CMakeLists.txt lapackpp-2024.10.26/CMakeLists.txt
+--- lapackpp-2024.10.26-orig/CMakeLists.txt	2024-10-26 23:17:25.000000000 +0800
++++ lapackpp-2024.10.26/CMakeLists.txt	2024-12-31 17:46:27.270359200 +0800
+@@ -795,11 +795,7 @@
+ # Install rules.
+ # GNU Filesystem Conventions
+ include( GNUInstallDirs )
+-if (WIN32)
+-    set( install_configdir "lapackpp" )
+-else()
+-    set( install_configdir "${CMAKE_INSTALL_LIBDIR}/cmake/lapackpp" )
+-endif()
++set( install_configdir "${CMAKE_INSTALL_LIBDIR}/cmake/lapackpp" )
+ 
+ # Install library and add to <package>Targets.cmake
+ install(

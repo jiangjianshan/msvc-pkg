@@ -1,0 +1,9 @@
+name: tk
+version: 8.6.15
+url: https://sourceforge.net/projects/tcl/files/Tcl/8.6.15/tk8.6.15-src.tar.gz
+sha256: 550969f35379f952b3020f3ab7b9dd5bfd11c1ef7c9b7c6a75f5c49aca793fec
+steps:
+  one:
+    dependencies:
+      - tcl
+    run: build.bat

@@ -1,0 +1,50 @@
+diff -urN libpng-1.6.44-orig/CMakeLists.txt libpng-1.6.44/CMakeLists.txt
+--- libpng-1.6.44-orig/CMakeLists.txt	2024-09-13 04:44:44.000000000 +0800
++++ libpng-1.6.44/CMakeLists.txt	2024-11-26 15:04:57.603903000 +0800
+@@ -1044,12 +1044,12 @@
+ # We use the same files like ./configure, so we have to set its vars.
+ # Only do this on Windows for Cygwin - the files don't make much sense
+ # outside of a UNIX look-alike.
+-if(NOT WIN32 OR CYGWIN OR MINGW)
++if(WIN32 OR CYGWIN OR MINGW)
+   set(prefix      ${CMAKE_INSTALL_PREFIX})
+   set(exec_prefix ${CMAKE_INSTALL_PREFIX})
+   set(libdir      ${CMAKE_INSTALL_FULL_LIBDIR})
+   set(includedir  ${CMAKE_INSTALL_FULL_INCLUDEDIR})
+-  set(LIBS        "-lz -lm")
++  set(LIBS        "-lz")
+   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libpng.pc.in
+                  ${CMAKE_CURRENT_BINARY_DIR}/libpng${PNGLIB_ABI_VERSION}.pc
+                  @ONLY)
+@@ -1114,7 +1114,7 @@
+   install(FILES png.5
+           DESTINATION ${CMAKE_INSTALL_MANDIR}/man5)
+   # Install the pkg-config files.
+-  if(NOT CMAKE_HOST_WIN32 OR CYGWIN OR MINGW)
++  if(CMAKE_HOST_WIN32 OR CYGWIN OR MINGW)
+     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libpng.pc
+             DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+     install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/libpng-config
+@@ -1129,7 +1129,7 @@
+ # Create an export file that CMake users can include() to import our targets.
+ if(NOT SKIP_INSTALL_EXPORT AND NOT SKIP_INSTALL_ALL)
+   install(EXPORT libpng
+-          DESTINATION ${CMAKE_INSTALL_LIBDIR}/libpng
++          DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libpng
+           FILE libpng${PNGLIB_ABI_VERSION}.cmake)
+ endif()
+ 
+@@ -1150,11 +1150,11 @@
+   install(EXPORT PNGTargets
+           FILE PNGTargets.cmake
+           NAMESPACE PNG::
+-          DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/PNG)
++          DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libpng)
+ 
+   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/scripts/cmake/PNGConfig.cmake
+                 ${CMAKE_CURRENT_BINARY_DIR}/PNGConfigVersion.cmake
+-          DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/PNG)
++          DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libpng)
+ endif()
+ 
+ # TODO: Create MSVC import lib for MinGW-compiled shared lib.

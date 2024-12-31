@@ -1,0 +1,10 @@
+name: sqlite
+version: 3.45.3
+url: https://github.com/sqlite/sqlite/archive/refs/tags/version-3.45.3.tar.gz
+sha256: a9502b2794ccf24685e6c4964df08944eed7d76aa0715870b3b62709b13a3fcb
+steps:
+  one:
+    dependencies:
+      - tcl
+      - tk
+    run: build.bat

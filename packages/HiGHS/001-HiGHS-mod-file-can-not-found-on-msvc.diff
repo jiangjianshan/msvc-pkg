@@ -1,0 +1,17 @@
+diff -urN HiGHS-1.7.1-orig/src/CMakeLists.txt HiGHS-1.7.1/src/CMakeLists.txt
+--- HiGHS-1.7.1-orig/src/CMakeLists.txt	2024-06-11 04:17:16.000000000 +0800
++++ HiGHS-1.7.1/src/CMakeLists.txt	2024-12-18 09:04:08.659871700 +0800
+@@ -352,12 +352,8 @@
+     RUNTIME
+     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/highs
+     MODULES DESTINATION modules)
+-  if(NOT MSVC)
+     install(FILES ${HIGHS_BINARY_DIR}/modules/highs_fortran_api.mod DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/highs/fortran)
+-  else()
+-    install(FILES ${HIGHS_BINARY_DIR}/modules/${CMAKE_BUILD_TYPE}/highs_fortran_api.mod DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/highs/fortran)
+-  endif()
+-  # use link rpath
++ # use link rpath
+   # set_target_properties(FortranHighs PROPERTIES INSTALL_RPATH
+   #   "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+ endif(FORTRAN_FOUND)

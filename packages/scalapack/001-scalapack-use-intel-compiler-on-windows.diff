@@ -1,0 +1,3878 @@
+diff -urN scalapack-2.2.0-orig/BLACS/SRC/BI_BlacsErr.c scalapack-2.2.0/BLACS/SRC/BI_BlacsErr.c
+--- scalapack-2.2.0-orig/BLACS/SRC/BI_BlacsErr.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/BLACS/SRC/BI_BlacsErr.c	2024-12-26 17:42:34.210229100 +0800
+@@ -2,7 +2,7 @@
+ 
+ void BI_BlacsErr(Int ConTxt, Int line, char *file, char *form, ...)
+ {
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+    void BI_BlacsAbort(Int ErrNo);
+ #else
+    void BI_BlacsAbort();
+diff -urN scalapack-2.2.0-orig/BLACS/TESTING/CMakeLists.txt scalapack-2.2.0/BLACS/TESTING/CMakeLists.txt
+--- scalapack-2.2.0-orig/BLACS/TESTING/CMakeLists.txt	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/BLACS/TESTING/CMakeLists.txt	2024-12-26 17:42:34.213214300 +0800
+@@ -6,7 +6,7 @@
+ endif()
+ 
+ add_executable(xFbtest ${FTestObj})
+-target_link_libraries(xFbtest scalapack)
++target_link_libraries(xFbtest scalapack MPI::MPI_Fortran)
+ 
+ set(CTestObj
+    Cbt.c)
+@@ -17,7 +17,7 @@
+    )
+ 
+ add_executable(xCbtest ${CTestObj} ${FTestObj})
+-target_link_libraries(xCbtest scalapack)
++target_link_libraries(xCbtest scalapack MPI::MPI_Fortran)
+ 
+ file(COPY bsbr.dat DESTINATION ${SCALAPACK_BINARY_DIR}/BLACS/TESTING)
+ file(COPY bt.dat DESTINATION ${SCALAPACK_BINARY_DIR}/BLACS/TESTING)
+diff -urN scalapack-2.2.0-orig/CMAKE/CheckBLACSCompilerFlags.cmake scalapack-2.2.0/CMAKE/CheckBLACSCompilerFlags.cmake
+--- scalapack-2.2.0-orig/CMAKE/CheckBLACSCompilerFlags.cmake	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/CMAKE/CheckBLACSCompilerFlags.cmake	2024-12-26 17:54:26.547190100 +0800
+@@ -21,7 +21,7 @@
+   endif()
+ 
+ # Intel Fortran
+-elseif( CMAKE_Fortran_COMPILER_ID STREQUAL "Intel" )
++elseif( CMAKE_Fortran_COMPILER_ID STREQUAL "Intel" OR CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
+   if( "${CMAKE_Fortran_FLAGS}" MATCHES "[-/]fpe(-all=|)0" )
+     set( FPE_EXIT TRUE )
+   endif()
+diff -urN scalapack-2.2.0-orig/CMAKE/FortranMangling.cmake scalapack-2.2.0/CMAKE/FortranMangling.cmake
+--- scalapack-2.2.0-orig/CMAKE/FortranMangling.cmake	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/CMAKE/FortranMangling.cmake	2024-12-26 17:42:34.220583600 +0800
+@@ -13,11 +13,16 @@
+ FUNCTION(COMPILE RESULT)
+     MESSAGE(STATUS "=========")
+     MESSAGE(STATUS "Compiling and Building BLACS INSTALL Testing to set correct variables")
+-   
++
++    if(CMAKE_BUILD_TYPE)
++      SET(BUILD_TYPE -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE})
++    endif()
++
+    # Configure: 
+-    EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND}  
+-         "-DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}"
+-         "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}" "${PROJECT_SOURCE_DIR}//BLACS/INSTALL"
++    EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND}
++        -G ${CMAKE_GENERATOR} ${BUILD_TYPE}  
++        "-DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}"
++        "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}" "${PROJECT_SOURCE_DIR}//BLACS/INSTALL"
+         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/BLACS/INSTALL/        
+         RESULT_VARIABLE RESVAR OUTPUT_VARIABLE LOG1_OUT ERROR_VARIABLE LOG1_ERR
+     )
+diff -urN scalapack-2.2.0-orig/CMakeLists.txt scalapack-2.2.0/CMakeLists.txt
+--- scalapack-2.2.0-orig/CMakeLists.txt	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/CMakeLists.txt	2024-12-26 17:56:10.372963800 +0800
+@@ -1,5 +1,7 @@
+-cmake_minimum_required(VERSION 3.2)
+-project(SCALAPACK C Fortran)
++cmake_minimum_required(VERSION 3.10)
++
++project(SCALAPACK VERSION 2.2.0 LANGUAGES C Fortran)
++
+ # Configure the warning and code coverage suppression file
+ configure_file(
+   "${SCALAPACK_SOURCE_DIR}/CMAKE/CTestCustom.cmake.in"
+@@ -19,16 +21,12 @@
+ #
+ #   MPI
+ #
+-#set(MPI_BASE_DIR "/Users/julie/opt/openmpi/" CACHE PATH "MPI Path")
+-#set(MPI_BASE_DIR "/Users/julie/opt/mpich2/" CACHE PATH "MPI Path")
+ set(CMAKE_PREFIX_PATH "${MPI_BASE_DIR};${CMAKE_PREFIX_PATH}")
+-#set(MPI_COMPILER ${MPI_BASE_DIR}/bin/mpicc)
+ 
+ find_package(MPI)
+ if (MPI_FOUND)
+    message(STATUS "Found MPI_LIBRARY : ${MPI_FOUND} ")
+-   INCLUDE_DIRECTORIES(${MPI_INCLUDE_PATH})
+-
++   
+    find_program(MPI_C_COMPILER
+       NAMES mpicc
+       HINTS "${MPI_BASE_DIR}"
+@@ -39,7 +37,7 @@
+       message(ERROR "--> MPI C Compiler NOT FOUND (please set MPI_BASE_DIR accordingly")
+    else()
+       message(STATUS "--> MPI C Compiler : ${MPI_C_COMPILER}")
+-      SET(CMAKE_C_COMPILER "${MPI_C_COMPILER}")
++      #SET(CMAKE_C_COMPILER "${MPI_C_COMPILER}")
+       message(STATUS "--> C Compiler : ${CMAKE_C_COMPILER}")
+    endif()
+    find_program(MPI_Fortran_COMPILER
+@@ -49,8 +47,6 @@
+       DOC "MPI Fortran compiler.")
+    MARK_AS_ADVANCED(MPI_Fortran_COMPILER)
+ 
+-
+-
+    if ("${MPI_Fortran_COMPILER}" STREQUAL "MPI_Fortran_COMPILER-NOTFOUND")
+       message(ERROR "--> MPI Fortran Compiler NOT FOUND (please set MPI_BASE_DIR accordingly")
+    else()
+@@ -85,7 +81,7 @@
+   install(TARGETS ${lib} EXPORT scalapack-targets
+     ARCHIVE DESTINATION lib${LIB_SUFFIX}
+     LIBRARY DESTINATION lib${LIB_SUFFIX}
+-    RUNTIME DESTINATION Testing
++    RUNTIME DESTINATION bin
+   )
+ endmacro()
+ 
+@@ -105,6 +101,21 @@
+ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${SCALAPACK_BINARY_DIR}/lib)
+ 
+ # --------------------------------------------------
++# By default static library
++function (invertBoolean varName varValue)
++  if (${varValue})
++    set(${varName} false PARENT_SCOPE)
++  else ()
++    set(${varName} true PARENT_SCOPE)
++  endif ()
++endfunction ()
++option(BUILD_SHARED_LIBS "Build shared libraries" OFF )
++invertBoolean("BUILD_STATIC_LIBS" ${BUILD_SHARED_LIBS})
++if ((${BUILD_SHARED_LIBS} EQUAL ON) AND NOT CMAKE_POSITION_INDEPENDENT_CODE)
++  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
++endif ()
++
++# --------------------------------------------------
+ # Check for any necessary platform specific compiler flags
+ include( CheckBLACSCompilerFlags )
+ CheckBLACSCompilerFlags()
+@@ -121,7 +132,9 @@
+ include(FortranMangling)
+ COMPILE(install_COMPILED)
+ 
+-FORTRAN_MANGLING(CDEFS)
++if (NOT DEFINED CDEFS)
++  FORTRAN_MANGLING(CDEFS)
++endif ()
+ #MESSAGE(STATUS "Setting CDEFS = ${CDEFS}")
+ #set(CDEFS ${CDEFS} CACHE STRING "Fortran Mangling" FORCE)
+ MESSAGE(STATUS "=========")
+@@ -157,18 +170,18 @@
+       message(STATUS "--> LAPACK and BLAS were not found. Reference LAPACK and BLAS will be downloaded and installed")
+       include(ExternalProject)
+       ExternalProject_Add(
+-		lapack
+-		URL http://www.netlib.org/lapack/lapack.tgz
+-		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${SCALAPACK_BINARY_DIR}
++        lapack
++        URL http://www.netlib.org/lapack/lapack.tgz
++        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${SCALAPACK_BINARY_DIR}
+         PREFIX ${SCALAPACK_BINARY_DIR}/dependencies
+       )
+-	  if (UNIX)
++      if (NOT MSVC)
+          SET(LAPACK_LIBRARIES ${SCALAPACK_BINARY_DIR}/lib/liblapack.a CACHE STRING "LAPACK library" FORCE)
+          SET(BLAS_LIBRARIES ${SCALAPACK_BINARY_DIR}/lib/libblas.a CACHE STRING "BLAS library" FORCE)
+-	  else (UNIX) # On Windows
++      else () # MSVC
+          SET(LAPACK_LIBRARIES ${SCALAPACK_BINARY_DIR}/lib/liblapack.lib CACHE STRING "LAPACK library" FORCE)
+          SET(BLAS_LIBRARIES ${SCALAPACK_BINARY_DIR}/lib/libblas.lib CACHE STRING "BLAS library" FORCE)
+-      endif (UNIX)
++      endif ()
+    ENDIF()
+ ENDIF()
+ 
+@@ -178,11 +191,6 @@
+ MESSAGE(STATUS "=========")
+ 
+ # --------------------------------------------------
+-# By default static library
+-OPTION(BUILD_SHARED_LIBS "Build shared libraries" OFF )
+-OPTION(BUILD_STATIC_LIBS "Build static libraries" ON )
+-
+-# --------------------------------------------------
+ # Subdirectories that need to be processed
+ 
+ macro(append_subdir_files variable dirname)
+@@ -230,19 +238,32 @@
+ append_subdir_files(src "SRC")
+ append_subdir_files(src-C "SRC")
+ 
+-if (UNIX)
++if ((CMAKE_C_COMPILER_ID STREQUAL "IntelLLVM" AND CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM") OR NOT MSVC)
+    add_library(scalapack ${blacs} ${tools} ${tools-C} ${extra_lapack} ${pblas} ${pblas-F} ${ptzblas} ${ptools} ${pbblas} ${redist} ${src} ${src-C})
+-   target_link_libraries( scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
++   set_target_properties(scalapack PROPERTIES
++    VERSION ${SCALAPACK_VERSION}
++    SOVERSION ${SCALAPACK_VERSION_MAJOR}.${SCALAPACK_VERSION_MINOR})
++   target_link_libraries( scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_C)
+    scalapack_install_library(scalapack)
+-else (UNIX) # Need to separate Fortran and C Code
++else () # Need to separate Fortran and C Code
+    OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON )
+    add_library(scalapack ${blacs} ${tools-C} ${pblas} ${ptools} ${redist} ${src-C})
+-   target_link_libraries( scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
++   set_target_properties(scalapack PROPERTIES
++    VERSION ${SCALAPACK_VERSION}
++    SOVERSION ${SCALAPACK_VERSION_MAJOR}.${SCALAPACK_VERSION_MINOR})
++   target_link_libraries( scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_C)
+    add_library(scalapack-F ${pblas-F} ${pbblas} ${ptzblas} ${tools} ${src} ${extra_lapack} )
+-   target_link_libraries( scalapack-F ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
++   set_target_properties(scalapack-F PROPERTIES
++    VERSION ${SCALAPACK_VERSION}
++    SOVERSION ${SCALAPACK_VERSION_MAJOR}.${SCALAPACK_VERSION_MINOR})
++   target_link_libraries( scalapack-F ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
+    scalapack_install_library(scalapack)
+    scalapack_install_library(scalapack-F)
+-endif (UNIX)
++endif ()
++
++if(TARGET lapack)
++   add_dependencies(scalapack lapack)
++endif()
+ 
+ option(SCALAPACK_BUILD_TESTS "Build all tests of the ScaLAPACK library" ON)
+ if(${SCALAPACK_BUILD_TESTS})
+@@ -255,10 +276,9 @@
+ SET(CPACK_PACKAGE_NAME "ScaLAPACK")
+ SET(CPACK_PACKAGE_VENDOR "University of Tennessee, Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd")
+ SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "ScaLAPACK- Linear Algebra Package")
+-set(SCALAPACK_VERSION 2.1.0)
+-set(CPACK_PACKAGE_VERSION_MAJOR 2)
+-set(CPACK_PACKAGE_VERSION_MINOR 1)
+-set(CPACK_PACKAGE_VERSION_PATCH 0)
++set(CPACK_PACKAGE_VERSION_MAJOR ${SCALAPACK_VERSION_MAJOR})
++set(CPACK_PACKAGE_VERSION_MINOR ${SCALAPACK_VERSION_MINOR})
++set(CPACK_PACKAGE_VERSION_PATCH ${SCALAPACK_VERSION_PATCH})
+ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+ SET(CPACK_PACKAGE_INSTALL_DIRECTORY "SCALAPACK")
+ IF(WIN32 AND NOT UNIX)
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PBblacs.h scalapack-2.2.0/PBLAS/SRC/PBblacs.h
+--- scalapack-2.2.0-orig/PBLAS/SRC/PBblacs.h	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PBblacs.h	2024-12-26 17:42:34.232067700 +0800
+@@ -71,7 +71,7 @@
+ *  Function prototypes
+ *  ---------------------------------------------------------------------
+ */
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+                                               /* BLACS Initialization */
+ void           Cblacs_pinfo    ( Int *,     Int * );
+ void           Cblacs_setup    ( Int *,     Int * );
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PBblas.h scalapack-2.2.0/PBLAS/SRC/PBblas.h
+--- scalapack-2.2.0-orig/PBLAS/SRC/PBblas.h	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PBblas.h	2024-12-26 17:42:34.236582600 +0800
+@@ -346,7 +346,7 @@
+ *  Function prototypes
+ *  ---------------------------------------------------------------------
+ */
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ 
+ Int            isamax_         ( Int *,     char *,    Int * );
+ Int            idamax_         ( Int *,     char *,    Int * );
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pblas.h scalapack-2.2.0/PBLAS/SRC/pblas.h
+--- scalapack-2.2.0-orig/PBLAS/SRC/pblas.h	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pblas.h	2024-12-26 17:42:34.241572900 +0800
+@@ -43,7 +43,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ #include <stdarg.h>
+ #else
+ #include <varargs.h>
+@@ -139,7 +139,7 @@
+ #define    REAL_PART           0
+ #define    IMAG_PART           1
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ 
+ typedef void           (*GESD2D_T)   ( Int,       Int,       Int,
+                                        char *,    Int,       Int,
+@@ -399,7 +399,7 @@
+ 
+ } PBTYP_T;
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ 
+ typedef void           (*TZSYR_T)    ( PBTYP_T *, char *,    Int,
+                                        Int,       Int,       Int,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PBpblas.h scalapack-2.2.0/PBLAS/SRC/PBpblas.h
+--- scalapack-2.2.0-orig/PBLAS/SRC/PBpblas.h	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PBpblas.h	2024-12-26 17:42:34.246316600 +0800
+@@ -375,7 +375,7 @@
+ *  Function prototypes
+ *  ---------------------------------------------------------------------
+ */
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ 
+ void           PB_freebuf_     ( void );
+ 
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PBtools.h scalapack-2.2.0/PBLAS/SRC/PBtools.h
+--- scalapack-2.2.0-orig/PBLAS/SRC/PBtools.h	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PBtools.h	2024-12-26 17:42:34.251627900 +0800
+@@ -878,7 +878,7 @@
+ *  Function prototypes
+ *  ---------------------------------------------------------------------
+ */
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ 
+ F_VOID_FCT     immadd_         ( Int *,     Int *,     char *,
+                                  char *,    Int *,     char *,
+@@ -1671,7 +1671,7 @@
+ 
+ #endif
+                                                              /* TOOLS */
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ 
+ Int            PB_Cgcd         ( Int,       Int );
+ Int            PB_Clcm         ( Int,       Int );
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcagemv_.c scalapack-2.2.0/PBLAS/SRC/pcagemv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcagemv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcagemv_.c	2024-12-26 17:42:34.257642500 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcagemv_( F_CHAR_T TRANS, Int * M, Int * N, float * ALPHA,
+                float * A, Int * IA, Int * JA, Int * DESCA,
+                float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcahemv_.c scalapack-2.2.0/PBLAS/SRC/pcahemv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcahemv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcahemv_.c	2024-12-26 17:42:34.262732500 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcahemv_( F_CHAR_T UPLO, Int * N, float * ALPHA,
+                float * A, Int * IA, Int * JA, Int * DESCA,
+                float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcamax_.c scalapack-2.2.0/PBLAS/SRC/pcamax_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcamax_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcamax_.c	2024-12-26 17:42:34.267852600 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcamax_( Int * N, float * AMAX, Int * INDX,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcatrmv_.c scalapack-2.2.0/PBLAS/SRC/pcatrmv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcatrmv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcatrmv_.c	2024-12-26 17:42:34.272840700 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcatrmv_( F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG, Int * N,
+                float * ALPHA,
+                float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcaxpy_.c scalapack-2.2.0/PBLAS/SRC/pcaxpy_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcaxpy_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcaxpy_.c	2024-12-26 17:42:34.278280700 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcaxpy_( Int * N,
+               float * ALPHA,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pccopy_.c scalapack-2.2.0/PBLAS/SRC/pccopy_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pccopy_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pccopy_.c	2024-12-26 17:42:34.283569500 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pccopy_( Int * N,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               float * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcdotc_.c scalapack-2.2.0/PBLAS/SRC/pcdotc_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcdotc_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcdotc_.c	2024-12-26 17:42:34.288592800 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcdotc_( Int * N,
+               float * DOT,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcdotu_.c scalapack-2.2.0/PBLAS/SRC/pcdotu_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcdotu_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcdotu_.c	2024-12-26 17:42:34.294252300 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcdotu_( Int * N,
+               float * DOT,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcgeadd_.c scalapack-2.2.0/PBLAS/SRC/pcgeadd_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcgeadd_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcgeadd_.c	2024-12-26 17:42:34.299666400 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcgeadd_( F_CHAR_T TRANS, Int * M, Int * N,
+                float * ALPHA,
+                float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcgemm_.c scalapack-2.2.0/PBLAS/SRC/pcgemm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcgemm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcgemm_.c	2024-12-26 17:42:34.304656600 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcgemm_( F_CHAR_T TRANSA, F_CHAR_T TRANSB,
+               Int * M, Int * N, Int * K,
+               float * ALPHA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcgemv_.c scalapack-2.2.0/PBLAS/SRC/pcgemv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcgemv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcgemv_.c	2024-12-26 17:42:34.309803400 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcgemv_( F_CHAR_T TRANS, Int * M, Int * N, float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcgerc_.c scalapack-2.2.0/PBLAS/SRC/pcgerc_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcgerc_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcgerc_.c	2024-12-26 17:42:34.314803500 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcgerc_( Int * M, Int * N, float * ALPHA,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               float * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcgeru_.c scalapack-2.2.0/PBLAS/SRC/pcgeru_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcgeru_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcgeru_.c	2024-12-26 17:42:34.320197700 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcgeru_( Int * M, Int * N, float * ALPHA,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               float * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pchemm_.c scalapack-2.2.0/PBLAS/SRC/pchemm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pchemm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pchemm_.c	2024-12-26 17:42:34.325442600 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pchemm_( F_CHAR_T SIDE, F_CHAR_T UPLO, Int * M, Int * N,
+               float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pchemv_.c scalapack-2.2.0/PBLAS/SRC/pchemv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pchemv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pchemv_.c	2024-12-26 17:42:34.330633300 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pchemv_( F_CHAR_T UPLO, Int * N, float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcher_.c scalapack-2.2.0/PBLAS/SRC/pcher_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcher_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcher_.c	2024-12-26 17:42:34.335054400 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcher_( F_CHAR_T UPLO, Int * N, float * ALPHA,
+              float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+              float * A, Int * IA, Int * JA, Int * DESCA )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcher2_.c scalapack-2.2.0/PBLAS/SRC/pcher2_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcher2_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcher2_.c	2024-12-26 17:42:34.340041000 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcher2_( F_CHAR_T UPLO, Int * N, float * ALPHA,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               float * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcher2k_.c scalapack-2.2.0/PBLAS/SRC/pcher2k_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcher2k_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcher2k_.c	2024-12-26 17:42:34.345368400 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcher2k_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * N, Int * K,
+               float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcherk_.c scalapack-2.2.0/PBLAS/SRC/pcherk_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcherk_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcherk_.c	2024-12-26 17:42:34.351153800 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcherk_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * N, Int * K,
+               float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcscal_.c scalapack-2.2.0/PBLAS/SRC/pcscal_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcscal_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcscal_.c	2024-12-26 17:42:34.355906400 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcscal_( Int * N, float * ALPHA,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcsscal_.c scalapack-2.2.0/PBLAS/SRC/pcsscal_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcsscal_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcsscal_.c	2024-12-26 17:42:34.360697100 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcsscal_( Int * N,
+                float * ALPHA,
+                float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcswap_.c scalapack-2.2.0/PBLAS/SRC/pcswap_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcswap_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcswap_.c	2024-12-26 17:42:34.365351500 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcswap_( Int * N,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               float * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcsymm_.c scalapack-2.2.0/PBLAS/SRC/pcsymm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcsymm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcsymm_.c	2024-12-26 17:42:34.370343400 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcsymm_( F_CHAR_T SIDE, F_CHAR_T UPLO, Int * M, Int * N,
+               float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcsyr2k_.c scalapack-2.2.0/PBLAS/SRC/pcsyr2k_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcsyr2k_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcsyr2k_.c	2024-12-26 17:42:34.374332800 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcsyr2k_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * N, Int * K,
+               float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pcsyrk_.c scalapack-2.2.0/PBLAS/SRC/pcsyrk_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pcsyrk_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pcsyrk_.c	2024-12-26 17:42:34.379867900 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pcsyrk_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * N, Int * K,
+               float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pctradd_.c scalapack-2.2.0/PBLAS/SRC/pctradd_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pctradd_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pctradd_.c	2024-12-26 17:42:34.384337200 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pctradd_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * M, Int * N,
+                float * ALPHA,
+                float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pctranc_.c scalapack-2.2.0/PBLAS/SRC/pctranc_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pctranc_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pctranc_.c	2024-12-26 17:42:34.389139900 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pctranc_( Int * M, Int * N,
+                float * ALPHA,
+                float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pctranu_.c scalapack-2.2.0/PBLAS/SRC/pctranu_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pctranu_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pctranu_.c	2024-12-26 17:42:34.393936600 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pctranu_( Int * M, Int * N,
+                float * ALPHA,
+                float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pctrmm_.c scalapack-2.2.0/PBLAS/SRC/pctrmm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pctrmm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pctrmm_.c	2024-12-26 17:42:34.397925700 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pctrmm_( F_CHAR_T SIDE, F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG,
+               Int * M, Int * N, float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pctrmv_.c scalapack-2.2.0/PBLAS/SRC/pctrmv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pctrmv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pctrmv_.c	2024-12-26 17:42:34.403128000 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pctrmv_( F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG, Int * N,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+               float * X, Int * IX, Int * JX, Int * DESCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pctrsm_.c scalapack-2.2.0/PBLAS/SRC/pctrsm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pctrsm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pctrsm_.c	2024-12-26 17:42:34.407116500 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pctrsm_( F_CHAR_T SIDE, F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG,
+               Int * M, Int * N, float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pctrsv_.c scalapack-2.2.0/PBLAS/SRC/pctrsv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pctrsv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pctrsv_.c	2024-12-26 17:42:34.412103000 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pctrsv_( F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG, Int * N,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+               float * X, Int * IX, Int * JX, Int * DESCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdagemv_.c scalapack-2.2.0/PBLAS/SRC/pdagemv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdagemv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdagemv_.c	2024-12-26 17:42:34.416456700 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdagemv_( F_CHAR_T TRANS, Int * M, Int * N, double * ALPHA,
+                double * A, Int * IA, Int * JA, Int * DESCA,
+                double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdamax_.c scalapack-2.2.0/PBLAS/SRC/pdamax_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdamax_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdamax_.c	2024-12-26 17:42:34.425311700 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdamax_( Int * N, double * AMAX, Int * INDX,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdasum_.c scalapack-2.2.0/PBLAS/SRC/pdasum_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdasum_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdasum_.c	2024-12-26 17:42:34.430260300 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdasum_( Int * N, double * ASUM,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdasymv_.c scalapack-2.2.0/PBLAS/SRC/pdasymv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdasymv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdasymv_.c	2024-12-26 17:42:34.434539900 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdasymv_( F_CHAR_T UPLO, Int * N, double * ALPHA,
+                double * A, Int * IA, Int * JA, Int * DESCA,
+                double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdatrmv_.c scalapack-2.2.0/PBLAS/SRC/pdatrmv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdatrmv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdatrmv_.c	2024-12-26 17:42:34.439290200 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdatrmv_( F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG, Int * N,
+                double * ALPHA,
+                double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdaxpy_.c scalapack-2.2.0/PBLAS/SRC/pdaxpy_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdaxpy_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdaxpy_.c	2024-12-26 17:42:34.444308400 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdaxpy_( Int * N,
+               double * ALPHA,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdcopy_.c scalapack-2.2.0/PBLAS/SRC/pdcopy_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdcopy_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdcopy_.c	2024-12-26 17:42:34.448320300 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdcopy_( Int * N,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               double * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pddot_.c scalapack-2.2.0/PBLAS/SRC/pddot_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pddot_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pddot_.c	2024-12-26 17:42:34.453003600 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pddot_( Int * N,
+              double * DOT,
+              double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdgeadd_.c scalapack-2.2.0/PBLAS/SRC/pdgeadd_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdgeadd_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdgeadd_.c	2024-12-26 17:42:34.457023600 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdgeadd_( F_CHAR_T TRANS, Int * M, Int * N,
+                double * ALPHA,
+                double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdgemm_.c scalapack-2.2.0/PBLAS/SRC/pdgemm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdgemm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdgemm_.c	2024-12-26 17:42:34.462439100 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdgemm_( F_CHAR_T TRANSA, F_CHAR_T TRANSB,
+               Int * M, Int * N, Int * K,
+               double * ALPHA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdgemv_.c scalapack-2.2.0/PBLAS/SRC/pdgemv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdgemv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdgemv_.c	2024-12-26 17:42:34.466772600 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdgemv_( F_CHAR_T TRANS, Int * M, Int * N, double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdger_.c scalapack-2.2.0/PBLAS/SRC/pdger_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdger_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdger_.c	2024-12-26 17:42:34.471381500 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdger_( Int * M, Int * N, double * ALPHA,
+              double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+              double * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdnrm2_.c scalapack-2.2.0/PBLAS/SRC/pdnrm2_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdnrm2_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdnrm2_.c	2024-12-26 17:42:34.476394400 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdnrm2_( Int * N, double * NORM2,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdscal_.c scalapack-2.2.0/PBLAS/SRC/pdscal_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdscal_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdscal_.c	2024-12-26 17:42:34.481380000 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdscal_( Int * N, double * ALPHA,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdswap_.c scalapack-2.2.0/PBLAS/SRC/pdswap_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdswap_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdswap_.c	2024-12-26 17:42:34.485783800 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdswap_( Int * N,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               double * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdsymm_.c scalapack-2.2.0/PBLAS/SRC/pdsymm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdsymm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdsymm_.c	2024-12-26 17:42:34.489803000 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdsymm_( F_CHAR_T SIDE, F_CHAR_T UPLO, Int * M, Int * N,
+               double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdsymv_.c scalapack-2.2.0/PBLAS/SRC/pdsymv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdsymv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdsymv_.c	2024-12-26 17:42:34.495531000 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdsymv_( F_CHAR_T UPLO, Int * N, double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdsyr_.c scalapack-2.2.0/PBLAS/SRC/pdsyr_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdsyr_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdsyr_.c	2024-12-26 17:42:34.500266500 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdsyr_( F_CHAR_T UPLO, Int * N, double * ALPHA,
+              double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+              double * A, Int * IA, Int * JA, Int * DESCA )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdsyr2_.c scalapack-2.2.0/PBLAS/SRC/pdsyr2_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdsyr2_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdsyr2_.c	2024-12-26 17:42:34.506043000 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdsyr2_( F_CHAR_T UPLO, Int * N, double * ALPHA,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               double * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdsyr2k_.c scalapack-2.2.0/PBLAS/SRC/pdsyr2k_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdsyr2k_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdsyr2k_.c	2024-12-26 17:42:34.511084000 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdsyr2k_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * N, Int * K,
+               double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdsyrk_.c scalapack-2.2.0/PBLAS/SRC/pdsyrk_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdsyrk_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdsyrk_.c	2024-12-26 17:42:34.516650800 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdsyrk_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * N, Int * K,
+               double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdtradd_.c scalapack-2.2.0/PBLAS/SRC/pdtradd_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdtradd_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdtradd_.c	2024-12-26 17:42:34.521639100 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdtradd_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * M, Int * N,
+                double * ALPHA,
+                double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdtran_.c scalapack-2.2.0/PBLAS/SRC/pdtran_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdtran_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdtran_.c	2024-12-26 17:42:34.527557700 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdtran_( Int * M, Int * N,
+               double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdtrmm_.c scalapack-2.2.0/PBLAS/SRC/pdtrmm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdtrmm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdtrmm_.c	2024-12-26 17:42:34.532544300 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdtrmm_( F_CHAR_T SIDE, F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG,
+               Int * M, Int * N, double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdtrmv_.c scalapack-2.2.0/PBLAS/SRC/pdtrmv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdtrmv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdtrmv_.c	2024-12-26 17:42:34.537934900 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdtrmv_( F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG, Int * N,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+               double * X, Int * IX, Int * JX, Int * DESCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdtrsm_.c scalapack-2.2.0/PBLAS/SRC/pdtrsm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdtrsm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdtrsm_.c	2024-12-26 17:42:34.543916700 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdtrsm_( F_CHAR_T SIDE, F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG,
+               Int * M, Int * N, double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdtrsv_.c scalapack-2.2.0/PBLAS/SRC/pdtrsv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdtrsv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdtrsv_.c	2024-12-26 17:42:34.549298500 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdtrsv_( F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG, Int * N,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+               double * X, Int * IX, Int * JX, Int * DESCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdzasum_.c scalapack-2.2.0/PBLAS/SRC/pdzasum_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdzasum_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdzasum_.c	2024-12-26 17:42:34.553289000 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdzasum_( Int * N, double * ASUM,
+                double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pdznrm2_.c scalapack-2.2.0/PBLAS/SRC/pdznrm2_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pdznrm2_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pdznrm2_.c	2024-12-26 17:42:34.558896800 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pdznrm2_( Int * N, double * NORM2,
+                double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/picopy_.c scalapack-2.2.0/PBLAS/SRC/picopy_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/picopy_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/picopy_.c	2024-12-26 17:42:34.563295100 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void picopy_( Int * N,
+               Int * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               Int * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/psagemv_.c scalapack-2.2.0/PBLAS/SRC/psagemv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/psagemv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/psagemv_.c	2024-12-26 17:42:34.567752400 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void psagemv_( F_CHAR_T TRANS, Int * M, Int * N, float * ALPHA,
+                float * A, Int * IA, Int * JA, Int * DESCA,
+                float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/psamax_.c scalapack-2.2.0/PBLAS/SRC/psamax_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/psamax_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/psamax_.c	2024-12-26 17:42:34.572738900 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void psamax_( Int * N, float * AMAX, Int * INDX,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/psasum_.c scalapack-2.2.0/PBLAS/SRC/psasum_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/psasum_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/psasum_.c	2024-12-26 17:42:34.578573100 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void psasum_( Int * N, float * ASUM,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/psasymv_.c scalapack-2.2.0/PBLAS/SRC/psasymv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/psasymv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/psasymv_.c	2024-12-26 17:42:34.583915000 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void psasymv_( F_CHAR_T UPLO, Int * N, float * ALPHA,
+                float * A, Int * IA, Int * JA, Int * DESCA,
+                float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/psatrmv_.c scalapack-2.2.0/PBLAS/SRC/psatrmv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/psatrmv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/psatrmv_.c	2024-12-26 17:42:34.589351000 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void psatrmv_( F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG, Int * N,
+                float * ALPHA,
+                float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/psaxpy_.c scalapack-2.2.0/PBLAS/SRC/psaxpy_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/psaxpy_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/psaxpy_.c	2024-12-26 17:42:34.594595600 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void psaxpy_( Int * N,
+               float * ALPHA,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pscasum_.c scalapack-2.2.0/PBLAS/SRC/pscasum_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pscasum_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pscasum_.c	2024-12-26 17:42:34.599011700 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pscasum_( Int * N, float * ASUM,
+                float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pscnrm2_.c scalapack-2.2.0/PBLAS/SRC/pscnrm2_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pscnrm2_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pscnrm2_.c	2024-12-26 17:42:34.603274500 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pscnrm2_( Int * N, float * NORM2,
+                float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pscopy_.c scalapack-2.2.0/PBLAS/SRC/pscopy_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pscopy_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pscopy_.c	2024-12-26 17:42:34.607264300 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pscopy_( Int * N,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               float * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/psdot_.c scalapack-2.2.0/PBLAS/SRC/psdot_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/psdot_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/psdot_.c	2024-12-26 17:42:34.612627700 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void psdot_( Int * N,
+              float * DOT,
+              float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/psgeadd_.c scalapack-2.2.0/PBLAS/SRC/psgeadd_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/psgeadd_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/psgeadd_.c	2024-12-26 17:42:34.616992300 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void psgeadd_( F_CHAR_T TRANS, Int * M, Int * N,
+                float * ALPHA,
+                float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/psgemm_.c scalapack-2.2.0/PBLAS/SRC/psgemm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/psgemm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/psgemm_.c	2024-12-26 17:42:34.622158400 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void psgemm_( F_CHAR_T TRANSA, F_CHAR_T TRANSB,
+               Int * M, Int * N, Int * K,
+               float * ALPHA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/psgemv_.c scalapack-2.2.0/PBLAS/SRC/psgemv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/psgemv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/psgemv_.c	2024-12-26 17:42:34.627030100 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void psgemv_( F_CHAR_T TRANS, Int * M, Int * N, float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/psger_.c scalapack-2.2.0/PBLAS/SRC/psger_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/psger_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/psger_.c	2024-12-26 17:42:34.633176700 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void psger_( Int * M, Int * N, float * ALPHA,
+              float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+              float * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/psnrm2_.c scalapack-2.2.0/PBLAS/SRC/psnrm2_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/psnrm2_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/psnrm2_.c	2024-12-26 17:42:34.638196500 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void psnrm2_( Int * N, float * NORM2,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/psscal_.c scalapack-2.2.0/PBLAS/SRC/psscal_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/psscal_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/psscal_.c	2024-12-26 17:42:34.643422000 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void psscal_( Int * N, float * ALPHA,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/psswap_.c scalapack-2.2.0/PBLAS/SRC/psswap_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/psswap_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/psswap_.c	2024-12-26 17:42:34.647410400 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void psswap_( Int * N,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               float * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pssymm_.c scalapack-2.2.0/PBLAS/SRC/pssymm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pssymm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pssymm_.c	2024-12-26 17:42:34.652898100 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pssymm_( F_CHAR_T SIDE, F_CHAR_T UPLO, Int * M, Int * N,
+               float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pssymv_.c scalapack-2.2.0/PBLAS/SRC/pssymv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pssymv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pssymv_.c	2024-12-26 17:42:34.656941700 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pssymv_( F_CHAR_T UPLO, Int * N, float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pssyr_.c scalapack-2.2.0/PBLAS/SRC/pssyr_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pssyr_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pssyr_.c	2024-12-26 17:42:34.662387100 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pssyr_( F_CHAR_T UPLO, Int * N, float * ALPHA,
+              float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+              float * A, Int * IA, Int * JA, Int * DESCA )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pssyr2_.c scalapack-2.2.0/PBLAS/SRC/pssyr2_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pssyr2_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pssyr2_.c	2024-12-26 17:42:34.666705100 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pssyr2_( F_CHAR_T UPLO, Int * N, float * ALPHA,
+               float * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               float * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pssyr2k_.c scalapack-2.2.0/PBLAS/SRC/pssyr2k_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pssyr2k_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pssyr2k_.c	2024-12-26 17:42:34.671484300 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pssyr2k_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * N, Int * K,
+               float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pssyrk_.c scalapack-2.2.0/PBLAS/SRC/pssyrk_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pssyrk_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pssyrk_.c	2024-12-26 17:42:34.675472900 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pssyrk_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * N, Int * K,
+               float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pstradd_.c scalapack-2.2.0/PBLAS/SRC/pstradd_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pstradd_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pstradd_.c	2024-12-26 17:42:34.680979900 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pstradd_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * M, Int * N,
+                float * ALPHA,
+                float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pstran_.c scalapack-2.2.0/PBLAS/SRC/pstran_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pstran_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pstran_.c	2024-12-26 17:42:34.685855300 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pstran_( Int * M, Int * N,
+               float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pstrmm_.c scalapack-2.2.0/PBLAS/SRC/pstrmm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pstrmm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pstrmm_.c	2024-12-26 17:42:34.689843600 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pstrmm_( F_CHAR_T SIDE, F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG,
+               Int * M, Int * N, float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pstrmv_.c scalapack-2.2.0/PBLAS/SRC/pstrmv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pstrmv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pstrmv_.c	2024-12-26 17:42:34.695682300 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pstrmv_( F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG, Int * N,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+               float * X, Int * IX, Int * JX, Int * DESCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pstrsm_.c scalapack-2.2.0/PBLAS/SRC/pstrsm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pstrsm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pstrsm_.c	2024-12-26 17:42:34.700105600 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pstrsm_( F_CHAR_T SIDE, F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG,
+               Int * M, Int * N, float * ALPHA,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pstrsv_.c scalapack-2.2.0/PBLAS/SRC/pstrsv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pstrsv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pstrsv_.c	2024-12-26 17:42:34.705536900 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pstrsv_( F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG, Int * N,
+               float * A, Int * IA, Int * JA, Int * DESCA,
+               float * X, Int * IX, Int * JX, Int * DESCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cabort.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cabort.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cabort.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cabort.c	2024-12-26 17:42:34.710514500 +0800
+@@ -57,7 +57,7 @@
+ #define PB_NoAbort pb_noabort__
+ #endif
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cabort( Int ICTXT, char * ROUT, Int INFO )
+ #else
+ void PB_Cabort( ICTXT, ROUT, INFO )
+@@ -112,7 +112,7 @@
+ *  .. External Functions ..
+ */
+ #ifdef TestingPblas
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+    Int            PB_NoAbort( Int * );
+ #else
+    Int            PB_NoAbort();
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cainfog2l.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cainfog2l.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cainfog2l.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cainfog2l.c	2024-12-26 17:42:34.715719300 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cainfog2l( Int M, Int N, Int I, Int J, Int * DESC, Int NPROW,
+                    Int NPCOL, Int MYROW, Int MYCOL, Int * IMB1,
+                    Int * INB1, Int * MP, Int * NQ, Int * II, Int * JJ,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CargFtoC.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CargFtoC.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CargFtoC.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CargFtoC.c	2024-12-26 17:42:34.720495600 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CargFtoC( Int IF, Int JF, Int * DESCIN, Int * IC, Int * JC,
+                     Int * DESCOUT )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cbinfo.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cbinfo.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cbinfo.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cbinfo.c	2024-12-26 17:42:34.724484300 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cbinfo( Int OFFD, Int M, Int N, Int IMB1, Int INB1, Int MB,
+                 Int NB, Int MRROW, Int MRCOL, Int * LCMT00, Int * MBLKS,
+                 Int * NBLKS, Int * IMBLOC, Int * INBLOC, Int * LMBLOC,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cchkmat.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cchkmat.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cchkmat.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cchkmat.c	2024-12-26 17:42:34.729151200 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cchkmat( Int ICTXT, char * ROUT, char * MNAME, Int M, Int MPOS0,
+                  Int N, Int NPOS0, Int IA, Int JA, Int * DESCA, Int DPOS0,
+                  Int * INFO )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cchkvec.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cchkvec.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cchkvec.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cchkvec.c	2024-12-26 17:42:34.733479500 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cchkvec( Int ICTXT, char * ROUT, char * VNAME, Int N, Int NPOS0,
+                  Int IX, Int JX, Int * DESCX, Int INCX, Int DPOS0,
+                  Int * INFO )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cconjg.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cconjg.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cconjg.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cconjg.c	2024-12-26 17:42:34.737963700 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cconjg( PBTYP_T * TYPE, char * ALPHA, char * CALPHA )
+ #else
+ void PB_Cconjg( TYPE, ALPHA, CALPHA )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cdescribe.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cdescribe.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cdescribe.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cdescribe.c	2024-12-26 17:42:34.740987200 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cdescribe( Int M, Int N, Int IA, Int JA, Int * DA, Int NPROW,
+                    Int NPCOL, Int MYROW, Int MYCOL, Int * II, Int * JJ,
+                    Int * LDA, Int * IMB, Int * INB, Int * MB, Int * NB,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cdescset.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cdescset.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cdescset.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cdescset.c	2024-12-26 17:42:34.745565400 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cdescset( Int * DESC, Int M, Int N, Int IMB, Int INB, Int MB, Int NB,
+                   Int RSRC, Int CSRC, Int CTXT, Int LLD )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cfirstnb.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cfirstnb.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cfirstnb.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cfirstnb.c	2024-12-26 17:42:34.748946000 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ Int PB_Cfirstnb( Int N, Int I, Int INB, Int NB )
+ #else
+ Int PB_Cfirstnb( N, I, INB, NB )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cg2lrem.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cg2lrem.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cg2lrem.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cg2lrem.c	2024-12-26 17:42:34.753118000 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ Int PB_Cg2lrem( Int IG, Int INB, Int NB, Int MYPROC, Int SRCPROC, Int NPROCS )
+ #else
+ Int PB_Cg2lrem( IG, INB, NB, MYPROC, SRCPROC, NPROCS )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CGatherV.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CGatherV.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CGatherV.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CGatherV.c	2024-12-26 17:42:34.757106200 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CGatherV( PBTYP_T * TYPE, char * ALLOC, char * DIRECA, Int M, Int N,
+                   char * A, Int IA, Int JA, Int * DESCA, char * AROC,
+                   char * * B, Int * DESCB, Int * BFREE )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cgcd.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cgcd.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cgcd.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cgcd.c	2024-12-26 17:42:34.762152200 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ Int PB_Cgcd( Int M, Int N )
+ #else
+ Int PB_Cgcd( M, N )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cgetbuf.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cgetbuf.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cgetbuf.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cgetbuf.c	2024-12-26 17:42:34.765143100 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ char * PB_Cgetbuf( char * MESS, Int LENGTH )
+ #else
+ char * PB_Cgetbuf( MESS, LENGTH )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cindxg2p.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cindxg2p.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cindxg2p.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cindxg2p.c	2024-12-26 17:42:34.768517800 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ Int PB_Cindxg2p( Int IG, Int INB, Int NB, Int PROC, Int SRCPROC, Int NPROCS )
+ #else
+ Int PB_Cindxg2p( IG, INB, NB, PROC, SRCPROC, NPROCS )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cinfog2l.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cinfog2l.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cinfog2l.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cinfog2l.c	2024-12-26 17:42:34.772506600 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cinfog2l( Int I, Int J, Int * DESC, Int NPROW, Int NPCOL,
+                   Int MYROW, Int MYCOL, Int * II, Int * JJ,
+                   Int * PROW, Int * PCOL )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CInOutV.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CInOutV.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CInOutV.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CInOutV.c	2024-12-26 17:42:34.777377500 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CInOutV( PBTYP_T * TYPE, char * ROWCOL, Int M, Int N, Int * DESCA,
+                  Int K, char * BETA,
+                  char * Y, Int IY, Int JY, Int * DESCY, char * YROC,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CInOutV2.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CInOutV2.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CInOutV2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CInOutV2.c	2024-12-26 17:42:34.782334100 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CInOutV2( PBTYP_T * TYPE, char * CONJUG, char * ROWCOL, Int M,
+                   Int N, Int KA, Int * DESCA, Int K, char * Y, Int IY,
+                   Int JY, Int * DESCY, char * YROC, char * * YAPTR,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CInV.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CInV.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CInV.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CInV.c	2024-12-26 17:42:34.787161400 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CInV( PBTYP_T * TYPE, char * CONJUG, char * ROWCOL, Int M,
+               Int N, Int * DESCA, Int K, char * X, Int IX, Int JX,
+               Int * DESCX, char * XROC, char * * XAPTR, Int * DXA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CInV2.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CInV2.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CInV2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CInV2.c	2024-12-26 17:42:34.791149700 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CInV2( PBTYP_T * TYPE, char * CONJUG, char * ROWCOL, Int M,
+                Int N, Int * DESCA, Int K, char * X, Int IX, Int JX,
+                Int * DESCX, char * XROC, char * XAPTR, Int IJXA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Clastnb.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Clastnb.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Clastnb.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Clastnb.c	2024-12-26 17:42:34.796136400 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ Int PB_Clastnb( Int N, Int I, Int INB, Int NB )
+ #else
+ Int PB_Clastnb( N, I, INB, NB )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Clcm.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Clcm.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Clcm.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Clcm.c	2024-12-26 17:42:34.800072500 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ Int PB_Clcm( Int M, Int N )
+ #else
+ Int PB_Clcm( M, N )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cmalloc.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cmalloc.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cmalloc.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cmalloc.c	2024-12-26 17:42:34.802824100 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ char * PB_Cmalloc( Int LENGTH )
+ #else
+ char * PB_Cmalloc( LENGTH )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cnnxtroc.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cnnxtroc.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cnnxtroc.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cnnxtroc.c	2024-12-26 17:42:34.806815600 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ Int PB_Cnnxtroc( Int N, Int I, Int INB, Int NB, Int PROC, Int SRCPROC,
+                  Int NPROCS )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cnpreroc.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cnpreroc.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cnpreroc.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cnpreroc.c	2024-12-26 17:42:34.811234500 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ Int PB_Cnpreroc( Int N, Int I, Int INB, Int NB, Int PROC, Int SRCPROC,
+                  Int NPROCS )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cnumroc.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cnumroc.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cnumroc.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cnumroc.c	2024-12-26 17:42:34.815224500 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ Int PB_Cnumroc( Int N, Int I, Int INB, Int NB, Int PROC, Int SRCPROC,
+                 Int NPROCS )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_COutV.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_COutV.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_COutV.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_COutV.c	2024-12-26 17:42:34.819578800 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_COutV( PBTYP_T * TYPE, char * ROWCOL, char * ZEROIT, Int M,
+                Int N, Int * DESCA, Int K, char * * YAPTR, Int * DYA,
+                Int * YAFREE, Int * YASUM )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpaxpby.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpaxpby.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpaxpby.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpaxpby.c	2024-12-26 17:42:34.823567400 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cpaxpby( PBTYP_T * TYPE, char * CONJUG, Int M, Int N,
+                  char * ALPHA,
+                  char * A, Int IA, Int JA, Int * DESCA, char * AROC,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpaxpbyDN.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpaxpbyDN.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpaxpbyDN.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpaxpbyDN.c	2024-12-26 17:42:34.829552200 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CpaxpbyDN( PBTYP_T * TYPE, char * CONJUG, Int M, Int N,
+                    char * ALPHA,
+                    char * A, Int IA, Int JA, Int * DESCA, char * AROC,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpaxpbyND.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpaxpbyND.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpaxpbyND.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpaxpbyND.c	2024-12-26 17:42:34.835430600 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CpaxpbyND( PBTYP_T * TYPE, char * CONJUG, Int M, Int N,
+                    char * ALPHA,
+                    char * A, Int IA, Int JA, Int * DESCA, char * AROC,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpaxpbyNN.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpaxpbyNN.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpaxpbyNN.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpaxpbyNN.c	2024-12-26 17:42:34.839450400 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CpaxpbyNN( PBTYP_T * TYPE, char * CONJUG, Int M, Int N,
+                    char * ALPHA,
+                    char * A, Int IA, Int JA, Int * DESCA, char * AROC,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpdot11.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpdot11.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpdot11.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpdot11.c	2024-12-26 17:42:34.844467000 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cpdot11( PBTYP_T * TYPE, Int N, char * DOT,
+                  char * X, Int IX, Int JX, Int * DESCX, Int INCX,
+                  char * Y, Int IY, Int JY, Int * DESCY, Int INCY,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpdotND.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpdotND.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpdotND.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpdotND.c	2024-12-26 17:42:34.849790200 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CpdotND( PBTYP_T * TYPE, Int N, char * DOT,
+                  char * X, Int IX, Int JX, Int * DESCX, Int INCX,
+                  char * Y, Int IY, Int JY, Int * DESCY, Int INCY,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpdotNN.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpdotNN.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpdotNN.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpdotNN.c	2024-12-26 17:42:34.855162300 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CpdotNN( PBTYP_T * TYPE, Int N, char * DOT,
+                  char * X, Int IX, Int JX, Int * DESCX, Int INCX,
+                  char * Y, Int IY, Int JY, Int * DESCY, Int INCY,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpgeadd.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpgeadd.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpgeadd.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpgeadd.c	2024-12-26 17:42:34.860148500 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cpgeadd( PBTYP_T * TYPE, char * DIRECA, char * DIRECC,
+                  char * CONJUG, Int M, Int N, char * ALPHA, char * A,
+                  Int IA, Int JA, Int * DESCA, char * BETA,  char * C,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpgemmAB.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpgemmAB.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpgemmAB.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpgemmAB.c	2024-12-26 17:42:34.866138900 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CpgemmAB( PBTYP_T * TYPE, char * DIRECA, char * DIRECB,
+                   char * TRANSA, char * TRANSB, Int M, Int N, Int K,
+                   char * ALPHA, char * A, Int IA, Int JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpgemmAC.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpgemmAC.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpgemmAC.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpgemmAC.c	2024-12-26 17:42:34.871126200 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CpgemmAC( PBTYP_T * TYPE, char * DIRECA, char * DIRECC,
+                   char * TRANSA, char * TRANSB, Int M, Int N, Int K,
+                   char * ALPHA, char * A, Int IA, Int JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpgemmBC.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpgemmBC.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpgemmBC.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpgemmBC.c	2024-12-26 17:42:34.877110600 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CpgemmBC( PBTYP_T * TYPE, char * DIRECB, char * DIRECC,
+                   char * TRANSA, char * TRANSB, Int M, Int N, Int K,
+                   char * ALPHA, char * A, Int IA, Int JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cplacnjg.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cplacnjg.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cplacnjg.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cplacnjg.c	2024-12-26 17:42:34.883201100 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cplacnjg( PBTYP_T * TYPE, Int M, Int N, char * ALPHA, char * A,
+                   Int IA, Int JA, Int * DESCA )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cplapad.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cplapad.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cplapad.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cplapad.c	2024-12-26 17:42:34.887897700 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cplapad( PBTYP_T * TYPE, char * UPLO, char * CONJUG, Int M,
+                  Int N, char * ALPHA, char * BETA, char * A, Int IA,
+                  Int JA, Int * DESCA )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cplapd2.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cplapd2.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cplapd2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cplapd2.c	2024-12-26 17:42:34.892885700 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cplapd2( PBTYP_T * TYPE, char * UPLO, char * CONJUG, Int M,
+                  Int N, char * ALPHA, char * BETA, char * A, Int IA,
+                  Int JA, Int * DESCA )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cplaprnt.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cplaprnt.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cplaprnt.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cplaprnt.c	2024-12-26 17:42:34.898445800 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cplaprnt( PBTYP_T * TYPE, Int M, Int N,
+                   char * A, Int IA, Int JA, Int * DESCA,
+                   Int IRPRNT, Int ICPRNT, char * CMATNM )
+@@ -238,7 +238,7 @@
+ */
+ }
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cplaprn2( PBTYP_T * TYPE, Int M, Int N, char * A, Int IA,
+                   Int JA, Int * DESCA, Int IRPRNT, Int ICPRNT,
+                   char * CMATNM, Int PROW, Int PCOL )
+@@ -490,7 +490,7 @@
+ */
+ }
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cprnt( char TYPE, Int SIZE, Int USIZ, Int N, char * A, Int IA,
+                Int JA, char * CMATNM )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cplasca2.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cplasca2.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cplasca2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cplasca2.c	2024-12-26 17:42:34.903910400 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cplasca2( PBTYP_T * TYPE, char * UPLO, char * CONJUG, Int M,
+                   Int N, char * ALPHA, char * A, Int IA, Int JA,
+                   Int * DESCA )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cplascal.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cplascal.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cplascal.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cplascal.c	2024-12-26 17:42:34.907918100 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cplascal( PBTYP_T * TYPE, char * UPLO, char * CONJUG, Int M,
+                   Int N, char * ALPHA, char * A, Int IA, Int JA,
+                   Int * DESCA )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpswapND.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpswapND.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpswapND.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpswapND.c	2024-12-26 17:42:34.912923900 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CpswapND( PBTYP_T * TYPE, Int N,
+                   char * X, Int IX, Int JX, Int * DESCX, Int INCX,
+                   char * Y, Int IY, Int JY, Int * DESCY, Int INCY )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpswapNN.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpswapNN.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpswapNN.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpswapNN.c	2024-12-26 17:42:34.919095400 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CpswapNN( PBTYP_T * TYPE, Int N,
+                   char * X, Int IX, Int JX, Int * DESCX, Int INCX,
+                   char * Y, Int IY, Int JY, Int * DESCY, Int INCY )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpsym.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpsym.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpsym.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpsym.c	2024-12-26 17:42:34.924083600 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cpsym( PBTYP_T * TYPE, PBTYP_T * UTYP, char * SIDE,
+                char * UPLO, Int N, Int K, char * ALPHA, char * A,
+                Int IA, Int JA, Int * DESCA, char * XC, Int LDXC,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpsymmAB.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpsymmAB.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpsymmAB.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpsymmAB.c	2024-12-26 17:42:34.929528700 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CpsymmAB( PBTYP_T * TYPE, char * DIRECAB, char * CONJUG,
+                   char * SIDE, char * UPLO, Int M, Int N, char * ALPHA,
+                   char * A, Int IA, Int JA, Int * DESCA, char * B,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpsymmBC.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpsymmBC.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpsymmBC.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpsymmBC.c	2024-12-26 17:42:34.935314100 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CpsymmBC( PBTYP_T * TYPE, char * DIRECAB, char * CONJUG,
+                   char * SIDE, char * UPLO, Int M, Int N, char * ALPHA,
+                   char * A, Int IA, Int JA, Int * DESCA, char * B,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpsyr.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpsyr.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpsyr.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpsyr.c	2024-12-26 17:42:34.940304100 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cpsyr( PBTYP_T * TYPE, char * UPLO, Int N, Int K,
+                char * ALPHA, char * XC, Int LDXC, char * XR, Int LDXR,
+                char * A, Int IA, Int JA, Int * DESCA, TZSYR_T SYR )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpsyr2.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpsyr2.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpsyr2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpsyr2.c	2024-12-26 17:42:34.945504400 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cpsyr2( PBTYP_T * TYPE, char * UPLO, Int N, Int K,
+                 char * ALPHA, char * XC, Int LDXC, char * XR, Int LDXR,
+                 char * YC, Int LDYC, char * YR, Int LDYR, char * A,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpsyr2kA.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpsyr2kA.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpsyr2kA.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpsyr2kA.c	2024-12-26 17:42:34.949809200 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cpsyr2kA( PBTYP_T * TYPE, char * DIRECAB, char * CONJUG,
+                   char * UPLO, char * TRANS, Int N, Int K, char * ALPHA,
+                   char * A, Int IA, Int JA, Int * DESCA, char * B,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpsyr2kAC.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpsyr2kAC.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cpsyr2kAC.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cpsyr2kAC.c	2024-12-26 17:42:34.956131400 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cpsyr2kAC( PBTYP_T * TYPE, char * DIRECAB, char * CONJUG,
+                    char * UPLO, char * TRANS, Int N, Int K, char * ALPHA,
+                    char * A, Int IA, Int JA, Int * DESCA, char * B,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpsyrkA.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpsyrkA.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpsyrkA.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpsyrkA.c	2024-12-26 17:42:34.962150900 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CpsyrkA( PBTYP_T * TYPE, char * DIRECA, char * CONJUG,
+                  char * UPLO, char * TRANS, Int N, Int K, char * ALPHA,
+                  char * A, Int IA, Int JA, Int * DESCA, char * BETA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpsyrkAC.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpsyrkAC.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CpsyrkAC.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CpsyrkAC.c	2024-12-26 17:42:34.968998700 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CpsyrkAC( PBTYP_T * TYPE, char * DIRECA, char * CONJUG,
+                   char * UPLO, char * TRANS, Int N, Int K, char * ALPHA,
+                   char * A, Int IA, Int JA, Int * DESCA, char * BETA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cptradd.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cptradd.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cptradd.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cptradd.c	2024-12-26 17:42:34.973951700 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cptradd( PBTYP_T * TYPE, char * DIRECAC, char * UPLO, char * TRANS,
+                  Int M, Int N, char * ALPHA, char * A, Int IA, Int JA,
+                  Int * DESCA, char * BETA, char * C, Int IC, Int JC,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cptran.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cptran.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cptran.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cptran.c	2024-12-26 17:42:34.979089300 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cptran( PBTYP_T * TYPE, char * CONJUG, Int M, Int N,
+                 char * ALPHA, char * A, Int IA, Int JA, Int * DESCA,
+                 char * BETA,  char * C, Int IC, Int JC, Int * DESCC )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cptrm.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cptrm.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cptrm.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cptrm.c	2024-12-26 17:42:34.984593100 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cptrm( PBTYP_T * TYPE, PBTYP_T * UTYP, char * SIDE, char * UPLO,
+                char * TRANS, char * DIAG, Int N, Int K, char * ALPHA,
+                char * A, Int IA, Int JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CptrmmAB.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CptrmmAB.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CptrmmAB.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CptrmmAB.c	2024-12-26 17:42:34.989477300 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CptrmmAB( PBTYP_T * TYPE, char * VARIANT, char * SIDE, char * UPLO,
+                   char * TRANSA, char * DIAG, Int M, Int N, char * ALPHA,
+                   char * A, Int IA, Int JA, Int * DESCA, char * B, Int IB,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CptrmmB.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CptrmmB.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CptrmmB.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CptrmmB.c	2024-12-26 17:42:34.995133100 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CptrmmB( PBTYP_T * TYPE, char * DIRECB, char * SIDE,
+                  char * UPLO, char * TRANSA, char * DIAG, Int M, Int N,
+                  char * ALPHA, char * A, Int IA, Int JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cptrsm.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cptrsm.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cptrsm.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cptrsm.c	2024-12-26 17:42:34.999489800 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cptrsm( PBTYP_T * TYPE, Int FBCAST, char * SIDE, char * UPLO,
+                 char * TRANS, char * DIAG, Int M, Int N, char * ALPHA,
+                 char * A, Int IA, Int JA, Int * DESCA, char * BC,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CptrsmAB.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CptrsmAB.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CptrsmAB.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CptrsmAB.c	2024-12-26 17:42:35.005329400 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CptrsmAB( PBTYP_T * TYPE, char * VARIANT, char * SIDE, char * UPLO,
+                   char * TRANSA, char * DIAG, Int M, Int N, char * ALPHA,
+                   char * A, Int IA, Int JA, Int * DESCA, char * B, Int IB,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CptrsmAB0.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CptrsmAB0.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CptrsmAB0.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CptrsmAB0.c	2024-12-26 17:42:35.011210100 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CptrsmAB0( PBTYP_T * TYPE, char * SIDE, char * UPLO, char * DIAG,
+                    Int M, Int N, char * ALPHA, char * A, Int IA, Int JA,
+                    Int * DESCA, char * B, Int IB, Int JB, Int * DESCB,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CptrsmAB1.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CptrsmAB1.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CptrsmAB1.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CptrsmAB1.c	2024-12-26 17:42:35.016592800 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CptrsmAB1( PBTYP_T * TYPE, char * SIDE, char * UPLO, char * TRANSA,
+                    char * DIAG, Int M, Int N, char * ALPHA, char * A, Int IA,
+                    Int JA, Int * DESCA,  char * B, Int IB, Int JB, Int * DESCB,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CptrsmB.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CptrsmB.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CptrsmB.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CptrsmB.c	2024-12-26 17:42:35.021281500 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CptrsmB( PBTYP_T * TYPE, char * DIRECB, char * SIDE,
+                  char * UPLO, char * TRANSA, char * DIAG, Int M, Int N,
+                  char * ALPHA, char * A, Int IA, Int JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cptrsv.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cptrsv.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cptrsv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cptrsv.c	2024-12-26 17:42:35.026815300 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cptrsv( PBTYP_T * TYPE, Int FBCAST, char * UPLO, char * TRANS,
+                 char * DIAG, Int N, char * A, Int IA, Int JA,
+                 Int * DESCA, char * XC, Int INCXC, char * XR,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CScatterV.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CScatterV.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CScatterV.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CScatterV.c	2024-12-26 17:42:35.031801800 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CScatterV( PBTYP_T * TYPE, char * DIRECA, Int M, Int N,
+                    char * A, Int IA, Int JA, Int * DESCA, char * AROC,
+                    char * ALPHA, char * B, Int IB, Int JB, Int * DESCB,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cspan.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cspan.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cspan.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cspan.c	2024-12-26 17:42:35.037653200 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ Int PB_Cspan( Int N, Int I, Int INB, Int NB, Int SRCPROC, Int NPROCS )
+ #else
+ Int PB_Cspan( N, I, INB, NB, SRCPROC, NPROCS )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctop.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctop.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctop.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctop.c	2024-12-26 17:42:35.040644000 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ char * PB_Ctop( Int * ICTXT, char * OP, char * SCOPE, char * TOP )
+ #else
+ char * PB_Ctop( ICTXT, OP, SCOPE, TOP )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzahemv.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzahemv.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzahemv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzahemv.c	2024-12-26 17:42:35.045238500 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctzahemv( PBTYP_T * TYPE, char * SIDE, char * UPLO, Int M, Int N,
+                   Int K, Int IOFFD, char * ALPHA, char * A, Int LDA,
+                   char * XC, Int LDXC, char * XR, Int LDXR, char * YC,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzasymv.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzasymv.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzasymv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzasymv.c	2024-12-26 17:42:35.049579500 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctzasymv( PBTYP_T * TYPE, char * SIDE, char * UPLO, Int M, Int N,
+                   Int K, Int IOFFD, char * ALPHA, char * A, Int LDA,
+                   char * XC, Int LDXC, char * XR, Int LDXR, char * YC,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzatrmv.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzatrmv.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzatrmv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzatrmv.c	2024-12-26 17:42:35.054814100 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctzatrmv( PBTYP_T * TYPE, char * SIDE, char * UPLO,
+                   char * TRANS, char * DIAG, Int M, Int N, Int K,
+                   Int IOFFD, char * ALPHA, char * A, Int LDA, char * X,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzhemm.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzhemm.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzhemm.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzhemm.c	2024-12-26 17:42:35.059702200 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctzhemm( PBTYP_T * TYPE, char * SIDE, char * UPLO, Int M, Int N,
+                  Int K, Int IOFFD, char * ALPHA, char * A, Int LDA,
+                  char * BC, Int LDBC, char * BR, Int LDBR, char * CC,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzhemv.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzhemv.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzhemv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzhemv.c	2024-12-26 17:42:35.064253600 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctzhemv( PBTYP_T * TYPE, char * SIDE, char * UPLO, Int M, Int N,
+                  Int K, Int IOFFD, char * ALPHA, char * A, Int LDA,
+                  char * XC, Int LDXC, char * XR, Int LDXR, char * YC,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzher.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzher.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzher.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzher.c	2024-12-26 17:42:35.068930700 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctzher( PBTYP_T * TYPE, char * UPLO, Int M, Int N, Int K,
+                 Int IOFFD, char * ALPHA, char * XC, Int LDXC, char * XR,
+                 Int LDXR, char * A, Int LDA )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzher2.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzher2.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzher2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzher2.c	2024-12-26 17:42:35.072919300 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctzher2( PBTYP_T * TYPE, char * UPLO, Int M, Int N, Int K,
+                  Int IOFFD, char * ALPHA, char * XC, Int LDXC,
+                  char * YC, Int LDYC, char * XR, Int LDXR, char * YR,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzher2k.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzher2k.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzher2k.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzher2k.c	2024-12-26 17:42:35.077849400 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctzher2k( PBTYP_T * TYPE, char * UPLO, Int M, Int N, Int K,
+                  Int IOFFD, char * ALPHA, char * AC, Int LDAC,
+                  char * BC, Int LDBC, char * AR, Int LDAR, char * BR,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzherk.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzherk.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzherk.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzherk.c	2024-12-26 17:42:35.082517000 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctzherk( PBTYP_T * TYPE, char * UPLO, Int M, Int N, Int K,
+                  Int IOFFD, char * ALPHA, char * AC, Int LDAC,
+                  char * AR, Int LDAR, char * C, Int LDC )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzsymm.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzsymm.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzsymm.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzsymm.c	2024-12-26 17:42:35.086767800 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctzsymm( PBTYP_T * TYPE, char * SIDE, char * UPLO, Int M, Int N,
+                  Int K, Int IOFFD, char * ALPHA, char * A, Int LDA,
+                  char * BC, Int LDBC, char * BR, Int LDBR, char * CC,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzsymv.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzsymv.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzsymv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzsymv.c	2024-12-26 17:42:35.090756200 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctzsymv( PBTYP_T * TYPE, char * SIDE, char * UPLO, Int M, Int N,
+                  Int K, Int IOFFD, char * ALPHA, char * A, Int LDA,
+                  char * XC, Int LDXC, char * XR, Int LDXR, char * YC,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzsyr.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzsyr.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzsyr.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzsyr.c	2024-12-26 17:42:35.095742800 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctzsyr( PBTYP_T * TYPE, char * UPLO, Int M, Int N, Int K,
+                 Int IOFFD, char * ALPHA, char * XC, Int LDXC, char * XR,
+                 Int LDXR, char * A, Int LDA )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzsyr2.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzsyr2.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzsyr2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzsyr2.c	2024-12-26 17:42:35.100062500 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctzsyr2( PBTYP_T * TYPE, char * UPLO, Int M, Int N, Int K,
+                  Int IOFFD, char * ALPHA, char * XC, Int LDXC,
+                  char * YC, Int LDYC, char * XR, Int LDXR, char * YR,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzsyr2k.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzsyr2k.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzsyr2k.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzsyr2k.c	2024-12-26 17:42:35.104052800 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctzsyr2k( PBTYP_T * TYPE, char * UPLO, Int M, Int N, Int K,
+                  Int IOFFD, char * ALPHA, char * AC, Int LDAC,
+                  char * BC, Int LDBC, char * AR, Int LDAR, char * BR,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzsyrk.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzsyrk.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctzsyrk.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctzsyrk.c	2024-12-26 17:42:35.109466200 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctzsyrk( PBTYP_T * TYPE, char * UPLO, Int M, Int N, Int K,
+                  Int IOFFD, char * ALPHA, char * AC, Int LDAC,
+                  char * AR, Int LDAR, char * C, Int LDC )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctztrmm.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctztrmm.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctztrmm.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctztrmm.c	2024-12-26 17:42:35.113787700 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctztrmm( PBTYP_T * TYPE, char * SIDE, char * UPLO, char * TRANS,
+                  char * DIAG, Int M, Int N, Int K, Int IOFFD,
+                  char * ALPHA, char * A, Int LDA, char * B, Int LDB,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctztrmv.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctztrmv.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Ctztrmv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Ctztrmv.c	2024-12-26 17:42:35.117942000 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Ctztrmv( PBTYP_T * TYPE, char * SIDE, char * UPLO, char * TRANS,
+                  char * DIAG, Int M, Int N, Int K, Int IOFFD,
+                  char * ALPHA, char * A, Int LDA, char * X, Int LDX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CVMcontig.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CVMcontig.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CVMcontig.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CVMcontig.c	2024-12-26 17:42:35.122306400 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CVMcontig( PB_VM_T * VM, Int * NRPQ, Int * NCPQ, Int * IOFF,
+                    Int * JOFF )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CVMinit.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CVMinit.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CVMinit.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CVMinit.c	2024-12-26 17:42:35.127703500 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CVMinit( PB_VM_T * VM, Int OFFD, Int M, Int N, Int IMB1, Int INB1,
+                  Int MB, Int NB, Int MRROW, Int MRCOL, Int NPROW,
+                  Int NPCOL, Int LCMB )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CVMloc.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CVMloc.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CVMloc.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CVMloc.c	2024-12-26 17:42:35.132152700 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ Int PB_CVMloc( PBTYP_T * TYPE, PB_VM_T * VM,
+                char * VROCS, char * ROCS, char * UNPA, char * TRANS,
+                Int MN, Int K, char * ALPHA, char * A, Int LDA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CVMnpq.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CVMnpq.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CVMnpq.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CVMnpq.c	2024-12-26 17:42:35.137103700 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ Int PB_CVMnpq( PB_VM_T * VM )
+ #else
+ Int PB_CVMnpq( VM )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CVMpack.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CVMpack.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CVMpack.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CVMpack.c	2024-12-26 17:42:35.141092000 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ Int PB_CVMpack( PBTYP_T * TYPE, PB_VM_T * VM, char * VROCS, char * ROCS,
+                 char * UNPA, char * TRANS, Int MN, Int K,
+                 char * ALPHA, char * A, Int LDA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CVMswp.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CVMswp.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CVMswp.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CVMswp.c	2024-12-26 17:42:35.147077300 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ Int PB_CVMswp( PBTYP_T * TYPE, PB_VM_T * VM, char * VROCS, char * ROCS,
+                char * TRANS, Int MN, char * X, Int INCX, char * Y,
+                Int INCY )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CVMupdate.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CVMupdate.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_CVMupdate.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_CVMupdate.c	2024-12-26 17:42:35.151804100 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_CVMupdate( PB_VM_T * VM, Int K, Int * II, Int * JJ )
+ #else
+ void PB_CVMupdate( VM, K, II, JJ )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cwarn.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cwarn.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_Cwarn.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_Cwarn.c	2024-12-26 17:42:35.155792600 +0800
+@@ -57,7 +57,7 @@
+ #define PB_NoAbort pb_noabort__
+ #endif
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_Cwarn( Int ICTXT, Int LINE, char * ROUT, char * FORM, ... )
+ #else
+ void PB_Cwarn( va_alist )
+@@ -109,14 +109,14 @@
+ *  .. External Functions ..
+ */
+ #ifdef TestingPblas
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+    Int            PB_NoAbort( Int * );
+ #else
+    Int            PB_NoAbort();
+ #endif
+ #endif
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+    va_start( argptr, FORM );
+ #else
+    char           * ROUT, * FORM;
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_topget_.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_topget_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_topget_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_topget_.c	2024-12-26 17:42:35.160945500 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_topget_( Int * ICTXT, F_CHAR_T OP, F_CHAR_T SCOPE, F_CHAR_T TOP )
+ #else
+ void PB_topget_( ICTXT, OP, SCOPE, TOP )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_topset_.c scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_topset_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/PTOOLS/PB_topset_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/PTOOLS/PB_topset_.c	2024-12-26 17:42:35.164452700 +0800
+@@ -16,7 +16,7 @@
+ #include "../PBblacs.h"
+ #include "../PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void PB_topset_( Int * ICTXT, F_CHAR_T OP, F_CHAR_T SCOPE, F_CHAR_T TOP )
+ #else
+ void PB_topset_( ICTXT, OP, SCOPE, TOP )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzagemv_.c scalapack-2.2.0/PBLAS/SRC/pzagemv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzagemv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzagemv_.c	2024-12-26 17:42:35.168259900 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzagemv_( F_CHAR_T TRANS, Int * M, Int * N, double * ALPHA,
+                double * A, Int * IA, Int * JA, Int * DESCA,
+                double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzahemv_.c scalapack-2.2.0/PBLAS/SRC/pzahemv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzahemv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzahemv_.c	2024-12-26 17:42:35.173250600 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzahemv_( F_CHAR_T UPLO, Int * N, double * ALPHA,
+                double * A, Int * IA, Int * JA, Int * DESCA,
+                double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzamax_.c scalapack-2.2.0/PBLAS/SRC/pzamax_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzamax_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzamax_.c	2024-12-26 17:42:35.177942800 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzamax_( Int * N, double * AMAX, Int * INDX,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzatrmv_.c scalapack-2.2.0/PBLAS/SRC/pzatrmv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzatrmv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzatrmv_.c	2024-12-26 17:42:35.182223600 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzatrmv_( F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG, Int * N,
+                double * ALPHA,
+                double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzaxpy_.c scalapack-2.2.0/PBLAS/SRC/pzaxpy_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzaxpy_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzaxpy_.c	2024-12-26 17:42:35.187647200 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzaxpy_( Int * N,
+               double * ALPHA,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzcopy_.c scalapack-2.2.0/PBLAS/SRC/pzcopy_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzcopy_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzcopy_.c	2024-12-26 17:42:35.192785100 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzcopy_( Int * N,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               double * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzdotc_.c scalapack-2.2.0/PBLAS/SRC/pzdotc_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzdotc_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzdotc_.c	2024-12-26 17:42:35.197533400 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzdotc_( Int * N,
+               double * DOT,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzdotu_.c scalapack-2.2.0/PBLAS/SRC/pzdotu_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzdotu_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzdotu_.c	2024-12-26 17:42:35.202806200 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzdotu_( Int * N,
+               double * DOT,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzdscal_.c scalapack-2.2.0/PBLAS/SRC/pzdscal_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzdscal_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzdscal_.c	2024-12-26 17:42:35.207812800 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzdscal_( Int * N,
+                double * ALPHA,
+                double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzgeadd_.c scalapack-2.2.0/PBLAS/SRC/pzgeadd_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzgeadd_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzgeadd_.c	2024-12-26 17:42:35.212654700 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzgeadd_( F_CHAR_T TRANS, Int * M, Int * N,
+                double * ALPHA,
+                double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzgemm_.c scalapack-2.2.0/PBLAS/SRC/pzgemm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzgemm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzgemm_.c	2024-12-26 17:42:35.217021500 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzgemm_( F_CHAR_T TRANSA, F_CHAR_T TRANSB,
+               Int * M, Int * N, Int * K,
+               double * ALPHA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzgemv_.c scalapack-2.2.0/PBLAS/SRC/pzgemv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzgemv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzgemv_.c	2024-12-26 17:42:35.222697900 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzgemv_( F_CHAR_T TRANS, Int * M, Int * N, double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzgerc_.c scalapack-2.2.0/PBLAS/SRC/pzgerc_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzgerc_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzgerc_.c	2024-12-26 17:42:35.227936300 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzgerc_( Int * M, Int * N, double * ALPHA,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               double * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzgeru_.c scalapack-2.2.0/PBLAS/SRC/pzgeru_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzgeru_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzgeru_.c	2024-12-26 17:42:35.231925100 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzgeru_( Int * M, Int * N, double * ALPHA,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               double * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzhemm_.c scalapack-2.2.0/PBLAS/SRC/pzhemm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzhemm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzhemm_.c	2024-12-26 17:42:35.237314600 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzhemm_( F_CHAR_T SIDE, F_CHAR_T UPLO, Int * M, Int * N,
+               double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzhemv_.c scalapack-2.2.0/PBLAS/SRC/pzhemv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzhemv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzhemv_.c	2024-12-26 17:42:35.241304100 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzhemv_( F_CHAR_T UPLO, Int * N, double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzher_.c scalapack-2.2.0/PBLAS/SRC/pzher_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzher_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzher_.c	2024-12-26 17:42:35.246989300 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzher_( F_CHAR_T UPLO, Int * N, double * ALPHA,
+              double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+              double * A, Int * IA, Int * JA, Int * DESCA )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzher2_.c scalapack-2.2.0/PBLAS/SRC/pzher2_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzher2_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzher2_.c	2024-12-26 17:42:35.251249600 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzher2_( F_CHAR_T UPLO, Int * N, double * ALPHA,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               double * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzher2k_.c scalapack-2.2.0/PBLAS/SRC/pzher2k_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzher2k_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzher2k_.c	2024-12-26 17:42:35.274400200 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzher2k_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * N, Int * K,
+               double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzherk_.c scalapack-2.2.0/PBLAS/SRC/pzherk_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzherk_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzherk_.c	2024-12-26 17:42:35.295477000 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzherk_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * N, Int * K,
+               double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzscal_.c scalapack-2.2.0/PBLAS/SRC/pzscal_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzscal_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzscal_.c	2024-12-26 17:42:35.307633500 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzscal_( Int * N, double * ALPHA,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX )
+ #else
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzswap_.c scalapack-2.2.0/PBLAS/SRC/pzswap_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzswap_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzswap_.c	2024-12-26 17:42:35.329380900 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzswap_( Int * N,
+               double * X, Int * IX, Int * JX, Int * DESCX, Int * INCX,
+               double * Y, Int * IY, Int * JY, Int * DESCY, Int * INCY )
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzsymm_.c scalapack-2.2.0/PBLAS/SRC/pzsymm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzsymm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzsymm_.c	2024-12-26 17:42:35.387034700 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzsymm_( F_CHAR_T SIDE, F_CHAR_T UPLO, Int * M, Int * N,
+               double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzsyr2k_.c scalapack-2.2.0/PBLAS/SRC/pzsyr2k_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzsyr2k_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzsyr2k_.c	2024-12-26 17:42:35.420177300 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzsyr2k_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * N, Int * K,
+               double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pzsyrk_.c scalapack-2.2.0/PBLAS/SRC/pzsyrk_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pzsyrk_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pzsyrk_.c	2024-12-26 17:42:35.429426400 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pzsyrk_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * N, Int * K,
+               double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pztradd_.c scalapack-2.2.0/PBLAS/SRC/pztradd_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pztradd_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pztradd_.c	2024-12-26 17:42:35.434414000 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pztradd_( F_CHAR_T UPLO, F_CHAR_T TRANS, Int * M, Int * N,
+                double * ALPHA,
+                double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pztranc_.c scalapack-2.2.0/PBLAS/SRC/pztranc_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pztranc_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pztranc_.c	2024-12-26 17:42:35.437996300 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pztranc_( Int * M, Int * N,
+                double * ALPHA,
+                double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pztranu_.c scalapack-2.2.0/PBLAS/SRC/pztranu_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pztranu_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pztranu_.c	2024-12-26 17:42:35.443805100 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pztranu_( Int * M, Int * N,
+                double * ALPHA,
+                double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pztrmm_.c scalapack-2.2.0/PBLAS/SRC/pztrmm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pztrmm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pztrmm_.c	2024-12-26 17:42:35.449184600 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pztrmm_( F_CHAR_T SIDE, F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG,
+               Int * M, Int * N, double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pztrmv_.c scalapack-2.2.0/PBLAS/SRC/pztrmv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pztrmv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pztrmv_.c	2024-12-26 17:42:35.454504900 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pztrmv_( F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG, Int * N,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+               double * X, Int * IX, Int * JX, Int * DESCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pztrsm_.c scalapack-2.2.0/PBLAS/SRC/pztrsm_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pztrsm_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pztrsm_.c	2024-12-26 17:42:35.460020100 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pztrsm_( F_CHAR_T SIDE, F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG,
+               Int * M, Int * N, double * ALPHA,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+diff -urN scalapack-2.2.0-orig/PBLAS/SRC/pztrsv_.c scalapack-2.2.0/PBLAS/SRC/pztrsv_.c
+--- scalapack-2.2.0-orig/PBLAS/SRC/pztrsv_.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/SRC/pztrsv_.c	2024-12-26 17:42:35.464989500 +0800
+@@ -16,7 +16,7 @@
+ #include "PBblacs.h"
+ #include "PBblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ void pztrsv_( F_CHAR_T UPLO, F_CHAR_T TRANS, F_CHAR_T DIAG, Int * N,
+               double * A, Int * IA, Int * JA, Int * DESCA,
+               double * X, Int * IX, Int * JX, Int * DESCX,
+diff -urN scalapack-2.2.0-orig/PBLAS/TESTING/CMakeLists.txt scalapack-2.2.0/PBLAS/TESTING/CMakeLists.txt
+--- scalapack-2.2.0-orig/PBLAS/TESTING/CMakeLists.txt	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/TESTING/CMakeLists.txt	2024-12-26 17:42:35.471408000 +0800
+@@ -44,20 +44,20 @@
+ add_executable(cpb3tst pcblas3tst.f ${cpbtcom})
+ add_executable(zpb3tst pzblas3tst.f ${zpbtcom})
+ 
+-target_link_libraries(spb1tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(dpb1tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(cpb1tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(zpb1tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
++target_link_libraries(spb1tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(dpb1tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(cpb1tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(zpb1tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
+ 
+-target_link_libraries(spb2tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(dpb2tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(cpb2tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(zpb2tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
++target_link_libraries(spb2tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(dpb2tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(cpb2tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(zpb2tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
+ 
+-target_link_libraries(spb3tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(dpb3tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(cpb3tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(zpb3tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
++target_link_libraries(spb3tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(dpb3tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(cpb3tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(zpb3tst scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
+ 
+ add_test(spb1tst ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ./spb1tst)
+ add_test(dpb1tst ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ./dpb1tst)
+diff -urN scalapack-2.2.0-orig/PBLAS/TIMING/CMakeLists.txt scalapack-2.2.0/PBLAS/TIMING/CMakeLists.txt
+--- scalapack-2.2.0-orig/PBLAS/TIMING/CMakeLists.txt	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/PBLAS/TIMING/CMakeLists.txt	2024-12-26 17:42:35.475395800 +0800
+@@ -44,20 +44,20 @@
+ add_executable(cpb3tim pcblas3tim.f ${cpbtcom})
+ add_executable(zpb3tim pzblas3tim.f ${zpbtcom})
+ 
+-target_link_libraries(spb1tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(dpb1tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(cpb1tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(zpb1tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
++target_link_libraries(spb1tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(dpb1tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(cpb1tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(zpb1tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
+ 
+-target_link_libraries(spb2tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(dpb2tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(cpb2tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(zpb2tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
++target_link_libraries(spb2tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(dpb2tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(cpb2tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(zpb2tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
+ 
+-target_link_libraries(spb3tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(dpb3tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(cpb3tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(zpb3tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
++target_link_libraries(spb3tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(dpb3tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(cpb3tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(zpb3tim scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
+ 
+ add_test(spb1tim ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ./spb1tim)
+ add_test(dpb1tim ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ./dpb1tim)
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pcgemr.c scalapack-2.2.0/REDIST/SRC/pcgemr.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pcgemr.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pcgemr.c	2024-12-26 17:45:57.368583600 +0800
+@@ -236,7 +236,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pcgemr2.c scalapack-2.2.0/REDIST/SRC/pcgemr2.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pcgemr2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pcgemr2.c	2024-12-26 17:45:57.368583600 +0800
+@@ -101,7 +101,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pctrmr.c scalapack-2.2.0/REDIST/SRC/pctrmr.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pctrmr.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pctrmr.c	2024-12-26 17:45:57.368583600 +0800
+@@ -251,7 +251,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pctrmr2.c scalapack-2.2.0/REDIST/SRC/pctrmr2.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pctrmr2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pctrmr2.c	2024-12-26 17:45:57.368583600 +0800
+@@ -101,7 +101,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pdgemr.c scalapack-2.2.0/REDIST/SRC/pdgemr.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pdgemr.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pdgemr.c	2024-12-26 17:45:57.368583600 +0800
+@@ -233,7 +233,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pdgemr2.c scalapack-2.2.0/REDIST/SRC/pdgemr2.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pdgemr2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pdgemr2.c	2024-12-26 17:45:57.368583600 +0800
+@@ -98,7 +98,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pdtrmr.c scalapack-2.2.0/REDIST/SRC/pdtrmr.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pdtrmr.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pdtrmr.c	2024-12-26 17:45:57.368583600 +0800
+@@ -248,7 +248,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pdtrmr2.c scalapack-2.2.0/REDIST/SRC/pdtrmr2.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pdtrmr2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pdtrmr2.c	2024-12-26 17:45:57.369580300 +0800
+@@ -98,7 +98,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pgemraux.c scalapack-2.2.0/REDIST/SRC/pgemraux.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pgemraux.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pgemraux.c	2024-12-26 17:45:57.369580300 +0800
+@@ -98,7 +98,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pigemr.c scalapack-2.2.0/REDIST/SRC/pigemr.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pigemr.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pigemr.c	2024-12-26 17:45:57.368583600 +0800
+@@ -233,7 +233,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pigemr2.c scalapack-2.2.0/REDIST/SRC/pigemr2.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pigemr2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pigemr2.c	2024-12-26 17:45:57.368583600 +0800
+@@ -98,7 +98,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pitrmr.c scalapack-2.2.0/REDIST/SRC/pitrmr.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pitrmr.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pitrmr.c	2024-12-26 17:45:57.368583600 +0800
+@@ -248,7 +248,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pitrmr2.c scalapack-2.2.0/REDIST/SRC/pitrmr2.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pitrmr2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pitrmr2.c	2024-12-26 17:45:57.369580300 +0800
+@@ -98,7 +98,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/psgemr.c scalapack-2.2.0/REDIST/SRC/psgemr.c
+--- scalapack-2.2.0-orig/REDIST/SRC/psgemr.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/psgemr.c	2024-12-26 17:45:57.369580300 +0800
+@@ -233,7 +233,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/psgemr2.c scalapack-2.2.0/REDIST/SRC/psgemr2.c
+--- scalapack-2.2.0-orig/REDIST/SRC/psgemr2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/psgemr2.c	2024-12-26 17:45:57.369580300 +0800
+@@ -98,7 +98,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pstrmr.c scalapack-2.2.0/REDIST/SRC/pstrmr.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pstrmr.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pstrmr.c	2024-12-26 17:45:57.369580300 +0800
+@@ -248,7 +248,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pstrmr2.c scalapack-2.2.0/REDIST/SRC/pstrmr2.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pstrmr2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pstrmr2.c	2024-12-26 17:45:57.368583600 +0800
+@@ -98,7 +98,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pzgemr.c scalapack-2.2.0/REDIST/SRC/pzgemr.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pzgemr.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pzgemr.c	2024-12-26 17:45:57.368583600 +0800
+@@ -236,7 +236,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pzgemr2.c scalapack-2.2.0/REDIST/SRC/pzgemr2.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pzgemr2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pzgemr2.c	2024-12-26 17:45:57.368583600 +0800
+@@ -101,7 +101,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pztrmr.c scalapack-2.2.0/REDIST/SRC/pztrmr.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pztrmr.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pztrmr.c	2024-12-26 17:45:57.369580300 +0800
+@@ -251,7 +251,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/SRC/pztrmr2.c scalapack-2.2.0/REDIST/SRC/pztrmr2.c
+--- scalapack-2.2.0-orig/REDIST/SRC/pztrmr2.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/SRC/pztrmr2.c	2024-12-26 17:45:57.369580300 +0800
+@@ -101,7 +101,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+diff -urN scalapack-2.2.0-orig/REDIST/TESTING/CMakeLists.txt scalapack-2.2.0/REDIST/TESTING/CMakeLists.txt
+--- scalapack-2.2.0-orig/REDIST/TESTING/CMakeLists.txt	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/TESTING/CMakeLists.txt	2024-12-26 17:42:35.481099200 +0800
+@@ -15,17 +15,17 @@
+ add_executable(xctrmr pctrmrdrv.c)
+ add_executable(xztrmr pztrmrdrv.c)
+ 
+-target_link_libraries(xigemr scalapack )
+-target_link_libraries(xsgemr scalapack )
+-target_link_libraries(xdgemr scalapack )
+-target_link_libraries(xcgemr scalapack )
+-target_link_libraries(xzgemr scalapack )
++target_link_libraries(xigemr scalapack MPI::MPI_Fortran )
++target_link_libraries(xsgemr scalapack MPI::MPI_Fortran )
++target_link_libraries(xdgemr scalapack MPI::MPI_Fortran )
++target_link_libraries(xcgemr scalapack MPI::MPI_Fortran )
++target_link_libraries(xzgemr scalapack MPI::MPI_Fortran )
+ 
+-target_link_libraries(xitrmr scalapack )
+-target_link_libraries(xstrmr scalapack )
+-target_link_libraries(xdtrmr scalapack )
+-target_link_libraries(xctrmr scalapack )
+-target_link_libraries(xztrmr scalapack )
++target_link_libraries(xitrmr scalapack MPI::MPI_Fortran )
++target_link_libraries(xstrmr scalapack MPI::MPI_Fortran )
++target_link_libraries(xdtrmr scalapack MPI::MPI_Fortran )
++target_link_libraries(xctrmr scalapack MPI::MPI_Fortran )
++target_link_libraries(xztrmr scalapack MPI::MPI_Fortran )
+ 
+ #add_test(xigemr ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ./xigemr)
+ #add_test(xsgemr ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 4 ./xsgemr)
+diff -urN scalapack-2.2.0-orig/REDIST/TESTING/pcgemrdrv.c scalapack-2.2.0/REDIST/TESTING/pcgemrdrv.c
+--- scalapack-2.2.0-orig/REDIST/TESTING/pcgemrdrv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/TESTING/pcgemrdrv.c	2024-12-26 17:45:57.156409400 +0800
+@@ -154,7 +154,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+@@ -176,7 +176,7 @@
+ }
+ /* getparam:read from a file a list of integer parameters, the end of the
+  * parameters to read is given by a NULL at the end of the args list */
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ #include <stdarg.h>
+ static void 
+ getparam(FILE * f,...)
+@@ -195,7 +195,7 @@
+   char *ptr, *next;
+   Int  *var;
+   static char buffer[200];
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+   va_start(ap, f);
+ #else
+   va_start(ap);
+diff -urN scalapack-2.2.0-orig/REDIST/TESTING/pctrmrdrv.c scalapack-2.2.0/REDIST/TESTING/pctrmrdrv.c
+--- scalapack-2.2.0-orig/REDIST/TESTING/pctrmrdrv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/TESTING/pctrmrdrv.c	2024-12-26 17:45:57.158742100 +0800
+@@ -154,7 +154,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+@@ -176,7 +176,7 @@
+ }
+ /* getparam:read from a file a list of integer parameters, the end of the
+  * parameters to read is given by a NULL at the end of the args list */
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ #include <stdarg.h>
+ static void 
+ getparam(FILE * f,...)
+@@ -195,7 +195,7 @@
+   char *ptr, *next;
+   Int  *var;
+   static char buffer[200];
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+   va_start(ap, f);
+ #else
+   va_start(ap);
+diff -urN scalapack-2.2.0-orig/REDIST/TESTING/pdgemrdrv.c scalapack-2.2.0/REDIST/TESTING/pdgemrdrv.c
+--- scalapack-2.2.0-orig/REDIST/TESTING/pdgemrdrv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/TESTING/pdgemrdrv.c	2024-12-26 17:45:57.158742100 +0800
+@@ -151,7 +151,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+@@ -173,7 +173,7 @@
+ }
+ /* getparam:read from a file a list of integer parameters, the end of the
+  * parameters to read is given by a NULL at the end of the args list */
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ #include <stdarg.h>
+ static void 
+ getparam(FILE * f,...)
+@@ -192,7 +192,7 @@
+   char *ptr, *next;
+   Int  *var;
+   static char buffer[200];
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+   va_start(ap, f);
+ #else
+   va_start(ap);
+diff -urN scalapack-2.2.0-orig/REDIST/TESTING/pdtrmrdrv.c scalapack-2.2.0/REDIST/TESTING/pdtrmrdrv.c
+--- scalapack-2.2.0-orig/REDIST/TESTING/pdtrmrdrv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/TESTING/pdtrmrdrv.c	2024-12-26 17:45:57.272889000 +0800
+@@ -151,7 +151,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+@@ -173,7 +173,7 @@
+ }
+ /* getparam:read from a file a list of integer parameters, the end of the
+  * parameters to read is given by a NULL at the end of the args list */
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ #include <stdarg.h>
+ static void 
+ getparam(FILE * f,...)
+@@ -192,7 +192,7 @@
+   char *ptr, *next;
+   Int  *var;
+   static char buffer[200];
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+   va_start(ap, f);
+ #else
+   va_start(ap);
+diff -urN scalapack-2.2.0-orig/REDIST/TESTING/pigemrdrv.c scalapack-2.2.0/REDIST/TESTING/pigemrdrv.c
+--- scalapack-2.2.0-orig/REDIST/TESTING/pigemrdrv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/TESTING/pigemrdrv.c	2024-12-26 17:45:57.364593900 +0800
+@@ -150,7 +150,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+@@ -172,7 +172,7 @@
+ }
+ /* getparam:read from a file a list of integer parameters, the end of the
+  * parameters to read is given by a NULL at the end of the args list */
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ #include <stdarg.h>
+ static void 
+ getparam(FILE * f,...)
+@@ -191,7 +191,7 @@
+   char *ptr, *next;
+   Int  *var;
+   static char buffer[200];
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+   va_start(ap, f);
+ #else
+   va_start(ap);
+diff -urN scalapack-2.2.0-orig/REDIST/TESTING/pitrmrdrv.c scalapack-2.2.0/REDIST/TESTING/pitrmrdrv.c
+--- scalapack-2.2.0-orig/REDIST/TESTING/pitrmrdrv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/TESTING/pitrmrdrv.c	2024-12-26 17:45:57.368583600 +0800
+@@ -150,7 +150,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+@@ -172,7 +172,7 @@
+ }
+ /* getparam:read from a file a list of integer parameters, the end of the
+  * parameters to read is given by a NULL at the end of the args list */
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ #include <stdarg.h>
+ static void 
+ getparam(FILE * f,...)
+@@ -191,7 +191,7 @@
+   char *ptr, *next;
+   Int  *var;
+   static char buffer[200];
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+   va_start(ap, f);
+ #else
+   va_start(ap);
+diff -urN scalapack-2.2.0-orig/REDIST/TESTING/psgemrdrv.c scalapack-2.2.0/REDIST/TESTING/psgemrdrv.c
+--- scalapack-2.2.0-orig/REDIST/TESTING/psgemrdrv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/TESTING/psgemrdrv.c	2024-12-26 17:45:57.368583600 +0800
+@@ -150,7 +150,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+@@ -172,7 +172,7 @@
+ }
+ /* getparam:read from a file a list of integer parameters, the end of the
+  * parameters to read is given by a NULL at the end of the args list */
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ #include <stdarg.h>
+ static void 
+ getparam(FILE * f,...)
+@@ -191,7 +191,7 @@
+   char *ptr, *next;
+   Int  *var;
+   static char buffer[200];
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+   va_start(ap, f);
+ #else
+   va_start(ap);
+diff -urN scalapack-2.2.0-orig/REDIST/TESTING/pstrmrdrv.c scalapack-2.2.0/REDIST/TESTING/pstrmrdrv.c
+--- scalapack-2.2.0-orig/REDIST/TESTING/pstrmrdrv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/TESTING/pstrmrdrv.c	2024-12-26 17:45:57.368583600 +0800
+@@ -150,7 +150,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+@@ -172,7 +172,7 @@
+ }
+ /* getparam:read from a file a list of integer parameters, the end of the
+  * parameters to read is given by a NULL at the end of the args list */
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ #include <stdarg.h>
+ static void 
+ getparam(FILE * f,...)
+@@ -191,7 +191,7 @@
+   char *ptr, *next;
+   Int  *var;
+   static char buffer[200];
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+   va_start(ap, f);
+ #else
+   va_start(ap);
+diff -urN scalapack-2.2.0-orig/REDIST/TESTING/pzgemrdrv.c scalapack-2.2.0/REDIST/TESTING/pzgemrdrv.c
+--- scalapack-2.2.0-orig/REDIST/TESTING/pzgemrdrv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/TESTING/pzgemrdrv.c	2024-12-26 17:45:57.368583600 +0800
+@@ -154,7 +154,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+@@ -176,7 +176,7 @@
+ }
+ /* getparam:read from a file a list of integer parameters, the end of the
+  * parameters to read is given by a NULL at the end of the args list */
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ #include <stdarg.h>
+ static void 
+ getparam(FILE * f,...)
+@@ -195,7 +195,7 @@
+   char *ptr, *next;
+   Int  *var;
+   static char buffer[200];
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+   va_start(ap, f);
+ #else
+   va_start(ap);
+diff -urN scalapack-2.2.0-orig/REDIST/TESTING/pztrmrdrv.c scalapack-2.2.0/REDIST/TESTING/pztrmrdrv.c
+--- scalapack-2.2.0-orig/REDIST/TESTING/pztrmrdrv.c	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/REDIST/TESTING/pztrmrdrv.c	2024-12-26 17:45:57.368583600 +0800
+@@ -154,7 +154,7 @@
+ #if 0
+ #define DEBUG
+ #endif
+-#ifndef DEBUG
++#ifndef NDEBUG
+ #define NDEBUG
+ #endif
+ #include <stdio.h>
+@@ -176,7 +176,7 @@
+ }
+ /* getparam:read from a file a list of integer parameters, the end of the
+  * parameters to read is given by a NULL at the end of the args list */
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ #include <stdarg.h>
+ static void 
+ getparam(FILE * f,...)
+@@ -195,7 +195,7 @@
+   char *ptr, *next;
+   Int  *var;
+   static char buffer[200];
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+   va_start(ap, f);
+ #else
+   va_start(ap);
+diff -urN scalapack-2.2.0-orig/SRC/tools.h scalapack-2.2.0/SRC/tools.h
+--- scalapack-2.2.0-orig/SRC/tools.h	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/SRC/tools.h	2024-12-26 17:42:35.533209200 +0800
+@@ -1,6 +1,6 @@
+ #include "./pblas.h"
+ 
+-#ifdef __STDC__
++#if defined(__STDC__) || defined(__INTEL_CLANG_COMPILER)
+ typedef void (*CPYPTR)(Int, Int, float *, Int, float *, Int);
+ #define SLVOID void
+ #else
+diff -urN scalapack-2.2.0-orig/TESTING/EIG/CMakeLists.txt scalapack-2.2.0/TESTING/EIG/CMakeLists.txt
+--- scalapack-2.2.0-orig/TESTING/EIG/CMakeLists.txt	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/TESTING/EIG/CMakeLists.txt	2024-12-26 17:42:35.536802600 +0800
+@@ -53,49 +53,49 @@
+ add_executable(xshseqr pshseqrdriver.f psmatgen2.f ${cmatgen})
+ add_executable(xdhseqr pdhseqrdriver.f pdmatgen2.f ${cmatgen})
+ 
+-target_link_libraries(xsbrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdbrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xcbrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzbrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xshrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdhrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xchrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzhrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xstrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdtrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xctrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xztrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xssvd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdsvd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xssep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdsep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xcsep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzsep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xsgsep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdgsep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xcgsep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzgsep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xsnep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdnep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xcnep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xznep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xcevc scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzevc scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xssyevr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdsyevr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xcheevr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzheevr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
++target_link_libraries(xsbrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdbrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xcbrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzbrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xshrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdhrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xchrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzhrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xstrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdtrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xctrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xztrd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xssvd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdsvd scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xssep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdsep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xcsep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzsep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xsgsep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdgsep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xcgsep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzgsep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xsnep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdnep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xcnep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xznep scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xcevc scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzevc scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xssyevr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdsyevr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xcheevr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzheevr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
+ 
+-target_link_libraries(xshseqr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdhseqr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
++target_link_libraries(xshseqr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdhseqr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
+ 
+ if ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 10)
+     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -std=legacy" )  # local to this directory
+diff -urN scalapack-2.2.0-orig/TESTING/LIN/CMakeLists.txt scalapack-2.2.0/TESTING/LIN/CMakeLists.txt
+--- scalapack-2.2.0-orig/TESTING/LIN/CMakeLists.txt	2022-02-03 09:42:46.000000000 +0800
++++ scalapack-2.2.0/TESTING/LIN/CMakeLists.txt	2024-12-26 17:42:35.541790200 +0800
+@@ -61,55 +61,55 @@
+ add_executable(xzls pzlsdriver.f pzlsinfo.f pzqrt13.f pzqrt14.f pzqrt16.f pzqrt17.f ${zmatgen})
+ 
+ 
+-target_link_libraries(xslu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdlu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xclu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzlu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xsdblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xddblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xcdblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzdblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xsdtlu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xddtlu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xcdtlu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzdtlu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xsgblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdgblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xcgblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzgblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xsllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xcllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xspbllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdpbllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xcpbllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzpbllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xsptllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdptllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xcptllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzptllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xsinv scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdinv scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xcinv scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzinv scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xsqr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdqr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xcqr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzqr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-
+-target_link_libraries(xsls scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xdls scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xcls scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+-target_link_libraries(xzls scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
++target_link_libraries(xslu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdlu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xclu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzlu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xsdblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xddblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xcdblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzdblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xsdtlu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xddtlu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xcdtlu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzdtlu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xsgblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdgblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xcgblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzgblu scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xsllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xcllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xspbllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdpbllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xcpbllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzpbllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xsptllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdptllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xcptllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzptllt scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xsinv scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdinv scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xcinv scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzinv scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xsqr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdqr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xcqr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzqr scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++
++target_link_libraries(xsls scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xdls scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xcls scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
++target_link_libraries(xzls scalapack ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} MPI::MPI_Fortran)
+ 
+ if ("${CMAKE_Fortran_COMPILER_ID}" STREQUAL "GNU" AND CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 10)
+     set( CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -std=legacy" )  # local to this directory

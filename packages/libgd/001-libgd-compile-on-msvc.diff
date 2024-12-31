@@ -1,0 +1,63 @@
+diff -urN libgd-2.3.3-orig/cmake/modules/FindWEBP.cmake libgd-2.3.3/cmake/modules/FindWEBP.cmake
+--- libgd-2.3.3-orig/cmake/modules/FindWEBP.cmake	2021-09-11 13:09:44.000000000 +0800
++++ libgd-2.3.3/cmake/modules/FindWEBP.cmake	2024-11-29 08:58:35.869697800 +0800
+@@ -37,11 +37,10 @@
+ # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+-include(FindZLIB)
+-
+-find_path(WEBP_INCLUDE_DIR decode.h
+-/usr/local/include/webp
+-/usr/include/webp
++find_path(WEBP_INCLUDE_DIR
++  NAMES decode.h
++  PATHS /usr/local/include /usr/include
++  PATH_SUFFIXES webp
+ )
+ 
+ set(WEBP_NAMES ${WEBP_NAMES} webp)
+diff -urN libgd-2.3.3-orig/CMakeLists.txt libgd-2.3.3/CMakeLists.txt
+--- libgd-2.3.3-orig/CMakeLists.txt	2021-09-11 13:09:44.000000000 +0800
++++ libgd-2.3.3/CMakeLists.txt	2024-11-29 09:04:02.110927800 +0800
+@@ -87,7 +87,7 @@
+ 
+ 	MACRO(GV VER VAR)
+ 		execute_process(
+-			COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/config/getver.sh ${VER}
++			COMMAND "C:/Program Files/Git/bin/bash.exe" ${CMAKE_CURRENT_SOURCE_DIR}/config/getver.sh ${VER}
+ 			OUTPUT_VARIABLE ${VAR}
+ 		)
+ 	ENDMACRO(GV)
+@@ -142,7 +142,7 @@
+ 	ENDIF (ENABLE_HEIF)
+ 
+ 	IF (ENABLE_AVIF)
+-		FIND_PACKAGE(libavif 0.8.2 REQUIRED CONFIG)
++		FIND_PACKAGE(libavif 1.1.1 REQUIRED CONFIG)
+ 		SET(HAVE_LIBAVIF 1)
+ 		SET(AVIF_LIBRARIES avif)
+ 		SET(AVIF_FOUND 1)
+diff -urN libgd-2.3.3-orig/src/gd_webp.c libgd-2.3.3/src/gd_webp.c
+--- libgd-2.3.3-orig/src/gd_webp.c	2021-09-11 13:09:44.000000000 +0800
++++ libgd-2.3.3/src/gd_webp.c	2024-11-29 08:57:41.916150900 +0800
+@@ -16,6 +16,7 @@
+ #include "gd.h"
+ #include "gd_errors.h"
+ #include "gdhelpers.h"
++#include "gd_intern.h"
+ 
+ #ifdef HAVE_LIBWEBP
+ #include "webp/decode.h"
+diff -urN libgd-2.3.3-orig/src/webpng.c libgd-2.3.3/src/webpng.c
+--- libgd-2.3.3-orig/src/webpng.c	2021-09-11 13:09:44.000000000 +0800
++++ libgd-2.3.3/src/webpng.c	2024-11-29 08:57:41.931772000 +0800
+@@ -10,6 +10,8 @@
+ #include <string.h>
+ #ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include "getopt.h"
+ #endif
+ 
+ #ifdef __clang__

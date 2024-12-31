@@ -1,0 +1,16 @@
+diff -urN hwloc-2.11.2-orig/Makefile.am hwloc-2.11.2/Makefile.am
+--- hwloc-2.11.2-orig/Makefile.am	2024-09-26 17:04:34.000000000 +0800
++++ hwloc-2.11.2/Makefile.am	2024-12-31 18:26:03.595345300 +0800
+@@ -69,9 +69,9 @@
+ # Winball specific rules
+ #
+ install-data-local:
+-	sed -e 's/$$/'$$'\015'/ < $(srcdir)/README > $(DESTDIR)$(prefix)/README.txt
+-	sed -e 's/$$/'$$'\015'/ < $(srcdir)/NEWS > $(DESTDIR)$(prefix)/NEWS.txt
+-	sed -e 's/$$/'$$'\015'/ < $(srcdir)/COPYING > $(DESTDIR)$(prefix)/COPYING.txt
++	sed -e 's/$$/'$$'\015'/ < $(srcdir)/README > $(DESTDIR)$(prefix)/share/hwloc/README.txt
++	sed -e 's/$$/'$$'\015'/ < $(srcdir)/NEWS > $(DESTDIR)$(prefix)/share/hwloc/NEWS.txt
++	sed -e 's/$$/'$$'\015'/ < $(srcdir)/COPYING > $(DESTDIR)$(prefix)/share/hwloc/COPYING.txt
+ uninstall-local:
+ 	rm -f $(DESTDIR)$(prefix)/README.txt $(DESTDIR)$(prefix)/NEWS.txt $(DESTDIR)$(prefix)/COPYING.txt
+ endif HWLOC_HAVE_WINDOWS

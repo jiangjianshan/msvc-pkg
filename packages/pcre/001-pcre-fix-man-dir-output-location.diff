@@ -1,0 +1,14 @@
+diff --color -urN pcre-8.45-orig/CMakeLists.txt pcre-8.45/CMakeLists.txt
+--- pcre-8.45-orig/CMakeLists.txt	2021-06-14 17:33:37.000000000 +0800
++++ pcre-8.45/CMakeLists.txt	2024-05-29 21:55:20.249003800 +0800
+@@ -959,8 +959,8 @@
+         SET(man3 ${man3_new})
+ ENDIF(PCRE_BUILD_PCRECPP)
+ 
+-INSTALL(FILES ${man1} DESTINATION man/man1)
+-INSTALL(FILES ${man3} DESTINATION man/man3)
++INSTALL(FILES ${man1} DESTINATION share/man/man1)
++INSTALL(FILES ${man3} DESTINATION share/man/man3)
+ INSTALL(FILES ${html} DESTINATION share/doc/pcre/html)
+ INSTALL(FILES ${pc} DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+ INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/pcre-config"

@@ -1,0 +1,157 @@
+diff -urN indent-2.2.13-orig/Makefile.am indent-2.2.13/Makefile.am
+--- indent-2.2.13-orig/Makefile.am	2023-01-26 17:52:16.000000000 +0800
++++ indent-2.2.13/Makefile.am	2024-11-01 17:17:44.544984500 +0800
+@@ -1,7 +1,7 @@
+ ## Process this file with automake to produce Makefile.in
+ AUTOMAKE_OPTIONS = no-texinfo.tex
+ 
+-SUBDIRS = src doc po man regression
++SUBDIRS = src doc po man
+ 
+ BUILT_SOURCES = 
+ 
+diff -urN indent-2.2.13-orig/Makefile.in indent-2.2.13/Makefile.in
+--- indent-2.2.13-orig/Makefile.in	2023-01-26 17:52:31.000000000 +0800
++++ indent-2.2.13/Makefile.in	2024-11-01 17:17:44.544984500 +0800
+@@ -336,7 +336,7 @@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+ AUTOMAKE_OPTIONS = no-texinfo.tex
+-SUBDIRS = src doc po man regression
++SUBDIRS = src doc po man
+ BUILT_SOURCES = 
+ DISTFILES = $(DIST_COMMON:README=README.md) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
+ EXTRA_DIST = README.md \
+diff -urN indent-2.2.13-orig/src/code_io.c indent-2.2.13/src/code_io.c
+--- indent-2.2.13-orig/src/code_io.c	2021-04-19 16:13:53.000000000 +0800
++++ indent-2.2.13/src/code_io.c	2024-11-01 17:17:44.555006000 +0800
+@@ -82,6 +82,14 @@
+ BOOLEAN         had_eof        = false; /*!< used in output.c        code_io.c          comments.c parse.c */
+ char          * cur_line       = NULL;  /*!< used in output.c        code_io.c */
+ 
++#ifndef SSIZE_MAX
++#ifdef _WIN64
++#define SSIZE_MAX _I64_MAX
++#else
++#define SSIZE_MAX INT_MAX
++#endif
++#endif
++
+ /**
+  *
+  */
+@@ -196,7 +204,7 @@
+ {
+     static file_buffer_ty fileptr = {NULL, 0, NULL};
+     
+-#if defined(__MSDOS__)
++#if defined(__MSDOS__) || defined(_MSC_VER)
+     /*
+      * size is required to be unsigned for MSDOS,
+      * in order to read files larger than 32767
+@@ -270,12 +278,12 @@
+                 size_to_read);
+         
+         if (size ==
+-#if defined(__MSDOS__)
++#if defined(__MSDOS__) || defined(_MSC_VER)
+                 (unsigned int)
+ #endif
+                 -1)
+         {
+-#if !defined(__MSDOS__)
++#if !defined(__MSDOS__) && !defined(_MSC_VER)
+             if (errno == EINTR)
+             {
+                 continue;
+diff -urN indent-2.2.13-orig/src/Makefile.am indent-2.2.13/src/Makefile.am
+--- indent-2.2.13-orig/src/Makefile.am	2023-01-26 17:14:46.000000000 +0800
++++ indent-2.2.13/src/Makefile.am	2024-11-01 17:18:36.073147300 +0800
+@@ -1,10 +1,10 @@
+ AUTOMAKE_OPTIONS = 1.2 gnits
+ 
+ bin_PROGRAMS = indent
+-indent_SOURCES = indent.c args.c backup.c comments.c lexi.c parse.c globs.c code_io.c output.c utils.c handletoken.c
++indent_SOURCES = indent.c args.c backup.c comments.c lexi.c parse.c globs.c code_io.c output.c utils.c handletoken.c wildexp.c
+ noinst_HEADERS = indent.h args.h backup.h comments.h lexi.h parse.h globs.h code_io.h output.h utils.h sys.h handletoken.h
+ indent_LDADD =  $(INTLLIBS)
+-EXTRA_DIST = @PACKAGE@.gperf @PACKAGE@-cc.gperf wildexp.c gperf.c gperf-cc.c \
++EXTRA_DIST = @PACKAGE@.gperf @PACKAGE@-cc.gperf gperf.c gperf-cc.c \
+ 	     @PACKAGE@.dsp \
+ 	     config.h.vc++
+ 
+diff -urN indent-2.2.13-orig/src/Makefile.in indent-2.2.13/src/Makefile.in
+--- indent-2.2.13-orig/src/Makefile.in	2023-01-26 17:52:29.000000000 +0800
++++ indent-2.2.13/src/Makefile.in	2024-11-01 17:19:19.378489100 +0800
+@@ -117,7 +117,7 @@
+ am_indent_OBJECTS = indent.$(OBJEXT) args.$(OBJEXT) backup.$(OBJEXT) \
+ 	comments.$(OBJEXT) lexi.$(OBJEXT) parse.$(OBJEXT) \
+ 	globs.$(OBJEXT) code_io.$(OBJEXT) output.$(OBJEXT) \
+-	utils.$(OBJEXT) handletoken.$(OBJEXT)
++	utils.$(OBJEXT) handletoken.$(OBJEXT) wildexp.$(OBJEXT)
+ indent_OBJECTS = $(am_indent_OBJECTS)
+ am__DEPENDENCIES_1 =
+ indent_DEPENDENCIES = $(am__DEPENDENCIES_1)
+@@ -304,10 +304,10 @@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+ AUTOMAKE_OPTIONS = 1.2 gnits
+-indent_SOURCES = indent.c args.c backup.c comments.c lexi.c parse.c globs.c code_io.c output.c utils.c handletoken.c
++indent_SOURCES = indent.c args.c backup.c comments.c lexi.c parse.c globs.c code_io.c output.c utils.c handletoken.c wildexp.c
+ noinst_HEADERS = indent.h args.h backup.h comments.h lexi.h parse.h globs.h code_io.h output.h utils.h sys.h handletoken.h
+ indent_LDADD = $(INTLLIBS)
+-EXTRA_DIST = @PACKAGE@.gperf @PACKAGE@-cc.gperf wildexp.c gperf.c gperf-cc.c \
++EXTRA_DIST = @PACKAGE@.gperf @PACKAGE@-cc.gperf gperf.c gperf-cc.c \
+ 	     @PACKAGE@.dsp \
+ 	     config.h.vc++
+ 
+diff -urN indent-2.2.13-orig/src/output.c indent-2.2.13/src/output.c
+--- indent-2.2.13-orig/src/output.c	2021-04-19 16:13:53.000000000 +0800
++++ indent-2.2.13/src/output.c	2024-11-01 17:17:44.564992200 +0800
+@@ -62,7 +62,11 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <sys/types.h>
++#if defined(__MSDOS__) || defined(_MSC_VER)
++#include <sys/utime.h>
++#else
+ #include <utime.h>
++#endif
+ #include <time.h>
+ #include <sys/stat.h>
+ 
+diff -urN indent-2.2.13-orig/src/sys.h indent-2.2.13/src/sys.h
+--- indent-2.2.13-orig/src/sys.h	2021-04-19 16:13:53.000000000 +0800
++++ indent-2.2.13/src/sys.h	2024-11-01 17:17:44.575006000 +0800
+@@ -86,9 +86,9 @@
+    #define CHARSET_EBCDIC
+ #endif
+ 
+-#ifdef __MSDOS__
++#if defined(__MSDOS__) || defined(_MSC_VER)
+    #define ONE_DOT_PER_FILENAME 1
+-#endif /* __MSDOS__ */
++#endif /* __MSDOS__ || _MSC_VER */
+ 
+ #if defined(HAVE_UTIME) && (defined(HAVE_UTIME_H) || defined(HAVE_SYS_UTIME_H))
+    #define PRESERVE_MTIME 1
+diff -urN indent-2.2.13-orig/src/wildexp.c indent-2.2.13/src/wildexp.c
+--- indent-2.2.13-orig/src/wildexp.c	2021-04-19 16:13:53.000000000 +0800
++++ indent-2.2.13/src/wildexp.c	2024-11-01 17:17:44.575006000 +0800
+@@ -54,6 +54,7 @@
+ #include "sys.h"
+ #include "code_io.h"
+ #include "indent.h"
++#include <io.h>
+ 
+ #define MAX_PATH 1024
+ 
+@@ -377,7 +378,7 @@
+  *
+  */
+ 
+-extern void wildexp (
++void wildexp (
+    int *argc, 
+    char ***argv)
+ {

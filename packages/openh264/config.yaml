@@ -1,0 +1,9 @@
+name: openh264
+version: 2.5.0
+url: https://github.com/cisco/openh264/archive/refs/tags/v2.5.0.tar.gz
+sha256: 94c8ca364db990047ec4ec3481b04ce0d791e62561ef5601443011bdc00825e3
+steps:
+  one:
+    dependencies:
+      - pkg-config
+    run: build.bat

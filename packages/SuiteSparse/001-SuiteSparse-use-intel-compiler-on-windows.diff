@@ -1,0 +1,24 @@
+diff -urN SuiteSparse-7.8.3-orig/GraphBLAS/Config/GraphBLAS.h.in SuiteSparse-7.8.3/GraphBLAS/Config/GraphBLAS.h.in
+--- SuiteSparse-7.8.3-orig/GraphBLAS/Config/GraphBLAS.h.in	2024-10-22 19:43:13.000000000 +0800
++++ SuiteSparse-7.8.3/GraphBLAS/Config/GraphBLAS.h.in	2024-12-25 16:54:07.264351000 +0800
+@@ -109,7 +109,7 @@
+ // GB_GLOBAL: for declaring global variables visible to the user application.
+ // These are not used for functions, just global variables like the predefined
+ // operators (GrB_PLUS_FP32), types, monoids, semirings, and descriptors.
+-#if defined (_MSC_VER) && !(defined (__INTEL_COMPILER) || defined(__INTEL_CLANG_COMPILER))
++#if defined (_MSC_VER)
+     #if defined ( GB_DLL_EXPORT )
+         // Compiling SuiteSparse:GraphBLAS as a Windows DLL, exporting symbols
+         // to user apps.
+diff -urN SuiteSparse-7.8.3-orig/GraphBLAS/Source/jit_kernels/include/GB_jit_kernel.h SuiteSparse-7.8.3/GraphBLAS/Source/jit_kernels/include/GB_jit_kernel.h
+--- SuiteSparse-7.8.3-orig/GraphBLAS/Source/jit_kernels/include/GB_jit_kernel.h	2024-10-22 19:43:13.000000000 +0800
++++ SuiteSparse-7.8.3/GraphBLAS/Source/jit_kernels/include/GB_jit_kernel.h	2024-12-25 16:53:53.117811400 +0800
+@@ -24,7 +24,7 @@
+ 
+ // for all JIT kernels
+ #include "include/GB_jit_kernel_proto.h"
+-#if defined (_MSC_VER) && !(defined (__INTEL_COMPILER) || defined(__INTEL_CLANG_COMPILER))
++#if defined (_MSC_VER)
+     #define GB_JIT_GLOBAL extern __declspec ( dllexport )
+ #else
+     #define GB_JIT_GLOBAL

@@ -1,0 +1,9 @@
+name: winflexbison
+version: master
+url: https://github.com/lexxmark/winflexbison.git
+sha256:
+steps:
+  one:
+    dependencies:
+      - getopt
+    run: build.bat

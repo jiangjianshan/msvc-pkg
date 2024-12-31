@@ -1,0 +1,27 @@
+diff --color -urN giflib-5.2.2-orig/gif_font.c giflib-5.2.2/gif_font.c
+--- giflib-5.2.2-orig/gif_font.c	2024-02-19 11:01:28.000000000 +0800
++++ giflib-5.2.2/gif_font.c	2024-05-22 09:55:58.509219900 +0800
+@@ -236,7 +236,11 @@
+ 		    border + LineCount * GIF_FONT_HEIGHT + border - 1, bg);
+ 		(void)strcpy(dup, (char *)legend);
+ 		char *lasts;
++#ifdef _MSC_VER
++		cp = strtok_s(dup, "\r\n", &lasts);
++#else
+ 		cp = strtok_r(dup, "\r\n", &lasts);
++#endif
+ 		do {
+ 			int leadspace = 0;
+ 
+@@ -247,7 +251,11 @@
+ 			GifDrawText8x8(
+ 			    Image, x + border + (leadspace * GIF_FONT_WIDTH),
+ 			    y + border + (GIF_FONT_HEIGHT * i++), cp, fg);
++#ifdef _MSC_VER
++			cp = strtok_s(NULL, "\r\n", &lasts);
++#else
+ 			cp = strtok_r(NULL, "\r\n", &lasts);
++#endif
+ 		} while (cp);
+ 		(void)free((void *)dup);
+ 

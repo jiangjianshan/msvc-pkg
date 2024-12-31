@@ -1,0 +1,12 @@
+diff -urN gmp-6.3.0-orig/gmp-h.in gmp-6.3.0/gmp-h.in
+--- gmp-6.3.0-orig/gmp-h.in	2023-07-29 21:42:16.000000000 +0800
++++ gmp-6.3.0/gmp-h.in	2024-10-29 17:25:28.214645800 +0800
+@@ -402,7 +402,7 @@
+ 
+ /* Microsoft's C compiler accepts __inline */
+ #ifdef _MSC_VER
+-#define __GMP_EXTERN_INLINE  __inline
++#define __GMP_EXTERN_INLINE  static __inline
+ #endif
+ 
+ /* Recent enough Sun C compilers want "inline" */

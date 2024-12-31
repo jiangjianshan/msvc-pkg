@@ -1,0 +1,12 @@
+diff -urN ruby-3.3.6-orig/win32/Makefile.sub ruby-3.3.6/win32/Makefile.sub
+--- ruby-3.3.6-orig/win32/Makefile.sub	2024-11-05 08:49:11.000000000 +0800
++++ ruby-3.3.6/win32/Makefile.sub	2024-12-23 15:00:14.047041800 +0800
+@@ -973,7 +973,7 @@
+ s,@incflags@,$(incflags),;t t
+ s,@FFLAGS@,$(FFLAGS),;t t
+ s,@LDFLAGS@,$(LDFLAGS),;t t
+-s,@LIBS@,user32.lib,;t t
++s,@LIBS@,$(LIBS),;t t
+ s,@MAINLIBS@,$(MAINLIBS),;t t
+ s,@exec_prefix@,$${prefix},;t t
+ s,@prefix@,$(prefix),;t t

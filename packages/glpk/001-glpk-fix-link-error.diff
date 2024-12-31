@@ -1,0 +1,18 @@
+diff -urN glpk-5.0-orig/w64/glpk_5_0.def glpk-5.0/w64/glpk_5_0.def
+--- glpk-5.0-orig/w64/glpk_5_0.def	2020-12-16 17:00:00.000000000 +0800
++++ glpk-5.0/w64/glpk_5_0.def	2024-11-22 17:41:44.848828700 +0800
+@@ -1,6 +1,5 @@
+ LIBRARY glpk_5_0
+ VERSION 5.0
+-DESCRIPTION "GNU Linear Programming Kit"
+ EXPORTS
+ glp_create_prob
+ glp_set_prob_name
+@@ -224,7 +223,6 @@
+ glp_read_ccdata
+ glp_write_ccdata
+ glp_netgen
+-glp_netgen_prob
+ glp_gridgen
+ glp_rmfgen
+ glp_weak_comp

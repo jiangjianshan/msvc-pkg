@@ -1,0 +1,54 @@
+diff -urN superlu-6.0.1-orig/CMakeLists.txt superlu-6.0.1/CMakeLists.txt
+--- superlu-6.0.1-orig/CMakeLists.txt	2023-08-06 04:18:45.000000000 +0800
++++ superlu-6.0.1/CMakeLists.txt	2024-11-18 17:36:29.930164500 +0800
+@@ -85,10 +85,18 @@
+ #---- For shared library
+ if (BUILD_SHARED_LIBS)
+   message("-- SuperLU will be built as a shared library.")
+-  set(PROJECT_NAME_LIB_EXPORT libsuperlu.so)
++  if (MSVC)
++    set(PROJECT_NAME_LIB_EXPORT superlu.dll)
++  else()
++    set(PROJECT_NAME_LIB_EXPORT libsuperlu.so)
++  endif()
+ else()
+   message("-- SuperLU will be built as a static library.")
+-  set(PROJECT_NAME_LIB_EXPORT libsuperlu.a)
++  if (MSVC)
++    set(PROJECT_NAME_LIB_EXPORT libsuperlu.lib)
++  else()
++    set(PROJECT_NAME_LIB_EXPORT libsuperlu.a)
++  endif()
+ endif()
+ 
+ enable_language(C)
+@@ -147,9 +155,17 @@
+   add_subdirectory(CBLAS)
+   set(BLAS_LIB blas)
+   if (BUILD_SHARED_LIBS)  # export to be referenced by downstream makefile
++    if (MSVC)
+       set(BLAS_LIB_EXPORT ${CMAKE_INSTALL_PREFIX}/CBLAS/libblas.so)
++    else()
++      set(BLAS_LIB_EXPORT ${CMAKE_INSTALL_PREFIX}/CBLAS/blas.dll)
++    endif()
+   else()
++    if (MSVC)
++      set(BLAS_LIB_EXPORT ${CMAKE_INSTALL_PREFIX}/CBLAS/blas.dll)
++    else()
+       set(BLAS_LIB_EXPORT ${CMAKE_INSTALL_PREFIX}/CBLAS/libblas.a)
++    endif()
+   endif()
+ endif()
+ 
+diff -urN superlu-6.0.1-orig/make.inc.in superlu-6.0.1/make.inc.in
+--- superlu-6.0.1-orig/make.inc.in	2023-08-06 04:18:45.000000000 +0800
++++ superlu-6.0.1/make.inc.in	2024-11-18 17:33:17.777807800 +0800
+@@ -20,7 +20,7 @@
+ SuperLUroot	= ${CMAKE_INSTALL_PREFIX}
+ SUPERLULIB   	= $(SuperLUroot)/SRC/${PROJECT_NAME_LIB_EXPORT}
+ 
+-TMGLIB       	= libtmglib.a
++TMGLIB       	= libtmglib.lib
+ 
+ XSDK_INDEX_SIZE = @XSDK_INDEX_SIZE@
+ HAVE_METIS      = @HAVE_METIS@

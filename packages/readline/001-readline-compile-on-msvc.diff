@@ -1,0 +1,2801 @@
+diff -urN readline-8.2.13-orig/colors.c readline-8.2.13/colors.c
+--- readline-8.2.13-orig/colors.c	2023-11-20 22:29:09.000000000 +0800
++++ readline-8.2.13/colors.c	2024-11-26 16:26:40.406456400 +0800
+@@ -39,6 +39,10 @@
+ #  include <sys/stat.h>
+ #endif
+ 
++#if defined _MSC_VER
++typedef unsigned short mode_t;
++#endif
++
+ #include <stdio.h>
+ 
+ #include "posixstat.h" // stat related macros (S_ISREG, ...)
+diff -urN readline-8.2.13-orig/dirent.c readline-8.2.13/dirent.c
+--- readline-8.2.13-orig/dirent.c	1970-01-01 08:00:00.000000000 +0800
++++ readline-8.2.13/dirent.c	2024-11-26 16:26:40.406456400 +0800
+@@ -0,0 +1,325 @@
++/*
++ * dirent.c
++ * This file has no copyright assigned and is placed in the Public Domain.
++ * This file is part of the mingw-runtime package.
++ * No warranty is given; refer to the file DISCLAIMER within the package.
++ *
++ * Derived from DIRLIB.C by Matt J. Weinstein
++ * This note appears in the DIRLIB.H
++ * DIRLIB.H by M. J. Weinstein   Released to public domain 1-Jan-89
++ *
++ * Updated by Jeremy Bettis <jeremy@hksys.com>
++ * Significantly revised and rewinddir, seekdir and telldir added by Colin
++ * Peters <colin@fu.is.saga-u.ac.jp>
++ *	
++ */
++
++#ifndef WIN32_LEAN_AND_MEAN
++#define WIN32_LEAN_AND_MEAN
++#endif
++
++#include <stdlib.h>
++#include <errno.h>
++#include <string.h>
++#include <io.h>
++#include <direct.h>
++#include <dirent.h>
++
++#include <windows.h> /* for GetFileAttributes */
++
++#include <tchar.h>
++#define SUFFIX	_T("*")
++#define	SLASH	_T("\\")
++
++
++/*
++ * opendir
++ *
++ * Returns a pointer to a DIR structure appropriately filled in to begin
++ * searching a directory.
++ */
++DIR *
++opendir (const _TCHAR *szPath)
++{
++  DIR *nd;
++  unsigned int rc;
++  _TCHAR szFullPath[MAX_PATH];
++
++  errno = 0;
++
++  if (!szPath)
++    {
++      errno = EFAULT;
++      return (DIR *) 0;
++    }
++
++  if (szPath[0] == _T('\0'))
++    {
++      errno = ENOTDIR;
++      return (DIR *) 0;
++    }
++
++  /* Attempt to determine if the given path really is a directory. */
++  rc = GetFileAttributes (szPath);
++  if (rc == INVALID_FILE_ATTRIBUTES)
++    {
++      /* call GetLastError for more error info */
++      errno = ENOENT;
++      return (DIR *) 0;
++    }
++  if (!(rc & FILE_ATTRIBUTE_DIRECTORY))
++    {
++      /* Error, entry exists but not a directory. */
++      errno = ENOTDIR;
++      return (DIR *) 0;
++    }
++
++  /* Make an absolute pathname.  */
++  _tfullpath (szFullPath, szPath, MAX_PATH);
++
++  /* Allocate enough space to store DIR structure and the complete
++   * directory path given. */
++  nd = (DIR *) malloc (sizeof (DIR) + (_tcslen (szFullPath)
++					   + _tcslen (SLASH)
++					   + _tcslen (SUFFIX) + 1)
++					  * sizeof (_TCHAR));
++
++  if (!nd)
++    {
++      /* Error, out of memory. */
++      errno = ENOMEM;
++      return (DIR *) 0;
++    }
++
++  /* Create the search expression. */
++  _tcscpy (nd->dd_name, szFullPath);
++
++  /* Add on a slash if the path does not end with one. */
++  if (nd->dd_name[0] != _T('\0') &&
++      nd->dd_name[_tcslen (nd->dd_name) - 1] != _T('/') &&
++      nd->dd_name[_tcslen (nd->dd_name) - 1] != _T('\\'))
++    {
++      _tcscat (nd->dd_name, SLASH);
++    }
++
++  /* Add on the search pattern */
++  _tcscat (nd->dd_name, SUFFIX);
++
++  /* Initialize handle to -1 so that a premature closedir doesn't try
++   * to call _findclose on it. */
++  nd->dd_handle = -1;
++
++  /* Initialize the status. */
++  nd->dd_stat = 0;
++
++  /* Initialize the dirent structure. ino and reclen are invalid under
++   * Win32, and name simply points at the appropriate part of the
++   * findfirst_t structure. */
++  nd->dd_dir.d_ino = 0;
++  nd->dd_dir.d_reclen = 0;
++  nd->dd_dir.d_namlen = 0;
++  memset (nd->dd_dir.d_name, 0, 260 * sizeof(nd->dd_dir.d_name[0])  /*FILENAME_MAX*/);
++
++  return nd;
++}
++
++
++/*
++ * readdir
++ *
++ * Return a pointer to a dirent structure filled with the information on the
++ * next entry in the directory.
++ */
++struct dirent *
++readdir (DIR * dirp)
++{
++  errno = 0;
++
++  /* Check for valid DIR struct. */
++  if (!dirp)
++    {
++      errno = EFAULT;
++      return (struct dirent *) 0;
++    }
++
++  if (dirp->dd_stat < 0)
++    {
++      /* We have already returned all files in the directory
++       * (or the structure has an invalid dd_stat). */
++      return (struct dirent *) 0;
++    }
++  else if (dirp->dd_stat == 0)
++    {
++      /* We haven't started the search yet. */
++      /* Start the search */
++      dirp->dd_handle = _tfindfirst (dirp->dd_name, &(dirp->dd_dta));
++
++      if (dirp->dd_handle == -1)
++	{
++	  /* Whoops! Seems there are no files in that
++	   * directory. */
++	  dirp->dd_stat = -1;
++	}
++      else
++	{
++	  dirp->dd_stat = 1;
++	}
++    }
++  else
++    {
++      /* Get the next search entry. */
++      if (_tfindnext (dirp->dd_handle, &(dirp->dd_dta)))
++	{
++	  /* We are off the end or otherwise error.
++	     _findnext sets errno to ENOENT if no more file
++	     Undo this. */
++	  DWORD winerr = GetLastError ();
++	  if (winerr == ERROR_NO_MORE_FILES)
++	    errno = 0;
++	  _findclose (dirp->dd_handle);
++	  dirp->dd_handle = -1;
++	  dirp->dd_stat = -1;
++	}
++      else
++	{
++	  /* Update the status to indicate the correct
++	   * number. */
++	  dirp->dd_stat++;
++	}
++    }
++
++  if (dirp->dd_stat > 0)
++    {
++      /* Successfully got an entry. Everything about the file is
++       * already appropriately filled in except the length of the
++       * file name. */
++      dirp->dd_dir.d_namlen = _tcslen (dirp->dd_dta.name);
++      _tcscpy (dirp->dd_dir.d_name, dirp->dd_dta.name);
++      return &dirp->dd_dir;
++    }
++
++  return (struct dirent *) 0;
++}
++
++
++/*
++ * closedir
++ *
++ * Frees up resources allocated by opendir.
++ */
++int
++closedir (DIR * dirp)
++{
++  int rc;
++
++  errno = 0;
++  rc = 0;
++
++  if (!dirp)
++    {
++      errno = EFAULT;
++      return -1;
++    }
++
++  if (dirp->dd_handle != -1)
++    {
++      rc = _findclose (dirp->dd_handle);
++    }
++
++  /* Delete the dir structure. */
++  free (dirp);
++
++  return rc;
++}
++
++/*
++ * rewinddir
++ *
++ * Return to the beginning of the directory "stream". We simply call findclose
++ * and then reset things like an opendir.
++ */
++void
++rewinddir (DIR * dirp)
++{
++  errno = 0;
++
++  if (!dirp)
++    {
++      errno = EFAULT;
++      return;
++    }
++
++  if (dirp->dd_handle != -1)
++    {
++      _findclose (dirp->dd_handle);
++    }
++
++  dirp->dd_handle = -1;
++  dirp->dd_stat = 0;
++}
++
++/*
++ * telldir
++ *
++ * Returns the "position" in the "directory stream" which can be used with
++ * seekdir to go back to an old entry. We simply return the value in stat.
++ */
++long
++telldir (DIR * dirp)
++{
++  errno = 0;
++
++  if (!dirp)
++    {
++      errno = EFAULT;
++      return -1;
++    }
++  return dirp->dd_stat;
++}
++
++/*
++ * seekdir
++ *
++ * Seek to an entry previously returned by telldir. We rewind the directory
++ * and call readdir repeatedly until either dd_stat is the position number
++ * or -1 (off the end). This is not perfect, in that the directory may
++ * have changed while we weren't looking. But that is probably the case with
++ * any such system.
++ */
++void
++seekdir (DIR * dirp, long lPos)
++{
++  errno = 0;
++
++  if (!dirp)
++    {
++      errno = EFAULT;
++      return;
++    }
++
++  if (lPos < -1)
++    {
++      /* Seeking to an invalid position. */
++      errno = EINVAL;
++      return;
++    }
++  else if (lPos == -1)
++    {
++      /* Seek past end. */
++      if (dirp->dd_handle != -1)
++	{
++	  _findclose (dirp->dd_handle);
++	}
++      dirp->dd_handle = -1;
++      dirp->dd_stat = -1;
++    }
++  else
++    {
++      /* Rewind and read forward to the appropriate index. */
++      rewinddir (dirp);
++
++      while ((dirp->dd_stat < lPos) && readdir (dirp))
++	;
++    }
++}
++
+diff -urN readline-8.2.13-orig/dirent.h readline-8.2.13/dirent.h
+--- readline-8.2.13-orig/dirent.h	1970-01-01 08:00:00.000000000 +0800
++++ readline-8.2.13/dirent.h	2024-11-26 16:26:40.406456400 +0800
+@@ -0,0 +1,148 @@
++/*
++ * DIRENT.H (formerly DIRLIB.H)
++ * This file has no copyright assigned and is placed in the Public Domain.
++ * This file is part of the mingw-runtime package.
++ * No warranty is given; refer to the file DISCLAIMER within the package.
++ *
++ */
++
++#ifndef _DIRENT_H_
++#define _DIRENT_H_
++
++/* All the headers include this file. */
++#include <corecrt.h>
++
++#include <io.h>
++
++#ifndef RC_INVOKED
++
++#pragma pack(push,_CRT_PACKING)
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++struct _tdirent
++{
++	long		d_ino;		/* Always zero. */
++	unsigned short	d_reclen;	/* Always zero. */
++	unsigned short	d_namlen;	/* Length of name in d_name. */
++	char		d_name[260]; /* [FILENAME_MAX] */ /* File name. */
++};
++
++/*
++ * This is an internal data structure. Good programmers will not use it
++ * except as an argument to one of the functions below.
++ * dd_stat field is now int (was short in older versions).
++ */
++typedef struct
++{
++	/* disk transfer area for this dir */
++	struct _finddata_t	dd_dta;
++
++	/* dirent struct to return from dir (NOTE: this makes this thread
++	 * safe as long as only one thread uses a particular DIR struct at
++	 * a time) */
++	struct _tdirent		dd_dir;
++
++	/* _findnext handle */
++	intptr_t		dd_handle;
++
++	/*
++	 * Status of search:
++	 *   0 = not started yet (next entry to read is first entry)
++	 *  -1 = off the end
++	 *   positive = 0 based index of next entry
++	 */
++	int			dd_stat;
++
++	/* given path for dir with search pattern (struct is extended) */
++	char			dd_name[1];
++} _TDIR;
++
++_TDIR* __cdecl _topendir (const char*);
++struct _tdirent* __cdecl _treaddir (_TDIR*);
++int __cdecl _tclosedir (_TDIR*);
++void __cdecl _trewinddir (_TDIR*);
++long __cdecl _ttelldir (_TDIR*);
++void __cdecl _tseekdir (_TDIR*, long);
++
++
++/* wide char versions */
++
++struct _wdirent
++{
++	long		d_ino;		/* Always zero. */
++	unsigned short	d_reclen;	/* Always zero. */
++	unsigned short	d_namlen;	/* Length of name in d_name. */
++	wchar_t		d_name[260]; /* [FILENAME_MAX] */ /* File name. */
++};
++
++/*
++ * This is an internal data structure. Good programmers will not use it
++ * except as an argument to one of the functions below.
++ */
++typedef struct
++{
++	/* disk transfer area for this dir */
++	struct _wfinddata_t	dd_dta;
++
++	/* dirent struct to return from dir (NOTE: this makes this thread
++	 * safe as long as only one thread uses a particular DIR struct at
++	 * a time) */
++	struct _wdirent		dd_dir;
++
++	/* _findnext handle */
++	intptr_t		dd_handle;
++
++	/*
++	 * Status of search:
++	 *   0 = not started yet (next entry to read is first entry)
++	 *  -1 = off the end
++	 *   positive = 0 based index of next entry
++	 */
++	int			dd_stat;
++
++	/* given path for dir with search pattern (struct is extended) */
++	wchar_t			dd_name[1];
++} _WDIR;
++
++_WDIR* __cdecl _wopendir (const wchar_t*);
++struct _wdirent* __cdecl _wreaddir (_WDIR*);
++int __cdecl _wclosedir (_WDIR*);
++void __cdecl _wrewinddir (_WDIR*);
++long __cdecl _wtelldir (_WDIR*);
++void __cdecl _wseekdir (_WDIR*, long);
++
++#ifdef _UNICODE
++/* dirent structures and functions */
++# define dirent	    _wdirent
++# define DIR 		    _WDIR
++# define opendir	  _wopendir
++# define closedir	  _wclosedir
++# define readdir	  _wreaddir
++# define rewinddir	_wrewinddir
++# define telldir	  _wtelldir
++# define seekdir	  _wseekdir
++#else
++/* dirent structures and functions */
++# define dirent	    _tdirent
++# define DIR        _TDIR
++# define opendir	  _topendir
++# define closedir	  _tclosedir
++# define readdir	  _treaddir
++# define rewinddir	_trewinddir
++# define telldir	  _ttelldir
++# define seekdir	  _tseekdir
++#endif
++
++#ifdef	__cplusplus
++}
++#endif
++
++#pragma pack(pop)
++
++#endif	/* Not RC_INVOKED */
++
++#endif	/* Not _DIRENT_H_ */
++
+diff -urN readline-8.2.13-orig/display.c readline-8.2.13/display.c
+--- readline-8.2.13-orig/display.c	2023-11-20 22:29:21.000000000 +0800
++++ readline-8.2.13/display.c	2024-11-26 16:26:40.422078500 +0800
+@@ -3245,7 +3245,7 @@
+ static void
+ open_some_spaces (int col)
+ {
+-#if !defined (__MSDOS__) && (!defined (__MINGW32__) || defined (NCURSES_VERSION))
++#if !defined (__MSDOS__) && (!defined (__MINGW32__) && !defined (_MSC_VER) || defined (NCURSES_VERSION))
+   char *buffer;
+   register int i;
+ 
+@@ -3274,7 +3274,7 @@
+       for (i = col; i--; )
+ 	tputs (_rl_term_ic, 1, _rl_output_character_function);
+     }
+-#endif /* !__MSDOS__ && (!__MINGW32__ || NCURSES_VERSION)*/
++#endif /* !__MSDOS__ && (!__MINGW32__ && !_MSC_VER || NCURSES_VERSION)*/
+ }
+ 
+ /* Delete COUNT characters from the display line. */
+@@ -3284,7 +3284,7 @@
+   if (count > _rl_screenwidth)	/* XXX */
+     return;
+ 
+-#if !defined (__MSDOS__) && (!defined (__MINGW32__) || defined (NCURSES_VERSION))
++#if !defined (__MSDOS__) && (!defined (__MINGW32__) && !defined (_MSC_VER) || defined (NCURSES_VERSION))
+   if (_rl_term_DC && *_rl_term_DC)
+     {
+       char *buffer;
+@@ -3297,7 +3297,7 @@
+ 	while (count--)
+ 	  tputs (_rl_term_dc, 1, _rl_output_character_function);
+     }
+-#endif /* !__MSDOS__ && (!__MINGW32__ || NCURSES_VERSION)*/
++#endif /* !__MSDOS__ && (!__MINGW32__ && !_MSC_VER || NCURSES_VERSION)*/
+ }
+ 
+ void
+diff -urN readline-8.2.13-orig/examples/hist_erasedups.c readline-8.2.13/examples/hist_erasedups.c
+--- readline-8.2.13-orig/examples/hist_erasedups.c	2018-05-21 23:02:04.000000000 +0800
++++ readline-8.2.13/examples/hist_erasedups.c	2024-11-26 16:26:40.422078500 +0800
+@@ -22,7 +22,11 @@
+ #define READLINE_LIBRARY 1
+ #endif
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include "getopt.h"
++#endif
+ #include <stdlib.h>
+ #include <stdio.h>
+ 
+diff -urN readline-8.2.13-orig/examples/hist_purgecmd.c readline-8.2.13/examples/hist_purgecmd.c
+--- readline-8.2.13-orig/examples/hist_purgecmd.c	2018-05-21 23:00:08.000000000 +0800
++++ readline-8.2.13/examples/hist_purgecmd.c	2024-11-26 16:26:40.422078500 +0800
+@@ -23,7 +23,11 @@
+ #define READLINE_LIBRARY 1
+ #endif
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include "getopt.h"
++#endif
+ #include <stdlib.h>
+ #include <stdio.h>
+ 
+diff -urN readline-8.2.13-orig/examples/histexamp.c readline-8.2.13/examples/histexamp.c
+--- readline-8.2.13-orig/examples/histexamp.c	2018-05-21 23:02:45.000000000 +0800
++++ readline-8.2.13/examples/histexamp.c	2024-11-26 16:26:40.437699400 +0800
+@@ -27,7 +27,9 @@
+ #  include <readline/history.h>
+ #endif
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#endif
+ #include <stdlib.h>
+ #include <string.h>
+ 
+diff -urN readline-8.2.13-orig/examples/Makefile.in readline-8.2.13/examples/Makefile.in
+--- readline-8.2.13-orig/examples/Makefile.in	2021-03-12 00:50:36.000000000 +0800
++++ readline-8.2.13/examples/Makefile.in	2024-11-26 16:26:40.437699400 +0800
+@@ -60,18 +60,20 @@
+ ASAN_XCFLAGS = -fsanitize=address -fno-omit-frame-pointer
+ ASAN_XLDFLAGS = -fsanitize=address
+ 
+-READLINE_LIB = ../libreadline.a
+-HISTORY_LIB = ../libhistory.a
++READLINE_LIB = ../libreadline.lib
++HISTORY_LIB = ../libhistory.lib
+ 
+ TERMCAP_LIB = @TERMCAP_LIB@
+ 
+-.c.o:
++.SUFFIXES:	.obj
++
++.c.obj:
+ 	${RM} $@
+ 	$(CC) $(CCFLAGS) -c $<
+ 
+ SOURCES = excallback.c fileman.c histexamp.c manexamp.c rl-fgets.c rl.c \
+ 		rlbasic.c rlcat.c rlevent.c rlptytest.c rltest.c rlversion.c \
+-		rltest2.c rl-callbacktest.c hist_erasedups.c hist_purgecmd.c \
++		rl-callbacktest.c hist_erasedups.c hist_purgecmd.c \
+ 		rlkeymaps.c rl-timeout.c
+ 
+ EXECUTABLES = fileman$(EXEEXT) rltest$(EXEEXT) rl$(EXEEXT) rlcat$(EXEEXT) \
+@@ -80,12 +82,12 @@
+ 		hist_erasedups$(EXEEXT) hist_purgecmd$(EXEEXT) \
+ 		rlkeymaps$(EXEEXT) rl-timeout$(EXEEXT)
+ 
+-OBJECTS = fileman.o rltest.o rl.o rlevent.o rlcat.o rlversion.o histexamp.o \
+-	  rltest2.o rl-callbacktest.o rlbasic.o hist_erasedups.o hist_purgecmd.o \
+-	  rlkeymaps.o rl-timeout.o
++OBJECTS = fileman.$(OBJEXT) rltest.$(OBJEXT) rl.$(OBJEXT) rlevent.$(OBJEXT) rlcat.$(OBJEXT) rlversion.$(OBJEXT) histexamp.$(OBJEXT) \
++	  rl-callbacktest.$(OBJEXT) rlbasic.$(OBJEXT) hist_erasedups.$(OBJEXT) hist_purgecmd.$(OBJEXT) \
++	  rlkeymaps.$(OBJEXT) rl-timeout.$(OBJEXT)
+ 
+ OTHEREXE = rlptytest$(EXEEXT)
+-OTHEROBJ = rlptytest.o
++OTHEROBJ = rlptytest.$(OBJEXT)
+ 
+ all: $(EXECUTABLES)
+ everything: all
+@@ -111,50 +113,47 @@
+ 	done
+ 	-rmdir $(DESTDIR)$(installdir)
+ 
+-rl$(EXEEXT): rl.o $(READLINE_LIB)
+-	$(CC) $(LDFLAGS) -o $@ rl.o $(READLINE_LIB) $(TERMCAP_LIB)
+-
+-rlbasic$(EXEEXT): rlbasic.o $(READLINE_LIB)
+-	$(CC) $(LDFLAGS) -o $@ rlbasic.o $(READLINE_LIB) $(TERMCAP_LIB)
++rl$(EXEEXT): rl.$(OBJEXT) $(READLINE_LIB)
++	$(CC) $(LDFLAGS) -o $@ rl.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB) -lgetopt
+ 
+-rlcat$(EXEEXT): rlcat.o $(READLINE_LIB)
+-	$(CC) $(LDFLAGS) -o $@ rlcat.o $(READLINE_LIB) $(TERMCAP_LIB)
++rlbasic$(EXEEXT): rlbasic.$(OBJEXT) $(READLINE_LIB)
++	$(CC) $(LDFLAGS) -o $@ rlbasic.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB)
+ 
+-rlevent$(EXEEXT): rlevent.o $(READLINE_LIB)
+-	$(CC) $(LDFLAGS) -o $@ rlevent.o $(READLINE_LIB) $(TERMCAP_LIB)
++rlcat$(EXEEXT): rlcat.$(OBJEXT) $(READLINE_LIB)
++	$(CC) $(LDFLAGS) -o $@ rlcat.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB) -lgetopt
+ 
+-rlkeymaps$(EXEEXT): rlkeymaps.o $(READLINE_LIB)
+-	$(CC) $(LDFLAGS) -o $@ rlkeymaps.o $(READLINE_LIB) $(TERMCAP_LIB)
++rlevent$(EXEEXT): rlevent.$(OBJEXT) $(READLINE_LIB)
++	$(CC) $(LDFLAGS) -o $@ rlevent.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB) -lgetopt
+ 
+-fileman$(EXEEXT): fileman.o $(READLINE_LIB)
+-	$(CC) $(LDFLAGS) -o $@ fileman.o $(READLINE_LIB) $(TERMCAP_LIB)
++rlkeymaps$(EXEEXT): rlkeymaps.$(OBJEXT) $(READLINE_LIB)
++	$(CC) $(LDFLAGS) -o $@ rlkeymaps.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB)
+ 
+-rltest$(EXEEXT): rltest.o $(READLINE_LIB)
+-	$(CC) $(LDFLAGS) -o $@ rltest.o $(READLINE_LIB) $(TERMCAP_LIB)
++fileman$(EXEEXT): fileman.$(OBJEXT) $(READLINE_LIB)
++	$(CC) $(LDFLAGS) -o $@ fileman.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB)
+ 
+-rltest2$(EXEEXT): rltest2.o $(READLINE_LIB)
+-	$(CC) $(LDFLAGS) -o $@ rltest2.o $(READLINE_LIB) $(TERMCAP_LIB)
++rltest$(EXEEXT): rltest.$(OBJEXT) $(READLINE_LIB)
++	$(CC) $(LDFLAGS) -o $@ rltest.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB)
+ 
+-rl-callbacktest$(EXEEXT): rl-callbacktest.o $(READLINE_LIB)
+-	$(CC) $(LDFLAGS) -o $@ rl-callbacktest.o $(READLINE_LIB) $(TERMCAP_LIB)
++rl-callbacktest$(EXEEXT): rl-callbacktest.$(OBJEXT) $(READLINE_LIB)
++	$(CC) $(LDFLAGS) -o $@ rl-callbacktest.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB) -lWs2_32
+ 
+-rlptytest$(EXEEXT): rlptytest.o $(READLINE_LIB)
+-	$(CC) $(LDFLAGS) -o $@ rlptytest.o $(READLINE_LIB) $(TERMCAP_LIB) $(LIBUTIL)
++rlptytest$(EXEEXT): rlptytest.$(OBJEXT) $(READLINE_LIB)
++	$(CC) $(LDFLAGS) -o $@ rlptytest.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB) $(LIBUTIL)
+ 
+-rl-timeout$(EXEEXT): rl-timeout.o $(READLINE_LIB)
+-	$(CC) $(LDFLAGS) -o $@ rl-timeout.o $(READLINE_LIB) $(TERMCAP_LIB)
++rl-timeout$(EXEEXT): rl-timeout.$(OBJEXT) $(READLINE_LIB)
++	$(CC) $(LDFLAGS) -o $@ rl-timeout.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB) -lWs2_32
+ 
+-rlversion$(EXEEXT): rlversion.o $(READLINE_LIB)
+-	$(CC) $(LDFLAGS) -o $@ rlversion.o $(READLINE_LIB) $(TERMCAP_LIB)
++rlversion$(EXEEXT): rlversion.$(OBJEXT) $(READLINE_LIB)
++	$(CC) $(LDFLAGS) -o $@ rlversion.$(OBJEXT) $(READLINE_LIB) $(TERMCAP_LIB)
+ 
+-histexamp$(EXEEXT): histexamp.o $(HISTORY_LIB)
+-	$(CC) $(LDFLAGS) -o $@ histexamp.o -lhistory $(TERMCAP_LIB)
++histexamp$(EXEEXT): histexamp.$(OBJEXT) $(HISTORY_LIB)
++	$(CC) $(LDFLAGS) -o $@ histexamp.$(OBJEXT) $(HISTORY_LIB) $(TERMCAP_LIB)
+ 
+-hist_erasedups$(EXEEXT): hist_erasedups.o $(HISTORY_LIB)
+-	$(CC) $(LDFLAGS) -o $@ hist_erasedups.o -lhistory $(TERMCAP_LIB)
++hist_erasedups$(EXEEXT): hist_erasedups.$(OBJEXT) $(HISTORY_LIB)
++	$(CC) $(LDFLAGS) -o $@ hist_erasedups.$(OBJEXT) $(HISTORY_LIB) $(TERMCAP_LIB) -lgetopt
+ 
+-hist_purgecmd$(EXEEXT): hist_purgecmd.o $(HISTORY_LIB)
+-	$(CC) $(LDFLAGS) -o $@ hist_purgecmd.o -lhistory $(TERMCAP_LIB)
++hist_purgecmd$(EXEEXT): hist_purgecmd.$(OBJEXT) $(HISTORY_LIB)
++	$(CC) $(LDFLAGS) -o $@ hist_purgecmd.$(OBJEXT) $(HISTORY_LIB) $(TERMCAP_LIB) -lgetopt -lpcreposix
+ 
+ clean mostlyclean:
+ 	$(RM) $(OBJECTS) $(OTHEROBJ)
+@@ -163,31 +162,29 @@
+ distclean maintainer-clean: clean
+ 	$(RM) Makefile
+ 
+-fileman.o: fileman.c
+-rltest.o: rltest.c
+-rltest2.o: rltest2.c
+-rl.o: rl.c
+-rlversion.o: rlversion.c
+-histexamp.o: histexamp.c
+-hist_erasedups.o: hist_erasedups.c
+-hist_purgecmd.o: hist_purgecmd.c
+-rlbasic.o: rlbasic.c
+-rlkeymaps.o: rlkeymaps.c
+-rlcat.o: rlcat.c
+-rlptytest.o: rlptytest.c
+-rl-callbacktest.o: rl-callbacktest.c
+-rl-timeout.o: rl-timeout.c
+-
+-fileman.o: $(top_srcdir)/readline.h
+-rltest.o: $(top_srcdir)/readline.h
+-rltest2.o: $(top_srcdir)/readline.h $(top_srcdir)/history.h
+-rl.o: $(top_srcdir)/readline.h
+-rlversion.o: $(top_srcdir)/readline.h
+-histexamp.o: $(top_srcdir)/history.h
+-hist_erasedups.o: $(top_srcdir)/history.h
+-hist_purgecmd.o: $(top_srcdir)/history.h
+-rlbasic.o: $(top_srcdir)/readline.h $(top_srcdir)/history.h
+-rlcat.o: $(top_srcdir)/readline.h $(top_srcdir)/history.h
+-rlptytest.o: $(top_srcdir)/readline.h $(top_srcdir)/history.h
+-rl-callbacktest.o: $(top_srcdir)/readline.h $(top_srcdir)/history.h
+-rl-timeout.o: $(top_srcdir)/readline.h $(top_srcdir)/history.h
++fileman.$(OBJEXT): fileman.c
++rltest.$(OBJEXT): rltest.c
++rl.$(OBJEXT): rl.c
++rlversion.$(OBJEXT): rlversion.c
++histexamp.$(OBJEXT): histexamp.c
++hist_erasedups.$(OBJEXT): hist_erasedups.c
++hist_purgecmd.$(OBJEXT): hist_purgecmd.c
++rlbasic.$(OBJEXT): rlbasic.c
++rlkeymaps.$(OBJEXT): rlkeymaps.c
++rlcat.$(OBJEXT): rlcat.c
++rlptytest.$(OBJEXT): rlptytest.c
++rl-callbacktest.$(OBJEXT): rl-callbacktest.c
++rl-timeout.$(OBJEXT): rl-timeout.c
++
++fileman.$(OBJEXT): $(top_srcdir)/readline.h
++rltest.$(OBJEXT): $(top_srcdir)/readline.h
++rl.$(OBJEXT): $(top_srcdir)/readline.h
++rlversion.$(OBJEXT): $(top_srcdir)/readline.h
++histexamp.$(OBJEXT): $(top_srcdir)/history.h
++hist_erasedups.$(OBJEXT): $(top_srcdir)/history.h
++hist_purgecmd.$(OBJEXT): $(top_srcdir)/history.h
++rlbasic.$(OBJEXT): $(top_srcdir)/readline.h $(top_srcdir)/history.h
++rlcat.$(OBJEXT): $(top_srcdir)/readline.h $(top_srcdir)/history.h
++rlptytest.$(OBJEXT): $(top_srcdir)/readline.h $(top_srcdir)/history.h
++rl-callbacktest.$(OBJEXT): $(top_srcdir)/readline.h $(top_srcdir)/history.h
++rl-timeout.$(OBJEXT): $(top_srcdir)/readline.h $(top_srcdir)/history.h
+diff -urN readline-8.2.13-orig/examples/rl.c readline-8.2.13/examples/rl.c
+--- readline-8.2.13-orig/examples/rl.c	2022-04-21 03:34:10.000000000 +0800
++++ readline-8.2.13/examples/rl.c	2024-11-26 16:26:40.437699400 +0800
+@@ -28,7 +28,11 @@
+ #  include <config.h>
+ #endif
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include "getopt.h"
++#endif
+ #include <stdio.h>
+ #include <sys/types.h>
+ 
+@@ -52,9 +56,6 @@
+ #  include <readline/history.h>
+ #endif
+ 
+-extern int optind;
+-extern char *optarg;
+-
+ #if !defined (strchr) && !defined (__STDC__)
+ extern char *strrchr();
+ #endif
+diff -urN readline-8.2.13-orig/examples/rlbasic.c readline-8.2.13/examples/rlbasic.c
+--- readline-8.2.13-orig/examples/rlbasic.c	2022-04-21 03:36:43.000000000 +0800
++++ readline-8.2.13/examples/rlbasic.c	2024-11-26 16:26:40.437699400 +0800
+@@ -1,5 +1,7 @@
+ #include <stdlib.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#endif
+ #include <stdio.h>
+ #include <string.h>
+ 
+diff -urN readline-8.2.13-orig/examples/rl-callbacktest.c readline-8.2.13/examples/rl-callbacktest.c
+--- readline-8.2.13-orig/examples/rl-callbacktest.c	2022-06-14 23:49:56.000000000 +0800
++++ readline-8.2.13/examples/rl-callbacktest.c	2024-11-26 16:39:33.240205700 +0800
+@@ -1,11 +1,17 @@
+ /* Standard include files. stdio.h is required. */
+ #include <stdlib.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#endif
+ #include <string.h>
+ 
+ /* Used for select(2) */
+ #include <sys/types.h>
++#ifdef HAVE_SYS_SELECT_H
+ #include <sys/select.h>
++#elif _WIN32
++#include <winsock2.h>
++#endif
+ 
+ #include <signal.h>
+ 
+@@ -23,7 +29,9 @@
+ #  include <readline/history.h>
+ #endif
+ 
++#ifndef _MSC_VER
+ extern int errno;
++#endif
+ 
+ static void cb_linehandler (char *);
+ static void signandler (int);
+@@ -75,8 +83,10 @@
+ 
+   setlocale (LC_ALL, "");
+ 
++#if defined (SIGWINCH)
+   /* Handle SIGWINCH */
+   signal (SIGWINCH, sighandler);
++#endif
+   
+   /* Install the line handler. */
+   rl_callback_handler_install (prompt, cb_linehandler);
+diff -urN readline-8.2.13-orig/examples/rlcat.c readline-8.2.13/examples/rlcat.c
+--- readline-8.2.13-orig/examples/rlcat.c	2022-06-14 23:48:09.000000000 +0800
++++ readline-8.2.13/examples/rlcat.c	2024-11-26 16:35:28.746915700 +0800
+@@ -29,6 +29,8 @@
+ 
+ #ifdef HAVE_UNISTD_H
+ #  include <unistd.h>
++#else
++#  include "getopt.h"
+ #endif
+ 
+ #include <sys/types.h>
+@@ -61,9 +63,6 @@
+ #  include <readline/history.h>
+ #endif
+ 
+-extern int optind;
+-extern char *optarg;
+-
+ static int stdcat();
+ 
+ static char *progname;
+diff -urN readline-8.2.13-orig/examples/rlevent.c readline-8.2.13/examples/rlevent.c
+--- readline-8.2.13-orig/examples/rlevent.c	2022-04-21 03:37:28.000000000 +0800
++++ readline-8.2.13/examples/rlevent.c	2024-11-26 16:38:04.707087300 +0800
+@@ -31,9 +31,13 @@
+ #ifdef HAVE_UNISTD_H
+ #  include <unistd.h>
+ #else
+-extern int getopt();
++#  include "getopt.h"
++#ifdef _MSC_VER
++extern void Sleep();
++#else
+ extern int sleep();
+ #endif
++#endif
+ 
+ #include <stdio.h>
+ #include <sys/types.h>
+@@ -58,9 +62,6 @@
+ #  include <readline/history.h>
+ #endif
+ 
+-extern int optind;
+-extern char *optarg;
+-
+ #if !defined (strchr) && !defined (__STDC__)
+ extern char *strrchr();
+ #endif
+@@ -72,7 +73,11 @@
+ event_hook ()
+ {
+   fprintf (stderr, "ding!\n");
++#ifdef _MSC_VER
++  Sleep (1000);
++#else
+   sleep (1);
++#endif
+   return 0;
+ }
+ 
+diff -urN readline-8.2.13-orig/examples/rlfe/Makefile.in readline-8.2.13/examples/rlfe/Makefile.in
+--- readline-8.2.13-orig/examples/rlfe/Makefile.in	2009-02-23 06:27:18.000000000 +0800
++++ readline-8.2.13/examples/rlfe/Makefile.in	2024-11-26 16:26:40.453320100 +0800
+@@ -20,6 +20,10 @@
+ VERSION = @VERSION@
+ SCREEN = screen-$(VERSION)
+ 
++.SUFFIXES:	.obj
++
++OBJEXT = @OBJEXT@
++
+ CC = @CC@
+ CFLAGS = @CFLAGS@
+ CPPFLAGS = @CPPFLAGS@
+@@ -44,7 +48,7 @@
+ CFILES=	rlfe.c pty.c
+ HFILES= extern.h os.h screen.h
+ EXTRA_DIST=configure.in configure Makefile.in config.h.in ChangeLog README
+-OFILES=	rlfe.o pty.o
++OFILES=	rlfe.$(OBJEXT) pty.$(OBJEXT)
+ 
+ all:	rlfe
+ 
+@@ -54,7 +58,7 @@
+ rlfe-$(VERSION).tar.gz:
+ 	tar czf $@ $(CFILES) $(HFILES) $(EXTRA_DIST)
+ 
+-.c.o:
++.c.obj:
+ 	$(CC) -c -I. -I$(srcdir) $(CPPFLAGS) $(M_CFLAGS) $(DEFS) $(OPTIONS) $(CFLAGS) $<
+ 
+ install_bin: .version screen
+@@ -92,7 +96,7 @@
+ 	sh $(srcdir)/tty.sh tty.c
+ 
+ mostlyclean:
+-	rm -f $(OFILES) rlfe *.o
++	rm -f $(OFILES) rlfe *.$(OBJEXT)
+ 
+ clean celan: mostlyclean
+ 	rm -f tty.c term.h comm.h osdef.h kmapdef.c core
+@@ -181,4 +185,4 @@
+ ###############################################################################
+ 
+ ### Dependencies:
+-pty.o: pty.c config.h
++pty.$(OBJEXT): pty.c config.h
+diff -urN readline-8.2.13-orig/examples/rlfe/pty.c readline-8.2.13/examples/rlfe/pty.c
+--- readline-8.2.13-orig/examples/rlfe/pty.c	2006-11-09 23:55:10.000000000 +0800
++++ readline-8.2.13/examples/rlfe/pty.c	2024-11-26 16:26:40.453320100 +0800
+@@ -27,7 +27,9 @@
+ #include <fcntl.h>
+ #include <signal.h>
+ 
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#endif
+ 
+ #include "screen.h"
+ 
+diff -urN readline-8.2.13-orig/examples/rlfe/rlfe.c readline-8.2.13/examples/rlfe/rlfe.c
+--- readline-8.2.13-orig/examples/rlfe/rlfe.c	2011-05-27 23:54:03.000000000 +0800
++++ readline-8.2.13/examples/rlfe/rlfe.c	2024-11-26 16:26:40.468986000 +0800
+@@ -68,7 +68,9 @@
+ #include <grp.h>
+ #include <string.h>
+ #include <sys/stat.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#endif
+ #include <sys/ioctl.h>
+ #include <termios.h>
+ 
+diff -urN readline-8.2.13-orig/examples/rl-fgets.c readline-8.2.13/examples/rl-fgets.c
+--- readline-8.2.13-orig/examples/rl-fgets.c	2004-04-23 04:52:17.000000000 +0800
++++ readline-8.2.13/examples/rl-fgets.c	2024-11-26 16:26:40.468986000 +0800
+@@ -121,7 +121,9 @@
+ #include <stdio.h>
+ #include <strings.h>
+ #include <stdlib.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#endif
+ 
+ #include <readline/readline.h>
+ #include <readline/history.h>
+diff -urN readline-8.2.13-orig/examples/rlkeymaps.c readline-8.2.13/examples/rlkeymaps.c
+--- readline-8.2.13-orig/examples/rlkeymaps.c	2018-09-19 01:14:29.000000000 +0800
++++ readline-8.2.13/examples/rlkeymaps.c	2024-11-26 16:26:40.468986000 +0800
+@@ -1,5 +1,7 @@
+ #include <stdlib.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#endif
+ #include <stdio.h>
+ #include <string.h>
+ 
+diff -urN readline-8.2.13-orig/examples/rlptytest.c readline-8.2.13/examples/rlptytest.c
+--- readline-8.2.13-orig/examples/rlptytest.c	2022-07-26 22:23:57.000000000 +0800
++++ readline-8.2.13/examples/rlptytest.c	2024-11-26 16:26:40.468986000 +0800
+@@ -15,7 +15,9 @@
+ #include <curses.h>
+ 
+ #include <stdlib.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#endif
+ 
+ #include <signal.h>
+ 
+diff -urN readline-8.2.13-orig/examples/rl-timeout.c readline-8.2.13/examples/rl-timeout.c
+--- readline-8.2.13-orig/examples/rl-timeout.c	2021-03-12 00:47:57.000000000 +0800
++++ readline-8.2.13/examples/rl-timeout.c	2024-11-26 16:39:52.339639100 +0800
+@@ -21,13 +21,19 @@
+ 
+ /* Standard include files. stdio.h is required. */
+ #include <stdlib.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#endif
+ #include <string.h>
+ #include <limits.h>
+ 
+ /* Used for select(2) */
+ #include <sys/types.h>
++#ifdef HAVE_SYS_SELECT_H
+ #include <sys/select.h>
++#elif _WIN32
++#include <winsock2.h>
++#endif
+ 
+ #include <errno.h>
+ #include <stdio.h>
+@@ -41,7 +47,9 @@
+ #  include <readline/history.h>
+ #endif
+ 
++#ifndef _MSC_VER
+ extern int errno;
++#endif
+ 
+ static void cb_linehandler (char *);
+ 
+diff -urN readline-8.2.13-orig/gettimeofday.c readline-8.2.13/gettimeofday.c
+--- readline-8.2.13-orig/gettimeofday.c	1970-01-01 08:00:00.000000000 +0800
++++ readline-8.2.13/gettimeofday.c	2024-11-26 16:26:40.484587200 +0800
+@@ -0,0 +1,120 @@
++/* Port from gnulib
++   Provide gettimeofday for systems that don't have it or for which it's broken.
++
++   Copyright (C) 2001-2003, 2005-2007, 2009-2024 Free Software Foundation, Inc.
++
++   This file is free software: you can redistribute it and/or modify
++   it under the terms of the GNU Lesser General Public License as
++   published by the Free Software Foundation; either version 2.1 of the
++   License, or (at your option) any later version.
++
++   This file is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public License
++   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
++
++/* written by Jim Meyering */
++
++#include <time.h>
++
++#if defined _WIN32 && ! defined __CYGWIN__
++# define WINDOWS_NATIVE
++# ifndef WIN32_LEAN_AND_MEAN
++#  define WIN32_LEAN_AND_MEAN
++# endif
++#include <windows.h>
++#include <winsock2.h>
++#endif
++
++#ifdef WINDOWS_NATIVE
++
++
++# if !(_WIN32_WINNT >= _WIN32_WINNT_WIN8)
++
++/* Avoid warnings from gcc -Wcast-function-type.  */
++#  define GetProcAddress \
++    (void *) GetProcAddress
++
++/* GetSystemTimePreciseAsFileTime was introduced only in Windows 8.  */
++typedef void (WINAPI * GetSystemTimePreciseAsFileTimeFuncType) (FILETIME *lpTime);
++static GetSystemTimePreciseAsFileTimeFuncType GetSystemTimePreciseAsFileTimeFunc = NULL;
++static BOOL initialized = FALSE;
++
++static void
++initialize (void)
++{
++  HMODULE kernel32 = LoadLibrary ("kernel32.dll");
++  if (kernel32 != NULL)
++    {
++      GetSystemTimePreciseAsFileTimeFunc =
++        (GetSystemTimePreciseAsFileTimeFuncType) GetProcAddress (kernel32, "GetSystemTimePreciseAsFileTime");
++    }
++  initialized = TRUE;
++}
++
++# else
++
++#  define GetSystemTimePreciseAsFileTimeFunc GetSystemTimePreciseAsFileTime
++
++# endif
++
++#endif
++
++/* This is a wrapper for gettimeofday.  It is used only on systems
++   that lack this function, or whose implementation of this function
++   causes problems.
++   Work around the bug in some systems whereby gettimeofday clobbers
++   the static buffer that localtime uses for its return value.  The
++   gettimeofday function from Mac OS X 10.0.4 (i.e., Darwin 1.3.7) has
++   this problem.  */
++
++int
++gettimeofday (struct timeval *restrict tv, void *restrict tz)
++{
++#undef gettimeofday
++#ifdef WINDOWS_NATIVE
++
++  /* On native Windows, there are two ways to get the current time:
++     GetSystemTimeAsFileTime
++     <https://docs.microsoft.com/en-us/windows/desktop/api/sysinfoapi/nf-sysinfoapi-getsystemtimeasfiletime>
++     or
++     GetSystemTimePreciseAsFileTime
++     <https://docs.microsoft.com/en-us/windows/desktop/api/sysinfoapi/nf-sysinfoapi-getsystemtimepreciseasfiletime>.
++     GetSystemTimeAsFileTime produces values that jump by increments of
++     15.627 milliseconds (!) on average.
++     Whereas GetSystemTimePreciseAsFileTime values usually jump by 1 or 2
++     microseconds.
++     More discussion on this topic:
++     <http://www.windowstimestamp.com/description>.  */
++  FILETIME current_time;
++
++# if !(_WIN32_WINNT >= _WIN32_WINNT_WIN8)
++  if (!initialized)
++    initialize ();
++# endif
++  if (GetSystemTimePreciseAsFileTimeFunc != NULL)
++    GetSystemTimePreciseAsFileTimeFunc (&current_time);
++  else
++    GetSystemTimeAsFileTime (&current_time);
++
++  /* Convert from FILETIME to 'struct timeval'.  */
++  /* FILETIME: <https://docs.microsoft.com/en-us/windows/desktop/api/minwinbase/ns-minwinbase-filetime> */
++  ULONGLONG since_1601 =
++    ((ULONGLONG) current_time.dwHighDateTime << 32)
++    | (ULONGLONG) current_time.dwLowDateTime;
++  /* Between 1601-01-01 and 1970-01-01 there were 280 normal years and 89 leap
++     years, in total 134774 days.  */
++  ULONGLONG since_1970 =
++    since_1601 - (ULONGLONG) 134774 * (ULONGLONG) 86400 * (ULONGLONG) 10000000;
++  ULONGLONG microseconds_since_1970 = since_1970 / (ULONGLONG) 10;
++  *tv = (struct timeval) {
++    .tv_sec  = microseconds_since_1970 / (ULONGLONG) 1000000,
++    .tv_usec = microseconds_since_1970 % (ULONGLONG) 1000000
++  };
++
++  return 0;
++#endif
++}
+diff -urN readline-8.2.13-orig/input.c readline-8.2.13/input.c
+--- readline-8.2.13-orig/input.c	2023-11-20 22:29:14.000000000 +0800
++++ readline-8.2.13/input.c	2024-11-26 16:26:40.484587200 +0800
+@@ -140,7 +140,7 @@
+ 
+ /* I don't know how to set a timeout for _getch() in MinGW32, so we use
+    SIGALRM. */
+-#if (defined (HAVE_PSELECT) || defined (HAVE_SELECT)) && !defined (__MINGW32__)
++#if (defined (HAVE_PSELECT) || defined (HAVE_SELECT)) && !defined (__MINGW32__) && !defined (_MSC_VER)
+ #  define RL_TIMEOUT_USE_SELECT
+ #else
+ #  define RL_TIMEOUT_USE_SIGALRM
+@@ -305,7 +305,7 @@
+     }
+ #endif /* O_NDELAY */
+ 
+-#if defined (__MINGW32__)
++#if defined (__MINGW32__) || defined (_MSC_VER)
+   /* Use getch/_kbhit to check for available console input, in the same way
+      that we read it normally. */
+    chars_avail = isatty (tty) ? _kbhit () : 0;
+@@ -404,7 +404,7 @@
+ 
+ #endif
+ 
+-#if defined (__MINGW32__)
++#if defined (__MINGW32__) || defined (_MSC_VER)
+   if (isatty (tty))
+     return (_kbhit ());
+ #endif
+@@ -543,12 +543,18 @@
+     (*secs)++;
+   *usecs = 0;
+ 
++#ifdef _MSC_VER
++  return 0;
++#else
+   return alarm (*secs);
++#endif
+ }
+ static void
+ reset_alarm ()
+ {
++#ifndef _MSC_VER
+   alarm (0);
++#endif
+ }
+ #  endif
+ #endif
+@@ -580,11 +586,13 @@
+     return 0;
+ 
+   /* Return -1 on gettimeofday error. */
++#if !HAVE_GETTIMEOFDAY
+   if (gettimeofday(&timeout_point, 0) != 0)
+     {
+       timerclear (&timeout_point);
+       return -1;
+     }
++#endif
+ 
+   secs = timeout_duration.tv_sec;
+   usecs = timeout_duration.tv_usec;
+@@ -625,8 +633,10 @@
+     }
+ 
+   /* Return -1 on error. errno is set by gettimeofday. */
++#if !HAVE_GETTIMEOFDAY
+   if (gettimeofday(&current_time, 0) != 0)
+     return -1;
++#endif
+ 
+   /* Return 0 when timeout has already expired. */
+   /* could use timercmp (&timeout_point, &current_time, <) here */
+@@ -734,8 +744,10 @@
+ 
+   /* Reset `timeout_point' to the current time to ensure that later
+      calls of `rl_timeout_pending ()' return 0 (timeout expired). */
++#if !HAVE_GETTIMEOFDAY
+   if (gettimeofday(&timeout_point, 0) != 0)
+     timerclear (&timeout_point);
++#endif
+ 
+   reset_alarm ();
+ 
+@@ -833,8 +845,8 @@
+ 
+       /* We know at this point that _rl_caught_signal == 0 */
+ 
+-#if defined (__MINGW32__)
+-      if (isatty (fd)
++#if defined (__MINGW32__) || defined (_MSC_VER)
++      if (isatty (fd))
+ 	return (_getch ());	/* "There is no error return." */
+ #endif
+       result = 0;
+diff -urN readline-8.2.13-orig/Makefile.in readline-8.2.13/Makefile.in
+--- readline-8.2.13-orig/Makefile.in	2021-11-26 02:32:47.000000000 +0800
++++ readline-8.2.13/Makefile.in	2024-11-26 16:26:40.500184200 +0800
+@@ -37,6 +37,8 @@
+ INSTALL_PROGRAM = @INSTALL_PROGRAM@
+ INSTALL_DATA = @INSTALL_DATA@
+ 
++OBJEXT = @OBJEXT@
++
+ CC = @CC@
+ RANLIB = @RANLIB@
+ AR = @AR@
+@@ -100,13 +102,15 @@
+ 
+ install_examples = @EXAMPLES_INSTALL_TARGET@
+ 
+-.c.o:
++.SUFFIXES:	.obj
++
++.c.obj:
+ 	${RM} $@
+ 	$(CC) -c $(CCFLAGS) $<
+ 
+ # The name of the main library target.
+-LIBRARY_NAME = libreadline.a
+-STATIC_LIBS = libreadline.a libhistory.a
++LIBRARY_NAME = libreadline.lib
++STATIC_LIBS = libreadline.lib libhistory.lib
+ 
+ # The C code source files for this library.
+ CSOURCES = $(srcdir)/readline.c $(srcdir)/funmap.c $(srcdir)/keymaps.c \
+@@ -120,7 +124,7 @@
+ 	   $(srcdir)/histfile.c $(srcdir)/nls.c $(srcdir)/search.c \
+ 	   $(srcdir)/shell.c $(srcdir)/savestring.c $(srcdir)/tilde.c \
+ 	   $(srcdir)/text.c $(srcdir)/misc.c $(srcdir)/compat.c \
+-	   $(srcdir)/mbutil.c
++	   $(srcdir)/mbutil.c $(srcdir)/dirent.c $(srcdir)/gettimeofday.c
+ 
+ # The header files for this library.
+ HSOURCES = $(srcdir)/readline.h $(srcdir)/rldefs.h $(srcdir)/chardefs.h \
+@@ -130,16 +134,16 @@
+ 	   $(srcdir)/ansi_stdlib.h $(srcdir)/tcap.h $(srcdir)/rlstdc.h \
+ 	   $(srcdir)/xmalloc.h $(srcdir)/rlprivate.h $(srcdir)/rlshell.h \
+ 	   $(srcdir)/rltypedefs.h $(srcdir)/rlmbutil.h \
+-	   $(srcdir)/colors.h $(srcdir)/parse-colors.h
++	   $(srcdir)/colors.h $(srcdir)/parse-colors.h $(srcdir)/dirent.h
+ 
+-HISTOBJ = history.o histexpand.o histfile.o histsearch.o shell.o mbutil.o
+-TILDEOBJ = tilde.o
+-COLORSOBJ = colors.o parse-colors.o
+-OBJECTS = readline.o vi_mode.o funmap.o keymaps.o parens.o search.o \
+-	  rltty.o complete.o bind.o isearch.o display.o signals.o \
+-	  util.o kill.o undo.o macro.o input.o callback.o terminal.o \
+-	  text.o nls.o misc.o $(HISTOBJ) $(TILDEOBJ) $(COLORSOBJ) \
+-	  xmalloc.o xfree.o compat.o
++HISTOBJ = history.$(OBJEXT) histexpand.$(OBJEXT) histfile.$(OBJEXT) histsearch.$(OBJEXT) shell.$(OBJEXT) mbutil.$(OBJEXT)
++TILDEOBJ = tilde.$(OBJEXT)
++COLORSOBJ = colors.$(OBJEXT) parse-colors.$(OBJEXT)
++OBJECTS = readline.$(OBJEXT) vi_mode.$(OBJEXT) funmap.$(OBJEXT) keymaps.$(OBJEXT) parens.$(OBJEXT) search.$(OBJEXT) \
++	  rltty.$(OBJEXT) complete.$(OBJEXT) bind.$(OBJEXT) isearch.$(OBJEXT) display.$(OBJEXT) signals.$(OBJEXT) \
++	  util.$(OBJEXT) kill.$(OBJEXT) undo.$(OBJEXT) macro.$(OBJEXT) input.$(OBJEXT) callback.$(OBJEXT) terminal.$(OBJEXT) \
++	  text.$(OBJEXT) nls.$(OBJEXT) misc.$(OBJEXT) $(HISTOBJ) $(TILDEOBJ) $(COLORSOBJ) \
++	  xmalloc.$(OBJEXT) xfree.$(OBJEXT) compat.$(OBJEXT) dirent.$(OBJEXT) gettimeofday.$(OBJEXT)
+ 
+ # The texinfo files which document this library.
+ DOCSOURCE = doc/rlman.texinfo doc/rltech.texinfo doc/rluser.texinfo
+@@ -171,24 +175,24 @@
+ 
+ static: $(STATIC_LIBS)
+ 
+-libreadline.a: $(OBJECTS)
++libreadline.lib: $(OBJECTS)
+ 	$(RM) $@
+-	$(AR) $(ARFLAGS) $@ $(OBJECTS)
++	$(AR) $(ARFLAGS) $@ $(OBJECTS) User32.lib
+ 	-test -n "$(RANLIB)" && $(RANLIB) $@
+ 
+-libhistory.a: $(HISTOBJ) xmalloc.o xfree.o
++libhistory.lib: $(HISTOBJ) xmalloc.$(OBJEXT) xfree.$(OBJEXT)
+ 	$(RM) $@
+-	$(AR) $(ARFLAGS) $@ $(HISTOBJ) xmalloc.o xfree.o
++	$(AR) $(ARFLAGS) $@ $(HISTOBJ) xmalloc.$(OBJEXT) xfree.$(OBJEXT)
+ 	-test -n "$(RANLIB)" && $(RANLIB) $@
+ 
+ # Since tilde.c is shared between readline and bash, make sure we compile
+ # it with the right flags when it's built as part of readline
+-tilde.o:	tilde.c
++tilde.$(OBJEXT):	tilde.c
+ 	rm -f $@
+ 	$(CC) $(CCFLAGS) -DREADLINE_LIBRARY -c $(srcdir)/tilde.c
+ 
+-readline: $(OBJECTS) readline.h rldefs.h chardefs.h ./libreadline.a
+-	$(CC) $(CCFLAGS) -DREADLINE_LIBRARY -o $@ $(top_srcdir)/examples/rl.c ./libreadline.a ${TERMCAP_LIB}
++readline: $(OBJECTS) readline.h rldefs.h chardefs.h ./libreadline.lib
++	$(CC) $(CCFLAGS) -DREADLINE_LIBRARY -o $@ $(top_srcdir)/examples/rl.c ./libreadline.lib ${TERMCAP_LIB}
+ 
+ lint:	force
+ 	$(MAKE) $(MFLAGS) CCFLAGS='$(GCC_LINT_CFLAGS)' static
+@@ -252,12 +256,10 @@
+ maybe-uninstall-pc: uninstall-pc
+ 
+ install-static: installdirs $(STATIC_LIBS) install-headers install-doc ${install_examples} install-pc
+-	-$(MV) $(DESTDIR)$(libdir)/libreadline.a $(DESTDIR)$(libdir)/libreadline.old
+-	$(INSTALL_DATA) libreadline.a $(DESTDIR)$(libdir)/libreadline.a
+-	-test -n "$(RANLIB)" && $(RANLIB) $(DESTDIR)$(libdir)/libreadline.a
+-	-$(MV) $(DESTDIR)$(libdir)/libhistory.a $(DESTDIR)$(libdir)/libhistory.old
+-	$(INSTALL_DATA) libhistory.a $(DESTDIR)$(libdir)/libhistory.a
+-	-test -n "$(RANLIB)" && $(RANLIB) $(DESTDIR)$(libdir)/libhistory.a
++	$(INSTALL_DATA) libreadline.lib $(DESTDIR)$(libdir)/libreadline.lib
++	-test -n "$(RANLIB)" && $(RANLIB) $(DESTDIR)$(libdir)/libreadline.lib
++	$(INSTALL_DATA) libhistory.lib $(DESTDIR)$(libdir)/libhistory.lib
++	-test -n "$(RANLIB)" && $(RANLIB) $(DESTDIR)$(libdir)/libhistory.lib
+ 
+ installdirs: $(srcdir)/support/mkinstalldirs
+ 	-$(SHELL) $(srcdir)/support/mkinstalldirs $(DESTDIR)$(includedir) \
+@@ -267,7 +269,7 @@
+ 
+ uninstall: uninstall-headers uninstall-doc uninstall-examples uninstall-pc
+ 	-test -n "$(DESTDIR)$(libdir)" && cd $(DESTDIR)$(libdir) && \
+-		${RM} libreadline.a libreadline.old libhistory.a libhistory.old $(SHARED_LIBS)
++		${RM} libreadline.lib libhistory.lib $(SHARED_LIBS)
+ 	-( cd shlib; ${MAKE} ${MFLAGS} DESTDIR=${DESTDIR} uninstall )
+ 
+ install-shared: installdirs install-headers shared install-doc install-pc
+@@ -351,260 +353,262 @@
+ .NOEXPORT:
+ 
+ # Dependencies
+-bind.o: ansi_stdlib.h posixstat.h
+-bind.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-bind.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+-bind.o: history.h
+-callback.o: rlconf.h
+-callback.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-callback.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+-compat.o: ${BUILD_DIR}/config.h
+-compat.o: rlstdc.h rltypedefs.h
+-complete.o: ansi_stdlib.h posixdir.h posixstat.h
+-complete.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-complete.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+-display.o: ansi_stdlib.h posixstat.h
+-display.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-display.o: tcap.h
+-display.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+-display.o: history.h rlstdc.h
+-funmap.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+-funmap.o: rlconf.h ansi_stdlib.h rlstdc.h
+-funmap.o: ${BUILD_DIR}/config.h
+-histexpand.o: ansi_stdlib.h
+-histexpand.o: history.h histlib.h rlstdc.h rltypedefs.h
+-histexpand.o: ${BUILD_DIR}/config.h
+-histfile.o: ansi_stdlib.h
+-histfile.o: history.h histlib.h rlstdc.h rltypedefs.h
+-histfile.o: ${BUILD_DIR}/config.h
+-history.o: ansi_stdlib.h
+-history.o: history.h histlib.h rlstdc.h rltypedefs.h
+-history.o: ${BUILD_DIR}/config.h
+-histsearch.o: ansi_stdlib.h
+-histsearch.o: history.h histlib.h rlstdc.h rltypedefs.h
+-histsearch.o: ${BUILD_DIR}/config.h
+-input.o: ansi_stdlib.h
+-input.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-input.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+-isearch.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-isearch.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+-isearch.o: ansi_stdlib.h history.h rlstdc.h
+-keymaps.o: emacs_keymap.c vi_keymap.c
+-keymaps.o: keymaps.h rltypedefs.h chardefs.h rlconf.h ansi_stdlib.h
+-keymaps.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+-keymaps.o: ${BUILD_DIR}/config.h rlstdc.h
+-kill.o: ansi_stdlib.h
+-kill.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-kill.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+-kill.o: history.h rlstdc.h
+-macro.o: ansi_stdlib.h
+-macro.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-macro.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+-macro.o: history.h rlstdc.h
+-mbutil.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-mbutil.o: readline.h keymaps.h rltypedefs.h chardefs.h rlstdc.h
+-misc.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+-misc.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-misc.o: history.h rlstdc.h ansi_stdlib.h
+-nls.o: ansi_stdlib.h
+-nls.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-nls.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h  
+-nls.o: history.h rlstdc.h  
+-parens.o: rlconf.h
+-parens.o: ${BUILD_DIR}/config.h
+-parens.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+-readline.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+-readline.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-readline.o: history.h rlstdc.h
+-readline.o: posixstat.h ansi_stdlib.h posixjmp.h
+-rltty.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-rltty.o: rltty.h
+-rltty.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+-savestring.o: ${BUILD_DIR}/config.h
+-search.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-search.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+-search.o: ansi_stdlib.h history.h rlstdc.h
+-shell.o: ${BUILD_DIR}/config.h
+-shell.o: ansi_stdlib.h
+-signals.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-signals.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+-signals.o: history.h rlstdc.h
+-terminal.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-terminal.o: tcap.h
+-terminal.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+-terminal.o: history.h rlstdc.h
+-text.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+-text.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-text.o: history.h rlstdc.h ansi_stdlib.h
+-tilde.o: ansi_stdlib.h
+-tilde.o: ${BUILD_DIR}/config.h
+-tilde.o: tilde.h
+-undo.o: ansi_stdlib.h
+-undo.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-undo.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+-undo.o: history.h rlstdc.h
+-util.o: posixjmp.h ansi_stdlib.h
+-util.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-util.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+-vi_mode.o: rldefs.h ${BUILD_DIR}/config.h rlconf.h
+-vi_mode.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
+-vi_mode.o: history.h ansi_stdlib.h rlstdc.h
+-xfree.o: ${BUILD_DIR}/config.h
+-xfree.o: ansi_stdlib.h
+-xmalloc.o: ${BUILD_DIR}/config.h
+-xmalloc.o: ansi_stdlib.h
+-
+-colors.o: ${BUILD_DIR}/config.h colors.h
+-colors.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+-colors.o: rlconf.h  
+-colors.o: ansi_stdlib.h posixstat.h
+-parse-colors.o: ${BUILD_DIR}/config.h colors.h parse-colors.h
+-parse-colors.o: rldefs.h rlconf.h
+-parse-colors.o: readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
+-
+-bind.o: rlshell.h
+-histfile.o: rlshell.h
+-nls.o: rlshell.h
+-readline.o: rlshell.h
+-shell.o: rlshell.h
+-terminal.o: rlshell.h
+-histexpand.o: rlshell.h
+-
+-bind.o: rlprivate.h
+-callback.o: rlprivate.h
+-complete.o: rlprivate.h
+-display.o: rlprivate.h
+-input.o: rlprivate.h
+-isearch.o: rlprivate.h
+-kill.o: rlprivate.h
+-macro.o: rlprivate.h
+-mbutil.o: rlprivate.h
+-misc.o: rlprivate.h
+-nls.o: rlprivate.h   
+-parens.o: rlprivate.h
+-readline.o: rlprivate.h
+-rltty.o: rlprivate.h 
+-search.o: rlprivate.h
+-signals.o: rlprivate.h
+-terminal.o: rlprivate.h
+-text.o: rlprivate.h
+-undo.o: rlprivate.h
+-util.o: rlprivate.h
+-vi_mode.o: rlprivate.h
+-colors.o: rlprivate.h
+-parse-colors.o: rlprivate.h
+-
+-bind.o: xmalloc.h
+-callback.o: xmalloc.h
+-complete.o: xmalloc.h
+-display.o: xmalloc.h
+-funmap.o: xmalloc.h
+-histexpand.o: xmalloc.h
+-histfile.o: xmalloc.h
+-history.o: xmalloc.h
+-input.o: xmalloc.h
+-isearch.o: xmalloc.h
+-keymaps.o: xmalloc.h
+-kill.o: xmalloc.h
+-macro.o: xmalloc.h
+-mbutil.o: xmalloc.h
+-misc.o: xmalloc.h
+-readline.o: xmalloc.h
+-savestring.o: xmalloc.h
+-search.o: xmalloc.h
+-shell.o: xmalloc.h
+-terminal.o: xmalloc.h
+-text.o: xmalloc.h
+-tilde.o: xmalloc.h
+-undo.o: xmalloc.h
+-util.o: xmalloc.h
+-vi_mode.o: xmalloc.h
+-xfree.o: xmalloc.h
+-xmalloc.o: xmalloc.h
+-colors.o: xmalloc.h
+-parse-colors.o: xmalloc.h
+-
+-complete.o: rlmbutil.h
+-display.o: rlmbutil.h
+-histexpand.o: rlmbutil.h
+-input.o: rlmbutil.h    
+-isearch.o: rlmbutil.h
+-mbutil.o: rlmbutil.h
+-misc.o: rlmbutil.h
+-readline.o: rlmbutil.h
+-search.o: rlmbutil.h 
+-text.o: rlmbutil.h
+-vi_mode.o: rlmbutil.h
+-
+-bind.o: $(srcdir)/bind.c
+-callback.o: $(srcdir)/callback.c
+-compat.o: $(srcdir)/compat.c
+-complete.o: $(srcdir)/complete.c
+-display.o: $(srcdir)/display.c
+-funmap.o: $(srcdir)/funmap.c
+-input.o: $(srcdir)/input.c
+-isearch.o: $(srcdir)/isearch.c
+-keymaps.o: $(srcdir)/keymaps.c $(srcdir)/emacs_keymap.c $(srcdir)/vi_keymap.c
+-kill.o: $(srcdir)/kill.c
+-macro.o: $(srcdir)/macro.c
+-mbutil.o: $(srcdir)/mbutil.c
+-misc.o: $(srcdir)/misc.c
+-nls.o: $(srcdir)/nls.c
+-parens.o: $(srcdir)/parens.c
+-readline.o: $(srcdir)/readline.c
+-rltty.o: $(srcdir)/rltty.c
+-savestring.o: $(srcdir)/savestring.c
+-search.o: $(srcdir)/search.c
+-shell.o: $(srcdir)/shell.c
+-signals.o: $(srcdir)/signals.c
+-terminal.o: $(srcdir)/terminal.c
+-text.o: $(srcdir)/text.c
+-tilde.o: $(srcdir)/tilde.c
+-undo.o: $(srcdir)/undo.c
+-util.o: $(srcdir)/util.c
+-vi_mode.o: $(srcdir)/vi_mode.c
+-xfree.o: $(srcdir)/xfree.c
+-xmalloc.o: $(srcdir)/xmalloc.c
+-
+-colors.o: $(srcdir)/parse-colors.c
+-parse-colors.o: $(srcdir)/parse-colors.c
+-
+-histexpand.o: $(srcdir)/histexpand.c
+-histfile.o: $(srcdir)/histfile.c
+-history.o: $(srcdir)/history.c
+-histsearch.o: $(srcdir)/histsearch.c
+-
+-bind.o: bind.c
+-callback.o: callback.c
+-compat.o: compat.c
+-complete.o: complete.c
+-display.o: display.c
+-funmap.o: funmap.c
+-input.o: input.c
+-isearch.o: isearch.c
+-keymaps.o: keymaps.c emacs_keymap.c vi_keymap.c
+-kill.o: kill.c
+-macro.o: macro.c
+-mbutil.o: mbutil.c
+-misc.o: misc.c
+-nls.o: nls.c
+-parens.o: parens.c
+-readline.o: readline.c
+-rltty.o: rltty.c
+-savestring.o: savestring.c
+-search.o: search.c
+-shell.o: shell.c
+-signals.o: signals.c
+-terminal.o: terminal.c
+-text.o: text.c
+-tilde.o: tilde.c
+-undo.o: undo.c
+-util.o: util.c
+-vi_mode.o: vi_mode.c
+-xfree.o: xfree.c
+-xmalloc.o: xmalloc.c
+-
+-histexpand.o: histexpand.c
+-histfile.o: histfile.c
+-history.o: history.c
+-histsearch.o: histsearch.c
++bind.$(OBJEXT): ansi_stdlib.h posixstat.h
++bind.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++bind.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
++bind.$(OBJEXT): history.h
++callback.$(OBJEXT): rlconf.h
++callback.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++callback.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
++compat.$(OBJEXT): ${BUILD_DIR}/config.h
++compat.$(OBJEXT): rlstdc.h rltypedefs.h
++complete.$(OBJEXT): ansi_stdlib.h posixdir.h posixstat.h
++complete.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++complete.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
++dirent.$(OBJEXT): dirent.h
++display.$(OBJEXT): ansi_stdlib.h posixstat.h
++display.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++display.$(OBJEXT): tcap.h
++display.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
++display.$(OBJEXT): history.h rlstdc.h
++funmap.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
++funmap.$(OBJEXT): rlconf.h ansi_stdlib.h rlstdc.h
++funmap.$(OBJEXT): ${BUILD_DIR}/config.h
++histexpand.$(OBJEXT): ansi_stdlib.h
++histexpand.$(OBJEXT): history.h histlib.h rlstdc.h rltypedefs.h
++histexpand.$(OBJEXT): ${BUILD_DIR}/config.h
++histfile.$(OBJEXT): ansi_stdlib.h
++histfile.$(OBJEXT): history.h histlib.h rlstdc.h rltypedefs.h
++histfile.$(OBJEXT): ${BUILD_DIR}/config.h
++history.$(OBJEXT): ansi_stdlib.h
++history.$(OBJEXT): history.h histlib.h rlstdc.h rltypedefs.h
++history.$(OBJEXT): ${BUILD_DIR}/config.h
++histsearch.$(OBJEXT): ansi_stdlib.h
++histsearch.$(OBJEXT): history.h histlib.h rlstdc.h rltypedefs.h
++histsearch.$(OBJEXT): ${BUILD_DIR}/config.h
++input.$(OBJEXT): ansi_stdlib.h
++input.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++input.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
++isearch.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++isearch.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
++isearch.$(OBJEXT): ansi_stdlib.h history.h rlstdc.h
++keymaps.$(OBJEXT): emacs_keymap.c vi_keymap.c
++keymaps.$(OBJEXT): keymaps.h rltypedefs.h chardefs.h rlconf.h ansi_stdlib.h
++keymaps.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
++keymaps.$(OBJEXT): ${BUILD_DIR}/config.h rlstdc.h
++kill.$(OBJEXT): ansi_stdlib.h
++kill.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++kill.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
++kill.$(OBJEXT): history.h rlstdc.h
++macro.$(OBJEXT): ansi_stdlib.h
++macro.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++macro.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
++macro.$(OBJEXT): history.h rlstdc.h
++mbutil.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++mbutil.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h rlstdc.h
++misc.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
++misc.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++misc.$(OBJEXT): history.h rlstdc.h ansi_stdlib.h
++nls.$(OBJEXT): ansi_stdlib.h
++nls.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++nls.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h  
++nls.$(OBJEXT): history.h rlstdc.h  
++parens.$(OBJEXT): rlconf.h
++parens.$(OBJEXT): ${BUILD_DIR}/config.h
++parens.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
++readline.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
++readline.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++readline.$(OBJEXT): history.h rlstdc.h
++readline.$(OBJEXT): posixstat.h ansi_stdlib.h posixjmp.h
++rltty.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++rltty.$(OBJEXT): rltty.h
++rltty.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
++savestring.$(OBJEXT): ${BUILD_DIR}/config.h
++search.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++search.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
++search.$(OBJEXT): ansi_stdlib.h history.h rlstdc.h
++shell.$(OBJEXT): ${BUILD_DIR}/config.h
++shell.$(OBJEXT): ansi_stdlib.h
++signals.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++signals.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
++signals.$(OBJEXT): history.h rlstdc.h
++terminal.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++terminal.$(OBJEXT): tcap.h
++terminal.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
++terminal.$(OBJEXT): history.h rlstdc.h
++text.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
++text.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++text.$(OBJEXT): history.h rlstdc.h ansi_stdlib.h
++tilde.$(OBJEXT): ansi_stdlib.h
++tilde.$(OBJEXT): ${BUILD_DIR}/config.h
++tilde.$(OBJEXT): tilde.h
++undo.$(OBJEXT): ansi_stdlib.h
++undo.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++undo.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
++undo.$(OBJEXT): history.h rlstdc.h
++util.$(OBJEXT): posixjmp.h ansi_stdlib.h
++util.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++util.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
++vi_mode.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
++vi_mode.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h
++vi_mode.$(OBJEXT): history.h ansi_stdlib.h rlstdc.h
++xfree.$(OBJEXT): ${BUILD_DIR}/config.h
++xfree.$(OBJEXT): ansi_stdlib.h
++xmalloc.$(OBJEXT): ${BUILD_DIR}/config.h
++xmalloc.$(OBJEXT): ansi_stdlib.h
++
++colors.$(OBJEXT): ${BUILD_DIR}/config.h colors.h
++colors.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
++colors.$(OBJEXT): rlconf.h  
++colors.$(OBJEXT): ansi_stdlib.h posixstat.h
++parse-colors.$(OBJEXT): ${BUILD_DIR}/config.h colors.h parse-colors.h
++parse-colors.$(OBJEXT): rldefs.h rlconf.h
++parse-colors.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
++
++bind.$(OBJEXT): rlshell.h
++histfile.$(OBJEXT): rlshell.h
++nls.$(OBJEXT): rlshell.h
++readline.$(OBJEXT): rlshell.h
++shell.$(OBJEXT): rlshell.h
++terminal.$(OBJEXT): rlshell.h
++histexpand.$(OBJEXT): rlshell.h
++
++bind.$(OBJEXT): rlprivate.h
++callback.$(OBJEXT): rlprivate.h
++complete.$(OBJEXT): rlprivate.h
++display.$(OBJEXT): rlprivate.h
++input.$(OBJEXT): rlprivate.h
++isearch.$(OBJEXT): rlprivate.h
++kill.$(OBJEXT): rlprivate.h
++macro.$(OBJEXT): rlprivate.h
++mbutil.$(OBJEXT): rlprivate.h
++misc.$(OBJEXT): rlprivate.h
++nls.$(OBJEXT): rlprivate.h   
++parens.$(OBJEXT): rlprivate.h
++readline.$(OBJEXT): rlprivate.h
++rltty.$(OBJEXT): rlprivate.h 
++search.$(OBJEXT): rlprivate.h
++signals.$(OBJEXT): rlprivate.h
++terminal.$(OBJEXT): rlprivate.h
++text.$(OBJEXT): rlprivate.h
++undo.$(OBJEXT): rlprivate.h
++util.$(OBJEXT): rlprivate.h
++vi_mode.$(OBJEXT): rlprivate.h
++colors.$(OBJEXT): rlprivate.h
++parse-colors.$(OBJEXT): rlprivate.h
++
++bind.$(OBJEXT): xmalloc.h
++callback.$(OBJEXT): xmalloc.h
++complete.$(OBJEXT): xmalloc.h
++display.$(OBJEXT): xmalloc.h
++funmap.$(OBJEXT): xmalloc.h
++histexpand.$(OBJEXT): xmalloc.h
++histfile.$(OBJEXT): xmalloc.h
++history.$(OBJEXT): xmalloc.h
++input.$(OBJEXT): xmalloc.h
++isearch.$(OBJEXT): xmalloc.h
++keymaps.$(OBJEXT): xmalloc.h
++kill.$(OBJEXT): xmalloc.h
++macro.$(OBJEXT): xmalloc.h
++mbutil.$(OBJEXT): xmalloc.h
++misc.$(OBJEXT): xmalloc.h
++readline.$(OBJEXT): xmalloc.h
++savestring.$(OBJEXT): xmalloc.h
++search.$(OBJEXT): xmalloc.h
++shell.$(OBJEXT): xmalloc.h
++terminal.$(OBJEXT): xmalloc.h
++text.$(OBJEXT): xmalloc.h
++tilde.$(OBJEXT): xmalloc.h
++undo.$(OBJEXT): xmalloc.h
++util.$(OBJEXT): xmalloc.h
++vi_mode.$(OBJEXT): xmalloc.h
++xfree.$(OBJEXT): xmalloc.h
++xmalloc.$(OBJEXT): xmalloc.h
++colors.$(OBJEXT): xmalloc.h
++parse-colors.$(OBJEXT): xmalloc.h
++
++complete.$(OBJEXT): rlmbutil.h
++display.$(OBJEXT): rlmbutil.h
++histexpand.$(OBJEXT): rlmbutil.h
++input.$(OBJEXT): rlmbutil.h    
++isearch.$(OBJEXT): rlmbutil.h
++mbutil.$(OBJEXT): rlmbutil.h
++misc.$(OBJEXT): rlmbutil.h
++readline.$(OBJEXT): rlmbutil.h
++search.$(OBJEXT): rlmbutil.h 
++text.$(OBJEXT): rlmbutil.h
++vi_mode.$(OBJEXT): rlmbutil.h
++
++bind.$(OBJEXT): $(srcdir)/bind.c
++callback.$(OBJEXT): $(srcdir)/callback.c
++compat.$(OBJEXT): $(srcdir)/compat.c
++complete.$(OBJEXT): $(srcdir)/complete.c
++display.$(OBJEXT): $(srcdir)/display.c
++funmap.$(OBJEXT): $(srcdir)/funmap.c
++input.$(OBJEXT): $(srcdir)/input.c
++isearch.$(OBJEXT): $(srcdir)/isearch.c
++keymaps.$(OBJEXT): $(srcdir)/keymaps.c $(srcdir)/emacs_keymap.c $(srcdir)/vi_keymap.c
++kill.$(OBJEXT): $(srcdir)/kill.c
++macro.$(OBJEXT): $(srcdir)/macro.c
++mbutil.$(OBJEXT): $(srcdir)/mbutil.c
++misc.$(OBJEXT): $(srcdir)/misc.c
++nls.$(OBJEXT): $(srcdir)/nls.c
++parens.$(OBJEXT): $(srcdir)/parens.c
++readline.$(OBJEXT): $(srcdir)/readline.c
++rltty.$(OBJEXT): $(srcdir)/rltty.c
++savestring.$(OBJEXT): $(srcdir)/savestring.c
++search.$(OBJEXT): $(srcdir)/search.c
++shell.$(OBJEXT): $(srcdir)/shell.c
++signals.$(OBJEXT): $(srcdir)/signals.c
++terminal.$(OBJEXT): $(srcdir)/terminal.c
++text.$(OBJEXT): $(srcdir)/text.c
++tilde.$(OBJEXT): $(srcdir)/tilde.c
++undo.$(OBJEXT): $(srcdir)/undo.c
++util.$(OBJEXT): $(srcdir)/util.c
++vi_mode.$(OBJEXT): $(srcdir)/vi_mode.c
++xfree.$(OBJEXT): $(srcdir)/xfree.c
++xmalloc.$(OBJEXT): $(srcdir)/xmalloc.c
++
++colors.$(OBJEXT): $(srcdir)/parse-colors.c
++parse-colors.$(OBJEXT): $(srcdir)/parse-colors.c
++
++histexpand.$(OBJEXT): $(srcdir)/histexpand.c
++histfile.$(OBJEXT): $(srcdir)/histfile.c
++history.$(OBJEXT): $(srcdir)/history.c
++histsearch.$(OBJEXT): $(srcdir)/histsearch.c
++
++bind.$(OBJEXT): bind.c
++callback.$(OBJEXT): callback.c
++compat.$(OBJEXT): compat.c
++complete.$(OBJEXT): complete.c
++dirent.$(OBJEXT): dirent.c
++display.$(OBJEXT): display.c
++funmap.$(OBJEXT): funmap.c
++input.$(OBJEXT): input.c
++isearch.$(OBJEXT): isearch.c
++keymaps.$(OBJEXT): keymaps.c emacs_keymap.c vi_keymap.c
++kill.$(OBJEXT): kill.c
++macro.$(OBJEXT): macro.c
++mbutil.$(OBJEXT): mbutil.c
++misc.$(OBJEXT): misc.c
++nls.$(OBJEXT): nls.c
++parens.$(OBJEXT): parens.c
++readline.$(OBJEXT): readline.c
++rltty.$(OBJEXT): rltty.c
++savestring.$(OBJEXT): savestring.c
++search.$(OBJEXT): search.c
++shell.$(OBJEXT): shell.c
++signals.$(OBJEXT): signals.c
++terminal.$(OBJEXT): terminal.c
++text.$(OBJEXT): text.c
++tilde.$(OBJEXT): tilde.c
++undo.$(OBJEXT): undo.c
++util.$(OBJEXT): util.c
++vi_mode.$(OBJEXT): vi_mode.c
++xfree.$(OBJEXT): xfree.c
++xmalloc.$(OBJEXT): xmalloc.c
++
++histexpand.$(OBJEXT): histexpand.c
++histfile.$(OBJEXT): histfile.c
++history.$(OBJEXT): history.c
++histsearch.$(OBJEXT): histsearch.c
+diff -urN readline-8.2.13-orig/posixselect.h readline-8.2.13/posixselect.h
+--- readline-8.2.13-orig/posixselect.h	2009-04-20 00:59:16.000000000 +0800
++++ readline-8.2.13/posixselect.h	2024-11-26 16:26:40.500184200 +0800
+@@ -27,7 +27,18 @@
+ 
+ #if defined (HAVE_SELECT)
+ #  if !defined (HAVE_SYS_SELECT_H) || !defined (M_UNIX)
+-#    include <sys/time.h>
++#    ifdef HAVE_SYS_TIME_H
++#      include <sys/time.h>
++#    else
++#      include <time.h>
++#      if !HAVE_TIMEVAL
++struct timeval
++{
++  time_t tv_sec;
++  long int tv_usec;
++};
++#      endif
++#    endif
+ #  endif
+ #endif /* HAVE_SELECT */
+ #if defined (HAVE_SYS_SELECT_H)
+diff -urN readline-8.2.13-orig/posixtime.h readline-8.2.13/posixtime.h
+--- readline-8.2.13-orig/posixtime.h	2021-11-05 21:54:58.000000000 +0800
++++ readline-8.2.13/posixtime.h	2024-11-26 16:26:40.500184200 +0800
+@@ -48,6 +48,8 @@
+ };
+ #endif
+ 
++#include "rlstdc.h"
++
+ #if !HAVE_GETTIMEOFDAY
+ extern int gettimeofday PARAMS((struct timeval *, void *));
+ #endif
+diff -urN readline-8.2.13-orig/readline.c readline-8.2.13/readline.c
+--- readline-8.2.13-orig/readline.c	2024-08-03 02:53:58.000000000 +0800
++++ readline-8.2.13/readline.c	2024-11-26 16:26:40.500184200 +0800
+@@ -1401,7 +1401,7 @@
+   rl_bind_keyseq_if_unbound ("\033[1;3C", rl_forward_word);
+   rl_bind_keyseq_if_unbound ("\033[1;3D", rl_backward_word);
+ 
+-#if defined (__MINGW32__)
++#if defined (__MINGW32__) || defined (_MSC_VER)
+   rl_bind_keyseq_if_unbound ("\340H", rl_get_previous_history);
+   rl_bind_keyseq_if_unbound ("\340P", rl_get_next_history);
+   rl_bind_keyseq_if_unbound ("\340M", rl_forward_char);
+diff -urN readline-8.2.13-orig/rldefs.h readline-8.2.13/rldefs.h
+--- readline-8.2.13-orig/rldefs.h	2021-01-22 23:06:31.000000000 +0800
++++ readline-8.2.13/rldefs.h	2024-11-26 16:26:40.515832600 +0800
+@@ -40,7 +40,7 @@
+ #  if defined (HAVE_TERMIO_H)
+ #    define TERMIO_TTY_DRIVER
+ #  else
+-#    if !defined (__MINGW32__)
++#    if !defined (__MINGW32__) && !defined (_MSC_VER)
+ #      define NEW_TTY_DRIVER
+ #    else
+ #      define NO_TTY_DRIVER
+diff -urN readline-8.2.13-orig/rlprivate.h readline-8.2.13/rlprivate.h
+--- readline-8.2.13-orig/rlprivate.h	2022-08-12 06:35:16.000000000 +0800
++++ readline-8.2.13/rlprivate.h	2024-11-26 16:26:40.515832600 +0800
+@@ -303,7 +303,7 @@
+ 
+ extern int _rl_timeout_init (void);
+ extern int _rl_timeout_handle_sigalrm (void);
+-#if defined (_POSIXSELECT_H_)
++#if defined (RL_TIMEOUT_USE_SELECT)
+ /* use as a sentinel for fd_set, struct timeval,  and sigset_t definitions */
+ extern int _rl_timeout_select (int, fd_set *, fd_set *, fd_set *, const struct timeval *, const sigset_t *);
+ #endif
+diff -urN readline-8.2.13-orig/rlstdc.h readline-8.2.13/rlstdc.h
+--- readline-8.2.13-orig/rlstdc.h	2011-03-27 03:00:21.000000000 +0800
++++ readline-8.2.13/rlstdc.h	2024-11-26 16:26:40.515832600 +0800
+@@ -29,7 +29,7 @@
+ 	extern char *func PARAMS((char *, char *, int)); */
+ 
+ #if !defined (PARAMS)
+-#  if defined (__STDC__) || defined (__GNUC__) || defined (__cplusplus)
++#  if defined (__STDC__) || defined (__GNUC__) || defined (_MSC_VER) || defined (__cplusplus)
+ #    define PARAMS(protos) protos
+ #  else
+ #    define PARAMS(protos) ()
+diff -urN readline-8.2.13-orig/rltty.c readline-8.2.13/rltty.c
+--- readline-8.2.13-orig/rltty.c	2024-08-03 02:52:42.000000000 +0800
++++ readline-8.2.13/rltty.c	2024-11-26 16:26:40.515832600 +0800
+@@ -738,9 +738,9 @@
+ int
+ rl_restart_output (int count, int key)
+ {
+-#if defined (__MINGW32__)
++#if defined (__MINGW32__) || defined (_MSC_VER)
+   return 0;
+-#else /* !__MING32__ */
++#else /* !__MING32__ || !_MSC_VER */
+ 
+   int fildes = fileno (rl_outstream);
+ #if defined (TIOCSTART)
+@@ -775,7 +775,7 @@
+ int
+ rl_stop_output (int count, int key)
+ {
+-#if defined (__MINGW32__)
++#if defined (__MINGW32__) || defined (_MSC_VER)
+   return 0;
+ #else
+ 
+@@ -801,7 +801,7 @@
+ #endif /* !TIOCSTOP */
+ 
+   return 0;
+-#endif /* !__MINGW32__ */
++#endif /* !__MINGW32__ || !_MSC_VER */
+ }
+ 
+ /* **************************************************************** */
+diff -urN readline-8.2.13-orig/shlib/exported.sh readline-8.2.13/shlib/exported.sh
+--- readline-8.2.13-orig/shlib/exported.sh	1970-01-01 08:00:00.000000000 +0800
++++ readline-8.2.13/shlib/exported.sh	2024-11-26 16:26:40.531476800 +0800
+@@ -0,0 +1,23 @@
++#! /bin/sh
++#
++# Copyright (C) 2006, 2009, 2019 Free Software Foundation, Inc.
++#
++# This program is free software: you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 3 of the License, or
++# (at your option) any later version.
++#
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++#
++# You should have received a copy of the GNU General Public License
++# along with this program.  If not, see <https://www.gnu.org/licenses/>.
++#
++
++# This is a script that determines the exported symbols of an object file.
++# This is a separate script because $(GLOBAL_SYMBOL_PIPE) cannot be used in a
++# Makefile, since it may contain dollar signs.
++
++dumpbin -nologo -symbols "$1" | gawk '     {last_section=section; section=$ 3};     /^COFF SYMBOL TABLE/{for(i in hide) delete hide[i]};     /Section length .*#relocs.*(pick any)/{hide[last_section]=1};     /^ *Symbol name *: /{split($ 0,sn,":"); si=substr(sn[2],2)};     /^ *Type *: code/{print "T",si,substr(si,length(prfx))};     /^ *Type *: data/{print "I",si,substr(si,length(prfx))};     $ 0!~/External *\|/{next};     / 0+ UNDEF /{next}; / UNDEF \([^|]\)*()/{next};     {if(hide[section]) next};     {f="D"}; $ 0~/\(\).*\|/{f="T"};     {split($ 0,a,/\||\r/); split(a[2],s)};     s[1]~/^[@?]/{print f,s[1],s[1]; next};     s[1]~prfx {split(s[1],t,"@"); print f,t[1],substr(t[1],length(prfx))}     ' prfx=^ | /usr/bin/sed '/ __gnu_lto/d'
+diff -urN readline-8.2.13-orig/shlib/Makefile.in readline-8.2.13/shlib/Makefile.in
+--- readline-8.2.13-orig/shlib/Makefile.in	2020-10-30 03:47:57.000000000 +0800
++++ readline-8.2.13/shlib/Makefile.in	2024-11-26 16:26:40.531476800 +0800
+@@ -38,6 +38,8 @@
+ INSTALL_PROGRAM = @INSTALL_PROGRAM@
+ INSTALL_DATA = @INSTALL_DATA@
+ 
++OBJEXT = @OBJEXT@
++
+ CC = @CC@
+ RANLIB = @RANLIB@
+ AR = @AR@
+@@ -109,18 +111,19 @@
+ 
+ CCFLAGS = $(DEFS) $(LOCAL_DEFS) $(INCLUDES) $(CPPFLAGS) $(LOCAL_CFLAGS) $(CFLAGS)
+ 
+-.SUFFIXES:	.so
++.SUFFIXES:	.obj
+ 
+-.c.so:
++.c.obj:
+ 	${RM} $@
+-	$(SHOBJ_CC) -c $(CCFLAGS) $(SHOBJ_CFLAGS) -o $*.o $< 
+-	$(MV) $*.o $@
++	$(SHOBJ_CC) -c $(CCFLAGS) $(SHOBJ_CFLAGS) -o $*.obj $<
+ 
+ # The name of the main library target.
+ 
+ SHARED_READLINE = $(SHLIB_LIBPREF)readline$(SHLIB_DOT)$(SHLIB_LIBVERSION)
+ SHARED_HISTORY = $(SHLIB_LIBPREF)history$(SHLIB_DOT)$(SHLIB_LIBVERSION)
+ SHARED_LIBS = $(SHARED_READLINE) $(SHARED_HISTORY)
++DEF_READLINE = readline.def
++DEF_HISTORY = history.def
+ 
+ # The C code source files for this library.
+ CSOURCES = $(topdir)/readline.c $(topdir)/funmap.c $(topdir)/keymaps.c \
+@@ -135,7 +138,7 @@
+ 	   $(topdir)/shell.c $(topdir)/savestring.c $(topdir)/tilde.c \
+ 	   $(topdir)/text.c $(topdir)/misc.c $(topdir)/compat.c \
+ 	   $(topdir)/colors.c $(topdir)/parse-colors.c \
+-	   $(topdir)/mbutil.c
++	   $(topdir)/mbutil.c $(topdir)/dirent.c $(topdir)/gettimeofday.c
+ 
+ # The header files for this library.
+ HSOURCES = $(topdir)/readline.h $(topdir)/rldefs.h $(topdir)/chardefs.h \
+@@ -145,18 +148,18 @@
+ 	   $(topdir)/ansi_stdlib.h $(topdir)/tcap.h $(topdir)/rlstdc.h \
+ 	   $(topdir)/xmalloc.h $(topdir)/rlprivate.h $(topdir)/rlshell.h \
+ 	   $(topdir)/rltypedefs.h $(topdir)/rlmbutil.h \
+-           $(topdir)/colors.h $(topdir)/parse-colors.h
++           $(topdir)/colors.h $(topdir)/parse-colors.h $(topdir)/dirent.h
+ 
+-SHARED_HISTOBJ = history.so histexpand.so histfile.so histsearch.so shell.so \
+-		 mbutil.so
+-SHARED_TILDEOBJ = tilde.so
+-SHARED_COLORSOBJ = colors.so parse-colors.so
+-SHARED_OBJ = readline.so vi_mode.so funmap.so keymaps.so parens.so search.so \
+-	  rltty.so complete.so bind.so isearch.so display.so signals.so \
+-	  util.so kill.so undo.so macro.so input.so callback.so terminal.so \
+-	  text.so nls.so misc.so \
++SHARED_HISTOBJ = history.$(OBJEXT) histexpand.$(OBJEXT) histfile.$(OBJEXT) histsearch.$(OBJEXT) shell.$(OBJEXT) \
++		 mbutil.$(OBJEXT)
++SHARED_TILDEOBJ = tilde.$(OBJEXT)
++SHARED_COLORSOBJ = colors.$(OBJEXT) parse-colors.$(OBJEXT)
++SHARED_OBJ = readline.$(OBJEXT) vi_mode.$(OBJEXT) funmap.$(OBJEXT) keymaps.$(OBJEXT) parens.$(OBJEXT) search.$(OBJEXT) \
++	  rltty.$(OBJEXT) complete.$(OBJEXT) bind.$(OBJEXT) isearch.$(OBJEXT) display.$(OBJEXT) signals.$(OBJEXT) \
++	  util.$(OBJEXT) kill.$(OBJEXT) undo.$(OBJEXT) macro.$(OBJEXT) input.$(OBJEXT) callback.$(OBJEXT) terminal.$(OBJEXT) \
++	  text.$(OBJEXT) nls.$(OBJEXT) misc.$(OBJEXT) \
+ 	  $(SHARED_HISTOBJ) $(SHARED_TILDEOBJ) $(SHARED_COLORSOBJ) \
+-	  xmalloc.so xfree.so compat.so
++	  xmalloc.$(OBJEXT) xfree.$(OBJEXT) compat.$(OBJEXT) dirent.$(OBJEXT) gettimeofday.$(OBJEXT)
+ 
+ ##########################################################################
+ 
+@@ -172,20 +175,39 @@
+ 	@echo "Please send the changes you made to bash-maintainers@gnu.org"
+ 	@echo "for inclusion in future bash and readline releases."
+ 
+-$(SHARED_READLINE):	$(SHARED_OBJ)
++$(DEF_READLINE): $(SHARED_OBJ)
++	echo 'EXPORTS' >$@ && \
++	{ \
++		for f in $(SHARED_OBJ); do \
++		  sh $(srcdir)/exported.sh $$f 1>&5; \
++		done; \
++	} 5>&1 1>&2 \
++		| sed -e 's,.* ,,' -e 's/^/    /' | grep -v '@' | LC_ALL=C sort | LC_ALL=C uniq \
++		>>$@
++
++$(SHARED_READLINE):	$(DEF_READLINE)
+ 	$(RM) $@
+-	$(SHOBJ_LD) ${SHOBJ_LDFLAGS} ${SHLIB_XLDFLAGS} -o $@ $(SHARED_OBJ) $(SHLIB_LIBS)
++	$(SHOBJ_LD) ${SHOBJ_LDFLAGS} -Wl,--out-implib=readline.lib -Wl,--output-def=$(DEF_READLINE) ${SHLIB_XLDFLAGS} -o $@ $(SHARED_OBJ) $(SHLIB_LIBS) -lUser32
++
++$(DEF_HISTORY): $(SHARED_HISTOBJ) xmalloc.$(OBJEXT) xfree.$(OBJEXT)
++	echo 'EXPORTS' >$@ && \
++	{ \
++		for f in $(SHARED_HISTOBJ) xmalloc.$(OBJEXT) xfree.$(OBJEXT); do \
++			sh $(srcdir)/exported.sh $$f 1>&5; \
++		done; \
++	} 5>&1 1>&2 \
++		| sed -e 's,.* ,,' -e 's/^/    /' | grep -v '@' | LC_ALL=C sort | LC_ALL=C uniq \
++		>>$@
+ 
+-$(SHARED_HISTORY):	$(SHARED_HISTOBJ) xmalloc.so xfree.so
++$(SHARED_HISTORY):	$(DEF_HISTORY)
+ 	$(RM) $@
+-	$(SHOBJ_LD) ${SHOBJ_LDFLAGS} ${SHLIB_XLDFLAGS} -o $@ $(SHARED_HISTOBJ) xmalloc.so xfree.so $(SHLIB_LIBS)
++	$(SHOBJ_LD) ${SHOBJ_LDFLAGS} -Wl,--out-implib=history.lib -Wl,--output-def=$(DEF_HISTORY) ${SHLIB_XLDFLAGS} -o $@ $(SHARED_HISTOBJ) xmalloc.$(OBJEXT) xfree.$(OBJEXT) $(SHLIB_LIBS)
+ 
+-# Since tilde.c is shared between readline and bash, make sure we compile 
++# Since tilde.c is shared between readline and bash, make sure we compile
+ # it with the right flags when it's built as part of readline
+-tilde.so:        tilde.c
++tilde.$(OBJEXT):        tilde.c
+ 	${RM} $@
+-	$(SHOBJ_CC) -c $(CCFLAGS) $(SHOBJ_CFLAGS) -DREADLINE_LIBRARY -c -o tilde.o $(topdir)/tilde.c
+-	$(MV) tilde.o $@
++	$(SHOBJ_CC) -c $(CCFLAGS) $(SHOBJ_CFLAGS) -DREADLINE_LIBRARY -c -o tilde.$(OBJEXT) $(topdir)/tilde.c
+ 
+ installdirs: $(topdir)/support/mkdirs
+ 	-$(SHELL) $(topdir)/support/mkdirs $(DESTDIR)$(libdir)
+@@ -224,278 +246,281 @@
+ .NOEXPORT:
+ 
+ # Dependencies
+-bind.so: $(topdir)/ansi_stdlib.h $(topdir)/posixstat.h
+-bind.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-bind.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-bind.so: $(topdir)/rltypedefs.h
+-bind.so: $(topdir)/tilde.h $(topdir)/history.h
+-compat.so: ${BUILD_DIR}/config.h
+-compat.so: $(topdir)/rlstdc.h $(topdir)/rltypedefs.h
+-callback.so: $(topdir)/rlconf.h
+-callback.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h
+-callback.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-callback.so: $(topdir)/rltypedefs.h
+-callback.so: $(topdir)/tilde.h
+-complete.so: $(topdir)/ansi_stdlib.h $(topdir)/posixdir.h $(topdir)/posixstat.h
+-complete.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-complete.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-complete.so: $(topdir)/rltypedefs.h
+-complete.so: $(topdir)/tilde.h
+-display.so: $(topdir)/ansi_stdlib.h $(topdir)/posixstat.h
+-display.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-display.so: $(topdir)/tcap.h
+-display.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-display.so: $(topdir)/rltypedefs.h
+-display.so: $(topdir)/tilde.h $(topdir)/history.h
+-funmap.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-funmap.so: $(topdir)/rltypedefs.h
+-funmap.so: $(topdir)/rlconf.h $(topdir)/ansi_stdlib.h
+-funmap.so: ${BUILD_DIR}/config.h $(topdir)/tilde.h
+-histexpand.so: $(topdir)/ansi_stdlib.h
+-histexpand.so: $(topdir)/history.h $(topdir)/histlib.h $(topdir)/rltypedefs.h
+-histexpand.so: ${BUILD_DIR}/config.h
+-histfile.so: $(topdir)/ansi_stdlib.h
+-histfile.so: $(topdir)/history.h $(topdir)/histlib.h $(topdir)/rltypedefs.h
+-histfile.so: ${BUILD_DIR}/config.h
+-history.so: $(topdir)/ansi_stdlib.h
+-history.so: $(topdir)/history.h $(topdir)/histlib.h $(topdir)/rltypedefs.h
+-history.so: ${BUILD_DIR}/config.h
+-histsearch.so: $(topdir)/ansi_stdlib.h
+-histsearch.so: $(topdir)/history.h $(topdir)/histlib.h $(topdir)/rltypedefs.h
+-histsearch.so: ${BUILD_DIR}/config.h
+-input.so: $(topdir)/ansi_stdlib.h
+-input.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-input.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-input.so: $(topdir)/rltypedefs.h
+-input.so: $(topdir)/tilde.h
+-isearch.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-isearch.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-isearch.so: $(topdir)/rltypedefs.h
+-isearch.so: $(topdir)/ansi_stdlib.h $(topdir)/history.h $(topdir)/tilde.h
+-keymaps.so: $(topdir)/keymaps.h $(topdir)/chardefs.h $(topdir)/rlconf.h
+-keymaps.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-keymaps.so: $(topdir)/rltypedefs.h
+-keymaps.so: ${BUILD_DIR}/config.h $(topdir)/ansi_stdlib.h $(topdir)/tilde.h
+-kill.so: $(topdir)/ansi_stdlib.h
+-kill.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-kill.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-kill.so: $(topdir)/tilde.h $(topdir)/history.h  $(topdir)/rltypedefs.h
+-macro.so: $(topdir)/ansi_stdlib.h
+-macro.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-macro.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-macro.so: $(topdir)/tilde.h $(topdir)/history.h $(topdir)/rltypedefs.h
+-mbutil.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-mbutil.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/rltypedefs.h
+-mbutil.so: $(topdir)/chardefs.h $(topdir)/rlstdc.h
+-misc.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-misc.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-misc.so: $(topdir)/rltypedefs.h
+-misc.so: $(topdir)/history.h $(topdir)/tilde.h $(topdir)/ansi_stdlib.h
+-nls.so: $(topdir)/ansi_stdlib.h
+-nls.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-nls.o: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-nls.o: $(topdir)/rltypedefs.h
+-nls.o: $(topdir)/tilde.h $(topdir)/history.h $(topdir)/rlstdc.h  
+-parens.so: $(topdir)/rlconf.h ${BUILD_DIR}/config.h
+-parens.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-parens.so: $(topdir)/rltypedefs.h
+-parens.so: $(topdir)/tilde.h
+-rltty.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-rltty.so: $(topdir)/rltty.h $(topdir)/tilde.h
+-rltty.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-rltty.so: $(topdir)/rltypedefs.h
+-savestring.so: ${BUILD_DIR}/config.h
+-search.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-search.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-search.so: $(topdir)/ansi_stdlib.h $(topdir)/history.h $(topdir)/tilde.h
+-search.so: $(topdir)/rltypedefs.h
+-signals.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-signals.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-signals.so: $(topdir)/history.h $(topdir)/tilde.h
+-signals.so: $(topdir)/rltypedefs.h
+-terminal.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-terminal.so: $(topdir)/tcap.h
+-terminal.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-terminal.so: $(topdir)/tilde.h $(topdir)/history.h
+-terminal.so: $(topdir)/rltypedefs.h
+-text.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-text.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-text.so: $(topdir)/rltypedefs.h
+-text.so: $(topdir)/history.h $(topdir)/tilde.h $(topdir)/ansi_stdlib.h
+-tilde.so: $(topdir)/ansi_stdlib.h ${BUILD_DIR}/config.h $(topdir)/tilde.h
+-undo.so: $(topdir)/ansi_stdlib.h
+-undo.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-undo.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-undo.so: $(topdir)/rltypedefs.h
+-undo.so: $(topdir)/tilde.h $(topdir)/history.h
+-util.so: $(topdir)/posixjmp.h $(topdir)/ansi_stdlib.h
+-util.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-util.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-util.so: $(topdir)/rltypedefs.h $(topdir)/tilde.h
+-vi_mode.so: $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
+-vi_mode.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
+-vi_mode.so: $(topdir)/history.h $(topdir)/ansi_stdlib.h $(topdir)/tilde.h
+-vi_mode.so: $(topdir)/rltypedefs.h
+-xfree.so: ${BUILD_DIR}/config.h
+-xfree.so: $(topdir)/ansi_stdlib.h
+-xmalloc.so: ${BUILD_DIR}/config.h
+-xmalloc.so: $(topdir)/ansi_stdlib.h
+-
+-bind.so: $(topdir)/rlshell.h
+-histfile.so: $(topdir)/rlshell.h
+-nls.so: $(topdir)/rlshell.h
+-readline.so: $(topdir)/rlshell.h
+-shell.so: $(topdir)/rlshell.h
+-terminal.so: $(topdir)/rlshell.h
+-histexpand.so: $(topdir)/rlshell.h
+-
+-colors.so: $(BUILD_DIR)/config.h $(topdir)/colors.h
+-colors.so: $(topdir)/rlconf.h 
+-colors.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/rltypedefs.h
+-colors.so: $(topdir)/chardefs.h $(topdir)/tilde.h $(topdir)/rlstdc.h
+-colors.so: $(topdir)/ansi_stdlib.h $(topdir)/posixstat.h
+-parse-colors.so: $(BUILD_DIR)/config.h $(topdir)/colors.h $(topdir)/parse-colors.h
+-parse-colors.so: $(topdir)/rldefs.h $(topdir)/rlconf.h 
+-parse-colors.so: $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/rltypedefs.h
+-parse-colors.so: $(topdir)/chardefs.h $(topdir)/tilde.h $(topdir)/rlstdc.h
+-
+-bind.so: $(topdir)/rlprivate.h
+-callback.so: $(topdir)/rlprivate.h
+-complete.so: $(topdir)/rlprivate.h
+-display.so: $(topdir)/rlprivate.h
+-input.so: $(topdir)/rlprivate.h
+-isearch.so: $(topdir)/rlprivate.h
+-kill.so: $(topdir)/rlprivate.h
+-macro.so: $(topdir)/rlprivate.h
+-mbutil.so: $(topdir)/rlprivate.h
+-misc.so: $(topdir)/rlprivate.h
+-nls.so: $(topdir)/rlprivate.h   
+-parens.so: $(topdir)/rlprivate.h
+-readline.so: $(topdir)/rlprivate.h
+-rltty.so: $(topdir)/rlprivate.h 
+-search.so: $(topdir)/rlprivate.h
+-signals.so: $(topdir)/rlprivate.h
+-terminal.so: $(topdir)/rlprivate.h
+-text.so: $(topdir)/rlprivate.h
+-undo.so: $(topdir)/rlprivate.h
+-util.so: $(topdir)/rlprivate.h
+-vi_mode.so: $(topdir)/rlprivate.h
+-colors.so: $(topdir)/rlprivate.h
+-parse-colors.so: $(topdir)/rlprivate.h
+-
+-bind.so: $(topdir)/xmalloc.h
+-callback.so: $(topdir)/xmalloc.h
+-complete.so: $(topdir)/xmalloc.h
+-display.so: $(topdir)/xmalloc.h
+-funmap.so: $(topdir)/xmalloc.h
+-histexpand.so: $(topdir)/xmalloc.h
+-histfile.so: $(topdir)/xmalloc.h
+-history.so: $(topdir)/xmalloc.h
+-input.so: $(topdir)/xmalloc.h
+-isearch.so: $(topdir)/xmalloc.h
+-keymaps.so: $(topdir)/xmalloc.h
+-kill.so: $(topdir)/xmalloc.h
+-macro.so: $(topdir)/xmalloc.h
+-mbutil.so: $(topdir)/xmalloc.h
+-misc.so: $(topdir)/xmalloc.h
+-readline.so: $(topdir)/xmalloc.h
+-savestring.so: $(topdir)/xmalloc.h
+-search.so: $(topdir)/xmalloc.h
+-shell.so: $(topdir)/xmalloc.h
+-terminal.so: $(topdir)/xmalloc.h
+-text.so: $(topdir)/xmalloc.h
+-tilde.so: $(topdir)/xmalloc.h
+-undo.so: $(topdir)/xmalloc.h
+-util.so: $(topdir)/xmalloc.h
+-vi_mode.so: $(topdir)/xmalloc.h
+-xfree.so: $(topdir)/xmalloc.h
+-xmalloc.so: $(topdir)/xmalloc.h
+-colors.so: $(topdir)/xmalloc.h
+-parse-colors.so: $(topdir)/xmalloc.h
+-
+-complete.so: $(topdir)/rlmbutil.h
+-display.so: $(topdir)/rlmbutil.h
+-histexpand.so: $(topdir)/rlmbutil.h
+-input.so: $(topdir)/rlmbutil.h
+-isearch.so: $(topdir)/rlmbutil.h
+-mbutil.so: $(topdir)/rlmbutil.h
+-misc.so: $(topdir)/rlmbutil.h
+-readline.so: $(topdir)/rlmbutil.h
+-search.so: $(topdir)/rlmbutil.h
+-text.so: $(topdir)/rlmbutil.h
+-vi_mode.so: $(topdir)/rlmbutil.h
+-colors.so: $(topdir)/rlmbutil.h
+-parse-colors.so: $(topdir)/rlmbutil.h
+-
+-bind.so: $(topdir)/bind.c
+-callback.so: $(topdir)/callback.c
+-compat.so: $(topdir)/compat.c
+-complete.so: $(topdir)/complete.c
+-display.so: $(topdir)/display.c
+-funmap.so: $(topdir)/funmap.c
+-input.so: $(topdir)/input.c
+-isearch.so: $(topdir)/isearch.c
+-keymaps.so: $(topdir)/keymaps.c $(topdir)/emacs_keymap.c $(topdir)/vi_keymap.c
+-kill.so: $(topdir)/kill.c
+-macro.so: $(topdir)/macro.c
+-mbutil.so: $(topdir)/mbutil.c
+-misc.so: $(topdir)/mbutil.c
+-nls.so: $(topdir)/nls.c
+-parens.so: $(topdir)/parens.c
+-readline.so: $(topdir)/readline.c
+-rltty.so: $(topdir)/rltty.c
+-savestring.so: $(topdir)/savestring.c
+-search.so: $(topdir)/search.c
+-shell.so: $(topdir)/shell.c
+-signals.so: $(topdir)/signals.c
+-terminal.so: $(topdir)/terminal.c
+-text.so: $(topdir)/text.c
+-tilde.so: $(topdir)/tilde.c
+-undo.so: $(topdir)/undo.c
+-util.so: $(topdir)/util.c
+-vi_mode.so: $(topdir)/vi_mode.c
+-xfree.so: $(topdir)/xfree.c
+-xmalloc.so: $(topdir)/xmalloc.c
+-
+-histexpand.so: $(topdir)/histexpand.c
+-histfile.so: $(topdir)/histfile.c
+-history.so: $(topdir)/history.c
+-histsearch.so: $(topdir)/histsearch.c
+-
+-bind.so: bind.c
+-callback.so: callback.c
+-comapt.so: compat.c
+-complete.so: complete.c
+-display.so: display.c
+-funmap.so: funmap.c
+-input.so: input.c
+-isearch.so: isearch.c
+-keymaps.so: keymaps.c emacs_keymap.c vi_keymap.c
+-kill.so: kill.c
+-macro.so: macro.c
+-mbutil.so: mbutil.c
+-misc.so: misc.c
+-nls.so: nls.c
+-parens.so: parens.c
+-readline.so: readline.c
+-rltty.so: rltty.c
+-savestring.so: savestring.c
+-search.so: search.c
+-signals.so: signals.c
+-shell.so: shell.c
+-terminal.so: terminal.c
+-text.so: text.c
+-tilde.so: tilde.c
+-undo.so: undo.c
+-util.so: util.c
+-vi_mode.so: vi_mode.c
+-xfree.so: xfree.c
+-xmalloc.so: xmalloc.c
+-
+-colors.so: colors.c
+-parse-colors.so: parse-colors.c
+-
+-histexpand.so: histexpand.c
+-histfile.so: histfile.c
+-history.so: history.c
+-histsearch.so: histsearch.c
++bind.$(OBJEXT): $(topdir)/ansi_stdlib.h $(topdir)/posixstat.h
++bind.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++bind.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++bind.$(OBJEXT): $(topdir)/rltypedefs.h
++bind.$(OBJEXT): $(topdir)/tilde.h $(topdir)/history.h
++compat.$(OBJEXT): ${BUILD_DIR}/config.h
++compat.$(OBJEXT): $(topdir)/rlstdc.h $(topdir)/rltypedefs.h
++callback.$(OBJEXT): $(topdir)/rlconf.h
++callback.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h
++callback.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++callback.$(OBJEXT): $(topdir)/rltypedefs.h
++callback.$(OBJEXT): $(topdir)/tilde.h
++complete.$(OBJEXT): $(topdir)/ansi_stdlib.h $(topdir)/posixdir.h $(topdir)/posixstat.h
++complete.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++complete.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++complete.$(OBJEXT): $(topdir)/rltypedefs.h
++complete.$(OBJEXT): $(topdir)/tilde.h
++dirent.$(OBJEXT): $(topdir)/dirent.h
++display.$(OBJEXT): $(topdir)/ansi_stdlib.h $(topdir)/posixstat.h
++display.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++display.$(OBJEXT): $(topdir)/tcap.h
++display.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++display.$(OBJEXT): $(topdir)/rltypedefs.h
++display.$(OBJEXT): $(topdir)/tilde.h $(topdir)/history.h
++funmap.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++funmap.$(OBJEXT): $(topdir)/rltypedefs.h
++funmap.$(OBJEXT): $(topdir)/rlconf.h $(topdir)/ansi_stdlib.h
++funmap.$(OBJEXT): ${BUILD_DIR}/config.h $(topdir)/tilde.h
++histexpand.$(OBJEXT): $(topdir)/ansi_stdlib.h
++histexpand.$(OBJEXT): $(topdir)/history.h $(topdir)/histlib.h $(topdir)/rltypedefs.h
++histexpand.$(OBJEXT): ${BUILD_DIR}/config.h
++histfile.$(OBJEXT): $(topdir)/ansi_stdlib.h
++histfile.$(OBJEXT): $(topdir)/history.h $(topdir)/histlib.h $(topdir)/rltypedefs.h
++histfile.$(OBJEXT): ${BUILD_DIR}/config.h
++history.$(OBJEXT): $(topdir)/ansi_stdlib.h
++history.$(OBJEXT): $(topdir)/history.h $(topdir)/histlib.h $(topdir)/rltypedefs.h
++history.$(OBJEXT): ${BUILD_DIR}/config.h
++histsearch.$(OBJEXT): $(topdir)/ansi_stdlib.h
++histsearch.$(OBJEXT): $(topdir)/history.h $(topdir)/histlib.h $(topdir)/rltypedefs.h
++histsearch.$(OBJEXT): ${BUILD_DIR}/config.h
++input.$(OBJEXT): $(topdir)/ansi_stdlib.h
++input.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++input.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++input.$(OBJEXT): $(topdir)/rltypedefs.h
++input.$(OBJEXT): $(topdir)/tilde.h
++isearch.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++isearch.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++isearch.$(OBJEXT): $(topdir)/rltypedefs.h
++isearch.$(OBJEXT): $(topdir)/ansi_stdlib.h $(topdir)/history.h $(topdir)/tilde.h
++keymaps.$(OBJEXT): $(topdir)/keymaps.h $(topdir)/chardefs.h $(topdir)/rlconf.h
++keymaps.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++keymaps.$(OBJEXT): $(topdir)/rltypedefs.h
++keymaps.$(OBJEXT): ${BUILD_DIR}/config.h $(topdir)/ansi_stdlib.h $(topdir)/tilde.h
++kill.$(OBJEXT): $(topdir)/ansi_stdlib.h
++kill.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++kill.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++kill.$(OBJEXT): $(topdir)/tilde.h $(topdir)/history.h  $(topdir)/rltypedefs.h
++macro.$(OBJEXT): $(topdir)/ansi_stdlib.h
++macro.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++macro.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++macro.$(OBJEXT): $(topdir)/tilde.h $(topdir)/history.h $(topdir)/rltypedefs.h
++mbutil.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++mbutil.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/rltypedefs.h
++mbutil.$(OBJEXT): $(topdir)/chardefs.h $(topdir)/rlstdc.h
++misc.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++misc.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++misc.$(OBJEXT): $(topdir)/rltypedefs.h
++misc.$(OBJEXT): $(topdir)/history.h $(topdir)/tilde.h $(topdir)/ansi_stdlib.h
++nls.$(OBJEXT): $(topdir)/ansi_stdlib.h
++nls.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++nls.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++nls.$(OBJEXT): $(topdir)/rltypedefs.h
++nls.$(OBJEXT): $(topdir)/tilde.h $(topdir)/history.h $(topdir)/rlstdc.h
++parens.$(OBJEXT): $(topdir)/rlconf.h ${BUILD_DIR}/config.h
++parens.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++parens.$(OBJEXT): $(topdir)/rltypedefs.h
++parens.$(OBJEXT): $(topdir)/tilde.h
++rltty.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++rltty.$(OBJEXT): $(topdir)/rltty.h $(topdir)/tilde.h
++rltty.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++rltty.$(OBJEXT): $(topdir)/rltypedefs.h
++savestring.$(OBJEXT): ${BUILD_DIR}/config.h
++search.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++search.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++search.$(OBJEXT): $(topdir)/ansi_stdlib.h $(topdir)/history.h $(topdir)/tilde.h
++search.$(OBJEXT): $(topdir)/rltypedefs.h
++signals.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++signals.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++signals.$(OBJEXT): $(topdir)/history.h $(topdir)/tilde.h
++signals.$(OBJEXT): $(topdir)/rltypedefs.h
++terminal.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++terminal.$(OBJEXT): $(topdir)/tcap.h
++terminal.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++terminal.$(OBJEXT): $(topdir)/tilde.h $(topdir)/history.h
++terminal.$(OBJEXT): $(topdir)/rltypedefs.h
++text.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++text.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++text.$(OBJEXT): $(topdir)/rltypedefs.h
++text.$(OBJEXT): $(topdir)/history.h $(topdir)/tilde.h $(topdir)/ansi_stdlib.h
++tilde.$(OBJEXT): $(topdir)/ansi_stdlib.h ${BUILD_DIR}/config.h $(topdir)/tilde.h
++undo.$(OBJEXT): $(topdir)/ansi_stdlib.h
++undo.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++undo.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++undo.$(OBJEXT): $(topdir)/rltypedefs.h
++undo.$(OBJEXT): $(topdir)/tilde.h $(topdir)/history.h
++util.$(OBJEXT): $(topdir)/posixjmp.h $(topdir)/ansi_stdlib.h
++util.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++util.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++util.$(OBJEXT): $(topdir)/rltypedefs.h $(topdir)/tilde.h
++vi_mode.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
++vi_mode.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
++vi_mode.$(OBJEXT): $(topdir)/history.h $(topdir)/ansi_stdlib.h $(topdir)/tilde.h
++vi_mode.$(OBJEXT): $(topdir)/rltypedefs.h
++xfree.$(OBJEXT): ${BUILD_DIR}/config.h
++xfree.$(OBJEXT): $(topdir)/ansi_stdlib.h
++xmalloc.$(OBJEXT): ${BUILD_DIR}/config.h
++xmalloc.$(OBJEXT): $(topdir)/ansi_stdlib.h
++
++bind.$(OBJEXT): $(topdir)/rlshell.h
++histfile.$(OBJEXT): $(topdir)/rlshell.h
++nls.$(OBJEXT): $(topdir)/rlshell.h
++readline.$(OBJEXT): $(topdir)/rlshell.h
++shell.$(OBJEXT): $(topdir)/rlshell.h
++terminal.$(OBJEXT): $(topdir)/rlshell.h
++histexpand.$(OBJEXT): $(topdir)/rlshell.h
++
++colors.$(OBJEXT): $(BUILD_DIR)/config.h $(topdir)/colors.h
++colors.$(OBJEXT): $(topdir)/rlconf.h 
++colors.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/rltypedefs.h
++colors.$(OBJEXT): $(topdir)/chardefs.h $(topdir)/tilde.h $(topdir)/rlstdc.h
++colors.$(OBJEXT): $(topdir)/ansi_stdlib.h $(topdir)/posixstat.h
++parse-colors.$(OBJEXT): $(BUILD_DIR)/config.h $(topdir)/colors.h $(topdir)/parse-colors.h
++parse-colors.$(OBJEXT): $(topdir)/rldefs.h $(topdir)/rlconf.h 
++parse-colors.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/rltypedefs.h
++parse-colors.$(OBJEXT): $(topdir)/chardefs.h $(topdir)/tilde.h $(topdir)/rlstdc.h
++
++bind.$(OBJEXT): $(topdir)/rlprivate.h
++callback.$(OBJEXT): $(topdir)/rlprivate.h
++complete.$(OBJEXT): $(topdir)/rlprivate.h
++display.$(OBJEXT): $(topdir)/rlprivate.h
++input.$(OBJEXT): $(topdir)/rlprivate.h
++isearch.$(OBJEXT): $(topdir)/rlprivate.h
++kill.$(OBJEXT): $(topdir)/rlprivate.h
++macro.$(OBJEXT): $(topdir)/rlprivate.h
++mbutil.$(OBJEXT): $(topdir)/rlprivate.h
++misc.$(OBJEXT): $(topdir)/rlprivate.h
++nls.$(OBJEXT): $(topdir)/rlprivate.h   
++parens.$(OBJEXT): $(topdir)/rlprivate.h
++readline.$(OBJEXT): $(topdir)/rlprivate.h
++rltty.$(OBJEXT): $(topdir)/rlprivate.h 
++search.$(OBJEXT): $(topdir)/rlprivate.h
++signals.$(OBJEXT): $(topdir)/rlprivate.h
++terminal.$(OBJEXT): $(topdir)/rlprivate.h
++text.$(OBJEXT): $(topdir)/rlprivate.h
++undo.$(OBJEXT): $(topdir)/rlprivate.h
++util.$(OBJEXT): $(topdir)/rlprivate.h
++vi_mode.$(OBJEXT): $(topdir)/rlprivate.h
++colors.$(OBJEXT): $(topdir)/rlprivate.h
++parse-colors.$(OBJEXT): $(topdir)/rlprivate.h
++
++bind.$(OBJEXT): $(topdir)/xmalloc.h
++callback.$(OBJEXT): $(topdir)/xmalloc.h
++complete.$(OBJEXT): $(topdir)/xmalloc.h
++display.$(OBJEXT): $(topdir)/xmalloc.h
++funmap.$(OBJEXT): $(topdir)/xmalloc.h
++histexpand.$(OBJEXT): $(topdir)/xmalloc.h
++histfile.$(OBJEXT): $(topdir)/xmalloc.h
++history.$(OBJEXT): $(topdir)/xmalloc.h
++input.$(OBJEXT): $(topdir)/xmalloc.h
++isearch.$(OBJEXT): $(topdir)/xmalloc.h
++keymaps.$(OBJEXT): $(topdir)/xmalloc.h
++kill.$(OBJEXT): $(topdir)/xmalloc.h
++macro.$(OBJEXT): $(topdir)/xmalloc.h
++mbutil.$(OBJEXT): $(topdir)/xmalloc.h
++misc.$(OBJEXT): $(topdir)/xmalloc.h
++readline.$(OBJEXT): $(topdir)/xmalloc.h
++savestring.$(OBJEXT): $(topdir)/xmalloc.h
++search.$(OBJEXT): $(topdir)/xmalloc.h
++shell.$(OBJEXT): $(topdir)/xmalloc.h
++terminal.$(OBJEXT): $(topdir)/xmalloc.h
++text.$(OBJEXT): $(topdir)/xmalloc.h
++tilde.$(OBJEXT): $(topdir)/xmalloc.h
++undo.$(OBJEXT): $(topdir)/xmalloc.h
++util.$(OBJEXT): $(topdir)/xmalloc.h
++vi_mode.$(OBJEXT): $(topdir)/xmalloc.h
++xfree.$(OBJEXT): $(topdir)/xmalloc.h
++xmalloc.$(OBJEXT): $(topdir)/xmalloc.h
++colors.$(OBJEXT): $(topdir)/xmalloc.h
++parse-colors.$(OBJEXT): $(topdir)/xmalloc.h
++
++complete.$(OBJEXT): $(topdir)/rlmbutil.h
++display.$(OBJEXT): $(topdir)/rlmbutil.h
++histexpand.$(OBJEXT): $(topdir)/rlmbutil.h
++input.$(OBJEXT): $(topdir)/rlmbutil.h
++isearch.$(OBJEXT): $(topdir)/rlmbutil.h
++mbutil.$(OBJEXT): $(topdir)/rlmbutil.h
++misc.$(OBJEXT): $(topdir)/rlmbutil.h
++readline.$(OBJEXT): $(topdir)/rlmbutil.h
++search.$(OBJEXT): $(topdir)/rlmbutil.h
++text.$(OBJEXT): $(topdir)/rlmbutil.h
++vi_mode.$(OBJEXT): $(topdir)/rlmbutil.h
++colors.$(OBJEXT): $(topdir)/rlmbutil.h
++parse-colors.$(OBJEXT): $(topdir)/rlmbutil.h
++
++bind.$(OBJEXT): $(topdir)/bind.c
++callback.$(OBJEXT): $(topdir)/callback.c
++compat.$(OBJEXT): $(topdir)/compat.c
++complete.$(OBJEXT): $(topdir)/complete.c
++dirent.$(OBJEXT): $(topdir)/dirent.c
++display.$(OBJEXT): $(topdir)/display.c
++funmap.$(OBJEXT): $(topdir)/funmap.c
++input.$(OBJEXT): $(topdir)/input.c
++isearch.$(OBJEXT): $(topdir)/isearch.c
++keymaps.$(OBJEXT): $(topdir)/keymaps.c $(topdir)/emacs_keymap.c $(topdir)/vi_keymap.c
++kill.$(OBJEXT): $(topdir)/kill.c
++macro.$(OBJEXT): $(topdir)/macro.c
++mbutil.$(OBJEXT): $(topdir)/mbutil.c
++misc.$(OBJEXT): $(topdir)/mbutil.c
++nls.$(OBJEXT): $(topdir)/nls.c
++parens.$(OBJEXT): $(topdir)/parens.c
++readline.$(OBJEXT): $(topdir)/readline.c
++rltty.$(OBJEXT): $(topdir)/rltty.c
++savestring.$(OBJEXT): $(topdir)/savestring.c
++search.$(OBJEXT): $(topdir)/search.c
++shell.$(OBJEXT): $(topdir)/shell.c
++signals.$(OBJEXT): $(topdir)/signals.c
++terminal.$(OBJEXT): $(topdir)/terminal.c
++text.$(OBJEXT): $(topdir)/text.c
++tilde.$(OBJEXT): $(topdir)/tilde.c
++undo.$(OBJEXT): $(topdir)/undo.c
++util.$(OBJEXT): $(topdir)/util.c
++vi_mode.$(OBJEXT): $(topdir)/vi_mode.c
++xfree.$(OBJEXT): $(topdir)/xfree.c
++xmalloc.$(OBJEXT): $(topdir)/xmalloc.c
++
++histexpand.$(OBJEXT): $(topdir)/histexpand.c
++histfile.$(OBJEXT): $(topdir)/histfile.c
++history.$(OBJEXT): $(topdir)/history.c
++histsearch.$(OBJEXT): $(topdir)/histsearch.c
++
++bind.$(OBJEXT): bind.c
++callback.$(OBJEXT): callback.c
++comapt.$(OBJEXT): compat.c
++complete.$(OBJEXT): complete.c
++dirent.$(OBJEXT): dirent.c
++display.$(OBJEXT): display.c
++funmap.$(OBJEXT): funmap.c
++input.$(OBJEXT): input.c
++isearch.$(OBJEXT): isearch.c
++keymaps.$(OBJEXT): keymaps.c emacs_keymap.c vi_keymap.c
++kill.$(OBJEXT): kill.c
++macro.$(OBJEXT): macro.c
++mbutil.$(OBJEXT): mbutil.c
++misc.$(OBJEXT): misc.c
++nls.$(OBJEXT): nls.c
++parens.$(OBJEXT): parens.c
++readline.$(OBJEXT): readline.c
++rltty.$(OBJEXT): rltty.c
++savestring.$(OBJEXT): savestring.c
++search.$(OBJEXT): search.c
++signals.$(OBJEXT): signals.c
++shell.$(OBJEXT): shell.c
++terminal.$(OBJEXT): terminal.c
++text.$(OBJEXT): text.c
++tilde.$(OBJEXT): tilde.c
++undo.$(OBJEXT): undo.c
++util.$(OBJEXT): util.c
++vi_mode.$(OBJEXT): vi_mode.c
++xfree.$(OBJEXT): xfree.c
++xmalloc.$(OBJEXT): xmalloc.c
++
++colors.$(OBJEXT): colors.c
++parse-colors.$(OBJEXT): parse-colors.c
++
++histexpand.$(OBJEXT): histexpand.c
++histfile.$(OBJEXT): histfile.c
++history.$(OBJEXT): history.c
++histsearch.$(OBJEXT): histsearch.c
+diff -urN readline-8.2.13-orig/support/shlib-install readline-8.2.13/support/shlib-install
+--- readline-8.2.13-orig/support/shlib-install	2019-12-13 22:46:13.000000000 +0800
++++ readline-8.2.13/support/shlib-install	2024-11-26 16:26:40.531476800 +0800
+@@ -77,7 +77,7 @@
+ 	fi ;;
+ cygwin*|mingw*)
+ 	IMPLIBNAME=`echo ${LIBNAME} \
+-		| sed -e 's,^cyg,lib,' -e 's,[0-9]*.dll$,.dll.a,'`
++		| sed -e 's,^cyg,lib,' -e 's,[0-9]*.dll$,.lib,'`
+ 	if [ -z "$uninstall" ]; then
+ 		${echo} $RM ${BINDIR}/${LIBNAME}.${OLDSUFF}
+ 		if [ -f "$BINDIR/$LIBNAME" ]; then
+@@ -85,7 +85,7 @@
+ 		fi
+ 		${echo} $MV ${INSTALLDIR}/${LIBNAME} ${BINDIR}/${LIBNAME}
+ 		${echo} chmod a+x ${BINDIR}/${LIBNAME}
+-		${echo} eval ${INSTALLPROG} ${LIBNAME}.a \
++		${echo} eval ${INSTALLPROG} ${IMPLIBNAME} \
+ 			${INSTALLDIR}/${IMPLIBNAME}
+ 	else
+ 		${echo} ${RM} ${BINDIR}/${LIBNAME}
+diff -urN readline-8.2.13-orig/support/shobj-conf readline-8.2.13/support/shobj-conf
+--- readline-8.2.13-orig/support/shobj-conf	2021-12-03 23:54:46.000000000 +0800
++++ readline-8.2.13/support/shobj-conf	2024-11-26 16:26:40.547049000 +0800
+@@ -478,7 +478,7 @@
+ 
+ cygwin*)
+ 	SHOBJ_LD='$(CC)'
+-	SHOBJ_LDFLAGS='-shared -Wl,--enable-auto-import -Wl,--enable-auto-image-base -Wl,--export-all -Wl,--out-implib=$(@).a'
++	SHOBJ_LDFLAGS='-shared -Wl,--enable-auto-import -Wl,--enable-auto-image-base -Wl,--export-all'
+ 	SHLIB_LIBPREF='cyg'
+ 	SHLIB_LIBSUFF='dll'
+ 	SHLIB_LIBVERSION='$(SHLIB_DLLVERSION).$(SHLIB_LIBSUFF)'
+@@ -496,7 +496,8 @@
+ 
+ mingw*)
+ 	SHOBJ_LD='$(CC)'
+-	SHOBJ_LDFLAGS='-shared -Wl,--enable-auto-import -Wl,--enable-auto-image-base -Wl,--export-all -Wl,--out-implib=$(@).a'
++	SHOBJ_LDFLAGS='-shared -Wl,--enable-auto-import -Wl,--enable-auto-image-base -Wl,--export-all'
++	SHLIB_LIBPREF=
+ 	SHLIB_LIBSUFF='dll'
+ 	SHLIB_LIBVERSION='$(SHLIB_DLLVERSION).$(SHLIB_LIBSUFF)'
+ 	SHLIB_LIBS='$(TERMCAP_LIB)'
+diff -urN readline-8.2.13-orig/terminal.c readline-8.2.13/terminal.c
+--- readline-8.2.13-orig/terminal.c	2022-04-05 22:44:17.000000000 +0800
++++ readline-8.2.13/terminal.c	2024-11-26 16:26:40.547049000 +0800
+@@ -69,7 +69,7 @@
+ #include "rlshell.h"
+ #include "xmalloc.h"
+ 
+-#if defined (__MINGW32__)
++#if defined (__MINGW32__) || defined (_MSC_VER)
+ #  include <windows.h>
+ #  include <wincon.h>
+ 
+@@ -229,7 +229,7 @@
+ }
+ #endif
+ 
+-#if defined (__MINGW32__)
++#if defined (__MINGW32__) || defined (_MSC_VER)
+ static void
+ _win_get_screensize (int *swp, int *shp)
+ {
+@@ -272,7 +272,7 @@
+ 
+ #if defined (__EMX__)
+   _emx_get_screensize (&wc, &wr);
+-#elif defined (__MINGW32__)
++#elif defined (__MINGW32__) || defined (_MSC_VER)
+   _win_get_screensize (&wc, &wr);
+ #endif
+ 

@@ -1,0 +1,17 @@
+name: llvm-project
+version: 19.1.6
+url: https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-19.1.6.tar.gz
+sha256: f07fdcbb27b2b67aa95e5ddadf45406b33228481c250e65175066d36536a1ee2
+steps:
+  one:
+    dependencies:
+      - dlfcn-win32
+      - libffi
+      - libxml2
+      - lua
+      - perl
+      - xz
+      - zlib
+      - zstd
+      - winpthreads
+    run: build.bat

@@ -1,0 +1,12 @@
+diff -urN libatomic_ops-7.8.2-orig/src/atomic_ops.h libatomic_ops-7.8.2/src/atomic_ops.h
+--- libatomic_ops-7.8.2-orig/src/atomic_ops.h	2023-12-16 05:30:34.000000000 +0800
++++ libatomic_ops-7.8.2/src/atomic_ops.h	2024-10-23 15:03:20.883727800 +0800
+@@ -231,7 +231,7 @@
+ # endif
+ #endif /* !AO_ATTR_NO_SANITIZE_THREAD */
+ 
+-#if (AO_GNUC_PREREQ(7, 5) || __STDC_VERSION__ >= 201112L) && !defined(LINT2)
++#if (AO_GNUC_PREREQ(7, 5) || __STDC_VERSION__ >= 201112L) && !defined(LINT2) && !defined(_MSC_VER)
+ # define AO_ALIGNOF_SUPPORTED 1
+ #endif
+ 

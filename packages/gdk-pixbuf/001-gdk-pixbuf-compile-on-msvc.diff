@@ -1,0 +1,108 @@
+diff -urN gdk-pixbuf-2.42.12-orig/gdk-pixbuf/meson.build gdk-pixbuf-2.42.12/gdk-pixbuf/meson.build
+--- gdk-pixbuf-2.42.12-orig/gdk-pixbuf/meson.build	2024-05-15 10:15:41.000000000 +0800
++++ gdk-pixbuf-2.42.12/gdk-pixbuf/meson.build	2024-12-05 14:36:57.046859000 +0800
+@@ -161,6 +161,7 @@
+                          sources,
+                          gdkpixbuf_enum_h,
+                          dependencies: loaders_deps + gdk_pixbuf_deps,
++                         name_suffix: 'lib',
+                          include_directories: [ root_inc, gdk_pixbuf_inc ],
+                          c_args: common_cflags + gdk_pixbuf_cflags + cflags + cflag_for_included_loader)
+ 
+@@ -186,6 +187,7 @@
+                          win_loader_sources,
+                          gdkpixbuf_enum_h,
+                          dependencies: loaders_deps + gdk_pixbuf_deps,
++                         name_suffix: 'lib',
+                          include_directories: [ root_inc, gdk_pixbuf_inc ],
+                          c_args: common_cflags + gdk_pixbuf_cflags + cflag_for_included_loader)
+ 
+@@ -294,7 +296,7 @@
+     mod = shared_module('pixbufloader-@0@'.format(name),
+                         sources,
+                         gdkpixbuf_enum_h,
+-                        dependencies: loaders_deps + gdk_pixbuf_deps + [ gdkpixbuf_dep ],
++                        dependencies: loaders_deps + [ gdkpixbuf_dep ],
+                         include_directories: [ root_inc, gdk_pixbuf_inc ],
+                         c_args: common_cflags + gdk_pixbuf_cflags + cflags,
+                         name_suffix: name_suffix,
+@@ -316,7 +318,7 @@
+       mod = shared_module('pixbufloader-gdip-@0@'.format(loader),
+                           loader_sources,
+                           gdkpixbuf_enum_h,
+-                          dependencies: loaders_deps + gdk_pixbuf_deps + [ gdkpixbuf_dep ],
++                          dependencies: loaders_deps + [ gdkpixbuf_dep ],
+                           include_directories: [ root_inc, gdk_pixbuf_inc ],
+                           c_args: common_cflags + gdk_pixbuf_cflags + cflags,
+                           install: true,
+@@ -339,7 +341,7 @@
+ 
+   bin = executable(bin_name, bin_source,
+                    gdkpixbuf_enum_h,
+-                   dependencies: gdk_pixbuf_deps + [ gdkpixbuf_dep ],
++                   dependencies: [ gdkpixbuf_dep ],
+                    include_directories: [ root_inc, gdk_pixbuf_inc ],
+                    c_args: common_cflags + gdk_pixbuf_cflags,
+                    install: true)
+diff -urN gdk-pixbuf-2.42.12-orig/gdk-pixbuf/pixops/meson.build gdk-pixbuf-2.42.12/gdk-pixbuf/pixops/meson.build
+--- gdk-pixbuf-2.42.12-orig/gdk-pixbuf/pixops/meson.build	2024-05-15 10:15:41.000000000 +0800
++++ gdk-pixbuf-2.42.12/gdk-pixbuf/pixops/meson.build	2024-12-05 14:36:57.046859000 +0800
+@@ -3,6 +3,7 @@
+   pixops_sources,
+   include_directories: root_inc,
+   dependencies: gdk_pixbuf_deps,
++  name_suffix: 'lib'
+ )
+ 
+ pixops_dep = declare_dependency(
+diff -urN gdk-pixbuf-2.42.12-orig/meson.build gdk-pixbuf-2.42.12/meson.build
+--- gdk-pixbuf-2.42.12-orig/meson.build	2024-05-15 10:15:41.000000000 +0800
++++ gdk-pixbuf-2.42.12/meson.build	2024-12-05 14:45:21.428551000 +0800
+@@ -219,6 +219,7 @@
+ endif
+ 
+ gdk_pixbuf_deps = [
++  intl_dep,
+   mathlib_dep,
+   glib_dep,
+   gobject_dep,
+@@ -226,7 +227,6 @@
+   gio_dep,
+   shared_mime_dep,
+   medialib_dep,
+-  intl_dep,
+ ]
+ 
+ # Check if we can build shared modules
+diff -urN gdk-pixbuf-2.42.12-orig/tests/meson.build gdk-pixbuf-2.42.12/tests/meson.build
+--- gdk-pixbuf-2.42.12-orig/tests/meson.build	2024-05-15 10:15:41.000000000 +0800
++++ gdk-pixbuf-2.42.12/tests/meson.build	2024-12-05 14:36:57.046859000 +0800
+@@ -161,7 +161,7 @@
+   install_subdir('test-images', install_dir: installed_test_bindir)
+ endif
+ 
+-test_deps = gdk_pixbuf_deps + [ gdkpixbuf_dep, ]
++test_deps = [ gdkpixbuf_dep, ]
+ test_args = [ '-k' ]
+ test_env = environment()
+ test_env.set('G_TEST_SRCDIR', meson.current_source_dir())
+diff -urN gdk-pixbuf-2.42.12-orig/thumbnailer/meson.build gdk-pixbuf-2.42.12/thumbnailer/meson.build
+--- gdk-pixbuf-2.42.12-orig/thumbnailer/meson.build	2024-05-15 10:15:41.000000000 +0800
++++ gdk-pixbuf-2.42.12/thumbnailer/meson.build	2024-12-05 14:36:57.062514200 +0800
+@@ -4,14 +4,14 @@
+              '-DTHUMBNAILER_RETURNS_PIXBUF',
+              '-DTHUMBNAILER_USAGE="Thumbnail images"',
+            ],
+-           dependencies: gdk_pixbuf_deps + [ gdkpixbuf_dep ],
++           dependencies: [ gdkpixbuf_dep ],
+            install: true)
+ meson.override_find_program('gdk-pixbuf-thumbnailer', bin)
+ 
+ gdk_pixbuf_print_mime_types = executable('gdk-pixbuf-print-mime-types',
+                                          'gdk-pixbuf-print-mime-types.c',
+                                          c_args: common_cflags,
+-                                         dependencies: gdk_pixbuf_deps + [ gdkpixbuf_dep ])
++                                         dependencies: [ gdkpixbuf_dep ])
+ 
+ custom_target('thumbnailer',
+               input: 'gdk-pixbuf-thumbnailer.thumbnailer.in',

@@ -1,0 +1,12 @@
+diff -urN blaspp-2024.10.26-orig/cmake/BLASFinder.cmake blaspp-2024.10.26/cmake/BLASFinder.cmake
+--- blaspp-2024.10.26-orig/cmake/BLASFinder.cmake	2024-10-26 21:59:09.000000000 +0800
++++ blaspp-2024.10.26/cmake/BLASFinder.cmake	2024-12-30 11:04:25.804701600 +0800
+@@ -101,7 +101,7 @@
+ endif()
+ 
+ #---------------------------------------- Fortran manglings to test
+-if (ibm_compiler)
++if (ibm_compiler OR intelllvm_compiler)
+     # For IBM XL, change default mangling search order to lower, add_, upper,
+     # ESSL includes all 3, but Netlib LAPACK has only one mangling.
+     set( fortran_mangling_list

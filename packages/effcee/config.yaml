@@ -1,0 +1,12 @@
+name: effcee
+version: main
+url: https://github.com/google/effcee.git
+sha256:
+steps:
+  one:
+    dependencies:
+      - abseil-cpp
+      - googletest
+      - re2
+      - winpthreads
+    run: build.bat

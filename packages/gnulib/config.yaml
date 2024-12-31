@@ -1,0 +1,8 @@
+name: gnulib
+version: master
+url: https://git.savannah.gnu.org/git/gnulib.git
+sha256:
+steps:
+  one:
+    dependencies:
+    run:

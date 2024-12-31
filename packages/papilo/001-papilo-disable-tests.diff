@@ -1,0 +1,14 @@
+diff -urN papilo-2.3.1-orig/CMakeLists.txt papilo-2.3.1/CMakeLists.txt
+--- papilo-2.3.1-orig/CMakeLists.txt	2024-09-13 13:18:58.000000000 +0800
++++ papilo-2.3.1/CMakeLists.txt	2024-11-11 13:52:18.407214100 +0800
+@@ -312,8 +312,8 @@
+                "${PROJECT_BINARY_DIR}/papilo/CMakeConfig.hpp")
+ 
+ # add tests
+-enable_testing()
+-add_subdirectory(${PROJECT_SOURCE_DIR}/test)
++# enable_testing()
++# add_subdirectory(${PROJECT_SOURCE_DIR}/test)
+ 
+ # install the header files of papilo
+ install(FILES

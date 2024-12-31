@@ -1,0 +1,14 @@
+diff -urN libdatrie-0.2.13-orig/configure.ac libdatrie-0.2.13/configure.ac
+--- libdatrie-0.2.13-orig/configure.ac	2021-01-29 17:33:49.000000000 +0800
++++ libdatrie-0.2.13/configure.ac	2024-12-17 17:24:29.015129600 +0800
+@@ -2,9 +2,7 @@
+ # Process this file with autoconf to produce a configure script.
+ 
+ AC_PREREQ(2.59)
+-AC_INIT(libdatrie,
+-        m4_esyscmd([build-aux/git-version-gen]),
+-        [https://github.com/tlwg/libdatrie/issues])
++AC_INIT(libdatrie, [0.2.13])
+ AC_CONFIG_SRCDIR([datrie/trie.h])
+ AC_CONFIG_HEADER([config.h])
+ AC_CONFIG_AUX_DIR(build-aux)

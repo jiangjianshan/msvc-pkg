@@ -1,0 +1,12 @@
+diff -urN pkg-config-0.29.2-orig/glib/glib/glib-init.c pkg-config-0.29.2/glib/glib/glib-init.c
+--- pkg-config-0.29.2-orig/glib/glib/glib-init.c	2024-09-23 12:06:46.151308200 +0800
++++ pkg-config-0.29.2/glib/glib/glib-init.c	2024-09-23 12:05:32.170751300 +0800
+@@ -106,7 +106,7 @@
+    * inside GLib.
+    */
+ 
+-  if (!strcasecmp (string, "help"))
++  if (!g_strcasecmp (string, "help"))
+     {
+       /* using stdio directly for the reason stated above */
+       fprintf (stderr, "Supported debug values:");

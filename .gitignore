@@ -1,0 +1,54 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+*.dll.a
+*.dll.lib
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Untrack folders
+out/
+docs/
+logs/
+pkgs/
+tags/
+x64/
+x86/
+releases/
+
+# Vim swap files
+.swp
+*/*.swp
+
+# Misc
+config.guess
+*.txt
+installed.yaml
+settings.yaml

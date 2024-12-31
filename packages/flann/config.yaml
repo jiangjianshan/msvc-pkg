@@ -1,0 +1,12 @@
+name: flann
+version: 1.9.2
+url: https://github.com/flann-lib/flann/archive/refs/tags/1.9.2.tar.gz
+sha256: e26829bb0017f317d9cc45ab83ddcb8b16d75ada1ae07157006c1e7d601c8824
+steps:
+  one:
+    dependencies:
+      - pkg-config
+      - boost
+      - hdf5
+      - lz4
+    run: build.bat

@@ -1,0 +1,880 @@
+diff -urN ncurses-6.5-orig/include/win32_curses.h ncurses-6.5/include/win32_curses.h
+--- ncurses-6.5-orig/include/win32_curses.h	2021-06-18 05:26:02.000000000 +0800
++++ ncurses-6.5/include/win32_curses.h	2024-11-26 15:53:17.535982000 +0800
+@@ -68,8 +68,10 @@
+ #undef sleep
+ #define sleep(n) Sleep((n) * 1000)
+ 
++#if !HAVE_CLOCK_GETTIME && !HAVE_GETTIMEOFDAY
+ #undef gettimeofday
+ #define gettimeofday(tv,tz) _nc_gettimeofday(tv,tz)
++#endif
+ 
+ #endif /* _NC_WIN32_CURSES_H */
+ #endif /* _WIN32||_WIN64 */
+diff -urN ncurses-6.5-orig/ncurses/base/tdelete.c ncurses-6.5/ncurses/base/tdelete.c
+--- ncurses-6.5-orig/ncurses/base/tdelete.c	1970-01-01 08:00:00.000000000 +0800
++++ ncurses-6.5/ncurses/base/tdelete.c	2024-11-26 15:53:17.535982000 +0800
+@@ -0,0 +1,64 @@
++/*	$NetBSD: tdelete.c,v 1.3 1999/09/20 04:39:43 lukem Exp $	*/
++
++/*
++ * Tree search generalized from Knuth (6.2.2) Algorithm T just like
++ * the AT&T man page says.
++ *
++ * The node_t structure is for internal use only, lint doesn't grok it.
++ *
++ * Written by reading the System V Interface Definition, not the code.
++ *
++ * Totally public domain.
++ */
++
++#include <assert.h>
++#define _SEARCH_PRIVATE
++#include "search.priv.h"
++#include <stdlib.h>
++
++#define _DIAGASSERT assert
++
++
++
++/* delete node with given key */
++void *
++tdelete(const void *vkey,	/* key to be deleted */
++	void      **vrootp,	/* address of the root of tree */
++	int       (*compar)(const void *, const void *))
++{
++	node_t **rootp = (node_t **)vrootp;
++	node_t *p, *q, *r;
++	int  cmp;
++
++	_DIAGASSERT((uintptr_t)compar != (uintptr_t)NULL);
++
++	if (rootp == NULL || (p = *rootp) == NULL)
++		return NULL;
++
++	while ((cmp = (*compar)(vkey, (*rootp)->key)) != 0) {
++		p = *rootp;
++		rootp = (cmp < 0) ?
++		    &(*rootp)->llink :		/* follow llink branch */
++		    &(*rootp)->rlink;		/* follow rlink branch */
++		if (*rootp == NULL)
++			return NULL;		/* key not found */
++	}
++	r = (*rootp)->rlink;			/* D1: */
++	if ((q = (*rootp)->llink) == NULL)	/* Left NULL? */
++		q = r;
++	else if (r != NULL) {			/* Right link is NULL? */
++		if (r->llink == NULL) {		/* D2: Find successor */
++			r->llink = q;
++			q = r;
++		} else {			/* D3: Find NULL link */
++			for (q = r->llink; q->llink != NULL; q = r->llink)
++				r = q;
++			r->llink = q->rlink;
++			q->llink = (*rootp)->llink;
++			q->rlink = (*rootp)->rlink;
++		}
++	}
++	free(*rootp);				/* D4: Free node */
++	*rootp = q;				/* link parent to new node */
++	return p;
++}
+diff -urN ncurses-6.5-orig/ncurses/base/tdestroy.c ncurses-6.5/ncurses/base/tdestroy.c
+--- ncurses-6.5-orig/ncurses/base/tdestroy.c	1970-01-01 08:00:00.000000000 +0800
++++ ncurses-6.5/ncurses/base/tdestroy.c	2024-11-26 15:53:17.535982000 +0800
+@@ -0,0 +1,25 @@
++/**
++ * This file has no copyright assigned and is placed in the Public Domain.
++ * This file is part of the mingw-w64 runtime package.
++ * No warranty is given; refer to the file DISCLAIMER.PD within this package.
++ */
++
++#include <assert.h>
++#define _SEARCH_PRIVATE
++#define _GNU_SOURCE
++#include <stdlib.h>
++#include "search.priv.h"
++
++
++/* destroy tree recursively and call free_node on each node key */
++void tdestroy(void *root, void (*free_node)(void *))
++{
++  node_t *p = (node_t *)root;
++  if (!p)
++    return;
++
++  tdestroy(p->llink , free_node);
++  tdestroy(p->rlink, free_node);
++  free_node((void*)p->key);
++  free(p);
++}
+diff -urN ncurses-6.5-orig/ncurses/base/tfind.c ncurses-6.5/ncurses/base/tfind.c
+--- ncurses-6.5-orig/ncurses/base/tfind.c	1970-01-01 08:00:00.000000000 +0800
++++ ncurses-6.5/ncurses/base/tfind.c	2024-11-26 15:53:17.535982000 +0800
+@@ -0,0 +1,42 @@
++/*	$NetBSD: tfind.c,v 1.3.18.2 2005/03/23 11:12:21 tron Exp $	*/
++
++/*
++ * Tree search generalized from Knuth (6.2.2) Algorithm T just like
++ * the AT&T man page says.
++ *
++ * The node_t structure is for internal use only, lint doesn't grok it.
++ *
++ * Written by reading the System V Interface Definition, not the code.
++ *
++ * Totally public domain.
++ */
++
++#include <assert.h>
++#define _SEARCH_PRIVATE
++#include <stdlib.h>
++#include "search.priv.h"
++
++
++/* find a node, or return 0 */
++void *
++tfind (const void *vkey, void * const *vrootp,
++       int (*compar) (const void *, const void *))
++{
++  node_t * const *rootp = (node_t * const*)vrootp;
++
++  if (rootp == NULL)
++    return NULL;
++
++  while (*rootp != NULL)
++    {
++      /* T1: */
++      int r;
++
++      if ((r = (*compar)(vkey, (*rootp)->key)) == 0)	/* T2: */
++	return *rootp;		/* key found */
++      rootp = (r < 0) ?
++	  &(*rootp)->llink :		/* T3: follow left branch */
++	  &(*rootp)->rlink;		/* T4: follow right branch */
++    }
++  return NULL;
++}
+diff -urN ncurses-6.5-orig/ncurses/base/tsearch.c ncurses-6.5/ncurses/base/tsearch.c
+--- ncurses-6.5-orig/ncurses/base/tsearch.c	1970-01-01 08:00:00.000000000 +0800
++++ ncurses-6.5/ncurses/base/tsearch.c	2024-11-26 15:53:17.551633000 +0800
+@@ -0,0 +1,58 @@
++/*	$NetBSD: tsearch.c,v 1.4 1999/09/20 04:39:43 lukem Exp $	*/
++
++/*
++ * Tree search generalized from Knuth (6.2.2) Algorithm T just like
++ * the AT&T man page says.
++ *
++ * The node_t structure is for internal use only, lint doesn't grok it.
++ *
++ * Written by reading the System V Interface Definition, not the code.
++ *
++ * Totally public domain.
++ */
++
++#include <assert.h>
++#define _SEARCH_PRIVATE
++#include "search.priv.h"
++#include <stdlib.h>
++
++
++/* find or insert datum into search tree */
++void *
++tsearch (const void * __restrict vkey,		/* key to be located */
++	 void ** __restrict vrootp,		/* address of tree root */
++	 int (*compar) (const void *, const void *))
++{
++  node_t *q, **n;
++  node_t **rootp = (node_t **)vrootp;
++
++  if (rootp == NULL)
++    return NULL;
++
++  n = rootp;
++  while (*n != NULL)
++    {
++      /* Knuth's T1: */
++      int r;
++
++      if ((r = (*compar)(vkey, ((*n)->key))) == 0)	/* T2: */
++	return *n;		/* we found it! */
++
++      n = (r < 0) ?
++	  &(*rootp)->llink :		/* T3: follow left branch */
++	  &(*rootp)->rlink;		/* T4: follow right branch */
++      if (*n == NULL)
++        break;
++      rootp = n;
++    }
++
++  q = malloc(sizeof(node_t));		/* T5: key not found */
++  if (!q)
++    return q;
++  *n = q;
++  /* make new node */
++  /* LINTED const castaway ok */
++  q->key = (void *)vkey;		/* initialize new node */
++  q->llink = q->rlink = NULL;
++  return q;
++}
+diff -urN ncurses-6.5-orig/ncurses/base/twalk.c ncurses-6.5/ncurses/base/twalk.c
+--- ncurses-6.5-orig/ncurses/base/twalk.c	1970-01-01 08:00:00.000000000 +0800
++++ ncurses-6.5/ncurses/base/twalk.c	2024-11-26 15:53:17.551633000 +0800
+@@ -0,0 +1,49 @@
++/*	$NetBSD: twalk.c,v 1.2 1999/09/16 11:45:37 lukem Exp $	*/
++
++/*
++ * Tree search generalized from Knuth (6.2.2) Algorithm T just like
++ * the AT&T man page says.
++ *
++ * The node_t structure is for internal use only, lint doesn't grok it.
++ *
++ * Written by reading the System V Interface Definition, not the code.
++ *
++ * Totally public domain.
++ */
++
++#include <assert.h>
++#define _SEARCH_PRIVATE
++#include "search.priv.h"
++#include <stdlib.h>
++
++static void trecurse (const node_t *, void (*action)(const void *, VISIT, int),
++	              int level);
++				  
++/* Walk the nodes of a tree */
++static void
++trecurse (const node_t *root,	/* Root of the tree to be walked */
++	  void (*action)(const void *, VISIT, int),
++	  int level)
++{
++  if (root->llink == NULL && root->rlink == NULL)
++    (*action)(root, leaf, level);
++  else
++    {
++      (*action)(root, preorder, level);
++      if (root->llink != NULL)
++        trecurse (root->llink, action, level + 1);
++      (*action)(root, postorder, level);
++      if (root->rlink != NULL)
++	      trecurse(root->rlink, action, level + 1);
++      (*action)(root, endorder, level);
++    }
++}
++
++/* Walk the nodes of a tree */
++void
++twalk (const void *vroot,	/* Root of the tree to be walked */
++       void (*action) (const void *, VISIT, int))
++{
++  if (vroot != NULL && action != NULL)
++    trecurse(vroot, action, 0);
++}
+diff -urN ncurses-6.5-orig/ncurses/modules ncurses-6.5/ncurses/modules
+--- ncurses-6.5-orig/ncurses/modules	2020-09-13 01:58:12.000000000 +0800
++++ ncurses-6.5/ncurses/modules	2024-11-26 15:53:17.551633000 +0800
+@@ -156,6 +156,12 @@
+ use_screen	lib		$(tinfo)	$(HEADER_DEPS)
+ use_window	lib		$(base)		$(HEADER_DEPS)
+ wresize		lib		$(base)		$(HEADER_DEPS)
++tdelete	lib		$(base)		$(HEADER_DEPS)  $(srcdir)/search.priv.h
++tdestroy	lib		$(base)		$(HEADER_DEPS)  $(srcdir)/search.priv.h
++tfind	lib		$(base)		$(HEADER_DEPS)  $(srcdir)/search.priv.h
++tsearch	lib		$(base)		$(HEADER_DEPS)  $(srcdir)/search.priv.h
++twalk	lib		$(base)		$(HEADER_DEPS)  $(srcdir)/search.priv.h
++
+ 
+ # Support for termcap (and tic, etc.), which can be a separate library
+ @ termlib
+diff -urN ncurses-6.5-orig/ncurses/search.priv.h ncurses-6.5/ncurses/search.priv.h
+--- ncurses-6.5-orig/ncurses/search.priv.h	1970-01-01 08:00:00.000000000 +0800
++++ ncurses-6.5/ncurses/search.priv.h	2024-11-26 15:53:17.551633000 +0800
+@@ -0,0 +1,60 @@
++/**
++ * This file has no copyright assigned and is placed in the Public Domain.
++ * This file is part of the mingw-w64 runtime package.
++ * No warranty is given; refer to the file DISCLAIMER.PD within this package.
++ */
++#ifndef _INC_SEARCH
++#define _INC_SEARCH
++
++#include <corecrt.h>
++#include <stddef.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++/*
++Documentation for these POSIX definitions and prototypes can be found in 
++The Open Group Base Specifications Issue 6
++IEEE Std 1003.1, 2004 Edition.
++eg:  http://www.opengroup.org/onlinepubs/009695399/functions/twalk.html
++*/
++
++typedef struct entry {
++	char *key;
++	void *data;
++} ENTRY;
++
++typedef enum {
++	FIND,
++	ENTER
++} ACTION;
++
++typedef enum {
++	preorder,
++	postorder,
++	endorder,
++	leaf
++} VISIT;
++
++#ifdef _SEARCH_PRIVATE
++typedef struct node {
++	char         *key;
++	struct node  *llink, *rlink;
++} node_t;
++#endif
++
++void * __cdecl tdelete (const void * __restrict, void ** __restrict, int (*)(const void *, const void *));
++void * __cdecl tfind (const void *, void * const *, int (*)(const void *, const void *));
++void * __cdecl tsearch (const void *, void **, int (*)(const void *, const void *));
++void __cdecl twalk (const void *, void (*)(const void *, VISIT, int));
++
++#ifdef _GNU_SOURCE
++void __cdecl tdestroy(void *, void (*)(void *));
++#endif
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+diff -urN ncurses-6.5-orig/ncurses/tinfo/lib_win32con.c ncurses-6.5/ncurses/tinfo/lib_win32con.c
+--- ncurses-6.5-orig/ncurses/tinfo/lib_win32con.c	2023-08-06 04:44:38.000000000 +0800
++++ ncurses-6.5/ncurses/tinfo/lib_win32con.c	2024-11-26 15:53:17.551633000 +0800
+@@ -36,6 +36,7 @@
+  * TODO - GetMousePos(POINT * result) from ntconio.c
+  */
+ 
++#define NEED_KEY_EVENT
+ #include <curses.priv.h>
+ 
+ MODULE_ID("$Id: lib_win32con.c,v 1.14 2023/08/05 20:44:38 tom Exp $")
+diff -urN ncurses-6.5-orig/progs/dirent.c ncurses-6.5/progs/dirent.c
+--- ncurses-6.5-orig/progs/dirent.c	1970-01-01 08:00:00.000000000 +0800
++++ ncurses-6.5/progs/dirent.c	2024-11-26 15:53:17.567224000 +0800
+@@ -0,0 +1,325 @@
++/*
++ * dirent.c
++ * This file has no copyright assigned and is placed in the Public Domain.
++ * This file is part of the mingw-runtime package.
++ * No warranty is given; refer to the file DISCLAIMER within the package.
++ *
++ * Derived from DIRLIB.C by Matt J. Weinstein
++ * This note appears in the DIRLIB.H
++ * DIRLIB.H by M. J. Weinstein   Released to public domain 1-Jan-89
++ *
++ * Updated by Jeremy Bettis <jeremy@hksys.com>
++ * Significantly revised and rewinddir, seekdir and telldir added by Colin
++ * Peters <colin@fu.is.saga-u.ac.jp>
++ *	
++ */
++
++#ifndef WIN32_LEAN_AND_MEAN
++#define WIN32_LEAN_AND_MEAN
++#endif
++
++#include <stdlib.h>
++#include <errno.h>
++#include <string.h>
++#include <io.h>
++#include <direct.h>
++#include <dirent.h>
++
++#include <windows.h> /* for GetFileAttributes */
++
++#include <tchar.h>
++#define SUFFIX	_T("*")
++#define	SLASH	_T("\\")
++
++
++/*
++ * opendir
++ *
++ * Returns a pointer to a DIR structure appropriately filled in to begin
++ * searching a directory.
++ */
++DIR *
++opendir (const _TCHAR *szPath)
++{
++  DIR *nd;
++  unsigned int rc;
++  _TCHAR szFullPath[MAX_PATH];
++
++  errno = 0;
++
++  if (!szPath)
++    {
++      errno = EFAULT;
++      return (DIR *) 0;
++    }
++
++  if (szPath[0] == _T('\0'))
++    {
++      errno = ENOTDIR;
++      return (DIR *) 0;
++    }
++
++  /* Attempt to determine if the given path really is a directory. */
++  rc = GetFileAttributes (szPath);
++  if (rc == INVALID_FILE_ATTRIBUTES)
++    {
++      /* call GetLastError for more error info */
++      errno = ENOENT;
++      return (DIR *) 0;
++    }
++  if (!(rc & FILE_ATTRIBUTE_DIRECTORY))
++    {
++      /* Error, entry exists but not a directory. */
++      errno = ENOTDIR;
++      return (DIR *) 0;
++    }
++
++  /* Make an absolute pathname.  */
++  _tfullpath (szFullPath, szPath, MAX_PATH);
++
++  /* Allocate enough space to store DIR structure and the complete
++   * directory path given. */
++  nd = (DIR *) malloc (sizeof (DIR) + (_tcslen (szFullPath)
++					   + _tcslen (SLASH)
++					   + _tcslen (SUFFIX) + 1)
++					  * sizeof (_TCHAR));
++
++  if (!nd)
++    {
++      /* Error, out of memory. */
++      errno = ENOMEM;
++      return (DIR *) 0;
++    }
++
++  /* Create the search expression. */
++  _tcscpy (nd->dd_name, szFullPath);
++
++  /* Add on a slash if the path does not end with one. */
++  if (nd->dd_name[0] != _T('\0') &&
++      nd->dd_name[_tcslen (nd->dd_name) - 1] != _T('/') &&
++      nd->dd_name[_tcslen (nd->dd_name) - 1] != _T('\\'))
++    {
++      _tcscat (nd->dd_name, SLASH);
++    }
++
++  /* Add on the search pattern */
++  _tcscat (nd->dd_name, SUFFIX);
++
++  /* Initialize handle to -1 so that a premature closedir doesn't try
++   * to call _findclose on it. */
++  nd->dd_handle = -1;
++
++  /* Initialize the status. */
++  nd->dd_stat = 0;
++
++  /* Initialize the dirent structure. ino and reclen are invalid under
++   * Win32, and name simply points at the appropriate part of the
++   * findfirst_t structure. */
++  nd->dd_dir.d_ino = 0;
++  nd->dd_dir.d_reclen = 0;
++  nd->dd_dir.d_namlen = 0;
++  memset (nd->dd_dir.d_name, 0, 260 * sizeof(nd->dd_dir.d_name[0])  /*FILENAME_MAX*/);
++
++  return nd;
++}
++
++
++/*
++ * readdir
++ *
++ * Return a pointer to a dirent structure filled with the information on the
++ * next entry in the directory.
++ */
++struct dirent *
++readdir (DIR * dirp)
++{
++  errno = 0;
++
++  /* Check for valid DIR struct. */
++  if (!dirp)
++    {
++      errno = EFAULT;
++      return (struct dirent *) 0;
++    }
++
++  if (dirp->dd_stat < 0)
++    {
++      /* We have already returned all files in the directory
++       * (or the structure has an invalid dd_stat). */
++      return (struct dirent *) 0;
++    }
++  else if (dirp->dd_stat == 0)
++    {
++      /* We haven't started the search yet. */
++      /* Start the search */
++      dirp->dd_handle = _tfindfirst (dirp->dd_name, &(dirp->dd_dta));
++
++      if (dirp->dd_handle == -1)
++	{
++	  /* Whoops! Seems there are no files in that
++	   * directory. */
++	  dirp->dd_stat = -1;
++	}
++      else
++	{
++	  dirp->dd_stat = 1;
++	}
++    }
++  else
++    {
++      /* Get the next search entry. */
++      if (_tfindnext (dirp->dd_handle, &(dirp->dd_dta)))
++	{
++	  /* We are off the end or otherwise error.
++	     _findnext sets errno to ENOENT if no more file
++	     Undo this. */
++	  DWORD winerr = GetLastError ();
++	  if (winerr == ERROR_NO_MORE_FILES)
++	    errno = 0;
++	  _findclose (dirp->dd_handle);
++	  dirp->dd_handle = -1;
++	  dirp->dd_stat = -1;
++	}
++      else
++	{
++	  /* Update the status to indicate the correct
++	   * number. */
++	  dirp->dd_stat++;
++	}
++    }
++
++  if (dirp->dd_stat > 0)
++    {
++      /* Successfully got an entry. Everything about the file is
++       * already appropriately filled in except the length of the
++       * file name. */
++      dirp->dd_dir.d_namlen = _tcslen (dirp->dd_dta.name);
++      _tcscpy (dirp->dd_dir.d_name, dirp->dd_dta.name);
++      return &dirp->dd_dir;
++    }
++
++  return (struct dirent *) 0;
++}
++
++
++/*
++ * closedir
++ *
++ * Frees up resources allocated by opendir.
++ */
++int
++closedir (DIR * dirp)
++{
++  int rc;
++
++  errno = 0;
++  rc = 0;
++
++  if (!dirp)
++    {
++      errno = EFAULT;
++      return -1;
++    }
++
++  if (dirp->dd_handle != -1)
++    {
++      rc = _findclose (dirp->dd_handle);
++    }
++
++  /* Delete the dir structure. */
++  free (dirp);
++
++  return rc;
++}
++
++/*
++ * rewinddir
++ *
++ * Return to the beginning of the directory "stream". We simply call findclose
++ * and then reset things like an opendir.
++ */
++void
++rewinddir (DIR * dirp)
++{
++  errno = 0;
++
++  if (!dirp)
++    {
++      errno = EFAULT;
++      return;
++    }
++
++  if (dirp->dd_handle != -1)
++    {
++      _findclose (dirp->dd_handle);
++    }
++
++  dirp->dd_handle = -1;
++  dirp->dd_stat = 0;
++}
++
++/*
++ * telldir
++ *
++ * Returns the "position" in the "directory stream" which can be used with
++ * seekdir to go back to an old entry. We simply return the value in stat.
++ */
++long
++telldir (DIR * dirp)
++{
++  errno = 0;
++
++  if (!dirp)
++    {
++      errno = EFAULT;
++      return -1;
++    }
++  return dirp->dd_stat;
++}
++
++/*
++ * seekdir
++ *
++ * Seek to an entry previously returned by telldir. We rewind the directory
++ * and call readdir repeatedly until either dd_stat is the position number
++ * or -1 (off the end). This is not perfect, in that the directory may
++ * have changed while we weren't looking. But that is probably the case with
++ * any such system.
++ */
++void
++seekdir (DIR * dirp, long lPos)
++{
++  errno = 0;
++
++  if (!dirp)
++    {
++      errno = EFAULT;
++      return;
++    }
++
++  if (lPos < -1)
++    {
++      /* Seeking to an invalid position. */
++      errno = EINVAL;
++      return;
++    }
++  else if (lPos == -1)
++    {
++      /* Seek past end. */
++      if (dirp->dd_handle != -1)
++	{
++	  _findclose (dirp->dd_handle);
++	}
++      dirp->dd_handle = -1;
++      dirp->dd_stat = -1;
++    }
++  else
++    {
++      /* Rewind and read forward to the appropriate index. */
++      rewinddir (dirp);
++
++      while ((dirp->dd_stat < lPos) && readdir (dirp))
++	;
++    }
++}
++
+diff -urN ncurses-6.5-orig/progs/dirent.h ncurses-6.5/progs/dirent.h
+--- ncurses-6.5-orig/progs/dirent.h	1970-01-01 08:00:00.000000000 +0800
++++ ncurses-6.5/progs/dirent.h	2024-11-26 15:53:17.567224000 +0800
+@@ -0,0 +1,148 @@
++/*
++ * DIRENT.H (formerly DIRLIB.H)
++ * This file has no copyright assigned and is placed in the Public Domain.
++ * This file is part of the mingw-runtime package.
++ * No warranty is given; refer to the file DISCLAIMER within the package.
++ *
++ */
++
++#ifndef _DIRENT_H_
++#define _DIRENT_H_
++
++/* All the headers include this file. */
++#include <corecrt.h>
++
++#include <io.h>
++
++#ifndef RC_INVOKED
++
++#pragma pack(push,_CRT_PACKING)
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++struct _tdirent
++{
++	long		d_ino;		/* Always zero. */
++	unsigned short	d_reclen;	/* Always zero. */
++	unsigned short	d_namlen;	/* Length of name in d_name. */
++	char		d_name[260]; /* [FILENAME_MAX] */ /* File name. */
++};
++
++/*
++ * This is an internal data structure. Good programmers will not use it
++ * except as an argument to one of the functions below.
++ * dd_stat field is now int (was short in older versions).
++ */
++typedef struct
++{
++	/* disk transfer area for this dir */
++	struct _finddata_t	dd_dta;
++
++	/* dirent struct to return from dir (NOTE: this makes this thread
++	 * safe as long as only one thread uses a particular DIR struct at
++	 * a time) */
++	struct _tdirent		dd_dir;
++
++	/* _findnext handle */
++	intptr_t		dd_handle;
++
++	/*
++	 * Status of search:
++	 *   0 = not started yet (next entry to read is first entry)
++	 *  -1 = off the end
++	 *   positive = 0 based index of next entry
++	 */
++	int			dd_stat;
++
++	/* given path for dir with search pattern (struct is extended) */
++	char			dd_name[1];
++} _TDIR;
++
++_TDIR* __cdecl _topendir (const char*);
++struct _tdirent* __cdecl _treaddir (_TDIR*);
++int __cdecl _tclosedir (_TDIR*);
++void __cdecl _trewinddir (_TDIR*);
++long __cdecl _ttelldir (_TDIR*);
++void __cdecl _tseekdir (_TDIR*, long);
++
++
++/* wide char versions */
++
++struct _wdirent
++{
++	long		d_ino;		/* Always zero. */
++	unsigned short	d_reclen;	/* Always zero. */
++	unsigned short	d_namlen;	/* Length of name in d_name. */
++	wchar_t		d_name[260]; /* [FILENAME_MAX] */ /* File name. */
++};
++
++/*
++ * This is an internal data structure. Good programmers will not use it
++ * except as an argument to one of the functions below.
++ */
++typedef struct
++{
++	/* disk transfer area for this dir */
++	struct _wfinddata_t	dd_dta;
++
++	/* dirent struct to return from dir (NOTE: this makes this thread
++	 * safe as long as only one thread uses a particular DIR struct at
++	 * a time) */
++	struct _wdirent		dd_dir;
++
++	/* _findnext handle */
++	intptr_t		dd_handle;
++
++	/*
++	 * Status of search:
++	 *   0 = not started yet (next entry to read is first entry)
++	 *  -1 = off the end
++	 *   positive = 0 based index of next entry
++	 */
++	int			dd_stat;
++
++	/* given path for dir with search pattern (struct is extended) */
++	wchar_t			dd_name[1];
++} _WDIR;
++
++_WDIR* __cdecl _wopendir (const wchar_t*);
++struct _wdirent* __cdecl _wreaddir (_WDIR*);
++int __cdecl _wclosedir (_WDIR*);
++void __cdecl _wrewinddir (_WDIR*);
++long __cdecl _wtelldir (_WDIR*);
++void __cdecl _wseekdir (_WDIR*, long);
++
++#ifdef _UNICODE
++/* dirent structures and functions */
++# define dirent	    _wdirent
++# define DIR 		    _WDIR
++# define opendir	  _wopendir
++# define closedir	  _wclosedir
++# define readdir	  _wreaddir
++# define rewinddir	_wrewinddir
++# define telldir	  _wtelldir
++# define seekdir	  _wseekdir
++#else
++/* dirent structures and functions */
++# define dirent	    _tdirent
++# define DIR        _TDIR
++# define opendir	  _topendir
++# define closedir	  _tclosedir
++# define readdir	  _treaddir
++# define rewinddir	_trewinddir
++# define telldir	  _ttelldir
++# define seekdir	  _tseekdir
++#endif
++
++#ifdef	__cplusplus
++}
++#endif
++
++#pragma pack(pop)
++
++#endif	/* Not RC_INVOKED */
++
++#endif	/* Not _DIRENT_H_ */
++
+diff -urN ncurses-6.5-orig/progs/Makefile.in ncurses-6.5/progs/Makefile.in
+--- ncurses-6.5-orig/progs/Makefile.in	2024-04-09 02:33:54.000000000 +0800
++++ ncurses-6.5/progs/Makefile.in	2024-11-26 16:00:41.558745500 +0800
+@@ -277,6 +277,7 @@
+ 	@ECHO_LD@ $(LINK) $(DEPS_TIC) $(LDFLAGS_TIC) -o $@
+ 
+ DEPS_TOE = \
++	$(MODEL)/dirent$o \
+ 	$(MODEL)/toe$o
+ 
+ toe$x: $(DEPS_TOE) $(DEPS_CURSES)
+diff -urN ncurses-6.5-orig/progs/modules ncurses-6.5/progs/modules
+--- ncurses-6.5-orig/progs/modules	2021-04-19 01:21:03.000000000 +0800
++++ ncurses-6.5/progs/modules	2024-11-26 16:00:55.419638600 +0800
+@@ -33,6 +33,7 @@
+ #
+ 
+ @ base
++dirent	progs		$(srcdir)	$(HEADER_DEPS) $(srcdir)/dirent.h
+ clear		progs		$(srcdir)	$(HEADER_DEPS) tty_settings.h
+ tic		progs		$(srcdir)	$(HEADER_DEPS) transform.h $(srcdir)/dump_entry.h $(srcdir)/tparm_type.h
+ toe		progs		$(srcdir)	$(HEADER_DEPS)             $(INCDIR)/hashed_db.h
+diff -urN ncurses-6.5-orig/progs/tic.c ncurses-6.5/progs/tic.c
+--- ncurses-6.5-orig/progs/tic.c	2024-03-03 03:33:22.000000000 +0800
++++ ncurses-6.5/progs/tic.c	2024-11-26 15:53:17.598469900 +0800
+@@ -53,6 +53,10 @@
+ 
+ #define STDIN_NAME "<stdin>"
+ 
++#ifndef S_IFIFO
++#define	S_IFIFO		_S_IFIFO
++#endif
++
+ const char *_nc_progname = "tic";
+ 
+ static FILE *log_fp;

@@ -1,0 +1,9 @@
+name: yasm
+version: master
+url: https://github.com/yasm/yasm.git
+sha256:
+steps:
+  one:
+    dependencies:
+      - gettext
+    run: build.bat

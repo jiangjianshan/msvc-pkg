@@ -1,0 +1,17 @@
+name: doxygen
+version: 1.12.0
+url: https://github.com/doxygen/doxygen/archive/refs/tags/Release_1_12_0.tar.gz
+sha256: 5ca35e1258020df5fe8b21c3656aed156c317def4a81b7fe52f452edc9f35768
+steps:
+  one:
+    dependencies:
+      - pkg-config
+      - llvm-project
+      - fmt
+      - sqlite
+      - spdlog
+      - xapian-core
+      - zlib
+      - winpthreads
+      - winflexbison
+    run: build.bat

@@ -1,0 +1,12 @@
+diff -urN avm-8.1.0-orig/build/cmake/aom_install.cmake avm-8.1.0/build/cmake/aom_install.cmake
+--- avm-8.1.0-orig/build/cmake/aom_install.cmake	2024-11-15 07:50:55.000000000 +0800
++++ avm-8.1.0/build/cmake/aom_install.cmake	2024-11-26 13:53:05.793732900 +0800
+@@ -32,7 +32,7 @@
+ # Note: aom.pc generation uses GNUInstallDirs:
+ # https://cmake.org/cmake/help/latest/module/GNUInstallDirs.html
+ macro(setup_aom_install_targets)
+-  if(NOT (MSVC OR XCODE))
++  if(NOT XCODE)
+     include("GNUInstallDirs")
+     set(AOM_PKG_CONFIG_FILE "${AOM_CONFIG_DIR}/aom.pc")
+ 

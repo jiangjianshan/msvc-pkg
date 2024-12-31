@@ -1,0 +1,11 @@
+name: upx
+version: 4.2.4
+url: https://github.com/upx/upx.git
+sha256:
+steps:
+  one:
+    dependencies:
+      - bzip2
+      - xz
+      - zlib
+    run: build.bat

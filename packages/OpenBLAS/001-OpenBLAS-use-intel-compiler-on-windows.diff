@@ -1,0 +1,504 @@
+diff -urN OpenBLAS-0.3.28-orig/cmake/arch.cmake OpenBLAS-0.3.28/cmake/arch.cmake
+--- OpenBLAS-0.3.28-orig/cmake/arch.cmake	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/cmake/arch.cmake	2024-12-24 18:08:21.551427500 +0800
+@@ -18,7 +18,7 @@
+         set(CCOMMON_OPT "${CCOMMON_OPT} -DEXPRECISION -m128bit-long-double")
+         set(FCOMMON_OPT	"${FCOMMON_OPT} -m128bit-long-double")
+       endif ()
+-      if (${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
++      if (${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "IntelLLVM")
+         set(EXPRECISION	1)
+         set(CCOMMON_OPT "${CCOMMON_OPT} -DEXPRECISION")
+         set(FCOMMON_OPT	"${FCOMMON_OPT} -m128bit-long-double")
+diff -urN OpenBLAS-0.3.28-orig/cmake/cc.cmake OpenBLAS-0.3.28/cmake/cc.cmake
+--- OpenBLAS-0.3.28-orig/cmake/cc.cmake	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/cmake/cc.cmake	2024-12-24 18:08:21.551427500 +0800
+@@ -5,11 +5,15 @@
+ include(CheckCCompilerFlag)
+ 
+ if (${CMAKE_C_COMPILER_ID} MATCHES "IntelLLVM")
+-  set(CCOMMON_OPT "${CCOMMON_OPT} -fp-model=consistent")
++  if (WIN32)
++    set(CCOMMON_OPT "${CCOMMON_OPT} -fp:consistent")
++  else()
++    set(CCOMMON_OPT "${CCOMMON_OPT} -fp-model=consistent")
++  endif()
+   set(GCC_VERSION 100)
+ endif ()
+ 
+-if (${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_C_COMPILER_ID} STREQUAL "LSB" OR ${CMAKE_C_COMPILER_ID} MATCHES "Clang")
++if (${CMAKE_C_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_C_COMPILER_ID} STREQUAL "LSB" OR ${CMAKE_C_COMPILER_ID} MATCHES "Clang" OR ${CMAKE_C_COMPILER_ID} MATCHES "IntelLLVM")
+   set(CCOMMON_OPT "${CCOMMON_OPT} -Wall")
+   set(COMMON_PROF "${COMMON_PROF} -fno-inline")
+   set(NO_UNINITIALIZED_WARN "-Wno-uninitialized")
+diff -urN OpenBLAS-0.3.28-orig/cmake/f_check.cmake OpenBLAS-0.3.28/cmake/f_check.cmake
+--- OpenBLAS-0.3.28-orig/cmake/f_check.cmake	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/cmake/f_check.cmake	2024-12-24 18:08:21.567080900 +0800
+@@ -45,13 +45,14 @@
+ 
+   # TODO: detect whether underscore needed, set #defines and BU appropriately - use try_compile
+   # TODO: set FEXTRALIB flags a la f_check?
+-
+-  set(BU "_")
+-  file(APPEND ${TARGET_CONF_TEMP}
+-    "#define BUNDERSCORE _\n"
+-    "#define NEEDBUNDERSCORE 1\n"
+-    "#define NEED2UNDERSCORES 0\n")
+-
++  if (NOT (${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND ${CMAKE_Fortran_COMPILER_ID} MATCHES "IntelLLVM"))
++    set(BU "_")
++    file(APPEND ${TARGET_CONF_TEMP}
++      "#define BUNDERSCORE _\n"
++      "#define NEEDBUNDERSCORE 1\n")
++  else()
++	  set (FCOMMON_OPT "${FCOMMON_OPT} /fp:precise /recursive /names:lowercase /assume:nounderscore")
++  endif()
+ else ()
+ 
+   #When we only build CBLAS, we set NOFORTRAN=2
+diff -urN OpenBLAS-0.3.28-orig/cmake/fc.cmake OpenBLAS-0.3.28/cmake/fc.cmake
+--- OpenBLAS-0.3.28-orig/cmake/fc.cmake	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/cmake/fc.cmake	2024-12-24 18:08:21.567080900 +0800
+@@ -36,9 +36,9 @@
+   endif ()
+ endif ()
+ 
+-if (${F_COMPILER} STREQUAL "GFORTRAN" OR ${F_COMPILER} STREQUAL "F95" OR CMAKE_Fortran_COMPILER_ID STREQUAL "LLVMFlang")
++if (${F_COMPILER} STREQUAL "GFORTRAN" OR ${F_COMPILER} STREQUAL "F95" OR CMAKE_Fortran_COMPILER_ID STREQUAL "LLVMFlang" OR CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
+   set(CCOMMON_OPT "${CCOMMON_OPT} -DF_INTERFACE_GFORT")
+-  if (NOT CMAKE_Fortran_COMPILER_ID STREQUAL "LLVMFlang")
++  if (NOT CMAKE_Fortran_COMPILER_ID STREQUAL "LLVMFlang" AND NOT CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
+     # ensure reentrancy of lapack codes
+     set(FCOMMON_OPT "${FCOMMON_OPT} -Wall -frecursive")
+     # work around ABI violation in passing string arguments from C
+@@ -91,11 +91,11 @@
+     endif ()
+   else ()
+     if (BINARY64)
+-      if (NOT CMAKE_Fortran_COMPILER_ID MATCHES "LLVMFlang.*")
++      if (NOT CMAKE_Fortran_COMPILER_ID MATCHES "LLVMFlang.*" AND NOT CMAKE_Fortran_COMPILER_ID MATCHES "IntelLLVM")
+       set(FCOMMON_OPT "${FCOMMON_OPT} -m64")
+       endif ()
+       if (INTERFACE64)
+-        if (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
++        if (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel" OR CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
+           if (WIN32)
+             set(FCOMMON_OPT "${FCOMMON_OPT} /integer-size:64")
+           else ()
+@@ -106,7 +106,7 @@
+         endif ()
+       endif ()
+     else ()
+-        if (NOT CMAKE_Fortran_COMPILER_ID MATCHES "LLVMFlang.*")
++      if (NOT CMAKE_Fortran_COMPILER_ID MATCHES "LLVMFlang.*" AND NOT CMAKE_Fortran_COMPILER_ID MATCHES "IntelLLVM")
+            set(FCOMMON_OPT "${FCOMMON_OPT} -m32")
+ 	endif ()
+     endif ()
+@@ -117,14 +117,18 @@
+   endif ()
+ endif ()
+ 
+-if (${F_COMPILER} STREQUAL "INTEL" OR CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
++if (${F_COMPILER} STREQUAL "IFORT" OR ${F_COMPILER} STREQUAL "IFX" OR CMAKE_Fortran_COMPILER_ID MATCHES "Intel" OR CMAKE_Fortran_COMPILER_ID MATCHES "IntelLLVM")
+   set(CCOMMON_OPT "${CCOMMON_OPT} -DF_INTERFACE_INTEL")
+   if (INTERFACE64)
+     set(FCOMMON_OPT "${FCOMMON_OPT} -i8")
+   endif ()
+-  set(FCOMMON_OPT "${FCOMMON_OPT} -recursive -fp-model=consistent")
++  if (WIN32)
++    set(FCOMMON_OPT "${FCOMMON_OPT} -recursive -fp:consistent")
++  else()
++    set(FCOMMON_OPT "${FCOMMON_OPT} -recursive -fp-model=consistent")
++  endif()
+   if (USE_OPENMP)
+-    set(FCOMMON_OPT "${FCOMMON_OPT} -openmp")
++    set(FCOMMON_OPT "${FCOMMON_OPT} -fopenmp")
+   endif ()
+ endif ()
+ 
+@@ -253,7 +257,7 @@
+ endif ()
+ 
+ if (${F_COMPILER} STREQUAL "CRAY")
+-  set(CCOMMON_OPT "${CCOMMON_OPT} -DF_INTERFACE_INTEL")
++  set(CCOMMON_OPT "${CCOMMON_OPT} -DF_INTERFACE_CRAYFC")
+   set(FCOMMON_OPT "${FCOMMON_OPT} -hnopattern")
+   if (INTERFACE64)
+     set (FCOMMON_OPT "${FCOMMON_OPT} -s integer64")
+diff -urN OpenBLAS-0.3.28-orig/cmake/os.cmake OpenBLAS-0.3.28/cmake/os.cmake
+--- OpenBLAS-0.3.28-orig/cmake/os.cmake	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/cmake/os.cmake	2024-12-24 18:08:21.582704400 +0800
+@@ -30,7 +30,7 @@
+   set(PSUFFIX "pobj")
+   set(LIBSUFFIX "a")
+ 
+-  if (${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
++  if (${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "IntelLLVM")
+     set(CCOMMON_OPT	"${CCOMMON_OPT} -DMS_ABI")
+   endif ()
+ 
+@@ -49,7 +49,7 @@
+   # Ensure the correct stack alignment on Win32
+   # http://permalink.gmane.org/gmane.comp.lib.openblas.general/97
+   if (X86)
+-    if (NOT MSVC AND NOT ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
++    if (NOT MSVC AND NOT ${CMAKE_C_COMPILER_ID} STREQUAL "Clang" AND NOT ${CMAKE_C_COMPILER_ID} STREQUAL "IntelLLVM")
+       set(CCOMMON_OPT "${CCOMMON_OPT} -mincoming-stack-boundary=2")
+     endif ()
+     set(FCOMMON_OPT "${FCOMMON_OPT} -mincoming-stack-boundary=2")
+diff -urN OpenBLAS-0.3.28-orig/cmake/prebuild.cmake OpenBLAS-0.3.28/cmake/prebuild.cmake
+--- OpenBLAS-0.3.28-orig/cmake/prebuild.cmake	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/cmake/prebuild.cmake	2024-12-24 18:08:21.582704400 +0800
+@@ -58,7 +58,7 @@
+ 
+ # c_check
+ set(FU "")
+-if (APPLE OR (MSVC AND NOT ${CMAKE_C_COMPILER_ID} MATCHES "Clang"))
++if (APPLE OR (MSVC AND NOT (${CMAKE_C_COMPILER_ID} MATCHES "Clang" OR ${CMAKE_C_COMPILER_ID} MATCHES "IntelLLVM")))
+   set(FU "_")
+ endif()
+ if(MINGW AND NOT MINGW64)
+diff -urN OpenBLAS-0.3.28-orig/cmake/system.cmake OpenBLAS-0.3.28/cmake/system.cmake
+--- OpenBLAS-0.3.28-orig/cmake/system.cmake	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/cmake/system.cmake	2024-12-24 18:08:21.598292000 +0800
+@@ -110,7 +110,7 @@
+   set(HAVE_GAS 1)
+   if (CMAKE_ASM_COMPILER_ID STREQUAL "GNU")
+     set(HAVE_GAS 0)
+-  elseif (CMAKE_ASM_COMPILER_ID STREQUAL "Clang")
++  elseif (CMAKE_ASM_COMPILER_ID STREQUAL "Clang" OR CMAKE_ASM_COMPILER_ID STREQUAL "IntelLLVM")
+     set(CCOMMON_OPT "${CCOMMON_OPT} -fno-integrated-as")
+     set(HAVE_GAS 0)
+   endif ()
+@@ -175,7 +175,7 @@
+         else()
+           set (KERNEL_DEFINITIONS "${KERNEL_DEFINITIONS} -march=skylake-avx512")
+         endif()
+-    elseif (${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "AppleClang")
++      elseif (${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "AppleClang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "IntelLLVM")
+          if (${CMAKE_C_COMPILER_VERSION} VERSION_GREATER 8.99)
+           set (KERNEL_DEFINITIONS "${KERNEL_DEFINITIONS} -march=cooperlake -mllvm -exhaustive-register-search")
+         else()
+@@ -190,7 +190,7 @@
+         else()
+           set (KERNEL_DEFINITIONS "${KERNEL_DEFINITIONS} -march=skylake-avx512")
+         endif()
+-    elseif (${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "AppleClang")
++    elseif (${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "AppleClang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "IntelLLVM")
+          if (${CMAKE_C_COMPILER_VERSION} VERSION_GREATER 12.0)
+           set (KERNEL_DEFINITIONS "${KERNEL_DEFINITIONS} -march=sapphirerapids -mllvm -exhaustive-register-search")
+         else()
+@@ -200,7 +200,7 @@
+   endif()
+   if (${TARGET} STREQUAL SKYLAKEX AND NOT NO_AVX512)
+     	  set (KERNEL_DEFINITIONS "${KERNEL_DEFINITIONS} -march=skylake-avx512")
+-  	  if (${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "AppleClang")
++      if (${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "AppleClang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "IntelLLVM")
+ 	 	set (KERNEL_DEFINITIONS "${KERNEL_DEFINITIONS} -mllvm -exhaustive-register-search")
+   	  endif()
+   endif()
+@@ -212,7 +212,7 @@
+ 	else()
+     	  set (KERNEL_DEFINITIONS "${KERNEL_DEFINITIONS} -march=skylake-avx512")
+         endif()
+-    elseif (${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "AppleClang")
++    elseif (${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "AppleClang" OR ${CMAKE_C_COMPILER_ID} STREQUAL "IntelLLVM")
+          if (${CMAKE_C_COMPILER_VERSION} VERSION_GREATER 15.99)
+           set (KERNEL_DEFINITIONS "${KERNEL_DEFINITIONS} -march=znver4")
+ 	else()
+@@ -637,9 +637,9 @@
+ endif ()
+ 
+ if (CMAKE_Fortran_COMPILER)
+-if ("${F_COMPILER}" STREQUAL "NAG" OR "${F_COMPILER}" STREQUAL "CRAY" OR CMAKE_Fortran_COMPILER_ID MATCHES "LLVMFlang.*")
++  if ("${F_COMPILER}" STREQUAL "NAG" OR "${F_COMPILER}" STREQUAL "CRAY" OR CMAKE_Fortran_COMPILER_ID MATCHES "LLVMFlang.*" OR CMAKE_Fortran_COMPILER_ID MATCHES "IntelLLVM")
+   set(FILTER_FLAGS "-msse3;-mssse3;-msse4.1;-mavx;-mavx2,-mskylake-avx512")
+-  if (CMAKE_Fortran_COMPILER_ID MATCHES "LLVMFlang.*")
++  if (CMAKE_Fortran_COMPILER_ID MATCHES "LLVMFlang.*" OR CMAKE_Fortran_COMPILER_ID MATCHES "IntelLLVM")
+ message(STATUS "removing fortran flags")
+     set(FILTER_FLAGS "${FILTER_FLAGS};-m32;-m64")
+   endif ()
+@@ -667,12 +667,22 @@
+ if (${CMAKE_C_COMPILER} STREQUAL "LSB" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+   set(LAPACK_CFLAGS "${LAPACK_CFLAGS} -DLAPACK_COMPLEX_STRUCTURE")
+ endif ()
++if (${CMAKE_C_COMPILER_ID} MATCHES "IntelLLVM" AND ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
++  set(LAPACK_CFLAGS "${LAPACK_CFLAGS} -DNOCHANGE")
++endif ()
+ 
+ if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+ if ("${F_COMPILER}" STREQUAL "FLANG")
+-if (${CMAKE_Fortran_COMPILER_VERSION} VERSION_LESS_EQUAL 3)
+-  set(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} -fno-unroll-loops")
++  if (${CMAKE_Fortran_COMPILER_VERSION} VERSION_LESS_EQUAL 3)
++    set(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} -fno-unroll-loops")
++  endif ()
+ endif ()
++if ((${F_COMPILER} STREQUAL "IFORT" OR ${F_COMPILER} STREQUAL "IFX"))
++  if (WIN32)
++    set(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} -Qunroll:0")
++  else()
++    set(CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} -unroll=0")
++  endif()
+ endif ()
+ endif ()
+ 
+diff -urN OpenBLAS-0.3.28-orig/CMakeLists.txt OpenBLAS-0.3.28/CMakeLists.txt
+--- OpenBLAS-0.3.28-orig/CMakeLists.txt	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/CMakeLists.txt	2024-12-24 18:08:21.598292000 +0800
+@@ -2,7 +2,7 @@
+ ## Author: Hank Anderson <hank@statease.com>
+ ##
+ 
+-cmake_minimum_required(VERSION 2.8.5)
++cmake_minimum_required(VERSION 3.25.0)
+ 
+ project(OpenBLAS C ASM)
+ 
+diff -urN OpenBLAS-0.3.28-orig/common_x86_64.h OpenBLAS-0.3.28/common_x86_64.h
+--- OpenBLAS-0.3.28-orig/common_x86_64.h	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/common_x86_64.h	2024-12-24 19:02:51.254003100 +0800
+@@ -283,6 +283,10 @@
+ #define RETURN_BY_STACK
+ #endif
+ 
++#ifdef F_INTERFACE_CRAYFC
++#define RETURN_BY_PACKED
++#endif
++
+ #ifdef F_INTERFACE_FUJITSU
+ #define RETURN_BY_STACK
+ #endif
+diff -urN OpenBLAS-0.3.28-orig/ctest/cblas_test.h OpenBLAS-0.3.28/ctest/cblas_test.h
+--- OpenBLAS-0.3.28-orig/ctest/cblas_test.h	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/ctest/cblas_test.h	2024-12-24 18:08:21.613964000 +0800
+@@ -10,6 +10,16 @@
+ #define int long
+ #endif
+ 
++#if defined(_MSC_VER) && defined(__INTEL_CLANG_COMPILER)
++# ifndef NOCHANGE
++#  define NOCHANGE
++# endif
++#endif
++
++#ifdef FAILED
++# undef FAILED
++#endif
++
+ #define  TRUE           1
+ #define  PASSED         1
+ #define  TEST_ROW_MJR	1
+diff -urN OpenBLAS-0.3.28-orig/lapack-netlib/CMAKE/FortranMangling.cmake OpenBLAS-0.3.28/lapack-netlib/CMAKE/FortranMangling.cmake
+--- OpenBLAS-0.3.28-orig/lapack-netlib/CMAKE/FortranMangling.cmake	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/lapack-netlib/CMAKE/FortranMangling.cmake	2024-12-24 18:08:21.613964000 +0800
+@@ -15,7 +15,7 @@
+   get_filename_component(F77_PATH ${CMAKE_Fortran_COMPILER} PATH)
+   set(F77 ${F77_NAME} CACHE INTERNAL "Name of the fortran compiler.")
+ 
+-  if(${F77} STREQUAL "ifort.exe")
++  if(${F77} STREQUAL "ifort.exe" OR ${F77} STREQUAL "ifx.exe")
+     #settings for Intel Fortran
+     set(F77_OPTION_COMPILE "/c" CACHE INTERNAL
+       "Fortran compiler option for compiling without linking.")
+diff -urN OpenBLAS-0.3.28-orig/lapack-netlib/lapack_build.cmake OpenBLAS-0.3.28/lapack-netlib/lapack_build.cmake
+--- OpenBLAS-0.3.28-orig/lapack-netlib/lapack_build.cmake	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/lapack-netlib/lapack_build.cmake	2024-12-24 18:08:21.629560000 +0800
+@@ -4,7 +4,7 @@
+ ## HINTS: ctest -Ddashboard_model=Nightly      -S $(pwd)/lapack/lapack_build.cmake
+ ##
+ 
+-cmake_minimum_required(VERSION 2.8.10)
++cmake_minimum_required(VERSION 3.25.0)
+ ###################################################################
+ # The values in this section must always be provided
+ ###################################################################
+diff -urN OpenBLAS-0.3.28-orig/lapack-netlib/LAPACKE/include/lapacke_config.h OpenBLAS-0.3.28/lapack-netlib/LAPACKE/include/lapacke_config.h
+--- OpenBLAS-0.3.28-orig/lapack-netlib/LAPACKE/include/lapacke_config.h	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/lapack-netlib/LAPACKE/include/lapacke_config.h	2024-12-24 18:08:21.633601800 +0800
+@@ -67,8 +67,12 @@
+ #define lapack_logical    lapack_int
+ #endif
+ 
++#if defined(_MSC_VER) && defined(__INTEL_CLANG_COMPILER)
++#define LAPACK_GLOBAL(lcname,UCNAME)  lcname
++#endif
++
+ #ifndef LAPACK_COMPLEX_CUSTOM
+-#if defined(_MSC_VER)
++#if defined(_MSC_VER) && !defined(__INTEL_CLANG_COMPILER)
+     #define _CRT_USE_C_COMPLEX_H
+     #include <complex.h>
+     #define LAPACK_COMPLEX_CUSTOM
+diff -urN OpenBLAS-0.3.28-orig/utest/openblas_utest.h OpenBLAS-0.3.28/utest/openblas_utest.h
+--- OpenBLAS-0.3.28-orig/utest/openblas_utest.h	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/utest/openblas_utest.h	2024-12-24 19:02:06.954975000 +0800
+@@ -36,7 +36,11 @@
+ 
+ #include <stdlib.h>
+ #include "ctest.h"
+-
++#if defined(_MSC_VER) && defined(__INTEL_CLANG_COMPILER)
++# ifndef NOCHANGE
++#  define NOCHANGE
++# endif
++#endif
+ #include <common.h>
+ #include <math.h>
+ 
+diff -urN OpenBLAS-0.3.28-orig/utest/test_extensions/common.c OpenBLAS-0.3.28/utest/test_extensions/common.c
+--- OpenBLAS-0.3.28-orig/utest/test_extensions/common.c	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/utest/test_extensions/common.c	2024-12-24 18:39:49.455055900 +0800
+@@ -206,7 +206,7 @@
+  * param lda_dst - leading dimension of output matrix A
+  * param conj specifies conjugation
+  */
+-void scopy(blasint rows, blasint cols, float alpha, float *a_src, int lda_src, 
++void my_scopy(blasint rows, blasint cols, float alpha, float *a_src, int lda_src, 
+            float *a_dst, blasint lda_dst)
+ {
+     blasint i, j;
+@@ -217,7 +217,7 @@
+     }
+ }
+ 
+-void dcopy(blasint rows, blasint cols, double alpha, double *a_src, int lda_src, 
++void my_dcopy(blasint rows, blasint cols, double alpha, double *a_src, int lda_src, 
+            double *a_dst, blasint lda_dst)
+ {
+     blasint i, j;
+@@ -228,7 +228,7 @@
+     }
+ }
+ 
+-void ccopy(blasint rows, blasint cols, float *alpha, float *a_src, int lda_src, 
++void my_ccopy(blasint rows, blasint cols, float *alpha, float *a_src, int lda_src, 
+            float *a_dst, blasint lda_dst, int conj)
+ {
+     blasint i, j;
+@@ -243,7 +243,7 @@
+     }
+ }
+ 
+-void zcopy(blasint rows, blasint cols, double *alpha, double *a_src, int lda_src, 
++void my_zcopy(blasint rows, blasint cols, double *alpha, double *a_src, int lda_src, 
+            double *a_dst, blasint lda_dst, int conj)
+ {
+     blasint i, j;
+diff -urN OpenBLAS-0.3.28-orig/utest/test_extensions/common.h OpenBLAS-0.3.28/utest/test_extensions/common.h
+--- OpenBLAS-0.3.28-orig/utest/test_extensions/common.h	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/utest/test_extensions/common.h	2024-12-24 18:39:37.459591300 +0800
+@@ -65,12 +65,12 @@
+ extern void ztranspose(blasint rows, blasint cols, double *alpha, double *a_src, int lda_src, 
+                 double *a_dst, blasint lda_dst, int conj);
+ 
+-extern void scopy(blasint rows, blasint cols, float alpha, float *a_src, int lda_src, 
++extern void my_scopy(blasint rows, blasint cols, float alpha, float *a_src, int lda_src, 
+            float *a_dst, blasint lda_dst);
+-extern void dcopy(blasint rows, blasint cols, double alpha, double *a_src, int lda_src, 
++extern void my_dcopy(blasint rows, blasint cols, double alpha, double *a_src, int lda_src, 
+            double *a_dst, blasint lda_dst);
+-extern void ccopy(blasint rows, blasint cols, float *alpha, float *a_src, int lda_src, 
++extern void my_ccopy(blasint rows, blasint cols, float *alpha, float *a_src, int lda_src, 
+            float *a_dst, blasint lda_dst, int conj);
+-extern void zcopy(blasint rows, blasint cols, double *alpha, double *a_src, int lda_src, 
++extern void my_zcopy(blasint rows, blasint cols, double *alpha, double *a_src, int lda_src, 
+            double *a_dst, blasint lda_dst, int conj);                
+ #endif
+\ No newline at end of file
+diff -urN OpenBLAS-0.3.28-orig/utest/test_extensions/test_cimatcopy.c OpenBLAS-0.3.28/utest/test_extensions/test_cimatcopy.c
+--- OpenBLAS-0.3.28-orig/utest/test_extensions/test_cimatcopy.c	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/utest/test_extensions/test_cimatcopy.c	2024-12-24 18:59:24.867865100 +0800
+@@ -91,7 +91,7 @@
+         ctranspose(m, n, alpha, data_cimatcopy.a_test, lda_src, data_cimatcopy.a_verify, lda_dst, conj);
+     } 
+     else {
+-        ccopy(m, n, alpha, data_cimatcopy.a_test, lda_src, data_cimatcopy.a_verify, lda_dst, conj);
++        my_ccopy(m, n, alpha, data_cimatcopy.a_test, lda_src, data_cimatcopy.a_verify, lda_dst, conj);
+     }
+ 
+     if (api == 'F') {
+diff -urN OpenBLAS-0.3.28-orig/utest/test_extensions/test_comatcopy.c OpenBLAS-0.3.28/utest/test_extensions/test_comatcopy.c
+--- OpenBLAS-0.3.28-orig/utest/test_extensions/test_comatcopy.c	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/utest/test_extensions/test_comatcopy.c	2024-12-24 18:59:31.611047500 +0800
+@@ -92,7 +92,7 @@
+         ctranspose(m, n, alpha, data_comatcopy.a_test, lda, data_comatcopy.b_verify, ldb, conj);
+     } 
+     else {
+-        ccopy(m, n, alpha, data_comatcopy.a_test, lda, data_comatcopy.b_verify, ldb, conj);
++        my_ccopy(m, n, alpha, data_comatcopy.a_test, lda, data_comatcopy.b_verify, ldb, conj);
+     }
+ 
+     if (api == 'F') {
+diff -urN OpenBLAS-0.3.28-orig/utest/test_extensions/test_dimatcopy.c OpenBLAS-0.3.28/utest/test_extensions/test_dimatcopy.c
+--- OpenBLAS-0.3.28-orig/utest/test_extensions/test_dimatcopy.c	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/utest/test_extensions/test_dimatcopy.c	2024-12-24 18:59:45.927394800 +0800
+@@ -86,7 +86,7 @@
+         dtranspose(m, n, alpha, data_dimatcopy.a_test, lda_src, data_dimatcopy.a_verify, lda_dst);
+     } 
+     else {
+-        dcopy(m, n, alpha, data_dimatcopy.a_test, lda_src, data_dimatcopy.a_verify, lda_dst);
++        my_dcopy(m, n, alpha, data_dimatcopy.a_test, lda_src, data_dimatcopy.a_verify, lda_dst);
+     }
+ 
+     if (api == 'F') {
+diff -urN OpenBLAS-0.3.28-orig/utest/test_extensions/test_domatcopy.c OpenBLAS-0.3.28/utest/test_extensions/test_domatcopy.c
+--- OpenBLAS-0.3.28-orig/utest/test_extensions/test_domatcopy.c	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/utest/test_extensions/test_domatcopy.c	2024-12-24 18:59:52.638751000 +0800
+@@ -87,7 +87,7 @@
+         dtranspose(m, n, alpha, data_domatcopy.a_test, lda, data_domatcopy.b_verify, ldb);
+     } 
+     else {
+-        dcopy(m, n, alpha, data_domatcopy.a_test, lda, data_domatcopy.b_verify, ldb);
++        my_dcopy(m, n, alpha, data_domatcopy.a_test, lda, data_domatcopy.b_verify, ldb);
+     }
+ 
+     if (api == 'F') {
+diff -urN OpenBLAS-0.3.28-orig/utest/test_extensions/test_simatcopy.c OpenBLAS-0.3.28/utest/test_extensions/test_simatcopy.c
+--- OpenBLAS-0.3.28-orig/utest/test_extensions/test_simatcopy.c	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/utest/test_extensions/test_simatcopy.c	2024-12-24 19:00:04.066583400 +0800
+@@ -86,7 +86,7 @@
+         stranspose(m, n, alpha, data_simatcopy.a_test, lda_src, data_simatcopy.a_verify, lda_dst);
+     } 
+     else {
+-        scopy(m, n, alpha, data_simatcopy.a_test, lda_src, data_simatcopy.a_verify, lda_dst);
++        my_scopy(m, n, alpha, data_simatcopy.a_test, lda_src, data_simatcopy.a_verify, lda_dst);
+     }
+ 
+     if (api == 'F') {
+diff -urN OpenBLAS-0.3.28-orig/utest/test_extensions/test_somatcopy.c OpenBLAS-0.3.28/utest/test_extensions/test_somatcopy.c
+--- OpenBLAS-0.3.28-orig/utest/test_extensions/test_somatcopy.c	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/utest/test_extensions/test_somatcopy.c	2024-12-24 19:36:48.490045500 +0800
+@@ -87,7 +87,7 @@
+         stranspose(m, n, alpha, data_somatcopy.a_test, lda, data_somatcopy.b_verify, ldb);
+     } 
+     else {
+-        scopy(m, n, alpha, data_somatcopy.a_test, lda, data_somatcopy.b_verify, ldb);
++        my_scopy(m, n, alpha, data_somatcopy.a_test, lda, data_somatcopy.b_verify, ldb);
+     }
+ 
+     if (api == 'F') {
+diff -urN OpenBLAS-0.3.28-orig/utest/test_extensions/test_zimatcopy.c OpenBLAS-0.3.28/utest/test_extensions/test_zimatcopy.c
+--- OpenBLAS-0.3.28-orig/utest/test_extensions/test_zimatcopy.c	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/utest/test_extensions/test_zimatcopy.c	2024-12-24 19:00:16.716404200 +0800
+@@ -91,7 +91,7 @@
+         ztranspose(m, n, alpha, data_zimatcopy.a_test, lda_src, data_zimatcopy.a_verify, lda_dst, conj);
+     } 
+     else {
+-        zcopy(m, n, alpha, data_zimatcopy.a_test, lda_src, data_zimatcopy.a_verify, lda_dst, conj);
++        my_zcopy(m, n, alpha, data_zimatcopy.a_test, lda_src, data_zimatcopy.a_verify, lda_dst, conj);
+     }
+ 
+     if (api == 'F') {
+diff -urN OpenBLAS-0.3.28-orig/utest/test_extensions/test_zomatcopy.c OpenBLAS-0.3.28/utest/test_extensions/test_zomatcopy.c
+--- OpenBLAS-0.3.28-orig/utest/test_extensions/test_zomatcopy.c	2024-08-09 04:41:46.000000000 +0800
++++ OpenBLAS-0.3.28/utest/test_extensions/test_zomatcopy.c	2024-12-24 19:00:23.259766100 +0800
+@@ -92,7 +92,7 @@
+         ztranspose(m, n, alpha, data_zomatcopy.a_test, lda, data_zomatcopy.b_verify, ldb, conj);
+     } 
+     else {
+-        zcopy(m, n, alpha, data_zomatcopy.a_test, lda, data_zomatcopy.b_verify, ldb, conj);
++        my_zcopy(m, n, alpha, data_zomatcopy.a_test, lda, data_zomatcopy.b_verify, ldb, conj);
+     }
+ 
+     if (api == 'F') {

@@ -1,0 +1,40 @@
+diff -urN mumps-5.7.3.1-orig/cmake/install.cmake mumps-5.7.3.1/cmake/install.cmake
+--- mumps-5.7.3.1-orig/cmake/install.cmake	2024-08-01 07:13:24.000000000 +0800
++++ mumps-5.7.3.1/cmake/install.cmake	2024-12-31 17:57:59.661297700 +0800
+@@ -4,7 +4,7 @@
+ 
+ configure_package_config_file(${CMAKE_CURRENT_LIST_DIR}/config.cmake.in
+ ${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}Config.cmake
+-INSTALL_DESTINATION cmake
++INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mumps
+ )
+ 
+ write_basic_package_version_file(
+@@ -14,13 +14,13 @@
+ 
+ install(EXPORT ${PROJECT_NAME}-targets
+ NAMESPACE ${PROJECT_NAME}::
+-DESTINATION cmake
++DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mumps
+ )
+ 
+ install(FILES
+ ${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}Config.cmake
+ ${CMAKE_CURRENT_BINARY_DIR}/cmake/${PROJECT_NAME}ConfigVersion.cmake
+-DESTINATION cmake
++DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mumps
+ )
+ 
+ # --- CPack
+diff -urN mumps-5.7.3.1-orig/CMakeLists.txt mumps-5.7.3.1/CMakeLists.txt
+--- mumps-5.7.3.1-orig/CMakeLists.txt	2024-08-01 07:13:24.000000000 +0800
++++ mumps-5.7.3.1/CMakeLists.txt	2024-12-31 17:57:09.583036100 +0800
+@@ -100,7 +100,7 @@
+ ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindMETIS.cmake
+ ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindScotch.cmake
+ ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindMUMPS.cmake
+-DESTINATION cmake
++DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mumps
+ )
+ 
+ message(STATUS "MUMPS ORDERING_DEFS: ${ORDERING_DEFS}")

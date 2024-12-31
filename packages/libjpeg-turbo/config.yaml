@@ -1,0 +1,9 @@
+name: libjpeg-turbo
+version: 3.0.2
+url: https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/3.0.2.tar.gz
+sha256: 29f2197345aafe1dcaadc8b055e4cbec9f35aad2a318d61ea081f835af2eebe9
+steps:
+  one:
+    dependencies:
+      - nasm
+    run: build.bat

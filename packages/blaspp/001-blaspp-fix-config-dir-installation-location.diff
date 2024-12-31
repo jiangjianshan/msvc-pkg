@@ -1,0 +1,16 @@
+diff -urN blaspp-2024.10.26-orig/CMakeLists.txt blaspp-2024.10.26/CMakeLists.txt
+--- blaspp-2024.10.26-orig/CMakeLists.txt	2024-10-26 21:59:09.000000000 +0800
++++ blaspp-2024.10.26/CMakeLists.txt	2024-12-17 19:46:10.520170300 +0800
+@@ -523,11 +523,7 @@
+ # Install rules.
+ # GNU Filesystem Conventions
+ include( GNUInstallDirs )
+-if (WIN32)
+-    set( install_configdir "blaspp" )
+-else()
+-    set( install_configdir "${CMAKE_INSTALL_LIBDIR}/cmake/blaspp" )
+-endif()
++set( install_configdir "${CMAKE_INSTALL_LIBDIR}/cmake/blaspp" )
+ 
+ # Install library and add to <package>Targets.cmake
+ install(

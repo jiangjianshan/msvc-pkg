@@ -1,0 +1,49 @@
+diff --color -urN flatbuffers-24.3.25-orig/CMakeLists.txt flatbuffers-24.3.25/CMakeLists.txt
+--- flatbuffers-24.3.25-orig/CMakeLists.txt	2024-03-26 13:18:07.000000000 +0800
++++ flatbuffers-24.3.25/CMakeLists.txt	2024-06-04 12:09:50.099672100 +0800
+@@ -428,17 +428,19 @@
+ endif()
+ 
+ if(FLATBUFFERS_BUILD_FLATLIB)
+-  add_library(flatbuffers STATIC ${FlatBuffers_Library_SRCS})
++  add_library(flatbuffers_static STATIC ${FlatBuffers_Library_SRCS})
+ 
+   # Attach header directory for when build via add_subdirectory().
+-  target_include_directories(flatbuffers
++  target_include_directories(flatbuffers_static
+     INTERFACE
+       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+   )
+-  target_link_libraries(flatbuffers PRIVATE $<BUILD_INTERFACE:ProjectConfig>)
++  target_link_libraries(flatbuffers_static PRIVATE $<BUILD_INTERFACE:ProjectConfig>)
+ 
++  set_target_properties(flatbuffers_static PROPERTIES
++                    OUTPUT_NAME libflatbuffers)
+   if(FLATBUFFERS_ENABLE_PCH)
+-    add_pch_to_target(flatbuffers include/flatbuffers/pch/pch.h)
++    add_pch_to_target(flatbuffers_static include/flatbuffers/pch/pch.h)
+   endif()
+ endif()
+ 
+@@ -449,12 +451,6 @@
+   endif()
+ 
+   target_link_libraries(flatc PRIVATE $<BUILD_INTERFACE:ProjectConfig>)
+-  target_compile_options(flatc
+-    PRIVATE
+-      $<$<AND:$<BOOL:${MSVC_LIKE}>,$<CONFIG:Release>>:
+-        /MT
+-      >
+-  )
+ 
+   if(FLATBUFFERS_CODE_SANITIZE AND NOT WIN32)
+     add_fsanitize_to_target(flatc ${FLATBUFFERS_CODE_SANITIZE})
+@@ -626,7 +622,7 @@
+ 
+   if(FLATBUFFERS_BUILD_FLATLIB)
+     install(
+-      TARGETS flatbuffers EXPORT FlatBuffersTargets
++      TARGETS flatbuffers_static EXPORT FlatBuffersTargets
+       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+       INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+     )

@@ -1,0 +1,9 @@
+name: libzmq
+version: 4.3.5
+url: https://github.com/zeromq/libzmq/archive/refs/tags/v4.3.5.tar.gz
+sha256: 6c972d1e6a91a0ecd79c3236f04cf0126f2f4dfbbad407d72b4606a7ba93f9c6
+steps:
+  one:
+    dependencies:
+      - pkg-config
+    run: build.bat

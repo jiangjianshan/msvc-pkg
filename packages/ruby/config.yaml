@@ -1,0 +1,13 @@
+name: ruby
+version: 3.3.6
+url: https://cache.ruby-lang.org/pub/ruby/3.3/ruby-3.3.6.tar.xz
+sha256: 540975969d1af42190d26ff629bc93b1c3f4bffff4ab253e245e125085e66266
+steps:
+  one:
+    dependencies:
+      - gmp:two
+      - libffi
+      - openssl
+      - yaml
+      - zlib
+    run: build.bat

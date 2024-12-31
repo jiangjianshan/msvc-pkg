@@ -1,0 +1,9 @@
+name: ctags
+version: master
+url: https://github.com/universal-ctags/ctags.git
+sha256:
+steps:
+  one:
+    dependencies:
+      - libiconv
+    run: build.bat

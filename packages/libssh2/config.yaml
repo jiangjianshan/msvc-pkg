@@ -1,0 +1,10 @@
+name: libssh2
+version: 1.11.0
+url: https://libssh2.org/download/libssh2-1.11.0.tar.xz
+sha256: a488a22625296342ddae862de1d59633e6d446eff8417398e06674a49be3d7c2
+steps:
+  one:
+    dependencies:
+      - openssl
+      - zlib
+    run: build.bat
