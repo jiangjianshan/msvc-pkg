@@ -5,7 +5,6 @@ sha256: 54ac6470bf045c7ef5c9766f8a185078aff9953bfe3acbca23a8e3a2fab7d361
 steps:
   one:
     dependencies:
-      - OpenBLAS
       - lapack
       - scalapack
     run: build.bat

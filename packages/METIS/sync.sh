@@ -21,6 +21,11 @@ patch_package()
   patch -Np1 -i "$PKG_DIR/001-METIS-fix-compile-link-errors.diff"
   patch -Np1 -i "$PKG_DIR/002-METIS-missing-install-target-if-use-ninja.diff"
 
+  echo "Patching vsgen.bat in top level"
+  sed                                                                          \
+    -e 's|-DCMAKE_CONFIGURATION_TYPES=|-DCMAKE_BUILD_TYPE=|g'                  \
+    -i 'vsgen.bat'
+
   pushd "include" || exit 1
   if [ "$ARCH" == "x86" ]; then
     sed                                                                        \

@@ -18,7 +18,7 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
-  patch -Np1 -i "$PKG_DIR/001-GKlib-compile-on-msvc.diff"
+  patch -Np1 -i "$PKG_DIR/001-GKlib-fix-msvc-type-redefinition.diff"
 }
 
 . $ROOT_DIR/common.sh

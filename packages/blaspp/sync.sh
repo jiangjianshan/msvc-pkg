@@ -19,7 +19,6 @@ patch_package()
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
   patch -Np1 -i "$PKG_DIR/001-blaspp-fix-config-dir-installation-location.diff"
-  patch -Np1 -i "$PKG_DIR/002-blaspp-fix-fortran-mangling-issue-using-intel-compiler.diff"
 }
 
 . $ROOT_DIR/common.sh

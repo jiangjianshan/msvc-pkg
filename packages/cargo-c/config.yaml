@@ -1,0 +1,11 @@
+name: cargo-c
+version: 0.10.7
+url: https://github.com/lu-zero/cargo-c/archive/refs/tags/v0.10.7.tar.gz
+sha256:
+steps:
+  one:
+    dependencies:
+      - pkg-config
+      - curl
+      - openssl
+    run: build.bat

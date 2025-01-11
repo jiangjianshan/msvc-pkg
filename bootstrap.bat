@@ -28,6 +28,7 @@ call :check_cuda || goto :end
 call :check_oneapi || goto :end
 call :check_python || goto :end
 call :check_git || goto :end
+call :check_rust || goto :end
 
 rem Dealing with line endings
 rem See https://stackoverflow.com/questions/1967370/git-replacing-lf-with-crlf
@@ -162,7 +163,7 @@ rem https://oneapi-src.github.io/oneapi-ci/
 if not exist "!ONEAPI_ROOT!\mkl" (
   set with_mkl=
   echo:
-  echo "Do you want to install Intel oneAPI Math Kernel Library (oneMKL)? [yes/y/no/n]"
+  echo "Do you want to install Intel oneAPI Math Kernel Library ^(oneMKL^)? [yes/y/no/n]"
   echo "If you do not want, just press Enter to cancel"
   echo:
   set /p with_mkl=
@@ -367,25 +368,24 @@ if exist "!GIT_ROOT!" (
     call :download_extract https://repo.msys2.org/msys/x86_64/flex-2.6.4-3-x86_64.pkg.tar.zst !GIT_ROOT!
   )
   rem autoconf
+  if not exist "!GIT_ROOT!\usr\share\autoconf-2.13" call :download_extract https://repo.msys2.org/msys/x86_64/autoconf2.13-2.13-6-any.pkg.tar.zst !GIT_ROOT!
+  if not exist "!GIT_ROOT!\usr\share\autoconf-2.69" call :download_extract https://repo.msys2.org/msys/x86_64/autoconf2.69-2.69-4-any.pkg.tar.zst !GIT_ROOT!
+  if not exist "!GIT_ROOT!\usr\share\autoconf-2.71" call :download_extract https://repo.msys2.org/msys/x86_64/autoconf2.71-2.71-3-any.pkg.tar.zst !GIT_ROOT!
+  if not exist "!GIT_ROOT!\usr\share\autoconf-2.72" call :download_extract https://repo.msys2.org/msys/x86_64/autoconf2.72-2.72-1-any.pkg.tar.zst !GIT_ROOT!
   if not exist "!GIT_ROOT!\usr\bin\autoconf" (
-    call :download_extract https://repo.msys2.org/msys/x86_64/autoconf2.13-2.13-6-any.pkg.tar.zst !GIT_ROOT!
-    call :download_extract https://repo.msys2.org/msys/x86_64/autoconf2.69-2.69-4-any.pkg.tar.zst !GIT_ROOT!
-    call :download_extract https://repo.msys2.org/msys/x86_64/autoconf2.71-2.71-3-any.pkg.tar.zst !GIT_ROOT!
-    call :download_extract https://repo.msys2.org/msys/x86_64/autoconf2.72-2.72-1-any.pkg.tar.zst !GIT_ROOT!
     call :download_extract https://repo.msys2.org/msys/x86_64/autoconf-wrapper-20240607-1-any.pkg.tar.zst !GIT_ROOT!
     call :download_extract https://repo.msys2.org/msys/x86_64/autoconf-archive-2023.02.20-1-any.pkg.tar.zst !GIT_ROOT!
   )
   rem automake
-  if not exist "!GIT_ROOT!\usr\bin\automake" (
-    call :download_extract https://repo.msys2.org/msys/x86_64/automake1.11-1.11.6-6-any.pkg.tar.zst !GIT_ROOT!
-    call :download_extract https://repo.msys2.org/msys/x86_64/automake1.12-1.12.6-6-any.pkg.tar.zst !GIT_ROOT!
-    call :download_extract https://repo.msys2.org/msys/x86_64/automake1.13-1.13.4-7-any.pkg.tar.zst !GIT_ROOT!
-    call :download_extract https://repo.msys2.org/msys/x86_64/automake1.14-1.14.1-6-any.pkg.tar.zst !GIT_ROOT!
-    call :download_extract https://repo.msys2.org/msys/x86_64/automake1.15-1.15.1-4-any.pkg.tar.zst !GIT_ROOT!
-    call :download_extract https://repo.msys2.org/msys/x86_64/automake1.16-1.16.5-1-any.pkg.tar.zst !GIT_ROOT!
-    call :download_extract https://repo.msys2.org/msys/x86_64/automake1.17-1.17-1-any.pkg.tar.zst !GIT_ROOT!
-    call :download_extract https://repo.msys2.org/msys/x86_64/automake-wrapper-20240607-1-any.pkg.tar.zst !GIT_ROOT!
-  )
+  if not exist "!GIT_ROOT!\usr\share\automake-1.10" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.10-1.10.3-5-any.pkg.tar.zst !GIT_ROOT!
+  if not exist "!GIT_ROOT!\usr\share\automake-1.11" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.11-1.11.6-6-any.pkg.tar.zst !GIT_ROOT!
+  if not exist "!GIT_ROOT!\usr\share\automake-1.12" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.12-1.12.6-6-any.pkg.tar.zst !GIT_ROOT!
+  if not exist "!GIT_ROOT!\usr\share\automake-1.13" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.13-1.13.4-7-any.pkg.tar.zst !GIT_ROOT!
+  if not exist "!GIT_ROOT!\usr\share\automake-1.14" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.14-1.14.1-6-any.pkg.tar.zst !GIT_ROOT!
+  if not exist "!GIT_ROOT!\usr\share\automake-1.15" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.15-1.15.1-4-any.pkg.tar.zst !GIT_ROOT!
+  if not exist "!GIT_ROOT!\usr\share\automake-1.16" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.16-1.16.5-1-any.pkg.tar.zst !GIT_ROOT!
+  if not exist "!GIT_ROOT!\usr\share\automake-1.17" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.17-1.17-1-any.pkg.tar.zst !GIT_ROOT!
+  if not exist "!GIT_ROOT!\usr\bin\automake" call :download_extract https://repo.msys2.org/msys/x86_64/automake-wrapper-20240607-1-any.pkg.tar.zst !GIT_ROOT!
   rem texinfo
   if not exist "!GIT_ROOT!\usr\bin\texi2any" (
     call :download_extract https://repo.msys2.org/msys/x86_64/texinfo-7.1.1-1-x86_64.pkg.tar.zst !GIT_ROOT!
@@ -423,6 +423,28 @@ if "%errorlevel%" neq "0" (
   copy /Y /V yq.exe %~dp0%ARCH%\bin\yq.exe
 )
 echo Done.
+exit /b 0
+
+rem ==============================================================================
+rem  check rust whether has been installed
+rem ==============================================================================
+:check_rust
+echo Checking Rust whether has been installed
+where rustc >nul 2>&1
+if "%errorlevel%" neq "0" (
+  echo Installing Rust ...
+  if not exist "rustup-init.exe" (
+    if "%ARCH%" == "x64" (
+      wget --no-check-certificate https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe || goto :end
+    ) else (
+      wget --no-check-certificate https://static.rust-lang.org/rustup/dist/i686-pc-windows-msvc/rustup-init.exe || goto :end
+    )
+  )
+  start /wait rustup-init.exe || goto :end
+  set PATH=%HOME%\.cargo\bin;%PATH%
+  rustup default stable-msvc
+)
+echo Done
 exit /b 0
 
 :end

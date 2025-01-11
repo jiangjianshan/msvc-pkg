@@ -48,7 +48,6 @@ patch_package()
 
   echo "Patching configure in top level"
   sed                                                                                                \
-    -e 's|.dll.def|.def|g'                                                                           \
     -e 's|.dll.lib|.lib|g'                                                                           \
     -i configure
   chmod +x configure
@@ -56,7 +55,6 @@ patch_package()
   echo "Patching configure in gettext-runtime"
   pushd gettext-runtime || exit 1
   sed                                                                                                \
-    -e 's|.dll.def|.def|g'                                                                           \
     -e 's|.dll.lib|.lib|g'                                                                           \
     -i configure
   chmod +x configure
@@ -65,7 +63,6 @@ patch_package()
   echo "Patching configure in gettext-runtime/intl"
   pushd gettext-runtime/intl || exit 1
   sed                                                                                                \
-    -e 's|.dll.def|.def|g'                                                                           \
     -e 's|.dll.lib|.lib|g'                                                                           \
     -i configure
   chmod +x configure
@@ -74,7 +71,6 @@ patch_package()
   echo "Patching configure in gettext-runtime/libasprintf"
   pushd gettext-runtime/libasprintf || exit 1
   sed                                                                                                \
-    -e 's|.dll.def|.def|g'                                                                           \
     -e 's|.dll.lib|.lib|g'                                                                           \
     -i configure
   chmod +x configure
@@ -83,7 +79,6 @@ patch_package()
   echo "Patching configure in gettext-tools"
   pushd gettext-tools || exit 1
   sed                                                                                                \
-    -e 's|.dll.def|.def|g'                                                                           \
     -e 's|.dll.lib|.lib|g'                                                                           \
     -i configure
   chmod +x configure
@@ -92,7 +87,6 @@ patch_package()
   echo "Patching configure in gettext-tools/examples"
   pushd gettext-tools/examples || exit 1
   sed                                                                                                \
-    -e 's|.dll.def|.def|g'                                                                           \
     -e 's|.dll.lib|.lib|g'                                                                           \
     -i configure
   chmod +x configure
@@ -101,7 +95,6 @@ patch_package()
   echo "Patching configure in libtextstyle"
   pushd libtextstyle || exit 1
   sed                                                                                                \
-    -e 's|.dll.def|.def|g'                                                                           \
     -e 's|.dll.lib|.lib|g'                                                                           \
     -i configure
   chmod +x configure

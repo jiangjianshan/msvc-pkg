@@ -31,7 +31,6 @@ patch_package()
 
   echo "Patching configure in top level"
   sed                                                                                    \
-    -e 's|.dll.def|.def|g'                                                               \
     -e 's|.dll.lib|.lib|g'                                                               \
     -e 's|libglodb.a|libglodb.lib|g'                                                     \
     -e 's|libdb.a|libdb.lib|g'                                                           \

@@ -12,9 +12,9 @@ for /f "delims=" %%i in ('yq -r ".name" config.yaml') do set PKG_NAME=%%i
 for /f "delims=" %%i in ('yq -r ".version" config.yaml') do set PKG_VER=%%i
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
-set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
-set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm
-set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS
+set BUILD_DIR=%SRC_DIR%
+set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics
+set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
 
 call :configure_stage
 call :build_stage
@@ -25,11 +25,13 @@ rem ============================================================================
 rem  Configure package and ready to build
 rem ==============================================================================
 :configure_stage
-call :clean_build
+rem  call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
-mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
-cd "%BUILD_DIR%" && ..\win32\configure.bat --prefix="%PREFIX%"                 ^
-  --disable-install-doc --without-baseruby || exit 1
+rem TODO: If the build folder is not same as source folder, following issue will
+rem       occur:
+rem       executable host ruby is required. use --with-baseruby option.
+cd "%BUILD_DIR%"
+win32\configure.bat --prefix="%PREFIX%" --without-baseruby || exit 1
 exit /b 0
 
 rem ==============================================================================
@@ -56,7 +58,8 @@ rem  Clean files generated during build procedure
 rem ==============================================================================
 :clean_build
 echo "Cleaning %PKG_NAME% %PKG_VER%"
-cd "%SRC_DIR%" && if exist "%BUILD_DIR%" rmdir /s /q "%BUILD_DIR%"
+cd "%BUILD_DIR%
+del /s /q *.obj *.exe *.lib *.dll *.exp *.pdb
 exit /b 0
 
 :end

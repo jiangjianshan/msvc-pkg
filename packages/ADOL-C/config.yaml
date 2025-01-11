@@ -6,4 +6,5 @@ steps:
   one:
     dependencies:
       - dlfcn-win32
+      - boost
     run: build.sh

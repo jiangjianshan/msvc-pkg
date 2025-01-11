@@ -6,5 +6,4 @@ steps:
   one:
     dependencies:
       - OpenBLAS
-      - lapack
     run: build.bat

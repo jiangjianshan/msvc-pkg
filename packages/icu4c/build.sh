@@ -14,8 +14,8 @@ PKG_VER=$(yq -r '.version' config.yaml)
 RELS_DIR=$ROOT_DIR/releases
 SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/source/build${ARCH//x/}
-C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm'
-C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS'
+C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics'
+C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX'
 
 clean_build()
 {
@@ -47,12 +47,13 @@ configure_stage()
   CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
   CPPFLAGS="$C_DEFS"                                                           \
   CXX="$ROOT_DIR/wrappers/compile cl"                                          \
-  CXXFLAGS="-std:c++17 -EHsc $C_OPTS"                                           \
+  CXXFLAGS="-std:c++17 -EHsc $C_OPTS"                                          \
   CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
   DLLTOOL="link.exe -verbose -dll"                                             \
   LD="$ROOT_DIR/wrappers/compile cl"                                           \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
+  PYTHON="$(cygpath -u "$(where python.exe | head -1)")"                       \
   RANLIB=":"                                                                   \
   RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                \
   STRIP=":"                                                                    \

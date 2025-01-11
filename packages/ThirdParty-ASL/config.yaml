@@ -1,0 +1,8 @@
+name: ThirdParty-ASL
+version: 2.0.2
+url: https://github.com/coin-or-tools/ThirdParty-ASL/archive/refs/tags/releases/2.0.2.tar.gz
+sha256: f6e57d9752db939d2f55ff6917146406217eaa908539b351c840e0ff10b30c94
+steps:
+  one:
+    dependencies:
+    run: build.sh

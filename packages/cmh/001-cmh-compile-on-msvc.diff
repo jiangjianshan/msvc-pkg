@@ -1,0 +1,272 @@
+diff -urN cmh-1.1.1-orig/autogen.sh cmh-1.1.1/autogen.sh
+--- cmh-1.1.1-orig/autogen.sh	1970-01-01 08:00:00.000000000 +0800
++++ cmh-1.1.1/autogen.sh	2025-01-06 15:26:31.052515600 +0800
+@@ -0,0 +1,32 @@
++#!/bin/sh
++# Now it should contain a gnulib-tool.
++GNULIB_TOOL="$GNULIB_SRCDIR/gnulib-tool"
++test -f "$GNULIB_TOOL" || {
++  echo "*** gnulib-tool not found." 1>&2
++  exit 1
++}
++GNULIB_MODULES='
++  vasprintf
++  ftruncate
++  getrusage
++  gettimeofday
++  strsignal
++  sys_resource-h
++  sys_time-h
++  sys_utsname-h
++  unistd-h
++  uname
++'
++$GNULIB_TOOL --lib=libgrt --source-base=src --m4-base=config/m4 --without-tests \
++  --no-vc-files --makefile-name=Makefile.gnulib --libtool \
++  --import $GNULIB_MODULES
++
++aclocal -I config/m4
++autoconf
++autoheader && touch config.h.in
++automake --add-missing --copy
++# Get rid of autom4te.cache directory.
++rm -rf autom4te.cache
++find . -name "*~" -type f -print -exec rm -rfv {} \;
++
++echo "$0: done.  Now you can run './configure'."
+diff -urN cmh-1.1.1-orig/configure.ac cmh-1.1.1/configure.ac
+--- cmh-1.1.1-orig/configure.ac	2022-07-20 18:07:30.000000000 +0800
++++ cmh-1.1.1/configure.ac	2025-01-06 15:26:31.055829500 +0800
+@@ -30,7 +30,7 @@
+ fi
+ AC_SUBST([CMH_LONG_VERSION], [AC_PACKAGE_VERSION])
+ 
+-AM_INIT_AUTOMAKE([1.9 -Wall -Werror])
++AM_INIT_AUTOMAKE([1.9 subdir-objects -Wall])
+ # AM_MAINTAINER_MODE([enable])
+ 
+ AC_CANONICAL_HOST
+@@ -94,6 +94,7 @@
+ 
+ # Languages and compilers, including checks for MPI
+ AC_PROG_CXX
++gl_EARLY
+ AC_LANG(C)
+ AM_CONDITIONAL([MPI], [test x"$enable_mpi" = xyes])
+ AS_IF([test x"$enable_mpi" = xyes], [
+@@ -341,6 +342,7 @@
+ ])
+ AM_CONDITIONAL([WANT_CUSTOM_STACK_BACKTRACES], [test x"$want_custom_stack_backtraces" = xyes])
+ 
++gl_INIT
+ 
+ # Default to noisy rules, but make silent rules an option.
+ AM_SILENT_RULES([no])
+diff -urN cmh-1.1.1-orig/src/borchardt.c cmh-1.1.1/src/borchardt.c
+--- cmh-1.1.1-orig/src/borchardt.c	2022-05-03 00:17:49.000000000 +0800
++++ cmh-1.1.1/src/borchardt.c	2025-01-06 15:26:31.060816300 +0800
+@@ -18,6 +18,7 @@
+  * along with this program. If not, see http://www.gnu.org/licenses/ .
+  */
+ 
++#include <config.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <assert.h>
+diff -urN cmh-1.1.1-orig/src/cputime.c cmh-1.1.1/src/cputime.c
+--- cmh-1.1.1-orig/src/cputime.c	2021-02-03 22:41:35.000000000 +0800
++++ cmh-1.1.1/src/cputime.c	2025-01-06 15:26:31.064949000 +0800
+@@ -18,6 +18,7 @@
+  * along with this program. If not, see http://www.gnu.org/licenses/ .
+  */
+ 
++#include <config.h>
+ #include <stdlib.h>
+ #include <sys/types.h>		/* for cputime */
+ #include <sys/resource.h>	/* for cputime */
+diff -urN cmh-1.1.1-orig/src/factor.c cmh-1.1.1/src/factor.c
+--- cmh-1.1.1-orig/src/factor.c	2021-02-06 01:21:58.000000000 +0800
++++ cmh-1.1.1/src/factor.c	2025-01-06 15:26:31.067941000 +0800
+@@ -18,6 +18,7 @@
+  * along with this program. If not, see http://www.gnu.org/licenses/ .
+  */
+ 
++#include <config.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <limits.h>
+diff -urN cmh-1.1.1-orig/src/io.c cmh-1.1.1/src/io.c
+--- cmh-1.1.1-orig/src/io.c	2021-02-03 22:41:35.000000000 +0800
++++ cmh-1.1.1/src/io.c	2025-01-06 15:26:31.072322400 +0800
+@@ -20,6 +20,7 @@
+ 
+ /* I/O into files, mainly intended for checkpointing purposes */
+ #define _GNU_SOURCE
++#include <config.h>
+ #include <assert.h>
+ #include <unistd.h>
+ #include "cm2.h"
+diff -urN cmh-1.1.1-orig/src/io.h cmh-1.1.1/src/io.h
+--- cmh-1.1.1-orig/src/io.h	2021-02-03 22:41:35.000000000 +0800
++++ cmh-1.1.1/src/io.h	2025-01-06 15:26:31.077644100 +0800
+@@ -23,6 +23,8 @@
+ 
+ #include <stdio.h>
+ #include <mpc.h>
++#include <mpfrcx.h>
++#include "quadratic_field.h"
+ 
+ #define OUTPUT_FORMAT_CODE 42006
+ 
+diff -urN cmh-1.1.1-orig/src/jinvariants.c cmh-1.1.1/src/jinvariants.c
+--- cmh-1.1.1-orig/src/jinvariants.c	2021-02-03 22:41:35.000000000 +0800
++++ cmh-1.1.1/src/jinvariants.c	2025-01-06 15:26:31.081633300 +0800
+@@ -18,6 +18,7 @@
+  * along with this program. If not, see http://www.gnu.org/licenses/ .
+  */
+ 
++#include <config.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <assert.h>
+diff -urN cmh-1.1.1-orig/src/lprintf.c cmh-1.1.1/src/lprintf.c
+--- cmh-1.1.1-orig/src/lprintf.c	2021-02-06 00:51:42.000000000 +0800
++++ cmh-1.1.1/src/lprintf.c	2025-01-06 15:26:31.087056400 +0800
+@@ -18,6 +18,7 @@
+  * along with this program. If not, see http://www.gnu.org/licenses/ .
+  */
+ 
++#include <config.h>
+ #include <stdarg.h>
+ #include <stdio.h>
+ #include <gmp.h>
+diff -urN cmh-1.1.1-orig/src/Makefile.am cmh-1.1.1/src/Makefile.am
+--- cmh-1.1.1-orig/src/Makefile.am	2022-05-03 00:15:29.000000000 +0800
++++ cmh-1.1.1/src/Makefile.am	2025-01-06 15:26:31.091129500 +0800
+@@ -15,8 +15,18 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program. If not, see http://www.gnu.org/licenses/ .
+ 
++MOSTLYCLEANFILES =
++noinst_LTLIBRARIES =
++BUILT_SOURCES =
++EXTRA_DIST =
++MOSTLYCLEANDIRS =
++
+ AM_CFLAGS   = -std=c99 -Wall
+ AM_CXXFLAGS = -Wall
++AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_builddir)/src -I$(top_builddir)
++
++# Rules generated and collected by gnulib-tool.
++include Makefile.gnulib
+ 
+ bin_PROGRAMS = cm2
+ if MPI
+@@ -39,9 +49,8 @@
+ libparsepari_la_SOURCES = parsepari.h parsepari.c
+ 
+ cm2_SOURCES = $(cm2_common)
+-cm2_LDADD = libparsepari.la libcmh.la
++cm2_LDADD = libparsepari.la libcmh.la libgrt.la
+ 
+-    
+ if MPI
+ # Presently we're extracting all flags from the mpi command lines, and
+ # use them with $CC, as this functionality is offered by
+@@ -57,7 +66,7 @@
+ cm2_mpi_CFLAGS = $(AM_CFLAGS) $(MPI_CFLAGS) -DWITH_MPI
+ cm2_mpi_CXXFLAGS = $(AM_CXXFLAGS) $(MPI_CXXFLAGS) -DWITH_MPI
+ cm2_mpi_LDFLAGS = $(MPI_CXXLDFLAGS)
+-cm2_mpi_LDADD = libparsepari.la libcmh.la $(MPI_CXXLDFLAGS)
++cm2_mpi_LDADD = libparsepari.la libcmh.la libgrt.la $(MPI_CXXLDFLAGS)
+ endif
+ 
+ include_HEADERS = cmh.h
+diff -urN cmh-1.1.1-orig/src/misc.c cmh-1.1.1/src/misc.c
+--- cmh-1.1.1-orig/src/misc.c	2021-02-06 01:21:58.000000000 +0800
++++ cmh-1.1.1/src/misc.c	2025-01-06 15:26:31.094586400 +0800
+@@ -18,6 +18,7 @@
+    along with this program. If not, see http://www.gnu.org/licenses/ .
+ */
+ 
++#include <config.h>
+ #include <assert.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+diff -urN cmh-1.1.1-orig/src/mpfrx-mpi.c cmh-1.1.1/src/mpfrx-mpi.c
+--- cmh-1.1.1-orig/src/mpfrx-mpi.c	2021-02-03 22:41:35.000000000 +0800
++++ cmh-1.1.1/src/mpfrx-mpi.c	2025-01-06 15:26:31.098317500 +0800
+@@ -18,6 +18,7 @@
+  * along with this program. If not, see http://www.gnu.org/licenses/ .
+  */
+ 
++#include <config.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <mpi.h>
+diff -urN cmh-1.1.1-orig/src/mpicm2.c cmh-1.1.1/src/mpicm2.c
+--- cmh-1.1.1-orig/src/mpicm2.c	2021-02-03 22:41:35.000000000 +0800
++++ cmh-1.1.1/src/mpicm2.c	2025-01-06 15:26:31.104301400 +0800
+@@ -18,6 +18,7 @@
+  * along with this program. If not, see http://www.gnu.org/licenses/ .
+  */
+ 
++#include <config.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <assert.h>
+diff -urN cmh-1.1.1-orig/src/naive.c cmh-1.1.1/src/naive.c
+--- cmh-1.1.1-orig/src/naive.c	2021-02-03 22:41:35.000000000 +0800
++++ cmh-1.1.1/src/naive.c	2025-01-06 15:26:31.109299500 +0800
+@@ -18,6 +18,7 @@
+  * along with this program. If not, see http://www.gnu.org/licenses/ .
+  */
+ 
++#include <config.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <assert.h>
+diff -urN cmh-1.1.1-orig/src/newton.c cmh-1.1.1/src/newton.c
+--- cmh-1.1.1-orig/src/newton.c	2021-02-06 01:21:58.000000000 +0800
++++ cmh-1.1.1/src/newton.c	2025-01-06 15:26:31.113291600 +0800
+@@ -18,6 +18,7 @@
+  * along with this program. If not, see http://www.gnu.org/licenses/ .
+  */
+ 
++#include <config.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <assert.h>
+diff -urN cmh-1.1.1-orig/src/parsepari.c cmh-1.1.1/src/parsepari.c
+--- cmh-1.1.1-orig/src/parsepari.c	2021-02-06 01:21:58.000000000 +0800
++++ cmh-1.1.1/src/parsepari.c	2025-01-06 15:26:31.118823900 +0800
+@@ -18,6 +18,7 @@
+  * along with this program. If not, see http://www.gnu.org/licenses/ .
+  */
+ 
++#include <config.h>
+ #include <stdio.h>
+ #include <assert.h>
+ #include "parsepari.h"
+diff -urN cmh-1.1.1-orig/src/process_status.c cmh-1.1.1/src/process_status.c
+--- cmh-1.1.1-orig/src/process_status.c	2021-02-03 22:41:35.000000000 +0800
++++ cmh-1.1.1/src/process_status.c	2025-01-06 15:26:31.122192200 +0800
+@@ -19,6 +19,7 @@
+  */
+ 
+ #define _BSD_SOURCE
++#include <config.h>
+ #include <stdio.h>
+ #include <ctype.h>
+ #include "process_status.h"
+diff -urN cmh-1.1.1-orig/src/quadratic_field.c cmh-1.1.1/src/quadratic_field.c
+--- cmh-1.1.1-orig/src/quadratic_field.c	2021-02-06 01:21:58.000000000 +0800
++++ cmh-1.1.1/src/quadratic_field.c	2025-01-06 15:26:31.126368500 +0800
+@@ -18,6 +18,7 @@
+    along with this program. If not, see http://www.gnu.org/licenses/ .
+ */
+ 
++#include <config.h>
+ #include <stdlib.h>
+ /* This is a bit brittle: both pari.h and macros.h define a macro cmul.
+    So include our header file later. */

@@ -6,7 +6,6 @@ steps:
   one:
     dependencies:
       - gmp:two
-      - lapack
       - lz4
       - mpfr
       - OpenBLAS

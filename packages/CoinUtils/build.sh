@@ -14,9 +14,9 @@ PKG_VER=$(yq -r '.version' config.yaml)
 RELS_DIR=$ROOT_DIR/releases
 SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
-C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm'
-C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -DCOINUTILS_BUILD'
-F_OPTS='-nologo -Qdiag-disable:10448 -fp:precise -Qopenmp'
+C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics'
+C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX -DCOINUTILS_BUILD'
+F_OPTS='-nologo -MD -Qdiag-disable:10448 -fp:precise -Qopenmp -Qopenmp-simd -names:lowercase -assume:underscore'
 
 clean_build()
 {
@@ -46,17 +46,22 @@ configure_stage()
   #    in ltmain.sh, otherwise may have '-L=*' in the filed of 'dependency_libs' in
   #    *.la. So don't set --with-sysroot if --libdir has been set
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
-  CC=cl                                                                        \
+  CC="cl"                                                                      \
   CFLAGS="$C_OPTS"                                                             \
-  C_DEFS="$C_DEFS"                                                               \
+  CDEFS="$C_DEFS"                                                              \
+  CPP="cl -E"                                                                  \
   CPPFLAGS="$C_DEFS"                                                           \
-  CXX=cl                                                                       \
+  CXX="cl"                                                                     \
+  CXXCPP="cl -E"                                                               \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
-  CXXDEFS="$C_DEFS"                                                             \
+  CXXDEFS="$C_DEFS"                                                            \
   DLLTOOL="link.exe -verbose -dll"                                             \
-  F77="ifort -f77rtl"                                                          \
-  FFLAGS="$F_OPTS"                                                             \
-  LD="link -nologo"                                                            \
+  F77="ifort"                                                                  \
+  FFLAGS="$F_OPTS -f77rtl"                                                     \
+  LD="$ROOT_DIR/wrappers/compile cl"                                           \
+  MPICC="$ROOT_DIR/wrappers/mpicl"                                             \
+  MPICXX="$ROOT_DIR/wrappers/mpicl"                                            \
+  MPIF77="$ROOT_DIR/wrappers/mpif77"                                           \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
   RANLIB=":"                                                                   \
@@ -77,9 +82,10 @@ configure_stage()
     --enable-gnu-packages                                                      \
     --disable-rpath                                                            \
     --with-blas                                                                \
-    --with-blas-lib="-lblas"                                                   \
+    --with-blas-lib="-lopenblas"                                               \
     --with-lapack                                                              \
-    --with-lapack-lib="-llapack"                                               \
+    --with-lapack-lib="-lopenblas"                                             \
+    ac_cv_prog_f77_v="-verbose"                                                \
     gt_cv_locale_zh_CN=none || exit 1
 }
 
@@ -96,7 +102,6 @@ patch_stage()
     -i libtool
   chmod +x libtool
 }
-
 
 build_stage()
 {

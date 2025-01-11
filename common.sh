@@ -35,11 +35,13 @@ verify_file() {
   local calc_sha256
   echo "Checking file integrity of $1"
   calc_sha256=$(sha256sum "$TAGS_DIR/$archive" | cut -d ' ' -f1)
-  if [[ ! "$correct_sha256" = "$calc_sha256" ]]; then
-    echo "File $archive is corrupted, download it again, please wait"
-    if ! wget --no-check-certificate "$pkg_url" -O "$TAGS_DIR/$archive"; then
-      echo "Failed to download $archive from $pkg_url"
-      exit 1
+  if [ -n "$correct_sha256" ]; then
+    if [[ ! "$correct_sha256" = "$calc_sha256" ]]; then
+      echo "File $archive is corrupted, download it again, please wait"
+      if ! wget --no-check-certificate "$pkg_url" -O "$TAGS_DIR/$archive"; then
+        echo "Failed to download $archive from $pkg_url"
+        exit 1
+      fi
     fi
   fi
 }

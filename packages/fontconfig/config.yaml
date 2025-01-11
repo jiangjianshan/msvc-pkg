@@ -9,6 +9,7 @@ steps:
       - getopt
       - gettext
       - glib:two
+      - gperf
       - freetype
       - expat
       - harfbuzz:one

@@ -5,4 +5,9 @@ sha256:
 steps:
   one:
     dependencies:
+      - brotli
+      - c-ares
+      - openssl
+      - libxml2
+      - zlib
     run: build.bat

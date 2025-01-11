@@ -9,7 +9,7 @@
 - 🚗 Do you want to have independent compilation process for each library?
 - and etc.
 
-🚀 ***msvc-pkg*** is the right lightweight build manager you are looking for. It consists of more than 188+ open source libraries, which are available under👝 ***packages*** folder. Some of these libraries are not easy to be built on Windows, e.g. 💘 gmp 💚, 💘 ncurses 💚 and so on. More and more libraries are comming.
+🚀 ***msvc-pkg*** is the right lightweight build manager you are looking for. It consists of more than 200+ open source libraries, which are available under👝 ***packages*** folder. Some of these libraries are not easy to be built on Windows, e.g. 💘 gmp 💚, 💘 ncurses 💚 and so on. More and more libraries are comming.
 
 ## Dependencies
 
@@ -17,8 +17,7 @@
 - [Intel oneAPI DPC++/C++ Compiler 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html)
 - [Intel Fortran Compiler Classic and Intel Fortran Compiler 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler-download.html)
 - [Intel MPI Library](https://www.intel.com/content/www/us/en/developer/tools/oneapi/mpi-library-download.html)
-- [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit)
-- [CUDNN](https://developer.nvidia.com/cudnn)
+- [Rust for Windows](https://www.rust-lang.org/tools/install)
 - [Git for Windows](https://git-scm.com/download/win)
 - [Python 3](https://www.python.org/downloads/)
 - [CMake](https://cmake.org/download/)

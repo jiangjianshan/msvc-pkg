@@ -1,0 +1,8 @@
+name: qd
+version: 2.3.24
+url: https://www.davidhbailey.com/dhbsoftware/qd-2.3.24.tar.gz
+sha256: a47b6c73f86e6421e86a883568dd08e299b20e36c11a99bdfbe50e01bde60e38
+steps:
+  one:
+    dependencies:
+    run: build.sh

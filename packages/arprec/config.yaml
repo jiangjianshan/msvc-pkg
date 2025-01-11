@@ -1,0 +1,9 @@
+name: arprec
+version: 2.2.20
+url: https://www.davidhbailey.com/dhbsoftware/arprec-2.2.20.tar.gz
+sha256: a6f1fa5646b69ba8e862c47f4c32fc1b63b17e806e1da38b4cb45bceba905b10
+steps:
+  one:
+    dependencies:
+      - qd
+    run: build.sh

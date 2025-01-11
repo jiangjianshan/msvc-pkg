@@ -31,25 +31,12 @@ patch_package()
 
   echo "Patching configure in top level"
   sed                                                                                                \
-    -e 's|.dll.def|.def|g'                                                                           \
     -e 's|.dll.lib|.lib|g'                                                                           \
     -e 's|#include "$srcdir\/gmp-h.in"|#include "gmp-h.in"|g'                                        \
     -e 's|#include "$srcdir\/gmp-impl.h"|#include "gmp-impl.h"|g'                                    \
     -e 's|#include \\"$srcdir\/gmp-h.in\\"|#include \\"gmp-h.in\\"|g'                                \
     -i configure
   chmod +x configure
-
-  pushd doc
-  echo "Patching gmp.info-1 in doc"
-  sed                                                                                                \
-    -e 's|.dll.def|.def|g'                                                                           \
-    -i gmp.info-1
-
-  echo "Patching gmp.texi in doc"
-  sed                                                                                                \
-    -e 's|.dll.def|.def|g'                                                                           \
-    -i gmp.texi
-  popd
 }
 
 . $ROOT_DIR/common.sh

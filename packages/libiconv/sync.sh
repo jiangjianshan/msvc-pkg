@@ -40,7 +40,6 @@ patch_package()
 
   echo "Patching configure in top level"
   sed                                                                                    \
-    -e 's|.dll.def|.def|g'                                                               \
     -e 's|.dll.lib|.lib|g'                                                               \
     -i configure
   chmod +x configure
@@ -48,7 +47,6 @@ patch_package()
   echo "Patching configure in libcharset"
   pushd libcharset || exit 1
   sed                                                                                    \
-    -e 's|.dll.def|.def|g'                                                               \
     -e 's|.dll.lib|.lib|g'                                                               \
     -i configure
   chmod +x configure

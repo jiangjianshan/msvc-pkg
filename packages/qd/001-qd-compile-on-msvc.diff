@@ -1,0 +1,30 @@
+diff -urN qd-2.3.24-orig/fortran/Makefile.am qd-2.3.24/fortran/Makefile.am
+--- qd-2.3.24-orig/fortran/Makefile.am	2023-11-03 22:39:34.000000000 +0800
++++ qd-2.3.24/fortran/Makefile.am	2025-01-07 15:38:39.129682700 +0800
+@@ -14,7 +14,7 @@
+ DDMOD=ddmodule.$(module_ext)
+ endif
+ 
+-lib_LTLIBRARIES = libqdmod.la libqd_f_main.la
++lib_LTLIBRARIES = libqdmod.la
+ libqdmod_la_SOURCES = ddext.f ddmod.f qdext.f qdmod.f f_dd.cpp f_qd.cpp
+ libqdmod_la_LIBADD = $(top_builddir)/src/libqd.la $(FCLIBS)
+ libqd_f_main_la_SOURCES = main.cpp
+diff -urN qd-2.3.24-orig/qd-config.in qd-2.3.24/qd-config.in
+--- qd-2.3.24-orig/qd-config.in	2023-11-03 22:39:33.000000000 +0800
++++ qd-2.3.24/qd-config.in	2025-01-07 15:21:58.795764000 +0800
+@@ -18,11 +18,11 @@
+ FC="@FC@"
+ 
+ LDFLAGS="-L$libdir -lqd @LIBS@"
+-STATICLDFLAGS="$libdir/libqd.a @LIBS@"
++STATICLDFLAGS="$libdir/libqd.lib @LIBS@"
+ LALDFLAGS="$libdir/libqd.la @LIBS@"
+-SRC_LDFLAGS="$builddir/src/.libs/libqd.so @LIBS@"
++SRC_LDFLAGS="$builddir/src/.libs/qd.dll @LIBS@"
+ SRC_LALDFLAGS="$builddir/src/libqd.la @LIBS@"
+-SRC_STATICLDFLAGS="$builddir/src/.libs/libqd.a @LIBS@"
++SRC_STATICLDFLAGS="$builddir/src/.libs/libqd.lib @LIBS@"
+ 
+ CFLAGS="@CPPFLAGS@ -I$includedir"
+ SRC_CFLAGS="-I$srcdir/src -I$builddir/src @CPPFLAGS@"

@@ -6,4 +6,5 @@ steps:
   one:
     dependencies:
       - GKlib
+      - pcre
     run: build.bat

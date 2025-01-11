@@ -1,0 +1,15 @@
+diff -urN bc-1.08.1-orig/bc/execute.c bc-1.08.1/bc/execute.c
+--- bc-1.08.1-orig/bc/execute.c	2025-01-06 05:56:10.000000000 +0800
++++ bc-1.08.1/bc/execute.c	2025-01-11 09:20:12.223188800 +0800
+@@ -293,7 +293,11 @@
+ 
+ 	case 'X': /* Random function. */
+ 	  push_copy (_zero_);
++#ifdef _MSC_VER
++	  bc_int2num (&ex_stack->s_num, rand());
++#else
+ 	  bc_int2num (&ex_stack->s_num, random());
++#endif
+ 	  break;
+ 	}
+ 	break;
