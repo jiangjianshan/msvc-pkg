@@ -34,6 +34,9 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_C_COMPILER=cl                                                        ^
   -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS%"                                          ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
+  -DBUILD_LUTS_GENERATOR=ON                                                    ^
+  -DBUILD_JPIP=ON                                                              ^
+  -DBUILD_TESTING=OFF                                                          ^
   .. || exit 1
 exit /b 0
 

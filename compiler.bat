@@ -27,6 +27,7 @@ if exist "%ONEAPI_ROOT%" (
 
 rem Set CUDA environment
 if exist "%CUDA_PATH%" (
+  set "PATH=%PATH%;%CUDA_PATH%\extras\demo_suite"
   set "INCLUDE=%CUDA_PATH%\include;!INCLUDE!"
   set "LIB=%CUDA_PATH%\lib\x64;%CUDA_PATH%\lib\win32;!LIB!"
 )

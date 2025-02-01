@@ -27,20 +27,15 @@ rem ============================================================================
 :configure_stage
 call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
-mkdir "%BUILD_DIR%"
-cd "%SRC_DIR%"
-meson setup "%BUILD_DIR%"                                                      ^
-  --buildtype=release                                                          ^
-  --prefix="%PREFIX%"                                                          ^
-  --mandir="%PREFIX%\share\man"                                                ^
-  -Dc_std=c17                                                                  ^
-  -Dc_args="%C_OPTS% %C_DEFS%"                                                 ^
-  -Dcpp_std=c++17                                                              ^
-  -Dcpp_args="-EHsc %C_OPTS% %C_DEFS%"                                         ^
-  -Dc_winlibs="Ole32.lib,User32.lib"                                           ^
-  -Dcpp_winlibs="Ole32.lib,User32.lib"                                         ^
-  -Ddefault_library=shared                                                     ^
-  -Dbuild-test=false || exit 1
+mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
+cmake -G "Ninja"                                                               ^
+  -DBUILD_SHARED_LIBS=ON                                                       ^
+  -DCMAKE_BUILD_TYPE=Release                                                   ^
+  -DCMAKE_CXX_COMPILER=cl                                                      ^
+  -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
+  -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
+  -DBUILD_TESTING=OFF                                                          ^
+  .. || exit 1
 exit /b 0
 
 rem ==============================================================================

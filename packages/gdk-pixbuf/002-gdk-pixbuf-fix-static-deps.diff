@@ -1,0 +1,11 @@
+diff -urN gdk-pixbuf-2.42.12-orig/gdk-pixbuf/meson.build gdk-pixbuf-2.42.12/gdk-pixbuf/meson.build
+--- gdk-pixbuf-2.42.12-orig/gdk-pixbuf/meson.build	2024-05-15 10:15:41.000000000 +0800
++++ gdk-pixbuf-2.42.12/gdk-pixbuf/meson.build	2025-01-19 15:07:53.209216800 +0800
+@@ -214,6 +214,7 @@
+                     dependencies: [
+                       gdk_pixbuf_deps,
+                       included_loaders_deps,
++                      loaders_deps
+                     ],
+                     install: true)
+ 

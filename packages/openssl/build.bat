@@ -28,9 +28,16 @@ rem ============================================================================
 call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%"
-set HOST_TRIPLET=VC-WIN64A
-if "%ARCH%" == "x86" set HOST_TRIPLET=VC-WIN32
-perl Configure %HOST_TRIPLET% --prefix="%PREFIX%" --openssldir="%PREFIX%\ssl" || exit 1
+if "%ARCH%"=="x64" set HOST_TRIPLET=VC-WIN64A
+if "%ARCH%"=="x86" set HOST_TRIPLET=VC-WIN32
+perl Configure !HOST_TRIPLET!                                                  ^
+  --prefix="%PREFIX:\=/%"                                                      ^
+  --openssldir="%PREFIX:\=/%/ssl"                                              ^
+  shared                                                                       ^
+  CFLAGS="%C_OPTS%"                                                            ^
+  CPPFLAGS="%C_DEFS%"                                                          ^
+  CXXFLAGS="-EHsc %C_OPTS%"                                                    ^
+  || exit 1
 exit /b 0
 
 rem ==============================================================================
@@ -49,6 +56,12 @@ rem ============================================================================
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%"
 nmake install INSTALLDIR="%PREFIX%" || exit 1
+if not exist "%PREFIX%\lib\crypto.lib" (
+  mklink "%PREFIX%\lib\crypto.lib" "%PREFIX%\lib\libcrypto.lib"
+)
+if not exist "%PREFIX%\lib\ssl.lib" (
+  mklink "%PREFIX%\lib\ssl.lib" "%PREFIX%\lib\libssl.lib"
+)
 call :clean_build
 exit /b 0
 
@@ -59,7 +72,10 @@ rem ============================================================================
 echo "Cleaning %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%"
 nmake clean INSTALLDIR="%PREFIX%"
-del *.tmp makefile makefile.in *.res configdata.pm
+del /s /q *.tmp makefile.in *.res configdata.pm *.lib *.exp
+del /s /q include\openssl\configuration.h
+rmdir /s /q doc\man
+rmdir /s /q doc\html
 exit /b 0
 
 :end

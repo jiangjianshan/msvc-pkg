@@ -14,7 +14,7 @@ PKG_VER=$(yq -r '.version' config.yaml)
 RELS_DIR=$ROOT_DIR/releases
 SRC_DIR=$RELS_DIR/$PKG_NAME
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
-C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics'
+C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:fast -openmp:llvm -Zc:__cplusplus -experimental:c11atomics'
 C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX'
 
 clean_build()
@@ -46,6 +46,7 @@ configure_stage()
     --bindir="$PREFIX/bin"                                                     \
     --includedir="$PREFIX/include"                                             \
     --libdir="$PREFIX/lib"                                                     \
+    --enable-static                                                            \
     --enable-shared                                                            \
     --extra-cflags="$C_OPTS $C_DEFS" || exit 1
 }

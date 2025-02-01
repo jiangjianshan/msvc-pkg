@@ -1,0 +1,17 @@
+name: librsvg
+version: 2.59.2
+url: https://gitlab.gnome.org/GNOME/librsvg/-/archive/2.59.2/librsvg-2.59.2.tar.bz2
+sha256: 453c1c012ed014a5e1eb74e19454a7e1214c5a4a0dac0d09ac906f121035f619
+steps:
+  one:
+    dependencies:
+      - cairo
+      - cargo-c
+      - glib:two
+      - freetype
+      - pkg-config
+      - pango
+      - gdk-pixbuf
+      - libxml2
+      - vala
+    run: build.bat

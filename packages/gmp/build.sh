@@ -57,7 +57,7 @@ configure_stage()
   CC_FOR_BUILD="$ROOT_DIR/wrappers/compile cl"                                 \
   CCAS="yasm -Xvc -f $YASM_OBJ_FMT -rraw -pgas"                                \
   CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
-  CPPFLAGS="$C_DEFS -I$SRC_DIR -I$BUILD_DIR"                                    \
+  CPPFLAGS="$C_DEFS -I$SRC_DIR -I$BUILD_DIR"                                   \
   CPP_FOR_BUILD="$ROOT_DIR/wrappers/compile cl -E"                             \
   CXX="$ROOT_DIR/wrappers/compile cl"                                          \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
@@ -84,7 +84,7 @@ configure_stage()
     ac_cv_type_std__locale=yes                                                 \
     gmp_cv_asm_w32=".word"                                                     \
     gt_cv_locale_zh_CN=none
-  [[ $? -ne 0 ]] && exit 1
+    || exit 1
 }
 
 build_stage()

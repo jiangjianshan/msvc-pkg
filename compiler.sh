@@ -171,7 +171,7 @@ config_oneapi()
   LIB=$(prepend_path "${ONEAPI_ROOT}"'\tbb\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
   LIB=$(prepend_path "${ONEAPI_ROOT}"'\mpi\latest\lib' "${LIB:-}" ";")
   LIB=$(prepend_path "${ONEAPI_ROOT}"'\mkl\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
-  LIB=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\lib\clang\18\lib\windows' "${LIB:-}" ";")
+  LIB=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\lib\clang\19\lib\windows' "${LIB:-}" ";")
   LIB=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\opt\compiler\lib' "${LIB:-}" ";")
   LIB=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
   MKLROOT="${ONEAPI_ROOT}"'\mkl\latest'
@@ -251,12 +251,19 @@ config_cuda()
   if [ -n "${CUDA_PATH:-}" ]; then
     CUDA_HOME=${CUDA_PATH}
     PATH=$(prepend_path "$(cygpath -u "${CUDA_HOME}")/bin" "${PATH:-}" ":")
+    PATH=$(prepend_path "$(cygpath -u "${CUDA_HOME}")/extras/demo_suite" "${PATH:-}" ":")
     INCLUDE=$(prepend_path "${CUDA_HOME}"'\include' "${INCLUDE:-}" ";")
     LIB=$(prepend_path "${CUDA_HOME}"'\lib\x64' "${LIB:-}" ";")
+    NV_COMPUTE=$(deviceQuery | awk '/CUDA Capability Major/{print $(NF)}')
+    echo "Initializing CUDA command-line environment..."
+    echo "CUDA Install Directory                                 : $CUDA_HOME"
+    echo "CUDA Capability Major/Minor version number             : $NV_COMPUTE"
+    echo "CUDA command-line environment initialized for          : $ARCH"
     export CUDA_HOME
     export PATH
     export LIB
     export INCLUDE
+    export NV_COMPUTE
   fi
 }
 

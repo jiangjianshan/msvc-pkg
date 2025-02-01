@@ -1,0 +1,19 @@
+diff -urN gdk-pixbuf-2.42.12-orig/meson.build gdk-pixbuf-2.42.12/meson.build
+--- gdk-pixbuf-2.42.12-orig/meson.build	2024-05-15 10:15:41.000000000 +0800
++++ gdk-pixbuf-2.42.12/meson.build	2024-12-05 14:45:21.428551000 +0800
+@@ -219,6 +219,7 @@
+ endif
+ 
+ gdk_pixbuf_deps = [
++  intl_dep,
+   mathlib_dep,
+   glib_dep,
+   gobject_dep,
+@@ -226,7 +227,6 @@
+   gio_dep,
+   shared_mime_dep,
+   medialib_dep,
+-  intl_dep,
+ ]
+ 
+ # Check if we can build shared modules

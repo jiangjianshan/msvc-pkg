@@ -7,5 +7,6 @@ steps:
     dependencies:
       - gmp:two
       - ncurses
+      - perl
       - readline
     run: build.sh

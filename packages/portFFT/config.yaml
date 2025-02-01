@@ -1,0 +1,9 @@
+name: portFFT
+version: main
+url: https://github.com/codeplaysoftware/portFFT.git
+sha256:
+steps:
+  one:
+    dependencies:
+      - winpthreads
+    run: build.bat

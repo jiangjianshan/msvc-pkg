@@ -1,0 +1,116 @@
+diff -urN openssl-3.3.2-orig/Configurations/windows-makefile.tmpl openssl-3.3.2/Configurations/windows-makefile.tmpl
+--- openssl-3.3.2-orig/Configurations/windows-makefile.tmpl	2024-09-03 20:46:38.000000000 +0800
++++ openssl-3.3.2/Configurations/windows-makefile.tmpl	2025-01-25 09:05:21.712440300 +0800
+@@ -155,6 +155,11 @@
+                          && $unified_info{attributes}->{scripts}->{$_}->{misc} }
+                   @{$unified_info{scripts}})
+ -}
++INSTALL_EXPORTERS_PKGCONFIG={-
++        join(" ", map { quotify1($_) }
++                  grep { $unified_info{attributes}->{generate}->{$_}->{exporter} eq 'pkg-config'}
++                  sort keys %{$unified_info{generate}})
++-}
+ INSTALL_EXPORTERS_CMAKE={-
+         join(" ", map { quotify1($_) }
+                   grep { $unified_info{attributes}->{generate}->{$_}->{exporter} eq 'cmake'}
+@@ -254,6 +259,7 @@
+ libdir={- file_name_is_absolute($libdir)
+           ? $libdir : '$(INSTALLTOP)\$(LIBDIR)' -}
+ 
++PKGCONFIGDIR=$(libdir)\pkgconfig
+ CMAKECONFIGDIR=$(libdir)\cmake\OpenSSL
+ 
+ ##### User defined commands and flags ################################
+@@ -566,6 +572,8 @@
+ 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_LIBS) "$(libdir)"
+ 	@if "$(SHLIBS)"=="" \
+ 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" ossl_static.pdb "$(libdir)"
++	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(PKGCONFIGDIR)"
++	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_EXPORTERS_PKGCONFIG) "$(PKGCONFIGDIR)"
+ 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(CMAKECONFIGDIR)"
+ 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_EXPORTERS_CMAKE) "$(CMAKECONFIGDIR)"
+ 
+diff -urN openssl-3.3.2-orig/exporters/pkg-config/libcrypto.pc.in openssl-3.3.2/exporters/pkg-config/libcrypto.pc.in
+--- openssl-3.3.2-orig/exporters/pkg-config/libcrypto.pc.in	2024-09-03 20:46:38.000000000 +0800
++++ openssl-3.3.2/exporters/pkg-config/libcrypto.pc.in	2025-01-25 09:04:24.141023600 +0800
+@@ -1,4 +1,23 @@
+-prefix={- $OpenSSL::safe::installdata::PREFIX[0] -}
++{-
++   # Unixifying of paths, because that's what CMake understands.
++   # This assumes that the given path is absolute.
++   sub unixify {
++       use File::Spec;
++       use File::Spec::Unix;
++
++       my $path = shift;
++       my $no_file = shift;
++       (my $volume, $directories, $file) = File::Spec->splitpath($path, $no_file // ());
++       $directories = File::Spec::Unix->catdir(File::Spec->splitdir($directories));
++
++       # We know that $volume is ignored by File::Spec::Unix, so we handle it specially
++       # according to the conventions of the platform.
++       $volume =~ s|^(.*?):$|/$1| if $^O eq "vms"; # On VMS, DEV: -> /DEV
++
++       return $volume . File::Spec::Unix->catpath('', $directories, $no_file ? () : $file);
++   }
++-}
++prefix={- unixify($OpenSSL::safe::installdata::PREFIX[0], 1); -}
+ exec_prefix=${prefix}
+ libdir={- if (defined $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX[0]) {
+               my $x = '';
+diff -urN openssl-3.3.2-orig/exporters/pkg-config/libssl.pc.in openssl-3.3.2/exporters/pkg-config/libssl.pc.in
+--- openssl-3.3.2-orig/exporters/pkg-config/libssl.pc.in	2024-09-03 20:46:38.000000000 +0800
++++ openssl-3.3.2/exporters/pkg-config/libssl.pc.in	2025-01-25 09:04:31.487120200 +0800
+@@ -1,4 +1,23 @@
+-prefix={- $OpenSSL::safe::installdata::PREFIX[0] -}
++{-
++   # Unixifying of paths, because that's what CMake understands.
++   # This assumes that the given path is absolute.
++   sub unixify {
++       use File::Spec;
++       use File::Spec::Unix;
++
++       my $path = shift;
++       my $no_file = shift;
++       (my $volume, $directories, $file) = File::Spec->splitpath($path, $no_file // ());
++       $directories = File::Spec::Unix->catdir(File::Spec->splitdir($directories));
++
++       # We know that $volume is ignored by File::Spec::Unix, so we handle it specially
++       # according to the conventions of the platform.
++       $volume =~ s|^(.*?):$|/$1| if $^O eq "vms"; # On VMS, DEV: -> /DEV
++
++       return $volume . File::Spec::Unix->catpath('', $directories, $no_file ? () : $file);
++   }
++-}
++prefix={- unixify($OpenSSL::safe::installdata::PREFIX[0], 1); -}
+ exec_prefix=${prefix}
+ libdir={- if (defined $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX[0]) {
+               my $x = '';
+diff -urN openssl-3.3.2-orig/exporters/pkg-config/openssl.pc.in openssl-3.3.2/exporters/pkg-config/openssl.pc.in
+--- openssl-3.3.2-orig/exporters/pkg-config/openssl.pc.in	2024-09-03 20:46:38.000000000 +0800
++++ openssl-3.3.2/exporters/pkg-config/openssl.pc.in	2025-01-25 09:04:18.837321000 +0800
+@@ -1,4 +1,23 @@
+-prefix={- $OpenSSL::safe::installdata::PREFIX[0] -}
++{-
++   # Unixifying of paths, because that's what CMake understands.
++   # This assumes that the given path is absolute.
++   sub unixify {
++       use File::Spec;
++       use File::Spec::Unix;
++
++       my $path = shift;
++       my $no_file = shift;
++       (my $volume, $directories, $file) = File::Spec->splitpath($path, $no_file // ());
++       $directories = File::Spec::Unix->catdir(File::Spec->splitdir($directories));
++
++       # We know that $volume is ignored by File::Spec::Unix, so we handle it specially
++       # according to the conventions of the platform.
++       $volume =~ s|^(.*?):$|/$1| if $^O eq "vms"; # On VMS, DEV: -> /DEV
++
++       return $volume . File::Spec::Unix->catpath('', $directories, $no_file ? () : $file);
++   }
++-}
++prefix={- unixify($OpenSSL::safe::installdata::PREFIX[0], 1); -}
+ exec_prefix=${prefix}
+ libdir={- if (defined $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX[0]) {
+               my $x = '';

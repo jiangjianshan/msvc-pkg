@@ -18,6 +18,8 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
+  patch -Np1 -i "$PKG_DIR/001-zlib-fix-have-unistd-h-if-is-set-but-is-zero.diff"
+
   # Fix wrong .pc installation location
   echo "Patching CMakeLists.txt in top level"
   sed                                                                          \

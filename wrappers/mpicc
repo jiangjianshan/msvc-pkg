@@ -31,7 +31,7 @@ MPIVERSION=2021.13
 
 # The I_MPI_ROOT should be defined by a installer
 if [ -z "$I_MPI_ROOT" ]; then
-    echo "You have to source <Intel MPI>/env/vars.bat"
+    echo 'You have to source <Intel MPI>\env\vars.bat'
     exit 1
 fi
 I_MPI_INCDIR="${I_MPI_ROOT}/include"
@@ -100,6 +100,7 @@ VTTRACE_LIBS_START=
 Show=eval
 static_mpi=no
 static_log=no
+handle_executable=
 ilp64=no
 case_trace=no
 trace_opt=no
@@ -137,7 +138,6 @@ for arg in "$@" ; do
     # Only one -link must be present in the command line
     if [ "$link_arg_was_processed" == "yes" ]; then
         link_args="$link_args $qarg"
-        addarg=no
         continue
     fi
     case "$arg" in
@@ -152,6 +152,10 @@ for arg in "$@" ; do
         # Compiler options that affect whether we are linking or no
         -c|-S|-E|-QM|-QMM)
             linking=no
+            ;;
+        -o)
+            handle_executable=yes
+            addarg=no
             ;;
         # ----------------------------------------------------------------
         # Options that control how we use mpicc (e.g., -show, etc.)
@@ -181,6 +185,14 @@ for arg in "$@" ; do
             addarg=no
             Show=echo
             ;;
+        -static)
+            static_mpi=yes
+            addarg=no
+            ;;
+        -shared)
+            static_mpi=no
+            addarg=no
+            ;;
         -config=*)
             addarg=no
             CCname=`echo A$arg | sed -e 's/A-config=//g'`
@@ -190,15 +202,15 @@ for arg in "$@" ; do
                 echo "Configuration file mpicc-$CCname.conf was not found."
             fi
             ;;
-        # ----------------------------------------------------------------
-        # -compile_info included for backward compatibility
-        -compile-info|-compile_info)
+            # ----------------------------------------------------------------
+            # -compile_info included for backward compatibility
+            -compile-info|-compile_info)
             Show=echo
             addarg=no
             ;;
-        # ----------------------------------------------------------------
-        # -link_info included for backward compatibility
-        -link-info|-link_info)
+            # ----------------------------------------------------------------
+            # -link_info included for backward compatibility
+            -link-info|-link_info)
             Show=echo
             addarg=no
             ;;
@@ -270,6 +282,9 @@ for arg in "$@" ; do
             ilp64=yes
             addarg=no
             ;;
+        -l*)
+            qarg="${arg#-l}.lib"
+            ;;
         -t | -trace)
             if [ -z "$VT_ROOT" ]; then
                 echo "You need to set VT_ROOT env variable to use -trace option"
@@ -304,6 +319,27 @@ for arg in "$@" ; do
             trace_opt=yes
             addarg=no
             ;;
+        *.cc | *.CC | *.cxx | *.CXX | *.[cC]++ | *.c | *.cpp | *.CPP)
+            qarg="$(cygpath -m "$arg")"
+            ;;
+        *.o | *.lo | *.[oO][bB][jJ])
+            if [ "x$handle_executable" = "xyes" ] ; then
+                qarg='-Fo'"$(cygpath -m "$arg")"
+                handle_executable=
+            fi
+            ;;
+        *.dll)
+            if [ "x$handle_executable" = "xyes" ] ; then
+                qarg='-LD -Fe'"$(cygpath -m "$arg")"
+                handle_executable=
+            fi
+            ;;
+        *.exe)
+            if [ "x$handle_executable" = "xyes" ] ; then
+                qarg='-Fe'"$(cygpath -m "$arg")"
+                handle_executable=
+            fi
+            ;;
         # Other arguments.  We are careful to handle arguments with
         # quotes (we try to quote all arguments in case they include
         # any spaces)
@@ -314,7 +350,12 @@ for arg in "$@" ; do
             qarg=`echo \"$arg\"`
             ;;
         *)
-            qarg=$arg
+            if [ "x$handle_executable" = "xyes" ] ; then
+                qarg='-Fe'"$arg"
+                handle_executable=
+            else
+                qarg=$arg
+            fi
             ;;
     esac
     if [ $addarg = yes ] ; then
@@ -380,15 +421,15 @@ fi
 
 # Handle the case of a profile switch
 if [ -n "$profConf" ]; then
-    if [ -f "$I_MPI_LIBDIR/${profConf}.lib" ]; then
+    if [ -f "${I_MPI_LIBDIR}/${profConf}.lib" ]; then
         profConfLibExists=yes
     fi
-    if [ -f "$I_MPI_CFGDIR/${profConf}.conf" ]; then
+    if [ -f "${I_MPI_CFGDIR}/${profConf}.conf" ]; then
         profConfFileExists=yes
     fi
 fi
 if [ "$profConfLibExists" == "yes" ]; then
-   mpilibs="${profConf}.lib $mpilibs"
+    mpilibs="${profConf}.lib $mpilibs"
 elif [ -n "$profConf" ]; then
     if [ "$profConfFileExists" == "yes" ]; then
         . "${I_MPI_CFGDIR}/${profConf}.conf"
@@ -401,7 +442,7 @@ if [ -n "$PROFILE_PRELIB" ]; then mpilibs="$PROFILE_PRELIB $mpilibs"; fi
 if [ -n "$PROFILE_POSTLIB" ]; then mpilibs="$mpilibs $PROFILE_POSTLIB"; fi
 
 if [ "$ilp64" == "yes" ]; then
-   mpilibs="libmpi_ilp64.lib $mpilibs"
+    mpilibs="libmpi_ilp64.lib $mpilibs"
 fi
 
 # A temporary statement to invoke the compiler
@@ -423,12 +464,12 @@ fi
 if [ "$linking" == "yes" ]; then
     if [ -z "$I_MPI_TRACE_PATH" ]; then
         # Place default mpi library at end for linking with ITAC
-        $Show $CC $I_MPI_CFLAGS $I_MPI_LDFLAGS $allargs -I\"${I_MPI_INCDIR}\" -I\"${I_MPI_INCDIR}/mpi\" $LINKER_OPTION /LIBPATH:\"${I_MPI_ROOT}${MPILIBDIR}\" /LIBPATH:\"${I_MPI_LIBDIR}\" $I_MPI_OTHERLIBS $link_args $mpilibs
+        $Show $CC $I_MPI_CFLAGS $I_MPI_LDFLAGS "$allargs" -I\"${I_MPI_INCDIR}\" -I\"${I_MPI_INCDIR}/mpi\" $LINKER_OPTION /LIBPATH:\"${I_MPI_ROOT}${MPILIBDIR}\" /LIBPATH:\"${I_MPI_LIBDIR}\" $I_MPI_OTHERLIBS $link_args $mpilibs
     else
-        $Show $CC $I_MPI_CFLAGS $I_MPI_LDFLAGS $allargs -I\"${I_MPI_INCDIR}\" -I\"${I_MPI_INCDIR}/mpi\" $LINKER_OPTION /LIBPATH:\"${I_MPI_TRACE_PATH}\" /LIBPATH:\"${I_MPI_ROOT}${MPILIBDIR}\" /LIBPATH:\"${I_MPI_LIBDIR}\" $VTTRACE_LIBS_START $mpilibs $I_MPI_OTHERLIBS $link_args
+        $Show $CC $I_MPI_CFLAGS $I_MPI_LDFLAGS "$allargs" -I\"${I_MPI_INCDIR}\" -I\"${I_MPI_INCDIR}/mpi\" $LINKER_OPTION /LIBPATH:\"${I_MPI_TRACE_PATH}\" /LIBPATH:\"${I_MPI_ROOT}${MPILIBDIR}\" /LIBPATH:\"${I_MPI_LIBDIR}\" $VTTRACE_LIBS_START $mpilibs $I_MPI_OTHERLIBS $link_args
     fi
 else
-    $Show $CC $I_MPI_CFLAGS $allargs -I\"${I_MPI_INCDIR}\" -I\"${I_MPI_INCDIR}/mpi\"
+    $Show $CC $I_MPI_CFLAGS "$allargs" -I\"${I_MPI_INCDIR}\" -I\"${I_MPI_INCDIR}/mpi\"
 fi
 
 rc=$?

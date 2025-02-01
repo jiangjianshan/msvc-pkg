@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+# NOTE:
+# 1. The script here can work well to keep quotes with original input arguments
+#
+# TODO:
+# 1. if the .py has .run() or .popen() function from module subprocess and didn't set 'shell=True',
+#    the result will be wrong.
+# 2. The path of input .py should be convert from unix style to windows style. This is not so
+#    diffcult but keep it until the point 1 has been solved.
+#
+declare -a params
+for param; do
+  if [[ -z "${param}" || "${param}" =~ [^A-Za-z0-9_@%+=:,./-] ]]; then
+    params+=("'${param//\'/\'\"\'\"\'}'")
+  else
+    params+=("${param}")
+  fi
+done
+python "${params[@]}"

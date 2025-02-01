@@ -1,0 +1,41 @@
+diff -urN gp2c-0.0.14-orig/src/gp2c.c gp2c-0.0.14/src/gp2c.c
+--- gp2c-0.0.14-orig/src/gp2c.c	2024-10-01 04:03:30.000000000 +0800
++++ gp2c-0.0.14/src/gp2c.c	2025-01-14 17:48:24.648991900 +0800
+@@ -19,7 +19,11 @@
+ #include "config.h"
+ #include <stdlib.h>
+ #include <stdio.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#else
++#include <getopt.h>
++#endif
+ #include <string.h>
+ #include <errno.h>
+ #define GP2C_DECL
+diff -urN gp2c-0.0.14-orig/src/lang.c gp2c-0.0.14/src/lang.c
+--- gp2c-0.0.14-orig/src/lang.c	2022-02-19 20:46:46.000000000 +0800
++++ gp2c-0.0.14/src/lang.c	2025-01-14 17:48:55.020295400 +0800
+@@ -563,7 +563,9 @@
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.*/
+ 
+ #include "config.h"
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#endif
+ #include <string.h>
+ #include "header.h"
+ #include "parse.h"
+diff -urN gp2c-0.0.14-orig/src/lang.l gp2c-0.0.14/src/lang.l
+--- gp2c-0.0.14-orig/src/lang.l	2020-02-20 20:35:44.000000000 +0800
++++ gp2c-0.0.14/src/lang.l	2025-01-14 00:11:40.729799300 +0800
+@@ -14,7 +14,9 @@
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.*/
+ 
+ #include "config.h"
++#ifndef YY_NO_UNISTD_H
+ #include <unistd.h>
++#endif
+ #include <string.h>
+ #include "header.h"
+ #include "parse.h"

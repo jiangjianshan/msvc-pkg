@@ -1,0 +1,9 @@
+name: magma
+version: 2.8.0
+url: https://icl.utk.edu/projectsfiles/magma/downloads/magma-2.8.0.tar.gz
+sha256: f4e5e75350743fe57f49b615247da2cc875e5193cc90c11b43554a7c82cc4348
+steps:
+  one:
+    dependencies:
+      - OpenBLAS
+    run: build.bat

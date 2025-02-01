@@ -14,7 +14,7 @@ PKG_VER=$(yq -r '.version' config.yaml)
 RELS_DIR=$ROOT_DIR/releases
 SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
-C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics'
+C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics -arch:SSE2'
 C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX'
 
 clean_build()
@@ -76,10 +76,11 @@ configure_stage()
     --builddir="$BUILD_DIR"                                                    \
     --graphic=win32                                                            \
     --time=ftime                                                               \
-    --with-readline="$(cygpath -m "${READLINE_PREFIX:-$PREFIX}")"              \
-    --with-ncurses-lib="$(cygpath -m "${NCURSES_PREFIX:-$PREFIX}/lib")"        \
-    --with-gmp="$(cygpath -m "${GMP_PREFIX:-$PREFIX}")"                        \
-    --with-fltk="$(cygpath -m "${FLTK_PREFIX:-$PREFIX}")" || exit 1
+    --with-runtime-perl="$(cygpath -u "${PERL_PREFIX:-$PREFIX}/bin/perl.exe")" \
+    --with-readline="$(cygpath -u "${READLINE_PREFIX:-$PREFIX}")"              \
+    --with-ncurses-lib="$(cygpath -u "${NCURSES_PREFIX:-$PREFIX}/lib")"        \
+    --with-gmp="$(cygpath -u "${GMP_PREFIX:-$PREFIX}")"                        \
+    --with-fltk="$(cygpath -u "${FLTK_PREFIX:-$PREFIX}")" || exit 1
 }
 
 build_stage()

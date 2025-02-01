@@ -38,6 +38,14 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
   -DCMAKE_CXX_STANDARD_LIBRARIES="getopt.lib shell32.lib"                      ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
+  -DENABLE_LIBVMAF=ON                                                          ^
+  -DENABLE_HDR10_PLUS=ON                                                       ^
+  -DENABLE_SHARED=ON                                                           ^
+  -DENABLE_ASSEMBLY=ON                                                         ^
+  -DENABLE_SVT_HEVC=ON                                                         ^
+  -DENABLE_VTUNE=ON                                                            ^
+  -DENABLE_TESTS=OFF                                                           ^
+  -DNATIVE_BUILD=ON                                                            ^
   ../source || exit 1
 exit /b 0
 
@@ -55,6 +63,9 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
+if not exist "%PREFIX%\lib\x265.lib" (
+  mklink "%PREFIX%\lib\x265.lib" "%PREFIX%\lib\libx265.lib"
+)
 call :clean_build
 exit /b 0
 

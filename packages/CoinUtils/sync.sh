@@ -19,6 +19,21 @@ patch_package()
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR" || exit 1
   patch -Np1 -i "$PKG_DIR/001-CoinUtils-fix-pkgconfig-path-syntax-error.diff"
+
+  # NOTE: To fix the extension of library from .a to .lib
+  echo "Patching configure in the top level"
+  sed                                                                          \
+    -e 's/ICL\*)/ICL\* | \*mpicl)/g'                                           \
+    -i configure
+  chmod +x configure
+
+  echo "Patching configure in the CoinUtils"
+  pushd CoinUtils || exit 1
+  sed                                                                          \
+    -e 's/ICL\*)/ICL\* | \*mpicl)/g'                                           \
+    -i configure
+  chmod +x configure
+  popd || exit 1
 }
 
 . $ROOT_DIR/common.sh

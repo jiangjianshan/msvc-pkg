@@ -22,7 +22,8 @@ patch_package()
   # 1. Move intl_dep to begin position of gdk_pixbuf_deps[] in meson.build.
   #    This will changed the link order so that to slove the following issue:
   #    libintl.lib error LNK2005: DllMain already defined in gdk
-  patch -Np1 -i "$PKG_DIR/001-gdk-pixbuf-compile-on-msvc.diff"
+  patch -Np1 -i "$PKG_DIR/001-gdk-pixbuf-fix-dllmain-already-defined-issue.diff"
+  patch -Np1 -i "$PKG_DIR/002-gdk-pixbuf-fix-static-deps.diff"
 }
 
 . $ROOT_DIR/common.sh

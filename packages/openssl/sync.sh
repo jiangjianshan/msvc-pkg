@@ -18,6 +18,8 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
+  patch -Np1 -i "$PKG_DIR/001-openssl-enable-install-pkgconfig-files-on-windows.diff"
+
   pushd Configurations
   sed                                                                          \
     -e 's|$(INSTALLTOP)\\html\\|$(INSTALLTOP)\\share\\man\\|g'                 \

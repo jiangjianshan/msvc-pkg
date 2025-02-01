@@ -1,0 +1,16 @@
+diff -urN liboqs-0.12.0-orig/.CMake/compiler_opts.cmake liboqs-0.12.0/.CMake/compiler_opts.cmake
+--- liboqs-0.12.0-orig/.CMake/compiler_opts.cmake	2024-12-10 09:27:54.000000000 +0800
++++ liboqs-0.12.0/.CMake/compiler_opts.cmake	2025-01-19 18:15:31.222163600 +0800
+@@ -201,8 +201,10 @@
+     add_compile_options(/wd4146)
+     # Need a larger stack for Classic McEliece
+     add_link_options(/STACK:8192000)
+-    # bring compile options in line with openssl options; link otherwise fails
+-    add_compile_options(/MT)
++    if(NOT BUILD_SHARED_LIBS)
++      # bring compile options in line with openssl options; link otherwise fails
++      add_compile_options(/MT)
++    endif()
+ endif()
+ 
+ if(MINGW OR MSYS OR CYGWIN)

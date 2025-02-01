@@ -147,6 +147,9 @@ func_cl_wrapper ()
         --coverage)
           # TODO
           ;;
+        -dumpversion)
+          # TODO
+          ;;
         --export-all-symbols)
           # TODO
           ;;
@@ -296,8 +299,21 @@ func_cl_wrapper ()
           set x "$@" "-Zi"
           shift
           ;;
+        -mavx)
+          set x "$@" "-arch:AVX"
+          shift
+          ;;
         -mavx2)
-          # TODO
+          set x "$@" "-arch:AVX2"
+          shift
+          ;;
+        -mavx512f)
+          set x "$@" "-arch:AVX512"
+          shift
+          ;;
+        -mfma4)
+          set x "$@" "-arch:AVX2"
+          shift
           ;;
         -municode)
           # TODO
@@ -539,6 +555,8 @@ func_cl_wrapper ()
         -W)
           # TODO
           ;;
+        -Waggregate-return)
+          ;;
         -Wall)
           set x "$@" "-W3"
           shift
@@ -597,7 +615,7 @@ func_cl_wrapper ()
               ;;
           esac
           ;;
-        -Wformat)
+        -Wformat*)
           # TODO
           ;;
         -Wimplicit-function-declaration)
@@ -712,7 +730,8 @@ EOF
     ;;
   cl | *[/\\]cl | cl.exe | *[/\\]cl.exe | \
   clang-cl | *[/\\]clang-cl | clang-cl.exe | *[/\\]clang-cl.exe | \
-  icl | *[/\\]icl | icl.exe | *[/\\]icl.exe )
+  icl | *[/\\]icl | icl.exe | *[/\\]icl.exe | \
+  icx-cl | *[/\\]icx-cl | icx-cl.exe | *[/\\]icx-cl.exe )
     func_cl_wrapper "$@"      # Doesn't return...
     ;;
 esac

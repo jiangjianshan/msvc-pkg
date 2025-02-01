@@ -14,5 +14,17 @@ SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 ARCHIVE=$(basename -- "$PKG_URL")
 EXT=${ARCHIVE#$(echo "$ARCHIVE" | sed 's/\.[^[:digit:]].*$//g')}
 
+patch_package()
+{
+  echo "Patching package $PKG_NAME $PKG_VER"
+  cd "$SRC_DIR"
+  echo "Patching libvvenc.pc.in in pkgconfig"
+  pushd pkgconfig || exit 1
+  sed                                                                          \
+    -e 's| -lstdc++ -lm||g'                                                    \
+    -i libvvenc.pc.in
+  popd
+}
+
 . $ROOT_DIR/common.sh
 wget_sync $PKG_URL $SRC_DIR $PKG_NAME-$PKG_VER$EXT

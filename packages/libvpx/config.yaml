@@ -5,4 +5,5 @@ sha256: 901747254d80a7937c933d03bd7c5d41e8e6c883e0665fadcb172542167c7977
 steps:
   one:
     dependencies:
+      - yasm
     run: build.sh

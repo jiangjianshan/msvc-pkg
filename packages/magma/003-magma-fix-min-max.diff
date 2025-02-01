@@ -1,0 +1,56 @@
+diff -urN magma-2.8.0-orig/magmablas/cgbtf2_kernels.cu magma-2.8.0/magmablas/cgbtf2_kernels.cu
+--- magma-2.8.0-orig/magmablas/cgbtf2_kernels.cu	2024-03-28 20:28:14.000000000 +0800
++++ magma-2.8.0/magmablas/cgbtf2_kernels.cu	2025-01-21 11:31:58.664724300 +0800
+@@ -12,6 +12,10 @@
+ 
+ #include "magma_internal.h"
+ #if   defined(MAGMA_HAVE_CUDA)
++# if CUDA_VERSION >= 12060
++#  undef max
++#  undef min
++# endif
+ #include <cooperative_groups.h>
+ namespace cg = cooperative_groups;
+ #elif defined(MAGMA_HAVE_HIP)
+diff -urN magma-2.8.0-orig/magmablas/dgbtf2_kernels.cu magma-2.8.0/magmablas/dgbtf2_kernels.cu
+--- magma-2.8.0-orig/magmablas/dgbtf2_kernels.cu	2024-03-28 20:28:14.000000000 +0800
++++ magma-2.8.0/magmablas/dgbtf2_kernels.cu	2025-01-21 11:31:29.224858900 +0800
+@@ -12,6 +12,10 @@
+ 
+ #include "magma_internal.h"
+ #if   defined(MAGMA_HAVE_CUDA)
++# if CUDA_VERSION >= 12060
++#  undef max
++#  undef min
++# endif
+ #include <cooperative_groups.h>
+ namespace cg = cooperative_groups;
+ #elif defined(MAGMA_HAVE_HIP)
+diff -urN magma-2.8.0-orig/magmablas/sgbtf2_kernels.cu magma-2.8.0/magmablas/sgbtf2_kernels.cu
+--- magma-2.8.0-orig/magmablas/sgbtf2_kernels.cu	2024-03-28 20:28:14.000000000 +0800
++++ magma-2.8.0/magmablas/sgbtf2_kernels.cu	2025-01-21 11:34:27.075626200 +0800
+@@ -12,6 +12,10 @@
+ 
+ #include "magma_internal.h"
+ #if   defined(MAGMA_HAVE_CUDA)
++# if CUDA_VERSION >= 12060
++#  undef max
++#  undef min
++# endif
+ #include <cooperative_groups.h>
+ namespace cg = cooperative_groups;
+ #elif defined(MAGMA_HAVE_HIP)
+diff -urN magma-2.8.0-orig/magmablas/zgbtf2_kernels.cu magma-2.8.0/magmablas/zgbtf2_kernels.cu
+--- magma-2.8.0-orig/magmablas/zgbtf2_kernels.cu	2024-03-28 20:23:55.000000000 +0800
++++ magma-2.8.0/magmablas/zgbtf2_kernels.cu	2025-01-21 11:35:08.288200300 +0800
+@@ -12,6 +12,10 @@
+ 
+ #include "magma_internal.h"
+ #if   defined(MAGMA_HAVE_CUDA)
++# if CUDA_VERSION >= 12060
++#  undef max
++#  undef min
++# endif
+ #include <cooperative_groups.h>
+ namespace cg = cooperative_groups;
+ #elif defined(MAGMA_HAVE_HIP)

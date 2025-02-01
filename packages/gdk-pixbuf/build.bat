@@ -29,22 +29,24 @@ call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%"
 cd "%SRC_DIR%"
-meson setup "%BUILD_DIR%"                                                      ^
-  --buildtype=release                                                          ^
-  --prefix="%PREFIX%"                                                          ^
-  --mandir="%PREFIX%\share\man"                                                ^
-  --wrap-mode=nofallback                                                       ^
-  -Dc_std=c17                                                                  ^
-  -Dc_args="%C_OPTS% %C_DEFS%"                                                 ^
-  -Dcpp_std=c++17                                                              ^
-  -Dcpp_args="-EHsc %C_OPTS% %C_DEFS%"                                         ^
-  -Dc_winlibs="Advapi32.lib,iconv.lib"                                         ^
-  -Ddefault_library=shared                                                     ^
-  -Dothers=enabled                                                             ^
-  -Dnative_windows_loaders=true                                                ^
-  -Dtests=false                                                                ^
-  -Dinstalled_tests=false                                                      ^
-  -Dbuiltin_loaders=all                                                        ^
+meson setup "%BUILD_DIR%"                                                                ^
+  --buildtype=release                                                                    ^
+  --prefix="%PREFIX%"                                                                    ^
+  --mandir="%PREFIX%\share\man"                                                          ^
+  --wrap-mode=nofallback                                                                 ^
+  -Dc_std=c17                                                                            ^
+  -Dc_args="%C_OPTS% %C_DEFS%"                                                           ^
+  -Dcpp_std=c++17                                                                        ^
+  -Dcpp_args="-EHsc %C_OPTS% %C_DEFS%"                                                   ^
+  -Dc_winlibs="Advapi32.lib,Ole32.lib,Shell32.lib,User32.lib,iconv.lib,intl.lib"         ^
+  -Dcpp_winlibs="Advapi32.lib,Ole32.lib,Shell32.lib,User32.lib,iconv.lib,intl.lib"       ^
+  -Ddefault_library=shared                                                               ^
+  -Dothers=enabled                                                                       ^
+  -Drelocatable=true                                                                     ^
+  -Dtests=false                                                                          ^
+  -Dinstalled_tests=false                                                                ^
+  -Dbuiltin_loaders=all                                                                  ^
+  -Dnative_windows_loaders=true                                                          ^
   -Dman=false || exit 1
 exit /b 0
 

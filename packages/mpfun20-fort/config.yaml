@@ -1,0 +1,8 @@
+name: mpfun20-fort
+version: v32
+url: https://www.davidhbailey.com/dhbsoftware/mpfun10-fort-v32.tar.gz
+sha256: 7938fa693e445e6c5c24b00af3b6f4357a3ad84a3d214a96338ca96417a02b88
+steps:
+  one:
+    dependencies:
+    run: build.bat

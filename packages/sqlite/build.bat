@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 > nul
 setlocal enabledelayedexpansion
 rem
 rem The values of these environment variables come from mpt.py:
@@ -26,7 +27,16 @@ rem ============================================================================
 :build_stage
 echo "Building %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%"
-nmake /f Makefile.msc TCLSH_CMD=tclsh86t || exit 1
+if not defined TCL_PREFIX set TCL_PREFIX=%PREFIX%
+nmake /f Makefile.msc TCLDIR=!TCL_PREFIX!                                      ^
+  CCOPTS="%C_OPTS% %C_DEFS%"                                                   ^
+  BUILD_ZLIB=0                                                                 ^
+  USE_ZLIB=1                                                                   ^
+  USE_ICU=1                                                                    ^
+  USE_CRT_DLL=1                                                                ^
+  DYNAMIC_SHELL=1                                                              ^
+  PLATFORM=%ARCH%                                                              ^
+  || exit 1
 exit /b 0
 
 rem ==============================================================================
@@ -51,7 +61,7 @@ rem  Clean files generated during build procedure
 rem ==============================================================================
 :clean_build
 echo "Cleaning %PKG_NAME% %PKG_VER%"
-cd "%BUILD_DIR%" && del *.o *.obj *.exp *.lib *.dll *.exe
+cd "%BUILD_DIR%" && del *.o *.obj *.exp *.lib *.dll *.exe *.ilk *.pdb *.lo
 exit /b 0
 
 :end

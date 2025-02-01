@@ -1,0 +1,230 @@
+diff -urN fftw-3.3.10-orig/libbench2/Makefile.am fftw-3.3.10/libbench2/Makefile.am
+--- fftw-3.3.10-orig/libbench2/Makefile.am	2020-12-10 20:02:44.000000000 +0800
++++ fftw-3.3.10/libbench2/Makefile.am	2025-01-17 15:50:01.884901900 +0800
+@@ -1,5 +1,5 @@
+ AM_CPPFLAGS = -I $(top_srcdir)
+-noinst_LIBRARIES=libbench2.a
++noinst_LIBRARIES=libbench2.lib
+ 
+ libbench2_a_SOURCES=after-ccopy-from.c after-ccopy-to.c			\
+ after-hccopy-from.c after-hccopy-to.c after-rcopy-from.c		\
+diff -urN fftw-3.3.10-orig/libbench2/Makefile.in fftw-3.3.10/libbench2/Makefile.in
+--- fftw-3.3.10-orig/libbench2/Makefile.in	2021-09-14 22:43:46.000000000 +0800
++++ fftw-3.3.10/libbench2/Makefile.in	2025-01-17 15:50:01.884901900 +0800
+@@ -366,7 +366,7 @@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+ AM_CPPFLAGS = -I $(top_srcdir)
+-noinst_LIBRARIES = libbench2.a
++noinst_LIBRARIES = libbench2.lib
+ libbench2_a_SOURCES = after-ccopy-from.c after-ccopy-to.c			\
+ after-hccopy-from.c after-hccopy-to.c after-rcopy-from.c		\
+ after-rcopy-to.c allocate.c aset.c bench-cost-postprocess.c		\
+@@ -413,10 +413,10 @@
+ clean-noinstLIBRARIES:
+ 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
+ 
+-libbench2.a: $(libbench2_a_OBJECTS) $(libbench2_a_DEPENDENCIES) $(EXTRA_libbench2_a_DEPENDENCIES) 
+-	$(AM_V_at)-rm -f libbench2.a
+-	$(AM_V_AR)$(libbench2_a_AR) libbench2.a $(libbench2_a_OBJECTS) $(libbench2_a_LIBADD)
+-	$(AM_V_at)$(RANLIB) libbench2.a
++libbench2.lib: $(libbench2_a_OBJECTS) $(libbench2_a_DEPENDENCIES) $(EXTRA_libbench2_a_DEPENDENCIES) 
++	$(AM_V_at)-rm -f libbench2.lib
++	$(AM_V_AR)$(libbench2_a_AR) libbench2.lib $(libbench2_a_OBJECTS) $(libbench2_a_LIBADD)
++	$(AM_V_at)$(RANLIB) libbench2.lib
+ 
+ mostlyclean-compile:
+ 	-rm -f *.$(OBJEXT)
+diff -urN fftw-3.3.10-orig/mpi/Makefile.am fftw-3.3.10/mpi/Makefile.am
+--- fftw-3.3.10-orig/mpi/Makefile.am	2020-12-10 20:02:44.000000000 +0800
++++ fftw-3.3.10/mpi/Makefile.am	2025-01-17 15:50:01.901028900 +0800
+@@ -40,7 +40,7 @@
+ endif
+ 
+ mpi_bench_SOURCES = mpi-bench.c $(top_srcdir)/tests/fftw-bench.c $(top_srcdir)/tests/hook.c
+-mpi_bench_LDADD = libfftw3@PREC_SUFFIX@_mpi.la $(LIBFFTWTHREADS) $(top_builddir)/libfftw3@PREC_SUFFIX@.la $(top_builddir)/libbench2/libbench2.a $(MPILIBS) $(THREADLIBS)
++mpi_bench_LDADD = libfftw3@PREC_SUFFIX@_mpi.la $(LIBFFTWTHREADS) $(top_builddir)/libfftw3@PREC_SUFFIX@.la $(top_builddir)/api/libapi.la	$(top_builddir)/libbench2/libbench2.lib $(MPILIBS) $(THREADLIBS)
+ 
+ CHECK = $(top_srcdir)/tests/check.pl
+ NUMCHECK=10
+diff -urN fftw-3.3.10-orig/mpi/Makefile.in fftw-3.3.10/mpi/Makefile.in
+--- fftw-3.3.10-orig/mpi/Makefile.in	2021-09-14 22:43:46.000000000 +0800
++++ fftw-3.3.10/mpi/Makefile.in	2025-01-17 16:34:23.407844500 +0800
+@@ -177,7 +177,8 @@
+ am__DEPENDENCIES_1 =
+ mpi_bench_DEPENDENCIES = libfftw3@PREC_SUFFIX@_mpi.la \
+ 	$(LIBFFTWTHREADS) $(top_builddir)/libfftw3@PREC_SUFFIX@.la \
+-	$(top_builddir)/libbench2/libbench2.a $(am__DEPENDENCIES_1) \
++	$(top_builddir)/api/libapi.la \
++	$(top_builddir)/libbench2/libbench2.lib $(am__DEPENDENCIES_1) \
+ 	$(am__DEPENDENCIES_1)
+ mpi_bench_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+ 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(mpi_bench_CFLAGS) \
+@@ -446,7 +447,7 @@
+ @COMBINED_THREADS_FALSE@@THREADS_TRUE@LIBFFTWTHREADS = $(top_builddir)/threads/libfftw3@PREC_SUFFIX@_threads.la
+ @OPENMP_TRUE@@THREADS_FALSE@LIBFFTWTHREADS = $(top_builddir)/threads/libfftw3@PREC_SUFFIX@_omp.la
+ mpi_bench_SOURCES = mpi-bench.c $(top_srcdir)/tests/fftw-bench.c $(top_srcdir)/tests/hook.c
+-mpi_bench_LDADD = libfftw3@PREC_SUFFIX@_mpi.la $(LIBFFTWTHREADS) $(top_builddir)/libfftw3@PREC_SUFFIX@.la $(top_builddir)/libbench2/libbench2.a $(MPILIBS) $(THREADLIBS)
++mpi_bench_LDADD = libfftw3@PREC_SUFFIX@_mpi.la $(LIBFFTWTHREADS) $(top_builddir)/libfftw3@PREC_SUFFIX@.la $(top_builddir)/api/libapi.la	$(top_builddir)/libbench2/libbench2.lib $(MPILIBS) $(THREADLIBS)
+ CHECK = $(top_srcdir)/tests/check.pl
+ NUMCHECK = 10
+ CHECKSIZE = 10000
+diff -urN fftw-3.3.10-orig/mpi/mpi-bench.c fftw-3.3.10/mpi/mpi-bench.c
+--- fftw-3.3.10-orig/mpi/mpi-bench.c	2020-12-10 20:02:44.000000000 +0800
++++ fftw-3.3.10/mpi/mpi-bench.c	2025-01-17 16:40:00.069638600 +0800
+@@ -10,6 +10,11 @@
+ #include <string.h>
+ #include "fftw3-mpi.h"
+ #include "tests/fftw-bench.h"
++#include "libbench2/bench.h"
++
++#ifdef _MSC_VER
++#undef complex
++#endif
+ 
+ #if defined(BENCHFFT_SINGLE)
+ #  define BENCH_MPI_TYPE MPI_FLOAT
+@@ -796,6 +801,11 @@
+      FFTW(mpi_init)();
+ }
+ 
++int main(int argc, char *argv[])
++{
++     return bench_main(argc, argv);
++}
++
+ void initial_cleanup(void)
+ {
+      alloc_rnk(0);
+diff -urN fftw-3.3.10-orig/tests/bench.c fftw-3.3.10/tests/bench.c
+--- fftw-3.3.10-orig/tests/bench.c	2020-12-10 20:02:44.000000000 +0800
++++ fftw-3.3.10/tests/bench.c	2025-01-17 15:50:01.916659700 +0800
+@@ -12,6 +12,7 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include "tests/fftw-bench.h"
++#include "libbench2/bench.h"
+ 
+ static const char *mkversion(void) { return FFTW(version); }
+ static const char *mkcc(void) { return FFTW(cc); }
+@@ -533,6 +534,11 @@
+      UNUSED(argv);
+ }
+ 
++int main(int argc, char *argv[])
++{
++     return bench_main(argc, argv);
++}
++
+ void initial_cleanup(void)
+ {
+ }
+diff -urN fftw-3.3.10-orig/tests/Makefile.am fftw-3.3.10/tests/Makefile.am
+--- fftw-3.3.10-orig/tests/Makefile.am	2020-12-10 20:02:44.000000000 +0800
++++ fftw-3.3.10/tests/Makefile.am	2025-01-17 15:50:01.916659700 +0800
+@@ -17,7 +17,8 @@
+ bench_SOURCES = bench.c hook.c fftw-bench.c fftw-bench.h
+ bench_LDADD = $(LIBFFTWTHREADS)				\
+ $(top_builddir)/libfftw3@PREC_SUFFIX@.la		\
+-$(top_builddir)/libbench2/libbench2.a $(THREADLIBS)
++$(top_builddir)/api/libapi.la		\
++$(top_builddir)/libbench2/libbench2.lib $(THREADLIBS)
+ 
+ check-local: bench$(EXEEXT)
+ 	perl -w $(srcdir)/check.pl $(CHECK_PL_OPTS) -r -c=30 -v `pwd`/bench$(EXEEXT)
+diff -urN fftw-3.3.10-orig/tests/Makefile.in fftw-3.3.10/tests/Makefile.in
+--- fftw-3.3.10-orig/tests/Makefile.in	2021-09-14 22:43:46.000000000 +0800
++++ fftw-3.3.10/tests/Makefile.in	2025-01-17 16:34:42.237317700 +0800
+@@ -116,7 +116,8 @@
+ am__DEPENDENCIES_1 =
+ bench_DEPENDENCIES = $(LIBFFTWTHREADS) \
+ 	$(top_builddir)/libfftw3@PREC_SUFFIX@.la \
+-	$(top_builddir)/libbench2/libbench2.a $(am__DEPENDENCIES_1)
++	$(top_builddir)/api/libapi.la \
++	$(top_builddir)/libbench2/libbench2.lib $(am__DEPENDENCIES_1)
+ AM_V_lt = $(am__v_lt_@AM_V@)
+ am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+ am__v_lt_0 = --silent
+@@ -349,7 +350,8 @@
+ bench_SOURCES = bench.c hook.c fftw-bench.c fftw-bench.h
+ bench_LDADD = $(LIBFFTWTHREADS)				\
+ $(top_builddir)/libfftw3@PREC_SUFFIX@.la		\
+-$(top_builddir)/libbench2/libbench2.a $(THREADLIBS)
++$(top_builddir)/api/libapi.la		\
++$(top_builddir)/libbench2/libbench2.lib $(THREADLIBS)
+ 
+ all: all-am
+ 
+diff -urN fftw-3.3.10-orig/threads/ct.c fftw-3.3.10/threads/ct.c
+--- fftw-3.3.10-orig/threads/ct.c	2020-12-10 20:02:44.000000000 +0800
++++ fftw-3.3.10/threads/ct.c	2025-01-17 15:50:01.932309300 +0800
+@@ -21,6 +21,9 @@
+ 
+ #include "threads/threads.h"
+ 
++ct_solver *(*X(mksolver_ct_hook))(size_t, INT, int, 
++				  ct_mkinferior, ct_force_vrecursion) = 0;
++
+ typedef struct {
+      plan_dft super;
+      plan *cld;
+diff -urN fftw-3.3.10-orig/threads/hc2hc.c fftw-3.3.10/threads/hc2hc.c
+--- fftw-3.3.10-orig/threads/hc2hc.c	2020-12-10 20:02:44.000000000 +0800
++++ fftw-3.3.10/threads/hc2hc.c	2025-01-17 15:50:01.932309300 +0800
+@@ -20,6 +20,8 @@
+ 
+ #include "threads/threads.h"
+ 
++hc2hc_solver *(*X(mksolver_hc2hc_hook))(size_t, INT, hc2hc_mkinferior) = 0;
++
+ typedef struct {
+      plan_rdft super;
+      plan *cld;
+diff -urN fftw-3.3.10-orig/tools/Makefile.am fftw-3.3.10/tools/Makefile.am
+--- fftw-3.3.10-orig/tools/Makefile.am	2020-12-10 20:02:44.000000000 +0800
++++ fftw-3.3.10/tools/Makefile.am	2025-01-17 16:34:58.141048200 +0800
+@@ -24,7 +24,8 @@
+ endif
+ 
+ fftw@PREC_SUFFIX@_wisdom_SOURCES = fftw-wisdom.c
+-fftw@PREC_SUFFIX@_wisdom_LDADD = $(top_builddir)/tests/bench-bench.o	\
+-$(top_builddir)/tests/bench-fftw-bench.o $(LIBFFTWTHREADS)	\
++fftw@PREC_SUFFIX@_wisdom_LDADD = $(top_builddir)/tests/bench-bench.$(OBJEXT)	\
++$(top_builddir)/tests/bench-fftw-bench.$(OBJEXT) $(LIBFFTWTHREADS)	\
+ $(top_builddir)/libfftw3@PREC_SUFFIX@.la			\
+-$(top_builddir)/libbench2/libbench2.a $(THREADLIBS)
++$(top_builddir)/api/libapi.la \
++$(top_builddir)/libbench2/libbench2.lib $(THREADLIBS)
+diff -urN fftw-3.3.10-orig/tools/Makefile.in fftw-3.3.10/tools/Makefile.in
+--- fftw-3.3.10-orig/tools/Makefile.in	2021-09-14 22:43:47.000000000 +0800
++++ fftw-3.3.10/tools/Makefile.in	2025-01-17 16:35:28.625365700 +0800
+@@ -119,10 +119,11 @@
+ 	$(am_fftw@PREC_SUFFIX@_wisdom_OBJECTS)
+ am__DEPENDENCIES_1 =
+ fftw@PREC_SUFFIX@_wisdom_DEPENDENCIES =  \
+-	$(top_builddir)/tests/bench-bench.o \
+-	$(top_builddir)/tests/bench-fftw-bench.o $(LIBFFTWTHREADS) \
++	$(top_builddir)/tests/bench-bench.$(OBJEXT) \
++	$(top_builddir)/tests/bench-fftw-bench.$(OBJEXT) $(LIBFFTWTHREADS) \
+ 	$(top_builddir)/libfftw3@PREC_SUFFIX@.la \
+-	$(top_builddir)/libbench2/libbench2.a $(am__DEPENDENCIES_1)
++	$(top_builddir)/api/libapi.la \
++	$(top_builddir)/libbench2/libbench2.lib $(am__DEPENDENCIES_1)
+ AM_V_lt = $(am__v_lt_@AM_V@)
+ am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+ am__v_lt_0 = --silent
+@@ -373,10 +374,11 @@
+ @COMBINED_THREADS_FALSE@@THREADS_TRUE@LIBFFTWTHREADS = $(top_builddir)/threads/libfftw3@PREC_SUFFIX@_threads.la
+ @OPENMP_TRUE@@THREADS_FALSE@LIBFFTWTHREADS = $(top_builddir)/threads/libfftw3@PREC_SUFFIX@_omp.la
+ fftw@PREC_SUFFIX@_wisdom_SOURCES = fftw-wisdom.c
+-fftw@PREC_SUFFIX@_wisdom_LDADD = $(top_builddir)/tests/bench-bench.o	\
+-$(top_builddir)/tests/bench-fftw-bench.o $(LIBFFTWTHREADS)	\
++fftw@PREC_SUFFIX@_wisdom_LDADD = $(top_builddir)/tests/bench-bench.$(OBJEXT)	\
++$(top_builddir)/tests/bench-fftw-bench.$(OBJEXT) $(LIBFFTWTHREADS)	\
+ $(top_builddir)/libfftw3@PREC_SUFFIX@.la			\
+-$(top_builddir)/libbench2/libbench2.a $(THREADLIBS)
++$(top_builddir)/api/libapi.la \
++$(top_builddir)/libbench2/libbench2.lib $(THREADLIBS)
+ 
+ all: $(BUILT_SOURCES)
+ 	$(MAKE) $(AM_MAKEFLAGS) all-am
