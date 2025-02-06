@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+# Copyright (c) 2024 Jianshan Jiang
+#
 
 import argparse
 import logging
@@ -39,6 +42,7 @@ class Node:
         """
         self.children.append(child_node)
 
+
 def get_value(node: Node):
     """
     Gets the value of a given node in an N-ary tree.
@@ -47,13 +51,15 @@ def get_value(node: Node):
         return None
     return node.value
 
+
 def get_step(node: Node):
     """
     Gets the step of a given node in an N-ary tree.
     """
     if node is None:
-        return 'one'
+        return 'a'
     return node.step
+
 
 def build_tree(root: Node, pkg, step):
     """
@@ -69,7 +75,7 @@ def build_tree(root: Node, pkg, step):
                 if len(dep_with_step) > 1:
                     dep_step = dep_with_step[1]
                 else:
-                    dep_step = 'one'
+                    dep_step = 'a'
                 if not contains_node(root, dep, dep_step):
                     # TODO: If one node has been included at upper level, and another node
                     #       at lower level need it as dependency. Then may cause that node
@@ -77,6 +83,7 @@ def build_tree(root: Node, pkg, step):
                     #       to put dependencies of packages carefully in config.yaml.
                     insert_node(root, pkg, dep, dep_step)
                     build_tree(root, dep, dep_step)
+
 
 def insert_node(root: Node, parent_value, new_value, step):
     """
@@ -94,6 +101,7 @@ def insert_node(root: Node, parent_value, new_value, step):
             return result
     return None
 
+
 def contains_node(root: Node, value, step):
     """
     Checks if the tree contains a node with the given value and step.
@@ -106,6 +114,7 @@ def contains_node(root: Node, value, step):
         if contains_node(child, value, step):
             return True
     return False
+
 
 def level_order(root: Node, reverse=False):
     """
@@ -129,6 +138,7 @@ def level_order(root: Node, reverse=False):
     if reverse:
         return result[::-1]
     return result
+
 
 def print_tree(root: Node, rich_tree=None):
     """
@@ -204,6 +214,7 @@ def configure_envars(proc_env, arch, pkg):
     proc_env['PREFIX'] = prefix
     return prefix
 
+
 def execute(proc_env, commands, shell=False):
     """
     """
@@ -226,6 +237,7 @@ def execute(proc_env, commands, shell=False):
     logger.debug(f"Process exit code: {exit_code}")
     return exit_code
 
+
 def run_script(proc_env, pkgs_dir, pkg, file_name):
     """
     Run script .bat or .sh from config.yaml that has been defined in the package
@@ -244,6 +256,7 @@ def run_script(proc_env, pkgs_dir, pkg, file_name):
             result = True
     os.chdir(root_dir)
     return result
+
 
 def compare_version(current, previous):
     """
@@ -285,10 +298,9 @@ def build_decision(arch, pkg, pkg_conf, installed_conf, step):
         return True
     elif 'step' in installed_conf[arch][pkg]:
         built_step = installed_conf[arch][pkg]['step']
-        if built_step != step:
-            if built_step == 'one':
-                logger.debug(f"Current step of {pkg} wasn't built yet")
-                return True
+        if built_step < step:
+            logger.debug(f"Current step of {pkg} wasn't built yet")
+            return True
     else:
         matched = []
         installed_ver = str(installed_conf[arch][pkg]['version'])
@@ -348,8 +360,15 @@ def build_pkg(arch, pkg, pkg_conf, step):
                         yaml.safe_dump(installed_conf, g, indent=2)
                 elif arch in installed_conf.keys():
                     if pkg in installed_conf[arch]:
-                        logger.debug(f"Delete installed information of {pkg}")
-                        del installed_conf[arch][pkg]
+                        if len(pkg_conf['steps'].keys()) > 1:
+                            if 'step' in installed_conf[arch][pkg]:
+                              built_step = installed_conf[arch][pkg]['step']
+                              if built_step == step:
+                                logger.debug(f"Delete installed information of {pkg}")
+                                del installed_conf[arch][pkg]
+                        else:
+                            logger.debug(f"Delete installed information of {pkg}")
+                            del installed_conf[arch][pkg]
                         with open(installed_file, 'w', newline='', encoding='utf-8') as g:
                             logger.debug(f"Updating installed.yaml")
                             yaml.safe_dump(installed_conf, g, indent=2)
@@ -365,6 +384,7 @@ def build_pkg(arch, pkg, pkg_conf, step):
         logger.debug(f"Stop because of package '{pkg}' was synchronized fail")
         success = False
     return success
+
 
 def build_pkgs(arch, pkg, step):
     """
@@ -391,6 +411,7 @@ def build_pkgs(arch, pkg, step):
             if not build_pkg(arch, node_pkg, pkg_conf, node_step):
                 return False
 
+
 def traverse_pkgs(arch, pkgs):
     """
     """
@@ -400,6 +421,7 @@ def traverse_pkgs(arch, pkgs):
             pkg_conf = yaml.safe_load(f)
             for step in pkg_conf['steps']:
                 build_pkgs(arch, pkg, step)
+
 
 def list_pkgs(arch):
     """
@@ -438,6 +460,7 @@ def list_pkgs(arch):
         i += 1
     console.print(table)
 
+
 SafeDumper.add_representer(
    type(None),
    lambda dumper, value: dumper.represent_scalar(u'tag:yaml.org,2002:null', '')
@@ -462,6 +485,7 @@ settings_conf = {}
 if os.path.exists(settings_file):
     with open(settings_file, 'r', newline='', encoding="utf-8") as f:
         settings_conf = yaml.safe_load(f)
+
 
 if __name__ == '__main__':
     pkgs = []

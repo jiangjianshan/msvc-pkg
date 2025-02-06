@@ -3,7 +3,7 @@ version: 0.22.5
 url: https://ftp.gnu.org/pub/gnu/gettext/gettext-0.22.5.tar.xz
 sha256: fe10c37353213d78a5b83d48af231e005c4da84db5ce88037d88355938259640
 steps:
-  one:
+  a:
     dependencies:
       - bzip2
       - dlfcn-win32

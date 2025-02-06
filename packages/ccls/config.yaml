@@ -3,7 +3,7 @@ version: master
 url: https://github.com/MaskRay/ccls.git
 sha256:
 steps:
-  one:
+  a:
     dependencies:
       - libxml2
       - llvm-project

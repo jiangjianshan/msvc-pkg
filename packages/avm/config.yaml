@@ -3,7 +3,7 @@ version: 8.1.0
 url: https://gitlab.com/AOMediaCodec/avm/-/archive/research-v8.1.0/avm-research-v8.1.0.tar.bz2
 sha256: 14c928ee4b85ba01f670937e32693a4f9f90d9b5ad11552eefed4a04346487bb
 steps:
-  one:
+  a:
     dependencies:
       - abseil-cpp
       - perl

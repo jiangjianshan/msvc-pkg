@@ -3,7 +3,7 @@ version: 5.4.6
 url: https://github.com/tukaani-project/xz/archive/refs/tags/v5.4.6.tar.gz
 sha256: 60831005fddb270824fa9f7cdd28a59da8757fe95466ed5b10bcfe23379f17d9
 steps:
-  one:
+  a:
     dependencies:
       - getopt
       - winpthreads

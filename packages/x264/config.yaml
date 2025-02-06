@@ -3,7 +3,7 @@ version: master
 url: https://code.videolan.org/videolan/x264.git
 sha256:
 steps:
-  one:
+  a:
     dependencies:
       - AviSynthPlus
       - getopt

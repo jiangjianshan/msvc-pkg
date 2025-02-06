@@ -37,38 +37,8 @@ patch_package()
     -e 's|libgloparser.a|libgloparser.lib|g'                                             \
     -e 's|libgloutil.a|libgloutil.lib|g'                                                 \
     -e 's|libgloglibc.a|libgloglibc.lib|g'                                               \
-    -e 's|lib/libsqlite3.so|bin/sqlite3.dll|g'                                           \
-    -e 's|lib/libsqlite3.dylib|lib/sqlite3.lib|g'                                        \
     -i configure
   chmod +x configure
-
-  echo "Patching Makefile.in in libdb"
-  pushd libdb || exit 1
-  sed                                                                                   \
-    -e 's|libglodb.a|libglodb.lib|g'                                                    \
-    -i Makefile.in
-  popd || exit 1
-
-  echo "Patching Makefile.in in libglibc"
-  pushd libglibc || exit 1
-  sed                                                                                    \
-    -e 's|libgloglibc.a|libgloglibc.lib|g'                                               \
-    -i Makefile.in
-  popd || exit 1
-
-  echo "Patching Makefile.in in libparser"
-  pushd libparser || exit 1
-  sed                                                                                    \
-    -e 's|libgloparser.a|libgloparser.lib|g'                                             \
-    -i Makefile.in
-  popd || exit 1
-
-  echo "Patching Makefile.in in libutil"
-  pushd libutil || exit 1
-  sed                                                                                    \
-    -e 's|libgloutil.a|libgloutil.lib|g'                                                 \
-    -i Makefile.in
-  popd || exit 1
 }
 
 . $ROOT_DIR/common.sh

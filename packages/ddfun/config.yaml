@@ -3,6 +3,6 @@ version: v03
 url: https://www.davidhbailey.com/dhbsoftware/ddfun-v03.tar.gz
 sha256: 0fd0e4657085a7f2222097004d50fb003399442b7930daa100d6a24ba45f37ee
 steps:
-  one:
+  a:
     dependencies:
     run: build.bat

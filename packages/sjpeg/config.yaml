@@ -3,7 +3,7 @@ version: main
 url: https://github.com/webmproject/sjpeg.git
 sha256:
 steps:
-  one:
+  a:
     dependencies:
       - freeglut
       - libpng

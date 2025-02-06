@@ -3,16 +3,16 @@ version: 1.55.0
 url: https://download.gnome.org/sources/pango/1.55/pango-1.55.0.tar.xz
 sha256: a2c17a8dc459a7267b8b167bb149d23ff473b6ff9d5972bee047807ee2220ccf
 steps:
-  one:
+  a:
     dependencies:
       - pkg-config
       - cairo
       - gobject-introspection
-      - glib:two
+      - glib:b
       - fontconfig
       - freetype
       - fribidi
-      - harfbuzz:two
+      - harfbuzz:b
       - libpng
       - libthai
     run: build.bat

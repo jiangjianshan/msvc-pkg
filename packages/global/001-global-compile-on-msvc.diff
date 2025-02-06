@@ -1,20 +1,28 @@
 diff -urN global-6.6.14-orig/configure global-6.6.14/configure
 --- global-6.6.14-orig/configure	2024-12-11 14:44:41.000000000 +0800
-+++ global-6.6.14/configure	2024-12-31 17:30:13.917360700 +0800
-@@ -15495,10 +15495,6 @@
++++ global-6.6.14/configure	2025-02-06 16:13:36.693284400 +0800
+@@ -15495,9 +15495,6 @@
  
  fi
  
 -if test ${ac_header_dirent} = no; then
 -        as_fn_error $? "dirent(3) is required but not found." "$LINENO" 5
 -fi
--
+ 
  case "$host_os" in
  	mingw*|*djgpp*)
- 	;;
+@@ -17902,7 +17899,7 @@
+ 			if ! test -r "$withval/include/sqlite3.h"; then
+ 				as_fn_error $? "header $withval/include/sqlite3.h not found." "$LINENO" 5
+ 			fi
+-			if ! test -r "$withval/lib/libsqlite3.so" && ! test -r "$withval/lib/libsqlite3.dylib"; then
++			if ! test -r "$withval/bin/sqlite3.dll" && ! test -r "$withval/lib/libsqlite3.lib"; then
+ 				as_fn_error $? "library $withval/lib/libsqlite3.* not found." "$LINENO" 5
+ 			fi
+ 			 if false; then
 diff -urN global-6.6.14-orig/global/global.c global-6.6.14/global/global.c
 --- global-6.6.14-orig/global/global.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/global/global.c	2024-12-31 15:55:02.184504400 +0800
++++ global-6.6.14/global/global.c	2025-02-06 16:07:31.354996200 +0800
 @@ -1146,7 +1146,11 @@
  	}
  	if (debug)
@@ -65,7 +73,7 @@ diff -urN global-6.6.14-orig/global/global.c global-6.6.14/global/global.c
  	if (secure_pclose(ip) != 0)
 diff -urN global-6.6.14-orig/global/literal.c global-6.6.14/global/literal.c
 --- global-6.6.14-orig/global/literal.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/global/literal.c	2024-12-31 15:55:02.184504400 +0800
++++ global-6.6.14/global/literal.c	2025-02-06 16:07:31.361332900 +0800
 @@ -29,7 +29,9 @@
  #endif
  #include <stdio.h>
@@ -78,7 +86,7 @@ diff -urN global-6.6.14-orig/global/literal.c global-6.6.14/global/literal.c
  #ifdef STDC_HEADERS
 diff -urN global-6.6.14-orig/gtags/gtags.c global-6.6.14/gtags/gtags.c
 --- global-6.6.14-orig/gtags/gtags.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/gtags/gtags.c	2024-12-31 15:55:02.200125600 +0800
++++ global-6.6.14/gtags/gtags.c	2025-02-06 16:07:31.365818500 +0800
 @@ -619,7 +619,11 @@
  		}
  		if (debug)
@@ -105,7 +113,7 @@ diff -urN global-6.6.14-orig/gtags/gtags.c global-6.6.14/gtags/gtags.c
  			if (chmod(makepath(dbpath, "ID", NULL), 0644) < 0)
 diff -urN global-6.6.14-orig/gtags-cscope/exec.c global-6.6.14/gtags-cscope/exec.c
 --- global-6.6.14-orig/gtags-cscope/exec.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/gtags-cscope/exec.c	2024-12-31 15:55:02.200125600 +0800
++++ global-6.6.14/gtags-cscope/exec.c	2025-02-06 16:07:31.371490900 +0800
 @@ -36,11 +36,13 @@
   *	cscope - interactive C symbol cross-reference
   */
@@ -123,7 +131,7 @@ diff -urN global-6.6.14-orig/gtags-cscope/exec.c global-6.6.14/gtags-cscope/exec
  #if defined(USE_NCURSES) && !defined(RENAMED_NCURSES)
 diff -urN global-6.6.14-orig/gtags-cscope/global-cscope.h global-6.6.14/gtags-cscope/global-cscope.h
 --- global-6.6.14-orig/gtags-cscope/global-cscope.h	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/gtags-cscope/global-cscope.h	2024-12-31 15:55:02.200125600 +0800
++++ global-6.6.14/gtags-cscope/global-cscope.h	2025-02-06 16:07:31.376183500 +0800
 @@ -42,7 +42,9 @@
  #define CSCOPE_GLOBAL_H
  
@@ -158,7 +166,7 @@ diff -urN global-6.6.14-orig/gtags-cscope/global-cscope.h global-6.6.14/gtags-cs
  #ifdef R_OK
 diff -urN global-6.6.14-orig/gtags-cscope/gtags-cscope.c global-6.6.14/gtags-cscope/gtags-cscope.c
 --- global-6.6.14-orig/gtags-cscope/gtags-cscope.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/gtags-cscope/gtags-cscope.c	2024-12-31 15:55:02.215746200 +0800
++++ global-6.6.14/gtags-cscope/gtags-cscope.c	2025-02-06 16:07:31.380551900 +0800
 @@ -53,7 +53,9 @@
  #include "const.h"
  
@@ -171,7 +179,7 @@ diff -urN global-6.6.14-orig/gtags-cscope/gtags-cscope.c global-6.6.14/gtags-csc
  #else
 diff -urN global-6.6.14-orig/gtags-cscope/logdir.c global-6.6.14/gtags-cscope/logdir.c
 --- global-6.6.14-orig/gtags-cscope/logdir.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/gtags-cscope/logdir.c	2024-12-31 15:55:02.215746200 +0800
++++ global-6.6.14/gtags-cscope/logdir.c	2025-02-06 16:07:31.386419800 +0800
 @@ -39,7 +39,9 @@
   *	storage allocation.
   */
@@ -184,7 +192,7 @@ diff -urN global-6.6.14-orig/gtags-cscope/logdir.c global-6.6.14/gtags-cscope/lo
  
 diff -urN global-6.6.14-orig/gtags-cscope/mypopen.c global-6.6.14/gtags-cscope/mypopen.c
 --- global-6.6.14-orig/gtags-cscope/mypopen.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/gtags-cscope/mypopen.c	2024-12-31 17:29:28.990143700 +0800
++++ global-6.6.14/gtags-cscope/mypopen.c	2025-02-06 16:07:31.390410800 +0800
 @@ -32,7 +32,9 @@
  
  #include <stdio.h>
@@ -221,7 +229,7 @@ diff -urN global-6.6.14-orig/gtags-cscope/mypopen.c global-6.6.14/gtags-cscope/m
  	(void) fclose(ptr);
 diff -urN global-6.6.14-orig/htags/defineindex.c global-6.6.14/htags/defineindex.c
 --- global-6.6.14-orig/htags/defineindex.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/htags/defineindex.c	2024-12-31 15:55:02.215746200 +0800
++++ global-6.6.14/htags/defineindex.c	2025-02-06 16:07:31.394660300 +0800
 @@ -100,7 +100,11 @@
  	 */
  	STDOUT = DEFINES;
@@ -248,7 +256,7 @@ diff -urN global-6.6.14-orig/htags/defineindex.c global-6.6.14/htags/defineindex
  		char tmp[128];
 diff -urN global-6.6.14-orig/htags/dupindex.c global-6.6.14/htags/dupindex.c
 --- global-6.6.14-orig/htags/dupindex.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/htags/dupindex.c	2024-12-31 15:55:02.231368600 +0800
++++ global-6.6.14/htags/dupindex.c	2025-02-06 16:07:31.399807800 +0800
 @@ -95,7 +95,11 @@
  #if defined(_WIN32) && !defined(__CYGWIN__)
  		strbuf_putc(command, '"');
@@ -275,7 +283,7 @@ diff -urN global-6.6.14-orig/htags/dupindex.c global-6.6.14/htags/dupindex.c
  			if (!dynamic) {
 diff -urN global-6.6.14-orig/htags/fileindex.c global-6.6.14/htags/fileindex.c
 --- global-6.6.14-orig/htags/fileindex.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/htags/fileindex.c	2024-12-31 15:55:02.231368600 +0800
++++ global-6.6.14/htags/fileindex.c	2025-02-06 16:07:31.404206800 +0800
 @@ -809,7 +809,11 @@
  	 * Therefore, we can not use "\\t" here.
  	 */
@@ -302,7 +310,7 @@ diff -urN global-6.6.14-orig/htags/fileindex.c global-6.6.14/htags/fileindex.c
  	for (inc = first_inc(); inc; inc = next_inc()) {
 diff -urN global-6.6.14-orig/htags/htags.c global-6.6.14/htags/htags.c
 --- global-6.6.14-orig/htags/htags.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/htags/htags.c	2024-12-31 15:55:02.231368600 +0800
++++ global-6.6.14/htags/htags.c	2025-02-06 16:07:31.409262400 +0800
 @@ -38,7 +38,9 @@
  #include <signal.h>
  #include <sys/types.h>
@@ -363,7 +371,7 @@ diff -urN global-6.6.14-orig/htags/htags.c global-6.6.14/htags/htags.c
  	save_config = strbuf_value(save_c);
 diff -urN global-6.6.14-orig/htags-refkit/htags_path2url.c global-6.6.14/htags-refkit/htags_path2url.c
 --- global-6.6.14-orig/htags-refkit/htags_path2url.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/htags-refkit/htags_path2url.c	2024-12-31 15:55:02.231368600 +0800
++++ global-6.6.14/htags-refkit/htags_path2url.c	2025-02-06 16:07:31.414762400 +0800
 @@ -10,7 +10,9 @@
  #include <stdio.h>
  #include <stdlib.h>
@@ -374,82 +382,9 @@ diff -urN global-6.6.14-orig/htags-refkit/htags_path2url.c global-6.6.14/htags-r
  #include <sys/stat.h>
  
  #if defined(_WIN32) || defined(__DJGPP__)
-diff -urN global-6.6.14-orig/libdb/Makefile.in global-6.6.14/libdb/Makefile.in
---- global-6.6.14-orig/libdb/Makefile.in	2024-12-11 14:44:41.000000000 +0800
-+++ global-6.6.14/libdb/Makefile.in	2024-12-31 15:55:02.572934800 +0800
-@@ -116,10 +116,10 @@
- am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
- am__v_AR_0 = @echo "  AR      " $@;
- am__v_AR_1 = 
--libglodb_a_AR = $(AR) $(ARFLAGS)
--libglodb_a_RANLIB = $(RANLIB)
--libglodb_a_LIBADD =
--am__libglodb_a_SOURCES_DIST = bt_close.c bt_conv.c bt_debug.c \
-+libglodb.lib_AR = $(AR) $(ARFLAGS)
-+libglodb.lib_RANLIB = $(RANLIB)
-+libglodb.lib_LIBADD =
-+am__libglodb.lib_SOURCES_DIST = bt_close.c bt_conv.c bt_debug.c \
- 	bt_delete.c bt_get.c bt_open.c bt_overflow.c bt_page.c \
- 	bt_put.c bt_search.c bt_seq.c bt_split.c bt_utils.c db.c \
- 	mpool.c sqlite3.c
-@@ -130,8 +130,8 @@
- 	bt_put.$(OBJEXT) bt_search.$(OBJEXT) bt_seq.$(OBJEXT) \
- 	bt_split.$(OBJEXT) bt_utils.$(OBJEXT) db.$(OBJEXT) \
- 	mpool.$(OBJEXT) $(am__objects_1)
--am_libglodb_a_OBJECTS = $(am__objects_2)
--libglodb_a_OBJECTS = $(am_libglodb_a_OBJECTS)
-+am_libglodb.lib_OBJECTS = $(am__objects_2)
-+libglodb.lib_OBJECTS = $(am_libglodb.lib_OBJECTS)
- AM_V_P = $(am__v_P_@AM_V@)
- am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
- am__v_P_0 = false
-@@ -178,8 +178,8 @@
- am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
- am__v_CCLD_0 = @echo "  CCLD    " $@;
- am__v_CCLD_1 = 
--SOURCES = $(libglodb_a_SOURCES)
--DIST_SOURCES = $(am__libglodb_a_SOURCES_DIST)
-+SOURCES = $(libglodb.lib_SOURCES)
-+DIST_SOURCES = $(am__libglodb.lib_SOURCES_DIST)
- am__can_run_installinfo = \
-   case $$AM_UPDATE_INFO_DIR in \
-     n|no|NO) false;; \
-@@ -375,14 +375,14 @@
- # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
- # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- #
--noinst_LIBRARIES = libglodb.a
-+noinst_LIBRARIES = libglodb.lib
- INCS = btree.h db.h extern.h mpool.h queue.h compat.h $(am__append_1)
- SRCS = bt_close.c bt_conv.c bt_debug.c bt_delete.c bt_get.c bt_open.c \
- 	bt_overflow.c bt_page.c bt_put.c bt_search.c bt_seq.c \
- 	bt_split.c bt_utils.c db.c mpool.c $(am__append_2)
- noinst_HEADERS = $(INCS)
--libglodb_a_SOURCES = $(SRCS)
--libglodb_a_DEPENDENCIES = $(libglodb_a_LIBADD)
-+libglodb.lib_SOURCES = $(SRCS)
-+libglodb.lib_DEPENDENCIES = $(libglodb.lib_LIBADD)
- all: all-am
- 
- .SUFFIXES:
-@@ -420,10 +420,10 @@
- clean-noinstLIBRARIES:
- 	-$(am__rm_f) $(noinst_LIBRARIES)
- 
--libglodb.a: $(libglodb_a_OBJECTS) $(libglodb_a_DEPENDENCIES) $(EXTRA_libglodb_a_DEPENDENCIES) 
--	$(AM_V_at)-rm -f libglodb.a
--	$(AM_V_AR)$(libglodb_a_AR) libglodb.a $(libglodb_a_OBJECTS) $(libglodb_a_LIBADD)
--	$(AM_V_at)$(libglodb_a_RANLIB) libglodb.a
-+libglodb.lib: $(libglodb.lib_OBJECTS) $(libglodb.lib_DEPENDENCIES) $(EXTRA_libglodb.lib_DEPENDENCIES) 
-+	$(AM_V_at)-rm -f libglodb.lib
-+	$(AM_V_AR)$(libglodb.lib_AR) libglodb.lib $(libglodb.lib_OBJECTS) $(libglodb.lib_LIBADD)
-+	$(AM_V_at)$(libglodb.lib_RANLIB) libglodb.lib
- 
- mostlyclean-compile:
- 	-rm -f *.$(OBJEXT)
 diff -urN global-6.6.14-orig/libdb/sqlite3.c global-6.6.14/libdb/sqlite3.c
 --- global-6.6.14-orig/libdb/sqlite3.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/libdb/sqlite3.c	2024-12-31 15:55:02.269620400 +0800
++++ global-6.6.14/libdb/sqlite3.c	2025-02-06 16:07:31.442125400 +0800
 @@ -17,6 +17,35 @@
  ** language. The code for the "sqlite3" command-line shell is also in a
  ** separate file. This file contains only code for the core SQLite library.
@@ -532,7 +467,7 @@ diff -urN global-6.6.14-orig/libdb/sqlite3.c global-6.6.14/libdb/sqlite3.c
    /* grab an exclusive lock */
 diff -urN global-6.6.14-orig/libglibc/dirent.c global-6.6.14/libglibc/dirent.c
 --- global-6.6.14-orig/libglibc/dirent.c	1970-01-01 08:00:00.000000000 +0800
-+++ global-6.6.14/libglibc/dirent.c	2024-12-31 15:55:02.300865200 +0800
++++ global-6.6.14/libglibc/dirent.c	2025-02-06 16:07:31.463789300 +0800
 @@ -0,0 +1,325 @@
 +/*
 + * dirent.c
@@ -861,7 +796,7 @@ diff -urN global-6.6.14-orig/libglibc/dirent.c global-6.6.14/libglibc/dirent.c
 +
 diff -urN global-6.6.14-orig/libglibc/dirent.h global-6.6.14/libglibc/dirent.h
 --- global-6.6.14-orig/libglibc/dirent.h	1970-01-01 08:00:00.000000000 +0800
-+++ global-6.6.14/libglibc/dirent.h	2024-12-31 15:55:02.300865200 +0800
++++ global-6.6.14/libglibc/dirent.h	2025-02-06 16:07:31.467779100 +0800
 @@ -0,0 +1,148 @@
 +/*
 + * DIRENT.H (formerly DIRLIB.H)
@@ -1013,7 +948,7 @@ diff -urN global-6.6.14-orig/libglibc/dirent.h global-6.6.14/libglibc/dirent.h
 +
 diff -urN global-6.6.14-orig/libglibc/getopt.c global-6.6.14/libglibc/getopt.c
 --- global-6.6.14-orig/libglibc/getopt.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/libglibc/getopt.c	2024-12-31 15:55:02.316484500 +0800
++++ global-6.6.14/libglibc/getopt.c	2025-02-06 16:07:31.472766700 +0800
 @@ -57,7 +57,9 @@
  /* Don't include stdlib.h for non-GNU C libraries because some of them
     contain conflicting prototypes for getopt.  */
@@ -1026,7 +961,7 @@ diff -urN global-6.6.14-orig/libglibc/getopt.c global-6.6.14/libglibc/getopt.c
  #include <string.h>
 diff -urN global-6.6.14-orig/libglibc/Makefile.am global-6.6.14/libglibc/Makefile.am
 --- global-6.6.14-orig/libglibc/Makefile.am	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/libglibc/Makefile.am	2024-12-31 15:55:02.316484500 +0800
++++ global-6.6.14/libglibc/Makefile.am	2025-02-06 16:07:31.478009200 +0800
 @@ -12,8 +12,8 @@
  #
  noinst_LIBRARIES = libgloglibc.a
@@ -1040,28 +975,16 @@ diff -urN global-6.6.14-orig/libglibc/Makefile.am global-6.6.14/libglibc/Makefil
  libgloglibc_a_SOURCES = $(SRCS)
 diff -urN global-6.6.14-orig/libglibc/Makefile.in global-6.6.14/libglibc/Makefile.in
 --- global-6.6.14-orig/libglibc/Makefile.in	2024-12-11 14:44:41.000000000 +0800
-+++ global-6.6.14/libglibc/Makefile.in	2024-12-31 15:55:02.619799400 +0800
-@@ -113,14 +113,14 @@
- am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
- am__v_AR_0 = @echo "  AR      " $@;
- am__v_AR_1 = 
--libgloglibc_a_AR = $(AR) $(ARFLAGS)
--libgloglibc_a_RANLIB = $(RANLIB)
--libgloglibc_a_LIBADD =
++++ global-6.6.14/libglibc/Makefile.in	2025-02-06 16:07:31.482996200 +0800
+@@ -116,7 +116,7 @@
+ libgloglibc_a_AR = $(AR) $(ARFLAGS)
+ libgloglibc_a_RANLIB = $(RANLIB)
+ libgloglibc_a_LIBADD =
 -am__objects_1 = regex.$(OBJEXT) getopt.$(OBJEXT) getopt1.$(OBJEXT) \
-+libgloglibc.lib_AR = $(AR) $(ARFLAGS)
-+libgloglibc.lib_RANLIB = $(RANLIB)
-+libgloglibc.lib_LIBADD =
 +am__objects_1 = dirent.$(OBJEXT) regex.$(OBJEXT) getopt.$(OBJEXT) getopt1.$(OBJEXT) \
  	snprintf.$(OBJEXT) obstack.$(OBJEXT) hash-string.$(OBJEXT) \
  	fnmatch.$(OBJEXT)
--am_libgloglibc_a_OBJECTS = $(am__objects_1)
--libgloglibc_a_OBJECTS = $(am_libgloglibc_a_OBJECTS)
-+am_libgloglibc.lib_OBJECTS = $(am__objects_1)
-+libgloglibc.lib_OBJECTS = $(am_libgloglibc.lib_OBJECTS)
- AM_V_P = $(am__v_P_@AM_V@)
- am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
- am__v_P_0 = false
+ am_libgloglibc_a_OBJECTS = $(am__objects_1)
 @@ -139,7 +139,7 @@
  am__depfiles_remade = ./$(DEPDIR)/fnmatch.Po ./$(DEPDIR)/getopt.Po \
  	./$(DEPDIR)/getopt1.Po ./$(DEPDIR)/hash-string.Po \
@@ -1071,50 +994,17 @@ diff -urN global-6.6.14-orig/libglibc/Makefile.in global-6.6.14/libglibc/Makefil
  am__mv = mv -f
  COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
  	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-@@ -163,8 +163,8 @@
- am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
- am__v_CCLD_0 = @echo "  CCLD    " $@;
- am__v_CCLD_1 = 
--SOURCES = $(libgloglibc_a_SOURCES)
--DIST_SOURCES = $(libgloglibc_a_SOURCES)
-+SOURCES = $(libgloglibc.lib_SOURCES)
-+DIST_SOURCES = $(libgloglibc.lib_SOURCES)
- am__can_run_installinfo = \
-   case $$AM_UPDATE_INFO_DIR in \
-     n|no|NO) false;; \
-@@ -358,12 +358,12 @@
- # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+@@ -359,8 +359,8 @@
  # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  #
--noinst_LIBRARIES = libgloglibc.a
+ noinst_LIBRARIES = libgloglibc.a
 -INCS = regex.h getopt.h obstack.h hash-string.h getopt_int.h fnmatch.h
 -SRCS = regex.c getopt.c getopt1.c snprintf.c obstack.c hash-string.c fnmatch.c
-+noinst_LIBRARIES = libgloglibc.lib
 +INCS = dirent.h regex.h getopt.h obstack.h hash-string.h getopt_int.h fnmatch.h utime.h
 +SRCS = dirent.c regex.c getopt.c getopt1.c snprintf.c obstack.c hash-string.c fnmatch.c
  noinst_HEADERS = $(INCS)
--libgloglibc_a_SOURCES = $(SRCS)
--libgloglibc_a_DEPENDENCIES = $(libgloglibc_a_LIBADD)
-+libgloglibc.lib_SOURCES = $(SRCS)
-+libgloglibc.lib_DEPENDENCIES = $(libgloglibc.lib_LIBADD)
- all: all-am
- 
- .SUFFIXES:
-@@ -401,10 +401,10 @@
- clean-noinstLIBRARIES:
- 	-$(am__rm_f) $(noinst_LIBRARIES)
- 
--libgloglibc.a: $(libgloglibc_a_OBJECTS) $(libgloglibc_a_DEPENDENCIES) $(EXTRA_libgloglibc_a_DEPENDENCIES) 
--	$(AM_V_at)-rm -f libgloglibc.a
--	$(AM_V_AR)$(libgloglibc_a_AR) libgloglibc.a $(libgloglibc_a_OBJECTS) $(libgloglibc_a_LIBADD)
--	$(AM_V_at)$(libgloglibc_a_RANLIB) libgloglibc.a
-+libgloglibc.lib: $(libgloglibc.lib_OBJECTS) $(libgloglibc.lib_DEPENDENCIES) $(EXTRA_libgloglibc.lib_DEPENDENCIES) 
-+	$(AM_V_at)-rm -f libgloglibc.lib
-+	$(AM_V_AR)$(libgloglibc.lib_AR) libgloglibc.lib $(libgloglibc.lib_OBJECTS) $(libgloglibc.lib_LIBADD)
-+	$(AM_V_at)$(libgloglibc.lib_RANLIB) libgloglibc.lib
- 
- mostlyclean-compile:
- 	-rm -f *.$(OBJEXT)
+ libgloglibc_a_SOURCES = $(SRCS)
+ libgloglibc_a_DEPENDENCIES = $(libgloglibc_a_LIBADD)
 @@ -419,6 +419,7 @@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/obstack.Po@am__quote@ # am--include-marker
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/regex.Po@am__quote@ # am--include-marker
@@ -1141,7 +1031,7 @@ diff -urN global-6.6.14-orig/libglibc/Makefile.in global-6.6.14/libglibc/Makefil
  
 diff -urN global-6.6.14-orig/libglibc/regex.c global-6.6.14/libglibc/regex.c
 --- global-6.6.14-orig/libglibc/regex.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/libglibc/regex.c	2024-12-31 15:55:02.332106700 +0800
++++ global-6.6.14/libglibc/regex.c	2025-02-06 16:07:31.489125100 +0800
 @@ -297,11 +297,14 @@
  /* Make alloca work the best possible way.  */
  #  ifdef __GNUC__
@@ -1161,12 +1051,12 @@ diff -urN global-6.6.14-orig/libglibc/regex.c global-6.6.14/libglibc/regex.c
  
 diff -urN global-6.6.14-orig/libglibc/utime.h global-6.6.14/libglibc/utime.h
 --- global-6.6.14-orig/libglibc/utime.h	1970-01-01 08:00:00.000000000 +0800
-+++ global-6.6.14/libglibc/utime.h	2024-12-31 15:55:02.332106700 +0800
++++ global-6.6.14/libglibc/utime.h	2025-02-06 16:07:31.499292000 +0800
 @@ -0,0 +1 @@
 +#include <sys/utime.h>
 diff -urN global-6.6.14-orig/libltdl/Makefile.in global-6.6.14/libltdl/Makefile.in
 --- global-6.6.14-orig/libltdl/Makefile.in	2024-12-11 14:44:42.000000000 +0800
-+++ global-6.6.14/libltdl/Makefile.in	2024-12-31 15:55:02.332106700 +0800
++++ global-6.6.14/libltdl/Makefile.in	2025-02-06 16:07:31.545152000 +0800
 @@ -299,7 +299,7 @@
  # -I$(srcdir) is needed for user that built libltdl with a sub-Automake
  # (not as a sub-package!) using 'nostdinc':
@@ -1176,73 +1066,9 @@ diff -urN global-6.6.14-orig/libltdl/Makefile.in global-6.6.14/libltdl/Makefile.
  AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
  AR = @AR@
  AUTOCONF = @AUTOCONF@
-diff -urN global-6.6.14-orig/libparser/Makefile.in global-6.6.14/libparser/Makefile.in
---- global-6.6.14-orig/libparser/Makefile.in	2024-12-11 14:44:42.000000000 +0800
-+++ global-6.6.14/libparser/Makefile.in	2024-12-31 15:55:02.666663000 +0800
-@@ -113,13 +113,13 @@
- am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
- am__v_AR_0 = @echo "  AR      " $@;
- am__v_AR_1 = 
--libgloparser_a_AR = $(AR) $(ARFLAGS)
--libgloparser_a_RANLIB = $(RANLIB)
--libgloparser_a_LIBADD =
--am_libgloparser_a_OBJECTS = parser.$(OBJEXT) C.$(OBJEXT) Cpp.$(OBJEXT) \
-+libgloparser.lib_AR = $(AR) $(ARFLAGS)
-+libgloparser.lib_RANLIB = $(RANLIB)
-+libgloparser.lib_LIBADD =
-+am_libgloparser.lib_OBJECTS = parser.$(OBJEXT) C.$(OBJEXT) Cpp.$(OBJEXT) \
- 	asm_parse.$(OBJEXT) asm_scan.$(OBJEXT) java.$(OBJEXT) \
- 	php.$(OBJEXT)
--libgloparser_a_OBJECTS = $(am_libgloparser_a_OBJECTS)
-+libgloparser.lib_OBJECTS = $(am_libgloparser.lib_OBJECTS)
- AM_V_P = $(am__v_P_@AM_V@)
- am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
- am__v_P_0 = false
-@@ -161,8 +161,8 @@
- am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
- am__v_CCLD_0 = @echo "  CCLD    " $@;
- am__v_CCLD_1 = 
--SOURCES = $(libgloparser_a_SOURCES)
--DIST_SOURCES = $(libgloparser_a_SOURCES)
-+SOURCES = $(libgloparser.lib_SOURCES)
-+DIST_SOURCES = $(libgloparser.lib_SOURCES)
- am__can_run_installinfo = \
-   case $$AM_UPDATE_INFO_DIR in \
-     n|no|NO) false;; \
-@@ -356,12 +356,12 @@
- # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
- # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- #
--noinst_LIBRARIES = libgloparser.a
-+noinst_LIBRARIES = libgloparser.lib
- noinst_HEADERS = parser.h internal.h asm_parse.h \
- 		c_res.h cpp_res.h java_res.h php_res.h asm_res.h asm_parse.h
- 
--libgloparser_a_SOURCES = parser.c C.c Cpp.c asm_parse.c asm_scan.c java.c php.c
--libgloparser_a_DEPENDENCIES = $(libgloparser_a_LIBADD)
-+libgloparser.lib_SOURCES = parser.c C.c Cpp.c asm_parse.c asm_scan.c java.c php.c
-+libgloparser.lib_DEPENDENCIES = $(libgloparser.lib_LIBADD)
- EXTRA_DIST = reserved.pl HACKING \
- 		c_res.in c_res.gpf \
- 		cpp_res.in cpp_res.gpf \
-@@ -406,10 +406,10 @@
- clean-noinstLIBRARIES:
- 	-$(am__rm_f) $(noinst_LIBRARIES)
- 
--libgloparser.a: $(libgloparser_a_OBJECTS) $(libgloparser_a_DEPENDENCIES) $(EXTRA_libgloparser_a_DEPENDENCIES) 
--	$(AM_V_at)-rm -f libgloparser.a
--	$(AM_V_AR)$(libgloparser_a_AR) libgloparser.a $(libgloparser_a_OBJECTS) $(libgloparser_a_LIBADD)
--	$(AM_V_at)$(libgloparser_a_RANLIB) libgloparser.a
-+libgloparser.lib: $(libgloparser.lib_OBJECTS) $(libgloparser.lib_DEPENDENCIES) $(EXTRA_libgloparser.lib_DEPENDENCIES) 
-+	$(AM_V_at)-rm -f libgloparser.lib
-+	$(AM_V_AR)$(libgloparser.lib_AR) libgloparser.lib $(libgloparser.lib_OBJECTS) $(libgloparser.lib_LIBADD)
-+	$(AM_V_at)$(libgloparser.lib_RANLIB) libgloparser.lib
- 
- mostlyclean-compile:
- 	-rm -f *.$(OBJEXT)
 diff -urN global-6.6.14-orig/libutil/date.c global-6.6.14/libutil/date.c
 --- global-6.6.14-orig/libutil/date.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/libutil/date.c	2024-12-31 15:55:02.347727400 +0800
++++ global-6.6.14/libutil/date.c	2025-02-06 16:07:31.551540000 +0800
 @@ -57,10 +57,18 @@
  	FILE *ip;
  
@@ -1264,7 +1090,7 @@ diff -urN global-6.6.14-orig/libutil/date.c global-6.6.14/libutil/date.c
  	return buf;
 diff -urN global-6.6.14-orig/libutil/fileop.c global-6.6.14/libutil/fileop.c
 --- global-6.6.14-orig/libutil/fileop.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/libutil/fileop.c	2024-12-31 15:55:02.347727400 +0800
++++ global-6.6.14/libutil/fileop.c	2025-02-06 16:07:31.555256400 +0800
 @@ -53,6 +53,20 @@
  #define mkdir(path,mode) mkdir(path)
  #endif
@@ -1333,7 +1159,7 @@ diff -urN global-6.6.14-orig/libutil/fileop.c global-6.6.14/libutil/fileop.c
  }
 diff -urN global-6.6.14-orig/libutil/find.c global-6.6.14/libutil/find.c
 --- global-6.6.14-orig/libutil/find.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/libutil/find.c	2024-12-31 15:55:02.363348000 +0800
++++ global-6.6.14/libutil/find.c	2025-02-06 16:07:31.560455300 +0800
 @@ -84,6 +84,36 @@
  #define STRNCMP strncmp
  #define ROOT 0
@@ -1373,7 +1199,7 @@ diff -urN global-6.6.14-orig/libutil/find.c global-6.6.14/libutil/find.c
   *
 diff -urN global-6.6.14-orig/libutil/getdbpath.c global-6.6.14/libutil/getdbpath.c
 --- global-6.6.14-orig/libutil/getdbpath.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/libutil/getdbpath.c	2024-12-31 15:55:02.363348000 +0800
++++ global-6.6.14/libutil/getdbpath.c	2025-02-06 16:07:31.565320300 +0800
 @@ -46,6 +46,20 @@
  #include "strlimcpy.h"
  #include "test.h"
@@ -1397,7 +1223,7 @@ diff -urN global-6.6.14-orig/libutil/getdbpath.c global-6.6.14/libutil/getdbpath
   */
 diff -urN global-6.6.14-orig/libutil/gparam.h global-6.6.14/libutil/gparam.h
 --- global-6.6.14-orig/libutil/gparam.h	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/libutil/gparam.h	2024-12-31 15:55:02.363348000 +0800
++++ global-6.6.14/libutil/gparam.h	2025-02-06 16:07:31.569309500 +0800
 @@ -20,7 +20,7 @@
  
  #ifndef _GPARAM_H_
@@ -1409,42 +1235,7 @@ diff -urN global-6.6.14-orig/libutil/gparam.h global-6.6.14/libutil/gparam.h
  
 diff -urN global-6.6.14-orig/libutil/Makefile.in global-6.6.14/libutil/Makefile.in
 --- global-6.6.14-orig/libutil/Makefile.in	2024-12-11 14:44:42.000000000 +0800
-+++ global-6.6.14/libutil/Makefile.in	2024-12-31 15:55:02.709428400 +0800
-@@ -113,10 +113,10 @@
- am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
- am__v_AR_0 = @echo "  AR      " $@;
- am__v_AR_1 = 
--libgloutil_a_AR = $(AR) $(ARFLAGS)
--libgloutil_a_RANLIB = $(RANLIB)
--libgloutil_a_LIBADD =
--am_libgloutil_a_OBJECTS = assoc.$(OBJEXT) conf.$(OBJEXT) \
-+libgloutil.lib_AR = $(AR) $(ARFLAGS)
-+libgloutil.lib_RANLIB = $(RANLIB)
-+libgloutil.lib_LIBADD =
-+am_libgloutil.lib_OBJECTS = assoc.$(OBJEXT) conf.$(OBJEXT) \
- 	dbop.$(OBJEXT) defined.$(OBJEXT) die.$(OBJEXT) find.$(OBJEXT) \
- 	getdbpath.$(OBJEXT) gtagsop.$(OBJEXT) locatestring.$(OBJEXT) \
- 	makepath.$(OBJEXT) path.$(OBJEXT) gpathop.$(OBJEXT) \
-@@ -131,7 +131,7 @@
- 	fileop.$(OBJEXT) statistics.$(OBJEXT) args.$(OBJEXT) \
- 	logging.$(OBJEXT) nearsort.$(OBJEXT) secure_popen.$(OBJEXT) \
- 	convert.$(OBJEXT) output.$(OBJEXT) vstack.$(OBJEXT)
--libgloutil_a_OBJECTS = $(am_libgloutil_a_OBJECTS)
-+libgloutil.lib_OBJECTS = $(am_libgloutil.lib_OBJECTS)
- AM_V_P = $(am__v_P_@AM_V@)
- am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
- am__v_P_0 = false
-@@ -191,8 +191,8 @@
- am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
- am__v_CCLD_0 = @echo "  CCLD    " $@;
- am__v_CCLD_1 = 
--SOURCES = $(libgloutil_a_SOURCES)
--DIST_SOURCES = $(libgloutil_a_SOURCES)
-+SOURCES = $(libgloutil.lib_SOURCES)
-+DIST_SOURCES = $(libgloutil.lib_SOURCES)
- am__can_run_installinfo = \
-   case $$AM_UPDATE_INFO_DIR in \
-     n|no|NO) false;; \
++++ global-6.6.14/libutil/Makefile.in	2025-02-06 16:14:07.608160200 +0800
 @@ -257,7 +257,8 @@
  	-DDATADIR='"$(datadir)"' \
  	-DLIBDIR='"$(libdir)"' \
@@ -1455,51 +1246,9 @@ diff -urN global-6.6.14-orig/libutil/Makefile.in global-6.6.14/libutil/Makefile.
  
  AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
  AR = @AR@
-@@ -423,7 +424,7 @@
- # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
- # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- #
--noinst_LIBRARIES = libgloutil.a
-+noinst_LIBRARIES = libgloutil.lib
- noinst_HEADERS = \
- assoc.h conf.h dbop.h defined.h die.h find.h getdbpath.h global.h gparam.h \
- gtagsop.h locatestring.h makepath.h path.h gpathop.h strbuf.h \
-@@ -433,7 +434,7 @@
- compress.h checkalloc.h pool.h fileop.h statistics.h args.h logging.h nearsort.h \
- secure_popen.h convert.h output.h vstack.h
- 
--libgloutil_a_SOURCES = \
-+libgloutil.lib_SOURCES = \
- assoc.c conf.c dbop.c defined.c die.c find.c getdbpath.c gtagsop.c locatestring.c \
- makepath.c path.c gpathop.c strbuf.c strmake.c tab.c test.c \
- token.c usable.c version.c is_unixy.c abs2rel.c split.c strlimcpy.c linetable.c \
-@@ -441,7 +442,7 @@
- compress.c checkalloc.c pool.c fileop.c statistics.c args.c logging.c nearsort.c \
- secure_popen.c convert.c output.c vstack.c
- 
--libgloutil_a_DEPENDENCIES = $(libgloutil_a_LIBADD)
-+libgloutil.lib_DEPENDENCIES = $(libgloutil.lib_LIBADD)
- man_MANS = gtags.conf.5
- EXTRA_DIST = $(man_MANS) manual.in
- all: all-am
-@@ -483,10 +484,10 @@
- clean-noinstLIBRARIES:
- 	-$(am__rm_f) $(noinst_LIBRARIES)
- 
--libgloutil.a: $(libgloutil_a_OBJECTS) $(libgloutil_a_DEPENDENCIES) $(EXTRA_libgloutil_a_DEPENDENCIES) 
--	$(AM_V_at)-rm -f libgloutil.a
--	$(AM_V_AR)$(libgloutil_a_AR) libgloutil.a $(libgloutil_a_OBJECTS) $(libgloutil_a_LIBADD)
--	$(AM_V_at)$(libgloutil_a_RANLIB) libgloutil.a
-+libgloutil.lib: $(libgloutil.lib_OBJECTS) $(libgloutil.lib_DEPENDENCIES) $(EXTRA_libgloutil.lib_DEPENDENCIES) 
-+	$(AM_V_at)-rm -f libgloutil.lib
-+	$(AM_V_AR)$(libgloutil.lib_AR) libgloutil.lib $(libgloutil.lib_OBJECTS) $(libgloutil.lib_LIBADD)
-+	$(AM_V_at)$(libgloutil.lib_RANLIB) libgloutil.lib
- 
- mostlyclean-compile:
- 	-rm -f *.$(OBJEXT)
 diff -urN global-6.6.14-orig/libutil/makepath.c global-6.6.14/libutil/makepath.c
 --- global-6.6.14-orig/libutil/makepath.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/libutil/makepath.c	2024-12-31 15:55:02.378970200 +0800
++++ global-6.6.14/libutil/makepath.c	2025-02-06 16:07:31.578712700 +0800
 @@ -103,7 +103,9 @@
  #include <pwd.h>
  #include <limits.h>
@@ -1512,7 +1261,7 @@ diff -urN global-6.6.14-orig/libutil/makepath.c global-6.6.14/libutil/makepath.c
   * makepath_with_tilde: make path from a file with a tilde.
 diff -urN global-6.6.14-orig/libutil/path.h global-6.6.14/libutil/path.h
 --- global-6.6.14-orig/libutil/path.h	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/libutil/path.h	2024-12-31 15:55:02.385474900 +0800
++++ global-6.6.14/libutil/path.h	2025-02-06 16:07:31.583055200 +0800
 @@ -21,8 +21,10 @@
  #ifndef _PATH_H_
  #define _PATH_H_
@@ -1527,7 +1276,7 @@ diff -urN global-6.6.14-orig/libutil/path.h global-6.6.14/libutil/path.h
  /**
 diff -urN global-6.6.14-orig/libutil/test.c global-6.6.14/libutil/test.c
 --- global-6.6.14-orig/libutil/test.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/libutil/test.c	2024-12-31 15:55:02.385474900 +0800
++++ global-6.6.14/libutil/test.c	2025-02-06 16:07:31.586404600 +0800
 @@ -43,6 +43,35 @@
  #include "strbuf.h"
  #include "test.h"
@@ -1566,7 +1315,7 @@ diff -urN global-6.6.14-orig/libutil/test.c global-6.6.14/libutil/test.c
   *
 diff -urN global-6.6.14-orig/libutil/xargs.c global-6.6.14/libutil/xargs.c
 --- global-6.6.14-orig/libutil/xargs.c	2024-12-11 14:44:34.000000000 +0800
-+++ global-6.6.14/libutil/xargs.c	2024-12-31 15:55:02.385474900 +0800
++++ global-6.6.14/libutil/xargs.c	2025-02-06 16:07:31.590393900 +0800
 @@ -256,7 +256,11 @@
  		strbuf_putc(comline, '"');
  #endif

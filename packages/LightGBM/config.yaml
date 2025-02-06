@@ -3,6 +3,6 @@ version: 4.4.0
 url: https://github.com/microsoft/LightGBM.git
 sha256:
 steps:
-  one:
+  a:
     dependencies:
     run: build.bat

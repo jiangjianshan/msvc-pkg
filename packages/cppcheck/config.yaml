@@ -3,10 +3,10 @@ version: 2.14.0
 url: https://github.com/danmar/cppcheck/archive/refs/tags/2.14.0.tar.gz
 sha256: 2d2ead75db10c5993d77c8dfe854dc42b00fac65953611bb6c83e25fc74b9d50
 steps:
-  one:
+  a:
     dependencies:
       - boost
       - libxml2
-      - pcre:two
+      - pcre:b
       - winpthreads
     run: build.bat

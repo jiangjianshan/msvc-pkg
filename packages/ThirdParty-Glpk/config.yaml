@@ -3,8 +3,8 @@ version: 1.10.7
 url: https://github.com/coin-or-tools/ThirdParty-Glpk/archive/refs/tags/releases/1.10.7.tar.gz
 sha256: 0bc56db9d9031bb699f91fd6d312cbd236a7d310af01d3296ba31cea3421024a
 steps:
-  one:
+  a:
     dependencies:
       - dlfcn-win32
-      - gmp:two
+      - gmp:b
     run: build.sh

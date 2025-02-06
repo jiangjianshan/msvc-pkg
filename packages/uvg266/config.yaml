@@ -3,7 +3,7 @@ version: 0.8.1
 url: https://github.com/ultravideo/uvg266/archive/refs/tags/v0.8.1.tar.gz
 sha256: 9a2c68f94a1105058d1e654191036423d0a0fcf33b7e790dd63801997540b6ec
 steps:
-  one:
+  a:
     dependencies:
       - getopt
     run: build.bat

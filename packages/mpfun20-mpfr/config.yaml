@@ -3,6 +3,6 @@ version: v32
 url: https://www.davidhbailey.com/dhbsoftware/mpfun20-mpfr-v32.tar.gz
 sha256: 5f7ff522790176e0158abd569f2bf3b09d6dbaf20d1b3a1326caebfb616eeb11
 steps:
-  one:
+  a:
     dependencies:
     run: build.bat

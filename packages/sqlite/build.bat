@@ -27,12 +27,16 @@ rem ============================================================================
 :build_stage
 echo "Building %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%"
+if not defined ICU4C_PREFIX set ICU4C_PREFIX=%PREFIX%
 if not defined TCL_PREFIX set TCL_PREFIX=%PREFIX%
+if not defined ZLIB_PREFIX set ZLIB_PREFIX=%PREFIX%
 nmake /f Makefile.msc TCLDIR=!TCL_PREFIX!                                      ^
   CCOPTS="%C_OPTS% %C_DEFS%"                                                   ^
   BUILD_ZLIB=0                                                                 ^
   USE_ZLIB=1                                                                   ^
+  ZLIBDIR=!ZLIB_PREFIX!                                                        ^
   USE_ICU=1                                                                    ^
+  ICUDIR=!ICU4C_PREFIX!                                                        ^
   USE_CRT_DLL=1                                                                ^
   DYNAMIC_SHELL=1                                                              ^
   PLATFORM=%ARCH%                                                              ^

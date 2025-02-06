@@ -31,51 +31,51 @@ if not defined GMP_PREFIX set GMP_PREFIX=%PREFIX%
 if not defined MPFR_PREFIX set MPFR_PREFIX=%PREFIX%
 echo "Building %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%\fortran-var1"
-set libs=gmp.lib mpfr.lib
+set libs=%GMP_PREFIX%\lib\gmp.lib %MPFR_PREFIX%\lib\mpfr.lib
 set base_source=mpfuna.f90 mpfund.f90 mpfune.f90 mpfunf.f90 mpfung1.f90        ^
   mpfunh1.f90 mpmodule.f90 second.f90
 set base_objs=%base_source:.f90=.obj%
 rem NOTE: Don't use ifort with icx-cl. You must use ifx with icx-cl. Otherwise
 rem       ipo warnings will be occur: no IR in object file
 @echo on
-ifx %F_OPTS% -c %base_source%
-icx-cl %C_OPTS% -c mpinterface.c
+ifx %F_OPTS% -c %base_source% || exit 1
+icx-cl %C_OPTS% -c mpinterface.c || exit 1
 ifx %F_OPTS% -heap-arrays -exe:testmpfun.exe testmpfun.f90 !base_objs!         ^
-  mpinterface.obj !libs!
+  mpinterface.obj !libs! || exit 1
 ifx %F_OPTS% -heap-arrays -exe:tpolysolve.exe tpolysolve.f90 !base_objs!       ^
-  mpinterface.obj !libs!
+  mpinterface.obj !libs! || exit 1
 ifx %F_OPTS% -heap-arrays -exe:tpslq1.exe tpslq1.f90 !base_objs!               ^
-  mpinterface.obj !libs!
+  mpinterface.obj !libs! || exit 1
 ifx %F_OPTS% -heap-arrays -exe:tpslqm1.exe tpslqm1.f90 !base_objs!             ^
-  mpinterface.obj !libs!
+  mpinterface.obj !libs! || exit 1
 ifx %F_OPTS% -heap-arrays -exe:tpphix3.exe tpphix3.f90 !base_objs!             ^
-  mpinterface.obj !libs!
+  mpinterface.obj !libs! || exit 1
 ifx %F_OPTS% -heap-arrays -exe:tquad.exe tquad.f90 !base_objs!                 ^
-  mpinterface.obj !libs!
+  mpinterface.obj !libs! || exit 1
 @echo off
 cd "%BUILD_DIR%\fortran-var2"
 set base_source=mpfuna.f90 mpfund.f90 mpfune.f90 mpfunf.f90 mpfung2.f90        ^
   mpfunh2.f90 mpmodule.f90 second.f90
 set base_objs=%base_source:.f90=.obj%
 @echo on
-ifx %F_OPTS% -c %base_source%
-icx-cl %C_OPTS% -c mpinterface.c
+ifx %F_OPTS% -c %base_source% || exit 1
+icx-cl %C_OPTS% -c mpinterface.c || exit 1
 ifx %F_OPTS% -heap-arrays -exe:testmpfun.exe testmpfun.f90 !base_objs!         ^
-  mpinterface.obj !libs!
+  mpinterface.obj !libs! || exit 1
 ifx %F_OPTS% -heap-arrays -exe:tpolysolve.exe tpolysolve.f90 !base_objs!       ^
-  mpinterface.obj !libs!
+  mpinterface.obj !libs! || exit 1
 ifx %F_OPTS% -heap-arrays -exe:tpslq1.exe tpslq1.f90 !base_objs!               ^
-  mpinterface.obj !libs!
+  mpinterface.obj !libs! || exit 1
 ifx %F_OPTS% -heap-arrays -exe:tpslqm1.exe tpslqm1.f90 !base_objs!             ^
-  mpinterface.obj !libs!
+  mpinterface.obj !libs! || exit 1
 ifx %F_OPTS% -heap-arrays -exe:tpslqm2.exe tpslqm2.f90 !base_objs!             ^
-  mpinterface.obj !libs!
+  mpinterface.obj !libs! || exit 1
 ifx %F_OPTS% -heap-arrays -exe:tpslqm3.exe tpslqm3.f90 !base_objs!             ^
-  mpinterface.obj !libs!
+  mpinterface.obj !libs! || exit 1
 ifx %F_OPTS% -heap-arrays -exe:tpphix3.exe tpphix3.f90 !base_objs!             ^
-  mpinterface.obj !libs!
+  mpinterface.obj !libs! || exit 1
 ifx %F_OPTS% -heap-arrays -exe:tquad.exe tquad.f90 !base_objs!                 ^
-  mpinterface.obj !libs!
+  mpinterface.obj !libs! || exit 1
 @echo off
 exit /b 0
 

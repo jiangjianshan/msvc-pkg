@@ -3,6 +3,6 @@ version: master
 url: https://git.savannah.gnu.org/git/gnulib.git
 sha256:
 steps:
-  one:
+  a:
     dependencies:
     run:

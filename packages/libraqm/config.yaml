@@ -3,10 +3,10 @@ version: 0.10.2
 url: https://github.com/HOST-Oman/libraqm/archive/refs/tags/v0.10.2.tar.gz
 sha256: db68fd9f034fc40ece103e511ffdf941d69f5e935c48ded8a31590468e42ba72
 steps:
-  one:
+  a:
     dependencies:
       - pkg-config
       - freetype
-      - harfbuzz:two
+      - harfbuzz:b
       - fribidi
     run: build.bat

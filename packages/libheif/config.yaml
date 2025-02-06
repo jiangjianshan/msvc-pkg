@@ -3,7 +3,7 @@ version: 1.19.5
 url: https://github.com/strukturag/libheif/archive/refs/tags/v1.19.5.tar.gz
 sha256: 5cd9a3e28493310358e1c1299cd596cc4c7ae5fb985eceb758fa6141424e58bb
 steps:
-  one:
+  a:
     dependencies:
       - dav1d
       - getopt

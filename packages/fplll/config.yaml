@@ -3,9 +3,9 @@ version: 5.5.0
 url: https://github.com/fplll/fplll/archive/refs/tags/5.5.0.tar.gz
 sha256: 806a77355a40bee98179ccac3b5a2d17140311dde766838829c4c9166650f72e
 steps:
-  one:
+  a:
     dependencies:
-      - gmp:two
+      - gmp:b
       - mpfr
       - qd
       - winpthreads

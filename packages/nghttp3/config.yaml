@@ -3,6 +3,6 @@ version: main
 url: https://github.com/ngtcp2/nghttp3.git
 sha256:
 steps:
-  one:
+  a:
     dependencies:
     run: build.bat

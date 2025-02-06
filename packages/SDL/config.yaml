@@ -3,7 +3,7 @@ version: 2.30.9
 url: https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.30.9.tar.gz
 sha256: 682a055004081e37d81a7d4ce546c3ee3ef2e0e6a675ed2651e430ccd14eb407
 steps:
-  one:
+  a:
     dependencies:
       - libiconv
     run: build.bat

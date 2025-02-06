@@ -85,8 +85,7 @@ configure_stage()
     ac_cv_header_sstream=yes                                                   \
     ac_cv_type_std__locale=yes                                                 \
     gmp_cv_asm_w32=".word"                                                     \
-    gt_cv_locale_zh_CN=none
-    || exit 1
+    gt_cv_locale_zh_CN=none || exit 1
 }
 
 build_stage()

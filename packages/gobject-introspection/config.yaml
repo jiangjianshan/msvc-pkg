@@ -3,11 +3,11 @@ version: 1.82.0
 url: https://gitlab.gnome.org/GNOME/gobject-introspection/-/archive/1.82.0/gobject-introspection-1.82.0.tar.bz2
 sha256: f62ecd28fc4d641bcbae47d56fb7328beb1877b4bbdb648424d9b83e9e0496a5
 steps:
-  one:
+  a:
     dependencies:
       - pkg-config
-      - pcre2:two
-      - glib:one
+      - pcre2:b
+      - glib:a
       - libffi
       - zlib
     run: build.bat

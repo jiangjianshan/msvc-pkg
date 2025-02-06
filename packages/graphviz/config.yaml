@@ -3,15 +3,15 @@ version: 12.2.0
 url: https://gitlab.com/graphviz/graphviz/-/archive/12.2.0/graphviz-12.2.0.tar.bz2
 sha256: 56090fb1e5986919d6099041871744d84231d632f8649ea07028052a5487d444
 steps:
-  one:
+  a:
     dependencies:
       - getopt
       - pkg-config
       - pango
       - cairo
-      - glib:two
+      - glib:b
       - fontconfig
-      - harfbuzz:two
+      - harfbuzz:b
       - libgd
       - libpng
       - libjpeg-turbo

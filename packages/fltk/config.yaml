@@ -3,7 +3,7 @@ version: 1.3.9
 url: https://www.fltk.org/pub/fltk/1.3.9/fltk-1.3.9-source.tar.bz2
 sha256: 103441134915402808fd45424d4061778609437e804334434e946cfd26b196c2
 steps:
-  one:
+  a:
     dependencies:
       - fontconfig
       - openjpeg

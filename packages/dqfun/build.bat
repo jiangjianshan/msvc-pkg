@@ -32,11 +32,11 @@ cd "%BUILD_DIR%"
 set base_source=dqfuna.f90 dqfune.f90 dqmodule.f90 second.f90
 set base_objs=%base_source:.f90=.obj%
 @echo on
-ifort %F_OPTS% -c %base_source%
-ifort %F_OPTS% -exe:testdqfun.exe testdqfun.f90 !base_objs!
-ifort %F_OPTS% -exe:tpslqm1dq.exe tpslqm1dq.f90 !base_objs!
-ifort %F_OPTS% -exe:tquaddq.exe tquaddq.f90 !base_objs!
-ifort %F_OPTS% -exe:tpphixdq.exe tpphixdq.f90 !base_objs!
+ifort %F_OPTS% -c %base_source% || exit 1
+ifort %F_OPTS% -exe:testdqfun.exe testdqfun.f90 !base_objs! || exit 1
+ifort %F_OPTS% -exe:tpslqm1dq.exe tpslqm1dq.f90 !base_objs! || exit 1
+ifort %F_OPTS% -exe:tquaddq.exe tquaddq.f90 !base_objs! || exit 1
+ifort %F_OPTS% -exe:tpphixdq.exe tpphixdq.f90 !base_objs! || exit 1
 @echo off
 exit /b 0
 

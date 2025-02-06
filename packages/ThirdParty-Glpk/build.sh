@@ -64,7 +64,8 @@ configure_stage()
     --bindir="$PREFIX/bin"                                                     \
     --includedir="$PREFIX/include"                                             \
     --libdir="$PREFIX/lib"                                                     \
-    --disable-pkg-config                                                       \
+    --disable-mysql                                                            \
+    --disable-odbc                                                             \
     --enable-msvc                                                              \
     --enable-static                                                            \
     --enable-shared                                                            \

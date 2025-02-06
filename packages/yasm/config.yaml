@@ -3,7 +3,7 @@ version: master
 url: https://github.com/yasm/yasm.git
 sha256:
 steps:
-  one:
+  a:
     dependencies:
       - gettext
     run: build.bat

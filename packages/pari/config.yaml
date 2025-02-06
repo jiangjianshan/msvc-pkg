@@ -3,9 +3,9 @@ version: 2.17.0
 url: https://pari.math.u-bordeaux.fr/pub/pari/unix/pari-2.17.0.tar.gz
 sha256: e723e7cef18d08c6ece2283af9a9b4d56077c22b4fce998faaa588d389b1aea8
 steps:
-  one:
+  a:
     dependencies:
-      - gmp:two
+      - gmp:b
       - ncurses
       - perl
       - readline

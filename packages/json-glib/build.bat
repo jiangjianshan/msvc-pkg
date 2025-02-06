@@ -40,7 +40,9 @@ meson setup "%BUILD_DIR%"                                                      ^
   -Dc_winlibs="Advapi32.lib,iconv.lib,intl.lib"                                ^
   -Dcpp_winlibs="Advapi32.lib,iconv.lib,intl.lib"                              ^
   -Ddefault_library=shared                                                     ^
-  -Dintrospection=enabled                                                      ^
+  -Ddocumentation=disabled                                                     ^
+  -Dgtk_doc=disabled                                                           ^
+  -Dinstalled_tests=false                                                      ^
   -Dtests=false || exit 1
 exit /b 0
 

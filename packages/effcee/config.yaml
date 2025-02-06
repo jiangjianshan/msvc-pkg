@@ -3,7 +3,7 @@ version: main
 url: https://github.com/google/effcee.git
 sha256:
 steps:
-  one:
+  a:
     dependencies:
       - abseil-cpp
       - googletest

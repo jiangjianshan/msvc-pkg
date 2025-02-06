@@ -3,7 +3,7 @@ version: 5.7.3.1
 url: https://github.com/scivision/mumps/archive/refs/tags/v5.7.3.1.tar.gz
 sha256: 54ac6470bf045c7ef5c9766f8a185078aff9953bfe3acbca23a8e3a2fab7d361
 steps:
-  one:
+  a:
     dependencies:
       - lapack
       - scalapack

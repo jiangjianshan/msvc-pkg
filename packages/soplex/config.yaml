@@ -3,11 +3,11 @@ version: 7.1.2
 url: https://github.com/scipopt/soplex/archive/refs/tags/release-712.tar.gz
 sha256: a1a7d7f7e30d1db65548b32f75d6f2ed9bd0bf289f639eb4481d3d141c67a332
 steps:
-  one:
+  a:
     dependencies:
       - boost
       - zlib
-      - gmp:two
+      - gmp:b
       - mpfr
       - papilo
       - winpthreads

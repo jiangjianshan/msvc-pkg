@@ -33,14 +33,14 @@ set base_source=mpfuna.f90 mpfunbq.f90 mpfunc.f90 mpfund.f90 mpfune.f90        ^
   mpfunf.f90 mpfungq2.f90 mpmodule.f90 second.f90
 set base_objs=%base_source:.f90=.obj%
 @echo on
-ifort %F_OPTS% -c %base_source%
-ifort %F_OPTS% -heap-arrays -exe:testmpfun.exe testmpfun.f90 !base_objs!
-ifort %F_OPTS% -heap-arrays -exe:tpslq1.exe tpslq1.f90 !base_objs!
-ifort %F_OPTS% -heap-arrays -exe:tpslqm1.exe tpslqm1.f90 !base_objs!
-ifort %F_OPTS% -heap-arrays -exe:tpslqm2.exe tpslqm2.f90 !base_objs!
-ifort %F_OPTS% -heap-arrays -exe:tpslqm3.exe tpslqm3.f90 !base_objs!
-ifort %F_OPTS% -heap-arrays -exe:tquad.exe tquad.f90 !base_objs!
-ifort %F_OPTS% -heap-arrays -exe:tpphix3.exe tpphix3.f90 !base_objs!
+ifort %F_OPTS% -c %base_source% || exit 1
+ifort %F_OPTS% -heap-arrays -exe:testmpfun.exe testmpfun.f90 !base_objs! || exit 1
+ifort %F_OPTS% -heap-arrays -exe:tpslq1.exe tpslq1.f90 !base_objs! || exit 1
+ifort %F_OPTS% -heap-arrays -exe:tpslqm1.exe tpslqm1.f90 !base_objs! || exit 1
+ifort %F_OPTS% -heap-arrays -exe:tpslqm2.exe tpslqm2.f90 !base_objs! || exit 1
+ifort %F_OPTS% -heap-arrays -exe:tpslqm3.exe tpslqm3.f90 !base_objs! || exit 1
+ifort %F_OPTS% -heap-arrays -exe:tquad.exe tquad.f90 !base_objs! || exit 1
+ifort %F_OPTS% -heap-arrays -exe:tpphix3.exe tpphix3.f90 !base_objs! || exit 1
 @echo off
 exit /b 0
 

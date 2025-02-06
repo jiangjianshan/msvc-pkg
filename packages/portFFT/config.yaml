@@ -3,7 +3,7 @@ version: main
 url: https://github.com/codeplaysoftware/portFFT.git
 sha256:
 steps:
-  one:
+  a:
     dependencies:
       - winpthreads
     run: build.bat

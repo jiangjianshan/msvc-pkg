@@ -58,7 +58,8 @@ configure_stage()
   CPPFLAGS="$C_DEFS -I${NCURSES_PREFIX:-$PREFIX}/include/ncurses"              \
   DLLTOOL="link.exe -verbose -dll"                                             \
   LD="link -nologo"                                                            \
-  LIBS="-lShell32"                                                             \
+  LIBS="-lShell32 -lzdll -licuuc -licuin -llibsqlite3"                         \
+  LT_SYS_LIBRARY_PATH="$(cygpath -u "$PREFIX")"                                \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
   RANLIB=":"                                                                   \
@@ -87,6 +88,41 @@ configure_stage()
     gt_cv_locale_zh_CN=none || exit 1
 }
 
+patch_stage()
+{
+  echo "Patching $PKG_NAME $PKG_VER after configure"
+  cd "$BUILD_DIR"
+
+  echo "Patching Makefile libdb"
+  pushd libdb || exit 1
+  sed                                                                          \
+    -e 's|libglodb\.a|libglodb\.lib|g'                                         \
+    -i Makefile
+  popd || exit 1
+
+  echo "Patching Makefile in libglibc"
+  pushd libglibc || exit 1
+  sed                                                                          \
+    -e 's|libgloglibc\.a|libgloglibc\.lib|g'                                   \
+    -i Makefile
+  popd || exit 1
+
+  echo "Patching Makefile in libparser"
+  pushd libparser || exit 1
+  sed                                                                          \
+    -e 's|libgloparser\.a|libgloparser\.lib|g'                                 \
+    -i Makefile
+  popd || exit 1
+
+  echo "Patching Makefile in libutil"
+  pushd libutil || exit 1
+  sed                                                                          \
+    -e 's|libgloutil\.a|libgloutil\.lib|g'                                     \
+    -i Makefile
+  popd || exit 1
+
+}
+
 build_stage()
 {
   echo "Building $PKG_NAME $PKG_VER"
@@ -107,5 +143,6 @@ install_package()
 }
 
 configure_stage
+patch_stage
 build_stage
 install_package

@@ -3,7 +3,7 @@ version: 24.8.7
 url: https://github.com/icl-utk-edu/plasma/archive/refs/tags/24.8.7.tar.gz
 sha256: 418bf30dd5f3e19617b2b766556f236fb37a2e8cf1dac17fe78d7d8759779469
 steps:
-  one:
+  a:
     dependencies:
       - OpenBLAS
     run: build.bat

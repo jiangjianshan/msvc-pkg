@@ -3,14 +3,14 @@ version: 3.7.3
 url: https://www.libarchive.org/downloads/libarchive-3.7.3.tar.gz
 sha256: f27a97bc22ceb996e72502df47dc19f99f9a0f09181ae909f09f3c9eb17b67e2
 steps:
-  one:
+  a:
     dependencies:
       - bzip2
       - dlfcn-win32
       - libiconv
       - libxml2
       - lz4
-      - pcre:two
+      - pcre:b
       - xz
       - zlib
       - zstd
