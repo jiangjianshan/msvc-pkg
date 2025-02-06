@@ -1,4 +1,35 @@
 #!/bin/bash
+#
+# Copyright (c) 2024 Jianshan Jiang
+#
+
+# unzip featuring an enhanced version of tar's --strip-components=1
+# Usage: unzip-strip ARCHIVE [DESTDIR] [EXTRA_cp_OPTIONS]
+# Derive DESTDIR to current dir and archive filename or toplevel dir
+unzip-strip() {
+    set -e
+    local archive=$1
+    local destdir=${2:-}
+    shift; shift || :
+    local tmpdir=$(mktemp -d)
+    trap 'rm -rf -- "$tmpdir"' EXIT
+    unzip -qd "$tmpdir" -- "$archive"
+    shopt -s dotglob
+    local files=("$tmpdir"/*) name i=1
+    if (( ${#files[@]} == 1 )) && [[ -d "${files[0]}" ]]; then
+        name=$(basename "${files[0]}")
+        files=("$tmpdir"/*/*)
+    else
+        name=$(basename "$archive"); name=${archive%.*}
+        files=("$tmpdir"/*)
+    fi
+    if [[ -z "$destdir" ]]; then
+        destdir=./"$name"
+    fi
+    while [[ -f "$destdir" ]]; do destdir=${destdir}-$((i++)); done
+    mkdir -p "$destdir"
+    cp -ar "$@" -t "$destdir" -- "${files[@]}"
+}
 
 extract() {
   local dest_dir=$1
@@ -18,7 +49,7 @@ extract() {
       fi
       ;;
     *.zip)
-      unzip -q -o "$TAGS_DIR/$archive" -d "$dest_dir" >/dev/null
+      unzip-strip "$TAGS_DIR/$archive" "$dest_dir"
       ;;
     *)
       echo "$TAGS_DIR/$archive cannot be extracted via extract()"
