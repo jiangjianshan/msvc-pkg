@@ -18,7 +18,7 @@ if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
 
 set GIT_ROOT="C:\Program Files\Git"
 set OLDPATH=%PATH%
-set PATH=%PATH%;C:\Python312\Scripts;C:\Python312;%HOME%\.cargo\bin;%~dp0%ARCH%\bin;%GIT_ROOT%\bin
+set PATH=%PATH%;C:\Python312\Scripts;C:\Python312;%HOME%\.cargo\bin;%~dp0%ARCH%\bin;%GIT_ROOT:"=%\bin
 
 cd /d %~dp0
 mkdir %ARCH%\bin
@@ -35,12 +35,9 @@ call :check_rust || goto :end
 
 echo Dealing with line endings
 rem See https://stackoverflow.com/questions/1967370/git-replacing-lf-with-crlf
-git config --global core.autocrlf input
 git config --global core.autocrlf false
-
 echo Speed up git handling if on bash environment
-git config --system core.fileMode false
-
+git config --system core.filemode false
 echo Changed the default behavior of Git for Windows
 git config --global core.ignorecase false
 
@@ -116,25 +113,25 @@ if "!nv_gpu!" == "" (
 )
 :install_cuda
 echo You don't have CUDA installed
-set CUDA_FULL_VERSION=12.6.2_560.94
+set CUDA_FULL_VERSION=12.8.0_571.96
 for /f "tokens=1-4 delims=." %%a in ("!CUDA_FULL_VERSION!") do set cuda_major=%%a
 for /f "tokens=1-4 delims=." %%a in ("!CUDA_FULL_VERSION!") do set cuda_major_minor=%%a.%%b
 for /f "delims=_" %%a in ("!CUDA_FULL_VERSION!") do set cuda_version=%%a
 rem https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html
 if not exist "cuda_!CUDA_FULL_VERSION!_windows.exe" (
   echo Downloading CUDA !CUDA_FULL_VERSION!
-  wget  --no-check-certificate https://developer.download.nvidia.com/compute/cuda/!CUDA_VERSION!/local_installers/cuda_!CUDA_FULL_VERSION!_windows.exe
+  wget --no-check-certificate https://developer.download.nvidia.com/compute/cuda/!CUDA_VERSION!/local_installers/cuda_!CUDA_FULL_VERSION!_windows.exe
 )
 echo Installing CUDA !CUDA_FULL_VERSION!
 cuda_!CUDA_FULL_VERSION!_windows.exe -s cuda_profiler_api_!cuda_major_minor! cudart_!cuda_major_minor! cuobjdump_!cuda_major_minor! cupti_!cuda_major_minor! cuxxfilt_!cuda_major_minor! demo_suite_!cuda_major_minor! nvcc_!cuda_major_minor! nvdisasm_!cuda_major_minor! nvfatbin_!cuda_major_minor! nvjitlink_!cuda_major_minor! nvml_dev_!cuda_major_minor! nvprof_!cuda_major_minor! nvprune_!cuda_major_minor! nvrtc_!cuda_major_minor! nvrtc_dev_!cuda_major_minor! opencl_!cuda_major_minor! visual_profiler_!cuda_major_minor! sanitizer_!cuda_major_minor! thrust_!cuda_major_minor! cublas_!cuda_major_minor! cublas_dev_!cuda_major_minor! cufft_!cuda_major_minor! cufft_dev_!cuda_major_minor! curand_!cuda_major_minor! curand_dev_!cuda_major_minor! cusolver_!cuda_major_minor! cusolver_dev_!cuda_major_minor! cusparse_!cuda_major_minor! cusparse_dev_!cuda_major_minor! npp_!cuda_major_minor! npp_dev_!cuda_major_minor! nvjpeg_!cuda_major_minor! nvjpeg_dev_!cuda_major_minor! occupancy_calculator_!cuda_major_minor!
 echo Done.
 
-set CUDNN_VERSION=9.5.0.50
+set CUDNN_VERSION=9.7.1.26
 rem https://docs.nvidia.com/deeplearning/cudnn/latest/reference/support-matrix.html#support-matrix
 rem https://docs.nvidia.com/deeplearning/cudnn/latest/installation/windows.html
 if not exist "cudnn-windows-x86_64-!CUDNN_VERSION!_cuda!cuda_major!-archive.zip" (
   echo Downloading CUDNN !CUDNN_VERSION!
-  wget  --no-check-certificate https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-!CUDNN_VERSION!_cuda!cuda_major!-archive.zip
+  wget --no-check-certificate https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-!CUDNN_VERSION!_cuda!cuda_major!-archive.zip
 )
 powershell Expand-Archive -Path cudnn-windows-x86_64-!CUDNN_VERSION!_cuda!cuda_major!-archive.zip -DestinationPath . > nul || pause
 if not exist "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v!cuda_major_minor!\lib\x64" mkdir "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v!cuda_major_minor!\lib\x64"
@@ -159,27 +156,10 @@ if "!intel_cpu!" == "" (
   echo You don't have Intel CPU on your PC, but use Intel OneAPI should be OK.
 )
 set oneapi_version=2024.2.1
-set component_lists=intel.oneapi.win.cpp-dpcpp-common
 set with_basekit=no
 set with_hpckit=no
 rem Components available for installation:
 rem https://oneapi-src.github.io/oneapi-ci/
-if not exist "!ONEAPI_ROOT!\mkl" (
-  set with_mkl=
-  echo:
-  echo Do you want to install Intel oneAPI Math Kernel Library ^(oneMKL^)? [yes/y/no/n]
-  echo If you do not want, just press Enter to cancel
-  echo:
-  set /p with_mkl=
-  if "!with_mkl!"=="yes" (
-    set with_basekit=yes
-    set component_lists=!component_lists!:intel.oneapi.win.mkl.devel
-  )
-  if "!with_mkl!"=="y" (
-    set with_basekit=yes
-    set component_lists=!component_lists!:intel.oneapi.win.mkl.devel
-  )
-)
 if not exist "!ONEAPI_ROOT!\compiler" (
   if not exist "w_BaseKit_p_!oneapi_version!.101_offline.exe" (
     echo Downloading Intel OneAPI BaseKit for Windows
@@ -198,7 +178,7 @@ if not exist "!ONEAPI_ROOT!\compiler" (
 )
 if "!with_basekit!"=="yes" (
   echo Installing Intel OneAPI BaseKit
-  w_BaseKit_p_!oneapi_version!.101_offline.exe -a --silent --eula accept --components !component_lists!
+  w_BaseKit_p_!oneapi_version!.101_offline.exe -a --silent --eula accept --components intel.oneapi.win.cpp-dpcpp-common:intel.oneapi.win.mkl.devel:intel.oneapi.win.ipp.devel:intel.oneapi.win.ippcp
   echo Installing Intel oneAPI DPC++/C++ Compiler Runtime for Windows
   start /wait w_dpcpp_cpp_runtime_p_!oneapi_version!.1084.exe || goto :end
   echo Installing Intel Fortran Compiler Runtime for Windows* ^(IFX/IFORT^)
@@ -222,10 +202,11 @@ rem Check wget whether has been installed
 rem ==============================================================================
 :check_wget
 echo Checking wget whether has been installed
+set WGET_VERSION=1.21.4
 where wget >nul 2>&1
 if "%errorlevel%" neq "0" (
   echo Installing wget
-  curl -L https://eternallybored.org/misc/wget/1.21.4/%ARCH:x=%/wget.exe -o %~dp0%ARCH%\bin\wget.exe || goto :end
+  curl -L https://eternallybored.org/misc/wget/!WGET_VERSION!/%ARCH:x=%/wget.exe -o %~dp0%ARCH%\bin\wget.exe || goto :end
 )
 echo Done.
 exit /b 0
@@ -235,11 +216,12 @@ rem  Check ninja whether has been installed. If not, install it automatically
 rem ==============================================================================
 :check_ninja
 echo Checking Ninja whether has been installed
+set NINJA_VERSION=1.12.1
 where ninja >nul 2>&1
 if "%errorlevel%" neq "0" (
   echo Installing ninja
   if not exist "ninja-win.zip" (
-    wget --no-check-certificate https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-win.zip || goto :end
+    wget --no-check-certificate https://github.com/ninja-build/ninja/releases/download/v!NINJA_VERSION!/ninja-win.zip || goto :end
   )
   powershell Expand-Archive -Path ninja-win.zip -DestinationPath . > nul || goto :end
   copy /Y /V ninja.exe %~dp0%ARCH%\bin\ninja.exe
@@ -252,7 +234,7 @@ rem  Check python whether has been installed, If not, install it automatically
 rem ==============================================================================
 :check_python
 echo Checking Python whether has been installed
-set PYTHON_VERSION=3.12.8
+set PYTHON_VERSION=3.12.9
 where python >nul 2>&1
 if "%errorlevel%" neq "0" (
   echo Installing python 3
@@ -268,9 +250,9 @@ if "%errorlevel%" neq "0" (
     start /wait python-!PYTHON_VERSION!.exe InstallAllUsers=1 TargetDir=C:\Python312 PrependPath=1 Include_test=0 || goto :end
   )
 )
-echo Installing 3rd party libraries for Python
+echo Installing or updating 3rd party libraries for Python
 python -m pip install --upgrade pip setuptools
-python -m pip install --upgrade meson pygments pyyaml requests rich yamllint psutil || goto :end
+python -m pip install --upgrade meson pygments pyyaml requests rich yamllint psutil
 echo Done.
 exit /b 0
 
@@ -279,7 +261,7 @@ rem  check cmake whether has been installed
 rem ==============================================================================
 :check_cmake
 echo Checking CMake whether has been installed
-set CMAKE_VERSION=3.31.2
+set CMAKE_VERSION=3.31.5
 where cmake >nul 2>&1
 if "%errorlevel%" neq "0" (
   echo Installing CMake
@@ -303,23 +285,29 @@ rem  check git whether has been installed
 rem ==============================================================================
 :check_git
 echo Checking Git whether has been installed
-set GIT_VERSION=2.47.1
+set GIT_VERSION=2.47.1.2
 where git >nul 2>&1
 if "%errorlevel%" neq "0" (
   echo Intalling Git !GIT_VERSION!
+  for /f "tokens=1-4 delims=." %%a in ("%GIT_VERSION%") do (
+      if "%%d"=="" (
+          set git_patch_version=1
+      ) else (
+          set git_patch_version=%%d
+      )
+  )
   if "%ARCH%" == "x64" (
     if not exist "Git-!GIT_VERSION!-64-bit.exe" (
-      wget --no-check-certificate https://github.com/git-for-windows/git/releases/download/v!GIT_VERSION!.windows.1/Git-!GIT_VERSION!-64-bit.exe || goto :end
+      wget --no-check-certificate https://github.com/git-for-windows/git/releases/download/v!GIT_VERSION:~0,6!.windows.!git_patch_version!/Git-!GIT_VERSION!-64-bit.exe || goto :end
     )
     start /wait Git-!GIT_VERSION!-64-bit.exe || goto :end
   ) else (
     if not exist "Git-!GIT_VERSION!-32-bit.exe" (
-      wget --no-check-certificate https://github.com/git-for-windows/git/releases/download/v!GIT_VERSION!.windows.1/Git-!GIT_VERSION!-32-bit.exe || goto :end
+      wget --no-check-certificate https://github.com/git-for-windows/git/releases/download/v!GIT_VERSION:~0,6!.windows.!git_patch_version!/Git-!GIT_VERSION!-32-bit.exe || goto :end
     )
     start /wait Git-!GIT_VERSION!-32-bit.exe || goto :end
   )
 )
-popd || goto :end
 exit /b 0
 
 rem ==============================================================================
@@ -424,14 +412,15 @@ rem Check yq whether has been installed. If not, install it automatically
 rem ==============================================================================
 :check_yq
 echo Checking yq whether has been installed
+set YQ_VERSION=4.45.1
 where yq >nul 2>&1
 if "%errorlevel%" neq "0" (
   echo Installing yq
   if not exist "yq.exe" (
     if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
-      wget --no-check-certificate https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_windows_amd64.exe -O yq.exe || goto :end
+      wget --no-check-certificate https://github.com/mikefarah/yq/releases/download/v!YQ_VERSION!/yq_windows_amd64.exe -O yq.exe || goto :end
     ) else (
-      wget --no-check-certificate https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_windows_386.exe -O yq.exe || goto :end
+      wget --no-check-certificate https://github.com/mikefarah/yq/releases/download/v!YQ_VERSION!/yq_windows_386.exe -O yq.exe || goto :end
     )
   )
   copy /Y /V yq.exe %~dp0%ARCH%\bin\yq.exe
