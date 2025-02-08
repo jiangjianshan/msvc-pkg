@@ -1,8 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2024 Jianshan Jiang
+#  Copyright (c) 2024 Jianshan Jiang
 #
+#  Permission is hereby granted, free of charge, to any person obtaining a copy
+#  of this software and associated documentation files (the "Software"), to deal
+#  in the Software without restriction, including without limitation the rights
+#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#  copies of the Software, and to permit persons to whom the Software is
+#  furnished to do so, subject to the following conditions:
+#
+#  The above copyright notice and this permission notice shall be included in all
+#  copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#  SOFTWARE.
 
 import argparse
 import logging
@@ -25,131 +42,35 @@ from rich.tree import Tree as RichTree
 from rich.traceback import install
 from typing import List
 from yaml import SafeDumper
+from graphlib import TopologicalSorter, CycleError
 
-class Node:
-    """
-    Definition for a node in an N-ary tree.
-    Each node contains a value and a list of its children.
-    """
-    def __init__(self, pkg, step, children=None):
-        self.value = pkg
-        self.step = step
-        self.children = children if children is not None else []
-
-    def add_child(self, child_node):
-        """
-        Add child node into current node
-        """
-        self.children.append(child_node)
-
-
-def get_value(node: Node):
-    """
-    Gets the value of a given node in an N-ary tree.
-    """
-    if node is None:
-        return None
-    return node.value
-
-
-def get_step(node: Node):
-    """
-    Gets the step of a given node in an N-ary tree.
-    """
-    if node is None:
-        return 'a'
-    return node.step
-
-
-def build_tree(root: Node, pkg, step):
+def get_dependencies(pkg_with_step, deps, rich_tree):
     """
     Build dependencies tree recursively accoding to config.yaml on each package
     """
+    if ':' in pkg_with_step:
+        pkg = pkg_with_step.split(':')[0]
+        pkg_step = pkg_with_step.split(':')[1]
+    else:
+        pkg = pkg_with_step
+        pkg_step = 'a'
     conf_file = os.path.join(pkgs_dir, pkg, "config.yaml")
     with open(conf_file, 'r', newline='', encoding="utf-8") as f:
         pkg_conf = yaml.safe_load(f)
-        if pkg_conf['steps'][step]['dependencies']:
-            for dep_with_step in pkg_conf['steps'][step]['dependencies']:
-                dep_with_step = dep_with_step.split(':')
-                dep = dep_with_step[0]
-                if len(dep_with_step) > 1:
-                    dep_step = dep_with_step[1]
+        if pkg_conf['steps'][pkg_step]['dependencies']:
+            if pkg_with_step not in deps:
+                deps[pkg_with_step] = []
+            for dep_with_step in pkg_conf['steps'][pkg_step]['dependencies']:
+                if ':' in dep_with_step:
+                    dep = dep_with_step.split(':')[0]
+                    dep_step = dep_with_step.split(':')[1]
                 else:
+                    dep = dep_with_step
                     dep_step = 'a'
-                if not contains_node(root, dep, dep_step):
-                    # TODO: If one node has been included at upper level, and another node
-                    #       at lower level need it as dependency. Then may cause that node
-                    #       compile process failed. There is one solution but not good is
-                    #       to put dependencies of packages carefully in config.yaml.
-                    insert_node(root, pkg, dep, dep_step)
-                    build_tree(root, dep, dep_step)
-
-
-def insert_node(root: Node, parent_value, new_value, step):
-    """
-    Inserts a new node with value 'new_value' under the parent node with value 'parent_value'.
-    """
-    if root is None:
-        return None
-    if root.value == parent_value:
-        if not any(child.value == new_value and child.step == step for child in root.children):
-            root.add_child(Node(new_value, step))
-        return root
-    for child in root.children:
-        result = insert_node(child, parent_value, new_value, step)
-        if result is not None:
-            return result
-    return None
-
-
-def contains_node(root: Node, value, step):
-    """
-    Checks if the tree contains a node with the given value and step.
-    """
-    if root is None:
-        return False
-    if root.value == value and root.step == step:
-        return True
-    for child in root.children:
-        if contains_node(child, value, step):
-            return True
-    return False
-
-
-def level_order(root: Node, reverse=False):
-    """
-    Perform level order traversal on an N-ary tree and return a list of node values.
-    :type reverse: Boolean
-    :rtype: List[Node]
-    """
-    if root is None:
-        return []
-    result = []
-    queue = deque([root])
-    # Iterate as long as there are nodes to process.
-    while queue:
-        level_nodes = []
-        # Iterate over all nodes at the current level.
-        for _ in range(len(queue)):
-            current_node = queue.popleft()
-            level_nodes.append(current_node)
-            queue.extend(current_node.children)
-        result.append(level_nodes)
-    if reverse:
-        return result[::-1]
-    return result
-
-
-def print_tree(root: Node, rich_tree=None):
-    """
-    Pretty print dependencies tree under root node
-    """
-    if rich_tree is None:
-        rich_tree = RichTree(str(root.value), guide_style="bold bright_blue")
-    for child in root.children:
-        child_tree = rich_tree.add(str(child.value), guide_style="bold bright_blue")
-        print_tree(child, child_tree)
-    return rich_tree
+                if dep_with_step not in deps[pkg_with_step]:
+                    deps[pkg_with_step].append(dep_with_step)
+                    child_tree = rich_tree.add(dep_with_step, guide_style="bold bright_blue")
+                    get_dependencies(dep_with_step, deps, child_tree)
 
 
 def create_dirs(folders):
@@ -280,13 +201,17 @@ def compare_version(current, previous):
     else:
         return 0
 
-def build_decision(arch, pkg, pkg_conf, installed_conf, step):
+
+def build_decision(arch, deps, pkg_with_step, pkg_ver, pkg_url, installed_conf):
     """
     """
+    if ':' in pkg_with_step:
+        pkg = pkg_with_step.split(':')[0]
+        pkg_step = pkg_with_step.split(':')[1]
+    else:
+        pkg = pkg_with_step
+        pkg_step = 'a'
     logger.debug(f"Checking build decision for package '{pkg}'")
-    pkg_name = pkg_conf['name']
-    pkg_ver = str(pkg_conf['version'])
-    pkg_url = pkg_conf['url']
     if not installed_conf:
         logger.debug(f"Whole packages were not built yet")
         return True
@@ -297,119 +222,117 @@ def build_decision(arch, pkg, pkg_conf, installed_conf, step):
         logger.debug(f"Package '{pkg}' was not built yet")
         return True
     elif 'step' in installed_conf[arch][pkg]:
-        built_step = installed_conf[arch][pkg]['step']
-        if built_step < step:
+        pkg_built_step = installed_conf[arch][pkg]['step']
+        if pkg_built_step < pkg_step:
             logger.debug(f"Current step of {pkg} wasn't built yet")
             return True
     else:
         matched = []
         installed_ver = str(installed_conf[arch][pkg]['version'])
-        built_time = installed_conf[arch][pkg]['built']
-        logger.debug(f"{'Built time' : <29}: {built_time}")
+        pkg_built_time = installed_conf[arch][pkg]['built']
+        logger.debug(f"{'Built time' : <29}: {pkg_built_time}")
         if compare_version(pkg_ver, installed_ver) > 0:
             logger.debug(f"There is a newer version of package '{pkg}'")
             return True
-        if get_newer_files(os.path.join(pkgs_dir, pkg), built_time, matched, file_types=['.diff', '.yaml', '.sh', '.bat']):
+        if get_newer_files(os.path.join(pkgs_dir, pkg), pkg_built_time, matched, file_types=['.diff', '.yaml', '.sh', '.bat']):
             logger.debug(f"There are newer files exist in package directory")
             return True
         if pkg_url.endswith('.git'):
-            src_dir = os.path.join(root_dir, 'releases', pkg_name)
-            if get_newer_files(src_dir, built_time, matched, file_types=['.c', '.cc', '.cpp', '.h', '.hpp', '.f']):
+            src_dir = os.path.join(root_dir, 'releases', pkg)
+            if get_newer_files(src_dir, pkg_built_time, matched, file_types=['.c', '.cc', '.cpp', '.h', '.hpp', '.f']):
                 logger.debug(f"There are newer files exist in source directory")
                 return True
+        if pkg_with_step in deps and deps[pkg_with_step]:
+            for dep in deps[pkg_with_step]:
+                if dep in installed_conf[arch].keys():
+                    dep_built_time = installed_conf[arch][dep]['built']
+                    if dep_built_time > pkg_built_time:
+                        logger.debug(f"The built time {dep_built_time} of dependency '{dep}' is newer than package '{pkg}'")
+                        return True
     return False
 
-def build_pkg(arch, pkg, pkg_conf, step):
+
+def build_pkg(arch, deps, pkg_with_step):
     """
     """
     success = True
-    pkg_name = pkg_conf['name']
-    proc_env = os.environ.copy()
-    prefix = configure_envars(proc_env, arch, pkg)
-    if run_script(proc_env, pkgs_dir, pkg_name, 'sync.sh'):
-        installed_conf = {}
-        installed_file = os.path.join(root_dir, "installed.yaml")
-        if os.path.exists(installed_file):
-            with open(installed_file, 'r', newline='', encoding="utf-8") as g:
-                installed_conf = yaml.safe_load(g)
-        if step in pkg_conf['steps'] and pkg_conf['steps'][step]['run']:
-            logger.debug(f"Build step '{step}' for '{pkg}'")
-            if build_decision(arch, pkg, pkg_conf, installed_conf, step):
-                logger.debug(f"{'Decide to build ' + pkg : <29}: yes")
-                start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                logger.debug(f"{'Start time of build' : <29}: {start_time}")
-                log_file = os.path.join(root_dir, 'logs', pkg+'.txt')
-                file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
-                file_handler.setFormatter(formatter)
-                logger.addHandler(file_handler)
-                if run_script(proc_env, pkgs_dir, pkg, pkg_conf['steps'][step]['run']):
-                    # NOTE: here use pkg_name but not pkg, because pkg maybe as parameter input
-                    #       from command line is all lower case
-                    pkg_name = pkg_conf['name']
-                    logger.debug(f"Excute step '{step}' of '{pkg}' was success")
-                    if arch not in installed_conf.keys():
-                        installed_conf[arch] = {}
-                    if pkg not in installed_conf[arch]:
-                        installed_conf[arch][pkg] = {}
-                    installed_conf[arch][pkg]['version'] = pkg_conf['version']
-                    installed_conf[arch][pkg]['built'] = datetime.now()
-                    if len(pkg_conf['steps'].keys()) > 1:
-                        installed_conf[arch][pkg]['step'] = step
-                    with open(installed_file, 'w', newline='', encoding='utf-8') as g:
-                        logger.debug(f"Updating installed.yaml")
-                        yaml.safe_dump(installed_conf, g, indent=2)
-                elif arch in installed_conf.keys():
-                    if pkg in installed_conf[arch]:
+    if ':' in pkg_with_step:
+        pkg = pkg_with_step.split(':')[0]
+        pkg_step = pkg_with_step.split(':')[1]
+    else:
+        pkg = pkg_with_step
+        pkg_step = 'a'
+    conf_file = os.path.join(pkgs_dir, pkg, "config.yaml")
+    with open(conf_file, 'r', newline='', encoding="utf-8") as f:
+        pkg_conf = yaml.safe_load(f)
+        pkg_ver = str(pkg_conf['version'])
+        pkg_url = pkg_conf['url']
+        proc_env = os.environ.copy()
+        prefix = configure_envars(proc_env, arch, pkg)
+        if run_script(proc_env, pkgs_dir, pkg, 'sync.sh'):
+            installed_conf = {}
+            installed_file = os.path.join(root_dir, "installed.yaml")
+            if os.path.exists(installed_file):
+                with open(installed_file, 'r', newline='', encoding="utf-8") as g:
+                    installed_conf = yaml.safe_load(g)
+            if pkg_conf['steps'][pkg_step]['run']:
+                logger.debug(f"Build step '{pkg_step}' for '{pkg}'")
+                if build_decision(arch, deps, pkg_with_step, pkg_ver, pkg_url, installed_conf):
+                    logger.debug(f"{'Decide to build ' + pkg : <29}: yes")
+                    start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    logger.debug(f"{'Start time of build' : <29}: {start_time}")
+                    log_file = os.path.join(root_dir, 'logs', pkg+'.txt')
+                    file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
+                    file_handler.setFormatter(formatter)
+                    logger.addHandler(file_handler)
+                    if run_script(proc_env, pkgs_dir, pkg, pkg_conf['steps'][pkg_step]['run']):
+                        logger.debug(f"Excute step '{pkg_step}' of '{pkg}' was success")
+                        if arch not in installed_conf.keys():
+                            installed_conf[arch] = {}
+                        if pkg not in installed_conf[arch]:
+                            installed_conf[arch][pkg] = {}
+                        installed_conf[arch][pkg]['version'] = pkg_conf['version']
+                        installed_conf[arch][pkg]['built'] = datetime.now()
                         if len(pkg_conf['steps'].keys()) > 1:
-                            if 'step' in installed_conf[arch][pkg]:
-                              built_step = installed_conf[arch][pkg]['step']
-                              if built_step == step:
-                                logger.debug(f"Delete installed information of {pkg}")
-                                del installed_conf[arch][pkg]
-                        else:
-                            logger.debug(f"Delete installed information of {pkg}")
-                            del installed_conf[arch][pkg]
+                            installed_conf[arch][pkg]['step'] = pkg_step
                         with open(installed_file, 'w', newline='', encoding='utf-8') as g:
                             logger.debug(f"Updating installed.yaml")
                             yaml.safe_dump(installed_conf, g, indent=2)
-                    logger.debug(f"Stop further build because build '{pkg}' failed")
-                    success = False
-                end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                logger.removeHandler(file_handler)
-                file_handler.close()
-                logger.debug(f"{'Finish time of build' : <29}: {end_time}")
-            else:
-                logger.debug(f"{'Decide to build ' + pkg : <29}: no")
-    else:
-        logger.debug(f"Stop because of package '{pkg}' was synchronized fail")
-        success = False
+                    elif arch in installed_conf.keys():
+                        if pkg in installed_conf[arch]:
+                            if len(pkg_conf['steps'].keys()) > 1:
+                                if 'step' in installed_conf[arch][pkg]:
+                                  built_step = installed_conf[arch][pkg]['step']
+                                  if built_step == pkg_step:
+                                    logger.debug(f"Delete installed information of {pkg}")
+                                    del installed_conf[arch][pkg]
+                            else:
+                                logger.debug(f"Delete installed information of {pkg}")
+                                del installed_conf[arch][pkg]
+                            with open(installed_file, 'w', newline='', encoding='utf-8') as g:
+                                logger.debug(f"Updating installed.yaml")
+                                yaml.safe_dump(installed_conf, g, indent=2)
+                        logger.debug(f"Stop further build because build '{pkg}' failed")
+                        success = False
+                    end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    logger.removeHandler(file_handler)
+                    file_handler.close()
+                    logger.debug(f"{'Finish time of build' : <29}: {end_time}")
+                else:
+                    logger.debug(f"{'Decide to build ' + pkg : <29}: no")
+        else:
+            logger.debug(f"Stop because of package '{pkg}' was synchronized fail")
+            # NOTE: don't set success to False, because it will prevent to build other dependencies
+            #  success = False
     return success
 
 
-def build_pkgs(arch, pkg, step):
+def build_pkgs(arch, deps, build_order):
     """
     """
-    root = Node(pkg, step)
-    build_tree(root, pkg, step)
-    rich_tree = print_tree(root)
-    logger.debug(f"Dependencies tree of package '{pkg}' on step '{step}'")
-    console.print(rich_tree)
-    build_order = []
-    [build_order.append(i) for j in level_order(root, True) for i in j if i not in build_order]
-    for node in build_order:
-        node_pkg = get_value(node)
-        node_step = get_step(node)
-        logger.debug(f"Checking package '{node_pkg}' on step '{node_step}'")
-        conf_file = os.path.join(pkgs_dir, node_pkg, "config.yaml")
-        with open(conf_file, 'r', newline='', encoding="utf-8") as f:
-            pkg_conf = yaml.safe_load(f)
-            for _step in pkg_conf['steps']:
-                if _step == node_step:
-                    break
-                else:
-                    build_pkgs(arch, node_pkg, _step)
-            if not build_pkg(arch, node_pkg, pkg_conf, node_step):
-                return False
+    for pkg_with_step in build_order:
+        if not build_pkg(arch, deps, pkg_with_step):
+            break
 
 
 def traverse_pkgs(arch, pkgs):
@@ -419,8 +342,30 @@ def traverse_pkgs(arch, pkgs):
         conf_file = os.path.join(pkgs_dir, pkg, "config.yaml")
         with open(conf_file, 'r', newline='', encoding="utf-8") as f:
             pkg_conf = yaml.safe_load(f)
+            # NOTE: here use pkg_name but not pkg, because pkg maybe as parameter input
+            #       from command line is all lower case
+            pkg_name = pkg_conf['name']
             for step in pkg_conf['steps']:
-                build_pkgs(arch, pkg, step)
+                deps = {}
+                pkg_with_step = pkg_name
+                if step > 'a':
+                    pkg_with_step += ':' + step
+                rich_tree = RichTree(pkg_with_step, guide_style="bold bright_blue")
+                get_dependencies(pkg_with_step, deps, rich_tree)
+                logger.debug(f"Dependencies tree of package '{pkg_name}' on step '{step}'")
+                console.print(rich_tree)
+                try:
+                    sorter = TopologicalSorter(deps)
+                    build_order = tuple(sorter.static_order())
+                    if not build_order:
+                        #  Only have one node in graph
+                        build_order = tuple([pkg_with_step])
+                    logger.debug(f"Build order: {build_order}")
+                    build_pkgs(arch, deps, build_order)
+                except CycleError as e:
+                    logger.error(f"Cycle detected: {e}")
+                    logger.debug(f"You can fix this error in config.yaml of package {e[0]} and {e[1]}")
+                    break
 
 
 def list_pkgs(arch):

@@ -8,8 +8,17 @@ steps:
       - getopt
       - libdeflate
       - libjpeg-turbo
-      - libwebp
       - xz
       - zlib
       - zstd
+    run: build.bat
+  b:
+    dependencies:
+      - getopt
+      - libdeflate
+      - libjpeg-turbo
+      - xz
+      - zlib
+      - zstd
+      - libwebp
     run: build.bat

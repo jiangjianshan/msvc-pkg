@@ -8,7 +8,7 @@ steps:
       - zlib
       - libpng
       - libjpeg-turbo
-      - libtiff
+      - libtiff:a
       - giflib
       - winpthreads
       - freeglut

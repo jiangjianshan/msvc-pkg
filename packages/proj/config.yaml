@@ -8,6 +8,6 @@ steps:
       - sqlite
       - curl
       - googletest
-      - libtiff
+      - libtiff:b
       - winpthreads
     run: build.bat

@@ -1,8 +1,9 @@
 # msvc-pkg
 
 - ⚓ Have you ever encountered a build failure after spending a lot of time to build libraries and their dependencies?
-- 🏛️ Do you want to compile Autotools-based libraries on Windows withoug installing Cygwin or MSYS2?
+- 🏛️ Do you want to compile Autotools-based libraries on Windows without installing Cygwin or MSYS2?
 - 🏗️ Do you want to have a colorful and meaningful terminal for the compilation process?
+- ✨ Do you want each build process to be output to the terminal and also logged to a file?
 - 🏘️ Do you want to have .lib instead of .dll.a or .lib as suffix for the generated library files when using GNU libtool?
 - 🥁 Do you want to use MSVC or MSVC-like toolchain for native compilation on Windows without using MinGW?
 - 🏆 Do you want to automatically compile all build dependencies when compiling a library?
@@ -37,9 +38,7 @@ cd msvc-pkg
 bootstrap.bat
 ```
 
-📝Please note that this🚂 ***bootstrap.bat*** will not only install those [Dependencies](#dependencies)
-above, but also install some neccessary build essentials into Git for windows. So that ***msvc-pkg***
-can build autotools base projects on Windows without install Cygwin or MSYS2.
+📝Please note that this🚂 ***bootstrap.bat*** will not only install those [Dependencies](#dependencies) above, but also install some neccessary build essentials into Git for windows. So that ***msvc-pkg*** can build autotools base projects on Windows without install Cygwin or MSYS2.
 
 Then, it is recommand to create a file ***settings.yaml*** and put it in the root folder of ***msvc-pkg***. In case you want to install some libraries to your pre-defined location. Here is an example.
 

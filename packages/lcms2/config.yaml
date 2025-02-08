@@ -7,7 +7,7 @@ steps:
     dependencies:
       - dlfcn-win32
       - openjpeg
-      - libtiff
+      - libtiff:b
       - zlib
       - winpthreads
     run: build.sh

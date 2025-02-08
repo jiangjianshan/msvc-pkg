@@ -13,7 +13,7 @@ steps:
       - libjpeg-turbo
       - libpng
       - SVT-AV1
-      - libtiff
+      - libtiff:b
       - uvg266
       - zlib
       - openh264
