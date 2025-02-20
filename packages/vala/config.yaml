@@ -7,10 +7,10 @@ steps:
     dependencies:
       - getopt
       - gettext
-      - gobject-introspection
+      - gobject-introspection:a
       - glib:b
       - graphviz
-      - harfbuzz:b
+      - harfbuzz:a
       - libiconv
       - pixman
     run: build.sh

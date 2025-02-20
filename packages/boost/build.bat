@@ -40,7 +40,6 @@ if "%ARCH%" == "x86" set BITS=32
 cd "%SRC_DIR%" && b2 install -j%NUMBER_OF_PROCESSORS% --prefix="%PREFIX%"              ^
   --build-dir="%BUILD_DIR%" --build-type=complete variant=release                      ^
   address-model=!BITS! threading=multi link=static,shared runtime-link=shared          ^
-  architecture=x86 --without-predef                                                    ^
   --without-mpi --without-graph_parallel
 for /f "tokens=1-4 delims=." %%a in ("%PKG_VER%") do set boost_major_minor=%%a_%%b
 rem NOTE:

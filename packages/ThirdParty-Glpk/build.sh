@@ -16,6 +16,7 @@ SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
 C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics'
 C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX'
+F_OPTS='-nologo -MD -Qdiag-disable:10448 -fp:precise -Qopenmp -Qopenmp-simd -fpp'
 
 clean_build()
 {
@@ -50,6 +51,8 @@ configure_stage()
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
   CXXCPP="cl -E"                                                               \
   DLLTOOL="link.exe -verbose -dll"                                             \
+  F77="ifort"                                                                  \
+  FFLAGS="$F_OPTS -f77rtl"                                                     \
   LD="link -nologo"                                                            \
   MPICC="$ROOT_DIR/wrappers/mpicl"                                             \
   NM="dumpbin -nologo -symbols"                                                \
@@ -67,8 +70,9 @@ configure_stage()
     --disable-mysql                                                            \
     --disable-odbc                                                             \
     --enable-msvc                                                              \
-    --enable-static                                                            \
     --enable-shared                                                            \
+    ac_cv_prog_cc_c11="-std:c11"                                                         \
+    ac_cv_prog_f77_v="-verbose"                                                          \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

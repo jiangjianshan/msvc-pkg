@@ -25,13 +25,13 @@ patch_package()
 
   echo "Patching ltmain.sh in top level"
   sed                                                                                                \
-    -e 's|old_library=$libname.$libext|old_library=lib$libname.$libext|g'                            \
-    -e 's|$output_objdir/$libname.$libext|$output_objdir/lib$libname.$libext|g'                      \
+    -e 's|old_library=$libname\.$libext|old_library=lib$libname\.$libext|g'                          \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname\.$libext|g'                    \
     -i ltmain.sh
 
   echo "Patching configure in top level"
   sed                                                                                                \
-    -e 's|.dll.lib|.lib|g'                                                                           \
+    -e 's|\.dll\.lib|\.lib|g'                                                                        \
     -i configure
   chmod +x configure
 }

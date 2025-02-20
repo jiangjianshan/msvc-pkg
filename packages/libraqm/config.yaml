@@ -7,6 +7,6 @@ steps:
     dependencies:
       - pkg-config
       - freetype
-      - harfbuzz:b
+      - harfbuzz:a
       - fribidi
     run: build.bat

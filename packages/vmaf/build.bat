@@ -13,8 +13,10 @@ for /f "delims=" %%i in ('yq -r ".version" config.yaml') do set PKG_VER=%%i
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
-set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics
+set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -Zc:__cplusplus -Wno-implicit-function-declaration -Xclang -O3 -march=native -fms-extensions -fms-compatibility -fms-compatibility-version=19.42
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
+if not defined LLVM_PROJECT_PREFIX set LLVM_PROJECT_PREFIX=%PREFIX%
+set PATH=%LLVM_PROJECT_PREFIX%\bin;%PATH%
 
 call :configure_stage
 call :build_stage
@@ -29,6 +31,9 @@ call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%"
 cd "%SRC_DIR%/libvmaf"
+rem NOTE: msvc does not support VLA yet, so that use clang-cl.exe instead of cl.exe
+set CC=clang-cl
+set CXX=clang-cl
 meson setup "%BUILD_DIR%"                                                      ^
   --buildtype=release                                                          ^
   --prefix="%PREFIX%"                                                          ^
@@ -37,9 +42,8 @@ meson setup "%BUILD_DIR%"                                                      ^
   -Dc_args="%C_OPTS% %C_DEFS%"                                                 ^
   -Dcpp_std=c++17                                                              ^
   -Dcpp_args="-EHsc %C_OPTS% %C_DEFS%"                                         ^
-  -Dc_winlibs="Ole32.lib,User32.lib,pthread.lib"                               ^
-  -Dcpp_winlibs="Ole32.lib,User32.lib,pthread.lib"                             ^
-  -Ddefault_library=static                                                     ^
+  -Dc_winlibs="Ole32.lib,User32.lib,pthread.lib,getopt.lib"                    ^
+  -Dcpp_winlibs="Ole32.lib,User32.lib,pthread.lib,getopt.lib"                  ^
   -Denable_float=true                                                          ^
   -Denable_tests=false || exit 1
 exit /b 0

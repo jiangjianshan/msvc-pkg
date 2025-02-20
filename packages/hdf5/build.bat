@@ -31,6 +31,7 @@ mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
 cmake -G "Ninja"                                                               ^
   -DBUILD_STATIC_LIBS=OFF                                                      ^
   -DBUILD_SHARED_LIBS=ON                                                       ^
+  -DBUILD_TESTING=OFF                                                          ^
   -DCMAKE_BUILD_TYPE=Release                                                   ^
   -DCMAKE_C_COMPILER=cl                                                        ^
   -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS%"                                          ^

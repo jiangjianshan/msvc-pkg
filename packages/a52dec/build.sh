@@ -42,13 +42,13 @@ configure_stage()
   #    on some libraries will detect whether is msvc compiler according to
   #    '*cl | cl.exe'
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
-  CC="$ROOT_DIR/wrappers/compile cl"                                           \
+  CC="cl"                                                                      \
   CFLAGS="$C_OPTS"                                                             \
-  CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
+  CPP="cl -E"                                                                  \
   CPPFLAGS="$C_DEFS"                                                           \
-  CXX="$ROOT_DIR/wrappers/compile cl"                                          \
+  CXX="cl"                                                                     \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
-  CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
+  CXXCPP="cl -E"                                                               \
   DLLTOOL="link.exe -verbose -dll"                                             \
   LD="link -nologo"                                                            \
   NM="dumpbin -nologo -symbols"                                                \

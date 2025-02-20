@@ -1,0 +1,128 @@
+diff -urN libao-1.2.0-orig/include/ao/ao_private.h libao-1.2.0/include/ao/ao_private.h
+--- libao-1.2.0-orig/include/ao/ao_private.h	2012-02-14 08:46:05.000000000 +0800
++++ libao-1.2.0/include/ao/ao_private.h	2025-02-16 16:50:56.462203300 +0800
+@@ -138,6 +138,21 @@
+ 
+ void ao_read_config_files (ao_config *config);
+ 
++#ifdef _MSC_VER
++#define adebug(format, ...) {\
++    if(device->verbose==2){                                             \
++      if(strcmp(format,"\n")){                                          \
++        if(device->funcs->driver_info()->short_name){                   \
++          fprintf(stderr,"ao_%s debug: " format,device->funcs->driver_info()->short_name,## __VA_ARGS__); \
++        }else{                                                          \
++          fprintf(stderr,"debug: " format,## __VA_ARGS__);                     \
++        }                                                               \
++      }else{                                                            \
++        fprintf(stderr,"\n");                                           \
++      }                                                                 \
++    }                                                                   \
++  }
++#else
+ #define adebug(format, args...) {\
+     if(device->verbose==2){                                             \
+       if(strcmp(format,"\n")){                                          \
+@@ -151,7 +166,23 @@
+       }                                                                 \
+     }                                                                   \
+   }
++#endif
+ 
++#ifdef _MSC_VER
++#define averbose(format, ...) {\
++    if(device->verbose>0){                                              \
++      if(strcmp(format,"\n")){                                          \
++        if(device->funcs->driver_info()->short_name){                   \
++          fprintf(stderr,"ao_%s info: " format,device->funcs->driver_info()->short_name,## __VA_ARGS__); \
++        }else{                                                          \
++          fprintf(stderr,"info: " format,## __VA_ARGS__);                      \
++        }                                                               \
++      }else{                                                            \
++        fprintf(stderr,"\n");                                           \
++      }                                                                 \
++    }                                                                   \
++  }
++#else
+ #define averbose(format, args...) {\
+     if(device->verbose>0){                                              \
+       if(strcmp(format,"\n")){                                          \
+@@ -165,7 +196,23 @@
+       }                                                                 \
+     }                                                                   \
+   }
++#endif
+ 
++#ifdef _MSC_VER
++#define ainfo(format, ...) {\
++    if(device->verbose>=0){                                             \
++      if(strcmp(format,"\n")){                                          \
++        if(device->funcs->driver_info()->short_name){                   \
++          fprintf(stderr,"ao_%s info: " format,device->funcs->driver_info()->short_name,## __VA_ARGS__); \
++        }else{                                                          \
++          fprintf(stderr,"info: " format,## __VA_ARGS__);                      \
++        }                                                               \
++      }else{                                                            \
++        fprintf(stderr,"\n");                                           \
++      }                                                                 \
++    }                                                                   \
++  }
++#else
+ #define ainfo(format, args...) {\
+     if(device->verbose>=0){                                             \
+       if(strcmp(format,"\n")){                                          \
+@@ -179,7 +226,23 @@
+       }                                                                 \
+     }                                                                   \
+   }
++#endif
+ 
++#ifdef _MSC_VER
++#define awarn(format, ...) {\
++    if(device->verbose>=0){                                             \
++      if(strcmp(format,"\n")){                                          \
++        if(device->funcs->driver_info()->short_name){                   \
++          fprintf(stderr,"ao_%s WARNING: " format,device->funcs->driver_info()->short_name,## __VA_ARGS__); \
++        }else{                                                          \
++          fprintf(stderr,"WARNING: " format,## __VA_ARGS__);                   \
++        }                                                               \
++      }else{                                                            \
++        fprintf(stderr,"\n");                                           \
++      }                                                                 \
++    }                                                                   \
++  }
++#else
+ #define awarn(format, args...) {\
+     if(device->verbose>=0){                                             \
+       if(strcmp(format,"\n")){                                          \
+@@ -193,7 +256,23 @@
+       }                                                                 \
+     }                                                                   \
+   }
++#endif
+ 
++#ifdef _MSC_VER
++#define aerror(format, ...) {                                           \
++    if(device->verbose>=0){                                             \
++      if(strcmp(format,"\n")){                                          \
++        if(device->funcs->driver_info()->short_name){                   \
++          fprintf(stderr,"ao_%s ERROR: " format,device->funcs->driver_info()->short_name,## __VA_ARGS__); \
++        }else{                                                          \
++          fprintf(stderr,"ERROR: " format,## __VA_ARGS__);                     \
++        }                                                               \
++      }else{                                                            \
++        fprintf(stderr,"\n");                                           \
++      }                                                                 \
++    }                                                                   \
++  }
++#else
+ #define aerror(format, args...) {                                       \
+     if(device->verbose>=0){                                             \
+       if(strcmp(format,"\n")){                                          \
+@@ -207,5 +286,5 @@
+       }                                                                 \
+     }                                                                   \
+   }
+-
++#endif
+ #endif /* __AO_PRIVATE_H__ */

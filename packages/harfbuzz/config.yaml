@@ -11,8 +11,9 @@ steps:
     run: build.bat
   b:
     dependencies:
+      - harfbuzz:a
       - pkg-config
-      - gobject-introspection
+      - gobject-introspection:a
       - glib:b
       - cairo
       - freetype

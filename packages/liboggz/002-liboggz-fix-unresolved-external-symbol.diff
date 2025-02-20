@@ -1,0 +1,12 @@
+diff -urN liboggz-1.0.2-orig/src/liboggz/Makefile.in liboggz-1.0.2/src/liboggz/Makefile.in
+--- liboggz-1.0.2-orig/src/liboggz/Makefile.in	2010-04-29 09:45:31.000000000 +0800
++++ liboggz-1.0.2/src/liboggz/Makefile.in	2025-02-20 10:40:04.576609100 +0800
+@@ -260,7 +260,7 @@
+ 	dirac.c dirac.h
+ 
+ liboggz_la_LDFLAGS = -version-info @SHARED_VERSION_INFO@ @SHLIB_VERSION_ARG@
+-liboggz_la_LIBADD = @OGG_LIBS@
++liboggz_la_LIBADD = @OGG_LIBS@ @GETOPT_LIBS@
+ all: all-am
+ 
+ .SUFFIXES:

@@ -110,7 +110,6 @@ configure_stage()
     --with-menu-libname=menu                                                   \
     --with-normal                                                              \
     --with-panel-libname=panel                                                 \
-    --with-pkg-config-libdir="$PKG_CONFIG_PATH"                                \
     --with-progs                                                               \
     --with-shared                                                              \
     --without-ada                                                              \

@@ -5,10 +5,11 @@ sha256: 1db2aedde89d0dea42b16d9528f894c8d15dae4e190b59aecc78f5a951276eab
 steps:
   a:
     dependencies:
+      - dirent
       - getopt
       - libsigsegv
       - libiconv
       - gettext
-      - pcre2:b
+      - pcre2:a
       - winpthreads
     run: build.sh

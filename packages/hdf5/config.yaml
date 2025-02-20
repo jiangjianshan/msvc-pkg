@@ -6,6 +6,7 @@ steps:
   a:
     dependencies:
       - dlfcn-win32
+      - dirent
       - libaec
       - zlib
       - winpthreads

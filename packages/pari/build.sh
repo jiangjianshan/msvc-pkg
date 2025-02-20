@@ -80,7 +80,7 @@ configure_stage()
     --with-readline="$(cygpath -u "${READLINE_PREFIX:-$PREFIX}")"              \
     --with-ncurses-lib="$(cygpath -u "${NCURSES_PREFIX:-$PREFIX}/lib")"        \
     --with-gmp="$(cygpath -u "${GMP_PREFIX:-$PREFIX}")"                        \
-    --with-fltk="$(cygpath -u "${FLTK_PREFIX:-$PREFIX}")" || exit 1
+    --with-fltk="$(cygpath -u "${FLTK_PREFIX:-$PREFIX}")"
 }
 
 build_stage()

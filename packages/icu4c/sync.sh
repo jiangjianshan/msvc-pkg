@@ -36,8 +36,8 @@ fi
 if [[ ! -d "$SRC_DIR/source/data/locales" ]]; then
   correct_sha256='a5104212dc317a64f9b035723ea706f2f4fd5a0f37b7923fae7aeb9d1d0061b1'
   if verify_file $data_url "$data_archive" $correct_sha256; then
-    if ! extract "$SRC_DIR/source" "$data_archive"; then
-      echo "Failed to extract $archive into $dest_dir"
+    if ! extract "$SRC_DIR/source/data" "$data_archive"; then
+      echo "Failed to extract $archive into $SRC_DIR/source/data"
       exit 1
     fi
   fi

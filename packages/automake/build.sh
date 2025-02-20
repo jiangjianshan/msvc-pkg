@@ -68,6 +68,7 @@ configure_stage()
     --includedir="$PREFIX/include"                                             \
     --libdir="$PREFIX/lib"                                                     \
     --datarootdir="$PREFIX/share"                                              \
+    ac_cv_prog_f77_v="-verbose"                                                \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

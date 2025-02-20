@@ -6,8 +6,20 @@ steps:
   a:
     dependencies:
       - pkg-config
-      - pcre2:b
+      - pcre2:a
       - glib:a
       - libffi
+      - winflexbison
+      - zlib
+    run: build.bat
+  b:
+    dependencies:
+      - gobject-introspection:a
+      - pkg-config
+      - pcre2:a
+      - glib:b
+      - cairo
+      - libffi
+      - winflexbison
       - zlib
     run: build.bat

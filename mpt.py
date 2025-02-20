@@ -139,8 +139,8 @@ def configure_envars(proc_env, arch, pkg):
 def execute(proc_env, commands, shell=False):
     """
     """
-    err_list = ['Cannot', 'No such file', 'Error:', 'error:', ': error', ' Error ', 'syntax error', 'Failed', 'FAILED:', 'fatal:', 'fatal error']
-    warn_list = ['Warning:', 'warning:', ': warning', ' Warning ']
+    err_list = [' Cannot', ' No such file', ' Error:', ' error:', ': error', ' Error ', ' syntax error', ' Failed', ' FAILED:', ' fatal:', ' fatal error']
+    warn_list = [' Warning:', ' warning:', ': warning', ' Warning ']
     p = subprocess.Popen(commands, shell=shell, env=proc_env,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     with p.stdout:
@@ -202,7 +202,7 @@ def compare_version(current, previous):
         return 0
 
 
-def build_decision(arch, deps, pkg_with_step, pkg_ver, pkg_url, installed_conf):
+def build_decision(arch, deps, pkg_with_step, pkg_ver, pkg_url, installed_conf, fail_times):
     """
     """
     if ':' in pkg_with_step:
@@ -212,7 +212,10 @@ def build_decision(arch, deps, pkg_with_step, pkg_ver, pkg_url, installed_conf):
         pkg = pkg_with_step
         pkg_step = 'a'
     logger.debug(f"Checking build decision for package '{pkg}'")
-    if not installed_conf:
+    if pkg_with_step in fail_times.keys() and fail_times[pkg_with_step] > 1:
+        logger.debug(f"Package '{pkg}' was built failed more than 2 times, please fix it before build it again")
+        return False
+    elif not installed_conf:
         logger.debug(f"Whole packages were not built yet")
         return True
     elif arch not in installed_conf.keys():
@@ -221,11 +224,6 @@ def build_decision(arch, deps, pkg_with_step, pkg_ver, pkg_url, installed_conf):
     elif not pkg in installed_conf[arch].keys():
         logger.debug(f"Package '{pkg}' was not built yet")
         return True
-    elif 'step' in installed_conf[arch][pkg]:
-        pkg_built_step = installed_conf[arch][pkg]['step']
-        if pkg_built_step < pkg_step:
-            logger.debug(f"Current step of {pkg} wasn't built yet")
-            return True
     else:
         matched = []
         installed_ver = str(installed_conf[arch][pkg]['version'])
@@ -239,6 +237,9 @@ def build_decision(arch, deps, pkg_with_step, pkg_ver, pkg_url, installed_conf):
             return True
         if pkg_url.endswith('.git'):
             src_dir = os.path.join(root_dir, 'releases', pkg)
+            # NOTE: The numbers of source files may be huge, e.g. llvm-project, it will take a little long time to check
+            #       them whether have been modified at local. If you modified some files which are not in a git repository,
+            #       you can delete the entry of package name in installed.yaml to make the build decision to yes
             if get_newer_files(src_dir, pkg_built_time, matched, file_types=['.c', '.cc', '.cpp', '.h', '.hpp', '.f']):
                 logger.debug(f"There are newer files exist in source directory")
                 return True
@@ -249,10 +250,16 @@ def build_decision(arch, deps, pkg_with_step, pkg_ver, pkg_url, installed_conf):
                     if dep_built_time > pkg_built_time:
                         logger.debug(f"The built time {dep_built_time} of dependency '{dep}' is newer than package '{pkg}'")
                         return True
+        # NOTE: Put step check as last one to avoid missing previous scenarios
+        if 'step' in installed_conf[arch][pkg]:
+            pkg_built_step = installed_conf[arch][pkg]['step']
+            if pkg_built_step < pkg_step:
+                logger.debug(f"Current step of {pkg} wasn't built yet")
+                return True
     return False
 
 
-def build_pkg(arch, deps, pkg_with_step):
+def build_pkg(arch, deps, pkg_with_step, fail_times):
     """
     """
     success = True
@@ -277,11 +284,14 @@ def build_pkg(arch, deps, pkg_with_step):
                     installed_conf = yaml.safe_load(g)
             if pkg_conf['steps'][pkg_step]['run']:
                 logger.debug(f"Build step '{pkg_step}' for '{pkg}'")
-                if build_decision(arch, deps, pkg_with_step, pkg_ver, pkg_url, installed_conf):
+                if build_decision(arch, deps, pkg_with_step, pkg_ver, pkg_url, installed_conf, fail_times):
                     logger.debug(f"{'Decide to build ' + pkg : <29}: yes")
                     start_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     logger.debug(f"{'Start time of build' : <29}: {start_time}")
-                    log_file = os.path.join(root_dir, 'logs', pkg+'.txt')
+                    if pkg_step > 'a':
+                        log_file = os.path.join(root_dir, 'logs', pkg+'-'+pkg_step+'.txt')
+                    else:
+                        log_file = os.path.join(root_dir, 'logs', pkg+'.txt')
                     file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
                     file_handler.setFormatter(formatter)
                     logger.addHandler(file_handler)
@@ -298,6 +308,8 @@ def build_pkg(arch, deps, pkg_with_step):
                         with open(installed_file, 'w', newline='', encoding='utf-8') as g:
                             logger.debug(f"Updating installed.yaml")
                             yaml.safe_dump(installed_conf, g, indent=2)
+                        if pkg_with_step in fail_times.keys():
+                            del fail_times[pkg_with_step]
                     elif arch in installed_conf.keys():
                         if pkg in installed_conf[arch]:
                             if len(pkg_conf['steps'].keys()) > 1:
@@ -312,6 +324,11 @@ def build_pkg(arch, deps, pkg_with_step):
                             with open(installed_file, 'w', newline='', encoding='utf-8') as g:
                                 logger.debug(f"Updating installed.yaml")
                                 yaml.safe_dump(installed_conf, g, indent=2)
+                        if pkg_with_step not in fail_times.keys():
+                            fail_times[pkg_with_step] = 1
+                        else:
+                            fail_times[pkg_with_step] += 1
+                        logger.debug(f"Built fail times of package '{pkg}' on step '{pkg_step}' is {fail_times[pkg_with_step]}")
                         logger.debug(f"Stop further build because build '{pkg}' failed")
                         success = False
                     end_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -327,17 +344,18 @@ def build_pkg(arch, deps, pkg_with_step):
     return success
 
 
-def build_pkgs(arch, deps, build_order):
+def build_pkgs(arch, deps, build_order, fail_times):
     """
     """
     for pkg_with_step in build_order:
-        if not build_pkg(arch, deps, pkg_with_step):
+        if not build_pkg(arch, deps, pkg_with_step, fail_times):
             break
 
 
 def traverse_pkgs(arch, pkgs):
     """
     """
+    fail_times = {}
     for pkg in pkgs:
         conf_file = os.path.join(pkgs_dir, pkg, "config.yaml")
         with open(conf_file, 'r', newline='', encoding="utf-8") as f:
@@ -361,7 +379,7 @@ def traverse_pkgs(arch, pkgs):
                         #  Only have one node in graph
                         build_order = tuple([pkg_with_step])
                     logger.debug(f"Build order: {build_order}")
-                    build_pkgs(arch, deps, build_order)
+                    build_pkgs(arch, deps, build_order, fail_times)
                 except CycleError as e:
                     logger.error(f"Cycle detected: {e}")
                     logger.debug(f"You can fix this error in config.yaml of package {e[0]} and {e[1]}")

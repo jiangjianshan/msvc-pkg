@@ -5,4 +5,5 @@ sha256: 7ccdd27f33caa8e0216ed5a7efab6886cfc55c25b90680dd37c60520b116d6d1
 steps:
   a:
     dependencies:
+      - METIS
     run: build.sh

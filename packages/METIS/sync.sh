@@ -20,26 +20,22 @@ patch_package()
   cd "$SRC_DIR"
   patch -Np1 -i "$PKG_DIR/001-METIS-fix-compile-link-errors.diff"
   patch -Np1 -i "$PKG_DIR/002-METIS-missing-install-target-if-use-ninja.diff"
+  # TODO: The better way is to define a function with particular regular expression
+  #       in a .cmake to convert the objects files to .def file
+  patch -Np1 -i "$PKG_DIR/003-METIS-fix-build-shared-library-on-msvc.diff"
 
   echo "Patching vsgen.bat in top level"
   sed                                                                          \
     -e 's|-DCMAKE_CONFIGURATION_TYPES=|-DCMAKE_BUILD_TYPE=|g'                  \
     -i 'vsgen.bat'
 
+  # NOTE: ThirdParty-HSL need 'IDXTYPEWIDTH' to 32 but not 64
   pushd "include" || exit 1
-  if [ "$ARCH" == "x86" ]; then
-    sed                                                                        \
-      -e 's|\/\/#define IDXTYPEWIDTH 32|#define IDXTYPEWIDTH 32|g'             \
-      -e 's|\/\/#define REALTYPEWIDTH 32|#define REALTYPEWIDTH 32|g'           \
-      metis.h > metis.h-t
-    mv metis.h-t metis.h
-  else
-    sed                                                                        \
-      -e 's|\/\/#define IDXTYPEWIDTH 32|#define IDXTYPEWIDTH 64|g'             \
-      -e 's|\/\/#define REALTYPEWIDTH 32|#define REALTYPEWIDTH 64|g'           \
-      metis.h > metis.h-t
-    mv metis.h-t metis.h
-  fi
+  sed                                                                          \
+    -e 's|\/\/#define IDXTYPEWIDTH 32|#define IDXTYPEWIDTH 32|g'               \
+    -e 's|\/\/#define REALTYPEWIDTH 32|#define REALTYPEWIDTH 32|g'             \
+    metis.h > metis.h-t
+  mv metis.h-t metis.h
   popd || exit 1
 }
 

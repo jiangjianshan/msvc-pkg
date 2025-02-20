@@ -6,4 +6,5 @@ steps:
   a:
     dependencies:
       - dlfcn-win32
+      - dirent
     run: build.sh

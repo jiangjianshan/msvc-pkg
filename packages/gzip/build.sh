@@ -67,6 +67,10 @@ configure_stage()
     ac_cv_prog_cc_c11="-std:c11"                                               \
     ac_cv_func_getopt_long_only=yes                                            \
     gl_cv_func_getopt_posix=yes                                                \
+    ac_cv_func_opendir=yes                                                     \
+    ac_cv_func_readdir=yes                                                     \
+    ac_cv_func_closedir=yes                                                    \
+    ac_cv_func_rewinddir=yes                                                   \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

@@ -10,7 +10,7 @@
 - 🚗 Do you want to have independent compilation process for each library?
 - and etc.
 
-🚀 ***msvc-pkg*** is the right lightweight build manager you are looking for. It consists of more than 200+ open source libraries, which are available under👝 ***packages*** folder. Some of these libraries are not easy to be built on Windows, e.g. 💘 gmp 💚, 💘 ncurses 💚 and so on. More and more libraries are comming.
+🚀 ***msvc-pkg*** is the right lightweight build manager you are looking for. It consists of more than 230+ open source libraries, which are available under👝 ***packages*** folder. Some of these libraries are not easy to be built on Windows, e.g. 💘 gmp 💚, 💘 ncurses 💚 and so on. More and more libraries are comming.
 
 ## Dependencies
 
@@ -88,4 +88,4 @@ mpt gmp gettext ncurses readline
 
 ## Contributors
 
-This project follows the [all-contributors](https://allcontributors.org) specification. 🚈 The goal of ***msvc-pkg*** is to use MSVC and MSVC-like toolset to build as many C/C++/Fortran open source librareis as possible. It is a ✨huge✨ effort. Any volunteer for further contribution is welcome. If you find this project useful, please kindly click the 🌟star🌟 on the upper right corner. Thanks.
+This project follows the [all-contributors](https://allcontributors.org) specification. 🚈 The goal of ***msvc-pkg*** is to use MSVC and MSVC-like toolset to build as many C/C++/Fortran open source librareis as possible. It is a ✨huge✨ effort. Any volunteer for further contribution is welcome.

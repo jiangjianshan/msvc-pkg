@@ -5,7 +5,16 @@ sha256: b4c198460eba6f28d34894e3a5710998818515104d6e74e5cc331ce31e46e626
 steps:
   a:
     dependencies:
+      - pkg-config
+      - boost
+      - fftw:a
+      - sparsehash
+      - gmp
+      - gsl
+      - lapack
+      - mpfr
       - mpreal
+      - OpenBLAS
       - SuiteSparse
       - superlu
       - sparsehash

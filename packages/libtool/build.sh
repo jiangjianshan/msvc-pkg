@@ -82,6 +82,10 @@ configure_stage()
     --enable-static                                                            \
     --enable-shared                                                            \
     --disable-ltdl-install                                                     \
+    ac_cv_func_opendir=yes                                                     \
+    ac_cv_func_readdir=yes                                                     \
+    ac_cv_func_closedir=yes                                                    \
+    ac_cv_func_rewinddir=yes                                                   \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

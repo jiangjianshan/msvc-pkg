@@ -1,0 +1,13 @@
+diff -urN liboggz-1.0.2-orig/src/tools/oggz.c liboggz-1.0.2/src/tools/oggz.c
+--- liboggz-1.0.2-orig/src/tools/oggz.c	2010-01-30 13:55:59.000000000 +0800
++++ liboggz-1.0.2/src/tools/oggz.c	2025-02-20 10:48:41.692057600 +0800
+@@ -34,7 +34,9 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#ifdef HAVE_UNISTD_H
+ #include <unistd.h>
++#endif
+ 
+ /* #define DEBUG */
+ 

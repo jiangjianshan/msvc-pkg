@@ -7,6 +7,7 @@ steps:
     dependencies:
       - bzip2
       - dlfcn-win32
+      - dirent
       - getopt
       - libiconv
       - xz

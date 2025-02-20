@@ -21,6 +21,9 @@ patch_package()
   patch -Np1 -i "$PKG_DIR/001-magma-fix-cmake-check-lang-std-warnings.diff"
   patch -Np1 -i "$PKG_DIR/002-magma-add-cmake-option-to-disable-build-tests.diff"
   patch -Np1 -i "$PKG_DIR/003-magma-fix-min-max.diff"
+  # TODO: The better way is to define a function with particular regular expression
+  #       in a .cmake to convert the objects files to .def file
+  patch -Np1 -i "$PKG_DIR/004-magma-fix-build-shared-library-on-msvc.diff"
 }
 
 . $ROOT_DIR/common.sh

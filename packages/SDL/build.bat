@@ -36,8 +36,46 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_CXX_COMPILER=cl                                                      ^
   -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
+  -DSDL_ALSA=ON                                                                ^
+  -DSDL_ALSA_SHARED=ON                                                         ^
+  -DSDL_ASSEMBLY=ON                                                            ^
+  -DSDL_AVX=ON                                                                 ^
+  -DSDL_AVX2=ON                                                                ^
+  -DSDL_AVX512F=ON                                                             ^
+  -DSDL_CLOCK_GETTIME=ON                                                       ^
+  -DSDL_DIRECTX=ON                                                             ^
+  -DSDL_GPU_DXVK=ON                                                            ^
+  -DSDL_HIDAPI=ON                                                              ^
+  -DSDL_HIDAPI_JOYSTICK=ON                                                     ^
+  -DSDL_HIDAPI_LIBUSB=ON                                                       ^
+  -DSDL_HIDAPI_LIBUSB_SHARED=ON                                                ^
+  -DSDL_IBUS=ON                                                                ^
+  -DSDL_INSTALL=ON                                                             ^
+  -DSDL_JACK=ON                                                                ^
+  -DSDL_JACK_SHARED=ON                                                         ^
+  -DSDL_KMSDRM=ON                                                              ^
+  -DSDL_KMSDRM_SHARED=ON                                                       ^
+  -DSDL_LASX=ON                                                                ^
   -DSDL_LIBC=ON                                                                ^
   -DSDL_LIBICONV=ON                                                            ^
+  -DSDL_LSX=ON                                                                 ^
+  -DSDL_METAL=ON                                                               ^
+  -DSDL_MMX=ON                                                                 ^
+  -DSDL_PTHREADS=ON                                                            ^
+  -DSDL_PTHREADS_SEM=ON                                                        ^
+  -DSDL_PULSEAUDIO=ON                                                          ^
+  -DSDL_PULSEAUDIO_SHARED=ON                                                   ^
+  -DSDL_RENDER_D3D=ON                                                          ^
+  -DSDL_RENDER_D3D11=ON                                                        ^
+  -DSDL_RENDER_D3D12=ON                                                        ^
+  -DSDL_RENDER_GPU=ON                                                          ^
+  -DSDL_RENDER_METAL=ON                                                        ^
+  -DSDL_RENDER_VULKAN=ON                                                       ^
+  -DSDL_SSE=ON                                                                 ^
+  -DSDL_SSE2=ON                                                                ^
+  -DSDL_SSE3=ON                                                                ^
+  -DSDL_SSE4_1=ON                                                              ^
+  -DSDL_SSE4_2=ON                                                              ^
   .. || exit 1
 exit /b 0
 

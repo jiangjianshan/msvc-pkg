@@ -34,10 +34,10 @@ meson setup "%BUILD_DIR%"                                                      ^
   --prefix="%PREFIX%"                                                          ^
   --mandir="%PREFIX%\share\man"                                                ^
   -Dc_std=c17                                                                  ^
-  -Ddefault_library=shared                                                     ^
   -Dc_args="%C_OPTS% %C_DEFS%"                                                 ^
   -Dcpp_std=c++17                                                              ^
   -Dcpp_args="%C_OPTS% %C_DEFS%"                                               ^
+  -Ddefault_library=shared                                                     ^
   -Dc_winlibs="Ole32.lib,User32.lib"                                           ^
   -Dcpp_winlibs="Ole32.lib,User32.lib"                                         ^
   -Dtests=disabled || exit 1

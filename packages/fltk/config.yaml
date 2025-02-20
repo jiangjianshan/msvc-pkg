@@ -5,6 +5,7 @@ sha256: 103441134915402808fd45424d4061778609437e804334434e946cfd26b196c2
 steps:
   a:
     dependencies:
+      - dirent
       - fontconfig
       - openjpeg
       - libpng

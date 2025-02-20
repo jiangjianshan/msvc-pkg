@@ -11,11 +11,12 @@ steps:
       - cairo
       - glib:b
       - fontconfig
-      - harfbuzz:b
+      - harfbuzz:a
       - libgd
       - libpng
       - libjpeg-turbo
       - pixman
+      - tcl
       - zlib
       - freeglut
     run: build.bat

@@ -42,13 +42,14 @@ configure_stage()
   #    on some libraries will detect whether is msvc compiler according to
   #    '*cl | cl.exe'
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
-  CC="$ROOT_DIR/wrappers/compile cl"                                           \
+  CC="cl"                                                                      \
   CFLAGS="$C_OPTS"                                                             \
-  CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
+  ADD_CFLAGS="$C_OPTS"                                                         \
+  CPP="cl -E"                                                                  \
   CPPFLAGS="$C_DEFS"                                                           \
-  CXX="$ROOT_DIR/wrappers/compile cl"                                          \
+  CXX="cl"                                                                     \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
-  CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
+  CXXCPP="cl -E"                                                               \
   DLLTOOL="link.exe -verbose -dll"                                             \
   LD="link -nologo"                                                            \
   NM="dumpbin -nologo -symbols"                                                \
@@ -63,7 +64,11 @@ configure_stage()
     --includedir="$PREFIX/include"                                             \
     --libdir="$PREFIX/lib"                                                     \
     --datarootdir="$PREFIX/share"                                              \
+    --enable-msvc                                                              \
     --enable-relocatable                                                       \
+    --enable-shared                                                            \
+    --with-intsize=32                                                          \
+    ac_cv_prog_cc_c11="-std:c11"                                               \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

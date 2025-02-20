@@ -8,5 +8,5 @@ steps:
       - dlfcn-win32
       - pkg-config
       - glib:b
-      - gobject-introspection
+      - gobject-introspection:a
     run: build.bat

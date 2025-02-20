@@ -30,6 +30,7 @@ echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
 if not defined PKG_CONFIG_PREFIX set PKG_CONFIG_PREFIX=%PREFIX%
 if not defined FREEGLUT_PREFIX set FREEGLUT_PREFIX=%PREFIX%
+if not defined TCL_PREFIX set TCL_PREFIX=%PREFIX%
 cmake -G "Ninja"                                                               ^
   -DBUILD_SHARED_LIBS=ON                                                       ^
   -DCMAKE_BUILD_TYPE=Release                                                   ^
@@ -44,6 +45,7 @@ cmake -G "Ninja"                                                               ^
   -DPKG_CONFIG_EXECUTABLE="!PKG_CONFIG_PREFIX!\bin\pkg-config.exe"             ^
   -Dwith_cxx_api=ON                                                            ^
   -DENABLE_LTDL=ON                                                             ^
+  -DTCL_TCLSH="!TCL_PREFIX!/lib/tclConfig.sh"                                  ^
   -DWITH_EXPAT=ON                                                              ^
   -DWITH_ZLIB=ON                                                               ^
   -DWITH_GVEDIT=OFF                                                            ^

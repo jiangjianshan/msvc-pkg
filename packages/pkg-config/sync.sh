@@ -18,8 +18,7 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR" || exit 1
-  patch -Np1 -i "$PKG_DIR/001-pkg-config-missing-dirent-on-msvc.diff"
-  patch -Np1 -i "$PKG_DIR/002-pkg-config-missing-strcasecmp-on-msvc.diff"
+  patch -Np1 -i "$PKG_DIR/001-pkg-config-compile-on-msvc.diff"
 }
 
 . $ROOT_DIR/common.sh

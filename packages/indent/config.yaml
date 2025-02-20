@@ -5,6 +5,7 @@ sha256: 1b81ba4e9a006ca8e6eb5cbbe4cf4f75dfc1fc9301b459aa0d40393e85590a0b
 steps:
   a:
     dependencies:
+      - dirent
       - libiconv
       - gettext
     run: build.sh

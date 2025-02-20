@@ -7,5 +7,5 @@ steps:
     dependencies:
       - dlfcn-win32
       - yasm
-      - gmp:b
+      - gmp:a
     run: build.sh

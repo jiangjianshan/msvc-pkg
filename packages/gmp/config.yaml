@@ -10,6 +10,7 @@ steps:
     run: build.sh
   b:
     dependencies:
+      - gmp:a
       - dlfcn-win32
       - yasm
     run: build-2.sh

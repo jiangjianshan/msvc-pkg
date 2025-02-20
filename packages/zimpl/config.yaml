@@ -6,9 +6,9 @@ steps:
   a:
     dependencies:
       - winflexbison
-      - gmp:b
+      - gmp:a
       - getopt
-      - pcre:b
+      - pcre:a
       - winflexbison
       - zlib
     run: build.bat

@@ -1,0 +1,31 @@
+diff -urN liboggz-1.0.2-orig/src/tools/oggz-chop/httpdate.c liboggz-1.0.2/src/tools/oggz-chop/httpdate.c
+--- liboggz-1.0.2-orig/src/tools/oggz-chop/httpdate.c	2010-01-30 13:55:59.000000000 +0800
++++ liboggz-1.0.2/src/tools/oggz-chop/httpdate.c	2025-02-20 10:11:52.002483100 +0800
+@@ -60,7 +60,11 @@
+ 
+   d.tm_year -= 1900;
+ 
++#ifdef _MSC_VER
++ d.tm_sec -= _get_timezone(&(d.tm_sec));
++#else
+   d.tm_sec -= timezone;
++#endif
+ 
+   return mktime (&d);
+ }
+diff -urN liboggz-1.0.2-orig/src/tools/oggz-chop/httpdate_test.c liboggz-1.0.2/src/tools/oggz-chop/httpdate_test.c
+--- liboggz-1.0.2-orig/src/tools/oggz-chop/httpdate_test.c	2010-01-30 13:55:59.000000000 +0800
++++ liboggz-1.0.2/src/tools/oggz-chop/httpdate_test.c	2025-02-20 10:12:44.344189200 +0800
+@@ -21,7 +21,12 @@
+   if (t == (time_t)-1) {
+     FAIL ("Parse error");
+   } else {
++    
++#ifdef _MSC_VER
++    t -= _get_timezone(&t);
++#else
+     t -= timezone;
++#endif
+     httpdate_snprint (d_out, 30, t);
+ 
+     INFO ("Output date:");

@@ -20,11 +20,12 @@ patch_package()
   cd "$SRC_DIR"
   patch -Np1 -i "$PKG_DIR/001-openssl-enable-install-pkgconfig-files-on-windows.diff"
 
-  pushd Configurations
+  echo "Patching windows-makefile.tmpl in Configurations"
+  pushd Configurations || exit 1
   sed                                                                          \
     -e 's|$(INSTALLTOP)\\html\\|$(INSTALLTOP)\\share\\man\\|g'                 \
     -i windows-makefile.tmpl
-  popd
+  popd || exit 1
 }
 
 . $ROOT_DIR/common.sh

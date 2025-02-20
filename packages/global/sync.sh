@@ -37,6 +37,8 @@ patch_package()
     -e 's|libgloparser.a|libgloparser.lib|g'                                             \
     -e 's|libgloutil.a|libgloutil.lib|g'                                                 \
     -e 's|libgloglibc.a|libgloglibc.lib|g'                                               \
+    -e 's|lib/libsqlite3.so|bin/sqlite3.dll|g'                                           \
+    -e 's|lib/libsqlite3.dylib|lib/libsqlite3.lib|g'                                     \
     -i configure
   chmod +x configure
 }

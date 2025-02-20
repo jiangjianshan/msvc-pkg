@@ -5,6 +5,7 @@ sha256: 90e5e93cc724e4ebe12ede80df1634063c7a855692685919bfe60b556c9bd09e
 steps:
   a:
     dependencies:
+      - dirent
       - getopt
       - libiconv
       - libsigsegv

@@ -20,6 +20,9 @@ patch_package()
   cd "$SRC_DIR"
   patch -Np1 -i "$PKG_DIR/001-plasma-fix-invalid-escape-sequence.diff"
   patch -Np1 -i "$PKG_DIR/002-plasma-fix-unresolved-external-symbol-issue.diff"
+  # TODO: The better way is to define a function with particular regular expression
+  #       in a .cmake to convert the objects files to .def file
+  patch -Np1 -i "$PKG_DIR/003-plasma-fix-build-shared-library-on-msvc.diff"
 }
 
 . $ROOT_DIR/common.sh

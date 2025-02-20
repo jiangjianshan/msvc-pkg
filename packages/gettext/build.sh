@@ -91,6 +91,10 @@ configure_stage()
     --without-git                                                              \
     gl_cv_func_getopt_posix=yes                                                \
     ac_cv_func_getopt_long_only=yes                                            \
+    ac_cv_func_opendir=yes                                                     \
+    ac_cv_func_readdir=yes                                                     \
+    ac_cv_func_closedir=yes                                                    \
+    ac_cv_func_rewinddir=yes                                                   \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

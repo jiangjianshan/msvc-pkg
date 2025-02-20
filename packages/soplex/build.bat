@@ -27,6 +27,9 @@ rem ============================================================================
 :configure_stage
 call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
+if not defined BOOST_PREFIX set BOOST_PREFIX=%PREFIX%
+cd %BOOST_PREFIX%\lib
+for /f "delims=" %%i in ('dir /B boost_serialization-vc*-mt-%ARCH%-*.lib') do set BOOST_LIB=%%i
 mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
 cmake -G "Ninja"                                                               ^
   -DBUILD_SHARED_LIBS=ON                                                       ^
@@ -36,7 +39,8 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_CXX_COMPILER=cl                                                      ^
   -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
-  -DCMAKE_CXX_STANDARD_LIBRARIES="boost_serialization-vc143-mt-x64-1_86.lib"   ^
+  -DCMAKE_CXX_STANDARD_LIBRARIES="pthread.lib !BOOST_LIB!"                     ^
+  -DCMAKE_POLICY_DEFAULT_CMP0167=OLD                                           ^
   .. || exit 1
 exit /b 0
 

@@ -1,7 +1,7 @@
 name: pixman
-version: 0.43.4
-url: https://www.cairographics.org/releases/pixman-0.43.4.tar.gz
-sha256: a0624db90180c7ddb79fc7a9151093dc37c646d8c38d3f232f767cf64b85a226
+version: 0.44.2
+url: https://www.cairographics.org/releases/pixman-0.44.2.tar.xz
+sha256: 50baf820dde0c5ff9714d03d2df4970f606a3d3b1024f5404c0398a9821cc4b0
 steps:
   a:
     dependencies:

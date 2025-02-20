@@ -7,6 +7,6 @@ steps:
     dependencies:
       - boost
       - libxml2
-      - pcre:b
+      - pcre:a
       - winpthreads
     run: build.bat

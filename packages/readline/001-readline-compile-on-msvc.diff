@@ -1,6 +1,6 @@
 diff -urN readline-8.2.13-orig/colors.c readline-8.2.13/colors.c
 --- readline-8.2.13-orig/colors.c	2023-11-20 22:29:09.000000000 +0800
-+++ readline-8.2.13/colors.c	2024-11-26 16:26:40.406456400 +0800
++++ readline-8.2.13/colors.c	2025-02-10 10:53:59.743894600 +0800
 @@ -39,6 +39,10 @@
  #  include <sys/stat.h>
  #endif
@@ -12,529 +12,9 @@ diff -urN readline-8.2.13-orig/colors.c readline-8.2.13/colors.c
  #include <stdio.h>
  
  #include "posixstat.h" // stat related macros (S_ISREG, ...)
-diff -urN readline-8.2.13-orig/dirent.c readline-8.2.13/dirent.c
---- readline-8.2.13-orig/dirent.c	1970-01-01 08:00:00.000000000 +0800
-+++ readline-8.2.13/dirent.c	2024-11-26 16:26:40.406456400 +0800
-@@ -0,0 +1,325 @@
-+/*
-+ * dirent.c
-+ * This file has no copyright assigned and is placed in the Public Domain.
-+ * This file is part of the mingw-runtime package.
-+ * No warranty is given; refer to the file DISCLAIMER within the package.
-+ *
-+ * Derived from DIRLIB.C by Matt J. Weinstein
-+ * This note appears in the DIRLIB.H
-+ * DIRLIB.H by M. J. Weinstein   Released to public domain 1-Jan-89
-+ *
-+ * Updated by Jeremy Bettis <jeremy@hksys.com>
-+ * Significantly revised and rewinddir, seekdir and telldir added by Colin
-+ * Peters <colin@fu.is.saga-u.ac.jp>
-+ *	
-+ */
-+
-+#ifndef WIN32_LEAN_AND_MEAN
-+#define WIN32_LEAN_AND_MEAN
-+#endif
-+
-+#include <stdlib.h>
-+#include <errno.h>
-+#include <string.h>
-+#include <io.h>
-+#include <direct.h>
-+#include <dirent.h>
-+
-+#include <windows.h> /* for GetFileAttributes */
-+
-+#include <tchar.h>
-+#define SUFFIX	_T("*")
-+#define	SLASH	_T("\\")
-+
-+
-+/*
-+ * opendir
-+ *
-+ * Returns a pointer to a DIR structure appropriately filled in to begin
-+ * searching a directory.
-+ */
-+DIR *
-+opendir (const _TCHAR *szPath)
-+{
-+  DIR *nd;
-+  unsigned int rc;
-+  _TCHAR szFullPath[MAX_PATH];
-+
-+  errno = 0;
-+
-+  if (!szPath)
-+    {
-+      errno = EFAULT;
-+      return (DIR *) 0;
-+    }
-+
-+  if (szPath[0] == _T('\0'))
-+    {
-+      errno = ENOTDIR;
-+      return (DIR *) 0;
-+    }
-+
-+  /* Attempt to determine if the given path really is a directory. */
-+  rc = GetFileAttributes (szPath);
-+  if (rc == INVALID_FILE_ATTRIBUTES)
-+    {
-+      /* call GetLastError for more error info */
-+      errno = ENOENT;
-+      return (DIR *) 0;
-+    }
-+  if (!(rc & FILE_ATTRIBUTE_DIRECTORY))
-+    {
-+      /* Error, entry exists but not a directory. */
-+      errno = ENOTDIR;
-+      return (DIR *) 0;
-+    }
-+
-+  /* Make an absolute pathname.  */
-+  _tfullpath (szFullPath, szPath, MAX_PATH);
-+
-+  /* Allocate enough space to store DIR structure and the complete
-+   * directory path given. */
-+  nd = (DIR *) malloc (sizeof (DIR) + (_tcslen (szFullPath)
-+					   + _tcslen (SLASH)
-+					   + _tcslen (SUFFIX) + 1)
-+					  * sizeof (_TCHAR));
-+
-+  if (!nd)
-+    {
-+      /* Error, out of memory. */
-+      errno = ENOMEM;
-+      return (DIR *) 0;
-+    }
-+
-+  /* Create the search expression. */
-+  _tcscpy (nd->dd_name, szFullPath);
-+
-+  /* Add on a slash if the path does not end with one. */
-+  if (nd->dd_name[0] != _T('\0') &&
-+      nd->dd_name[_tcslen (nd->dd_name) - 1] != _T('/') &&
-+      nd->dd_name[_tcslen (nd->dd_name) - 1] != _T('\\'))
-+    {
-+      _tcscat (nd->dd_name, SLASH);
-+    }
-+
-+  /* Add on the search pattern */
-+  _tcscat (nd->dd_name, SUFFIX);
-+
-+  /* Initialize handle to -1 so that a premature closedir doesn't try
-+   * to call _findclose on it. */
-+  nd->dd_handle = -1;
-+
-+  /* Initialize the status. */
-+  nd->dd_stat = 0;
-+
-+  /* Initialize the dirent structure. ino and reclen are invalid under
-+   * Win32, and name simply points at the appropriate part of the
-+   * findfirst_t structure. */
-+  nd->dd_dir.d_ino = 0;
-+  nd->dd_dir.d_reclen = 0;
-+  nd->dd_dir.d_namlen = 0;
-+  memset (nd->dd_dir.d_name, 0, 260 * sizeof(nd->dd_dir.d_name[0])  /*FILENAME_MAX*/);
-+
-+  return nd;
-+}
-+
-+
-+/*
-+ * readdir
-+ *
-+ * Return a pointer to a dirent structure filled with the information on the
-+ * next entry in the directory.
-+ */
-+struct dirent *
-+readdir (DIR * dirp)
-+{
-+  errno = 0;
-+
-+  /* Check for valid DIR struct. */
-+  if (!dirp)
-+    {
-+      errno = EFAULT;
-+      return (struct dirent *) 0;
-+    }
-+
-+  if (dirp->dd_stat < 0)
-+    {
-+      /* We have already returned all files in the directory
-+       * (or the structure has an invalid dd_stat). */
-+      return (struct dirent *) 0;
-+    }
-+  else if (dirp->dd_stat == 0)
-+    {
-+      /* We haven't started the search yet. */
-+      /* Start the search */
-+      dirp->dd_handle = _tfindfirst (dirp->dd_name, &(dirp->dd_dta));
-+
-+      if (dirp->dd_handle == -1)
-+	{
-+	  /* Whoops! Seems there are no files in that
-+	   * directory. */
-+	  dirp->dd_stat = -1;
-+	}
-+      else
-+	{
-+	  dirp->dd_stat = 1;
-+	}
-+    }
-+  else
-+    {
-+      /* Get the next search entry. */
-+      if (_tfindnext (dirp->dd_handle, &(dirp->dd_dta)))
-+	{
-+	  /* We are off the end or otherwise error.
-+	     _findnext sets errno to ENOENT if no more file
-+	     Undo this. */
-+	  DWORD winerr = GetLastError ();
-+	  if (winerr == ERROR_NO_MORE_FILES)
-+	    errno = 0;
-+	  _findclose (dirp->dd_handle);
-+	  dirp->dd_handle = -1;
-+	  dirp->dd_stat = -1;
-+	}
-+      else
-+	{
-+	  /* Update the status to indicate the correct
-+	   * number. */
-+	  dirp->dd_stat++;
-+	}
-+    }
-+
-+  if (dirp->dd_stat > 0)
-+    {
-+      /* Successfully got an entry. Everything about the file is
-+       * already appropriately filled in except the length of the
-+       * file name. */
-+      dirp->dd_dir.d_namlen = _tcslen (dirp->dd_dta.name);
-+      _tcscpy (dirp->dd_dir.d_name, dirp->dd_dta.name);
-+      return &dirp->dd_dir;
-+    }
-+
-+  return (struct dirent *) 0;
-+}
-+
-+
-+/*
-+ * closedir
-+ *
-+ * Frees up resources allocated by opendir.
-+ */
-+int
-+closedir (DIR * dirp)
-+{
-+  int rc;
-+
-+  errno = 0;
-+  rc = 0;
-+
-+  if (!dirp)
-+    {
-+      errno = EFAULT;
-+      return -1;
-+    }
-+
-+  if (dirp->dd_handle != -1)
-+    {
-+      rc = _findclose (dirp->dd_handle);
-+    }
-+
-+  /* Delete the dir structure. */
-+  free (dirp);
-+
-+  return rc;
-+}
-+
-+/*
-+ * rewinddir
-+ *
-+ * Return to the beginning of the directory "stream". We simply call findclose
-+ * and then reset things like an opendir.
-+ */
-+void
-+rewinddir (DIR * dirp)
-+{
-+  errno = 0;
-+
-+  if (!dirp)
-+    {
-+      errno = EFAULT;
-+      return;
-+    }
-+
-+  if (dirp->dd_handle != -1)
-+    {
-+      _findclose (dirp->dd_handle);
-+    }
-+
-+  dirp->dd_handle = -1;
-+  dirp->dd_stat = 0;
-+}
-+
-+/*
-+ * telldir
-+ *
-+ * Returns the "position" in the "directory stream" which can be used with
-+ * seekdir to go back to an old entry. We simply return the value in stat.
-+ */
-+long
-+telldir (DIR * dirp)
-+{
-+  errno = 0;
-+
-+  if (!dirp)
-+    {
-+      errno = EFAULT;
-+      return -1;
-+    }
-+  return dirp->dd_stat;
-+}
-+
-+/*
-+ * seekdir
-+ *
-+ * Seek to an entry previously returned by telldir. We rewind the directory
-+ * and call readdir repeatedly until either dd_stat is the position number
-+ * or -1 (off the end). This is not perfect, in that the directory may
-+ * have changed while we weren't looking. But that is probably the case with
-+ * any such system.
-+ */
-+void
-+seekdir (DIR * dirp, long lPos)
-+{
-+  errno = 0;
-+
-+  if (!dirp)
-+    {
-+      errno = EFAULT;
-+      return;
-+    }
-+
-+  if (lPos < -1)
-+    {
-+      /* Seeking to an invalid position. */
-+      errno = EINVAL;
-+      return;
-+    }
-+  else if (lPos == -1)
-+    {
-+      /* Seek past end. */
-+      if (dirp->dd_handle != -1)
-+	{
-+	  _findclose (dirp->dd_handle);
-+	}
-+      dirp->dd_handle = -1;
-+      dirp->dd_stat = -1;
-+    }
-+  else
-+    {
-+      /* Rewind and read forward to the appropriate index. */
-+      rewinddir (dirp);
-+
-+      while ((dirp->dd_stat < lPos) && readdir (dirp))
-+	;
-+    }
-+}
-+
-diff -urN readline-8.2.13-orig/dirent.h readline-8.2.13/dirent.h
---- readline-8.2.13-orig/dirent.h	1970-01-01 08:00:00.000000000 +0800
-+++ readline-8.2.13/dirent.h	2024-11-26 16:26:40.406456400 +0800
-@@ -0,0 +1,148 @@
-+/*
-+ * DIRENT.H (formerly DIRLIB.H)
-+ * This file has no copyright assigned and is placed in the Public Domain.
-+ * This file is part of the mingw-runtime package.
-+ * No warranty is given; refer to the file DISCLAIMER within the package.
-+ *
-+ */
-+
-+#ifndef _DIRENT_H_
-+#define _DIRENT_H_
-+
-+/* All the headers include this file. */
-+#include <corecrt.h>
-+
-+#include <io.h>
-+
-+#ifndef RC_INVOKED
-+
-+#pragma pack(push,_CRT_PACKING)
-+
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
-+
-+struct _tdirent
-+{
-+	long		d_ino;		/* Always zero. */
-+	unsigned short	d_reclen;	/* Always zero. */
-+	unsigned short	d_namlen;	/* Length of name in d_name. */
-+	char		d_name[260]; /* [FILENAME_MAX] */ /* File name. */
-+};
-+
-+/*
-+ * This is an internal data structure. Good programmers will not use it
-+ * except as an argument to one of the functions below.
-+ * dd_stat field is now int (was short in older versions).
-+ */
-+typedef struct
-+{
-+	/* disk transfer area for this dir */
-+	struct _finddata_t	dd_dta;
-+
-+	/* dirent struct to return from dir (NOTE: this makes this thread
-+	 * safe as long as only one thread uses a particular DIR struct at
-+	 * a time) */
-+	struct _tdirent		dd_dir;
-+
-+	/* _findnext handle */
-+	intptr_t		dd_handle;
-+
-+	/*
-+	 * Status of search:
-+	 *   0 = not started yet (next entry to read is first entry)
-+	 *  -1 = off the end
-+	 *   positive = 0 based index of next entry
-+	 */
-+	int			dd_stat;
-+
-+	/* given path for dir with search pattern (struct is extended) */
-+	char			dd_name[1];
-+} _TDIR;
-+
-+_TDIR* __cdecl _topendir (const char*);
-+struct _tdirent* __cdecl _treaddir (_TDIR*);
-+int __cdecl _tclosedir (_TDIR*);
-+void __cdecl _trewinddir (_TDIR*);
-+long __cdecl _ttelldir (_TDIR*);
-+void __cdecl _tseekdir (_TDIR*, long);
-+
-+
-+/* wide char versions */
-+
-+struct _wdirent
-+{
-+	long		d_ino;		/* Always zero. */
-+	unsigned short	d_reclen;	/* Always zero. */
-+	unsigned short	d_namlen;	/* Length of name in d_name. */
-+	wchar_t		d_name[260]; /* [FILENAME_MAX] */ /* File name. */
-+};
-+
-+/*
-+ * This is an internal data structure. Good programmers will not use it
-+ * except as an argument to one of the functions below.
-+ */
-+typedef struct
-+{
-+	/* disk transfer area for this dir */
-+	struct _wfinddata_t	dd_dta;
-+
-+	/* dirent struct to return from dir (NOTE: this makes this thread
-+	 * safe as long as only one thread uses a particular DIR struct at
-+	 * a time) */
-+	struct _wdirent		dd_dir;
-+
-+	/* _findnext handle */
-+	intptr_t		dd_handle;
-+
-+	/*
-+	 * Status of search:
-+	 *   0 = not started yet (next entry to read is first entry)
-+	 *  -1 = off the end
-+	 *   positive = 0 based index of next entry
-+	 */
-+	int			dd_stat;
-+
-+	/* given path for dir with search pattern (struct is extended) */
-+	wchar_t			dd_name[1];
-+} _WDIR;
-+
-+_WDIR* __cdecl _wopendir (const wchar_t*);
-+struct _wdirent* __cdecl _wreaddir (_WDIR*);
-+int __cdecl _wclosedir (_WDIR*);
-+void __cdecl _wrewinddir (_WDIR*);
-+long __cdecl _wtelldir (_WDIR*);
-+void __cdecl _wseekdir (_WDIR*, long);
-+
-+#ifdef _UNICODE
-+/* dirent structures and functions */
-+# define dirent	    _wdirent
-+# define DIR 		    _WDIR
-+# define opendir	  _wopendir
-+# define closedir	  _wclosedir
-+# define readdir	  _wreaddir
-+# define rewinddir	_wrewinddir
-+# define telldir	  _wtelldir
-+# define seekdir	  _wseekdir
-+#else
-+/* dirent structures and functions */
-+# define dirent	    _tdirent
-+# define DIR        _TDIR
-+# define opendir	  _topendir
-+# define closedir	  _tclosedir
-+# define readdir	  _treaddir
-+# define rewinddir	_trewinddir
-+# define telldir	  _ttelldir
-+# define seekdir	  _tseekdir
-+#endif
-+
-+#ifdef	__cplusplus
-+}
-+#endif
-+
-+#pragma pack(pop)
-+
-+#endif	/* Not RC_INVOKED */
-+
-+#endif	/* Not _DIRENT_H_ */
-+
-diff -urN readline-8.2.13-orig/display.c readline-8.2.13/display.c
---- readline-8.2.13-orig/display.c	2023-11-20 22:29:21.000000000 +0800
-+++ readline-8.2.13/display.c	2024-11-26 16:26:40.422078500 +0800
-@@ -3245,7 +3245,7 @@
- static void
- open_some_spaces (int col)
- {
--#if !defined (__MSDOS__) && (!defined (__MINGW32__) || defined (NCURSES_VERSION))
-+#if !defined (__MSDOS__) && (!defined (__MINGW32__) && !defined (_MSC_VER) || defined (NCURSES_VERSION))
-   char *buffer;
-   register int i;
- 
-@@ -3274,7 +3274,7 @@
-       for (i = col; i--; )
- 	tputs (_rl_term_ic, 1, _rl_output_character_function);
-     }
--#endif /* !__MSDOS__ && (!__MINGW32__ || NCURSES_VERSION)*/
-+#endif /* !__MSDOS__ && (!__MINGW32__ && !_MSC_VER || NCURSES_VERSION)*/
- }
- 
- /* Delete COUNT characters from the display line. */
-@@ -3284,7 +3284,7 @@
-   if (count > _rl_screenwidth)	/* XXX */
-     return;
- 
--#if !defined (__MSDOS__) && (!defined (__MINGW32__) || defined (NCURSES_VERSION))
-+#if !defined (__MSDOS__) && (!defined (__MINGW32__) && !defined (_MSC_VER) || defined (NCURSES_VERSION))
-   if (_rl_term_DC && *_rl_term_DC)
-     {
-       char *buffer;
-@@ -3297,7 +3297,7 @@
- 	while (count--)
- 	  tputs (_rl_term_dc, 1, _rl_output_character_function);
-     }
--#endif /* !__MSDOS__ && (!__MINGW32__ || NCURSES_VERSION)*/
-+#endif /* !__MSDOS__ && (!__MINGW32__ && !_MSC_VER || NCURSES_VERSION)*/
- }
- 
- void
 diff -urN readline-8.2.13-orig/examples/hist_erasedups.c readline-8.2.13/examples/hist_erasedups.c
 --- readline-8.2.13-orig/examples/hist_erasedups.c	2018-05-21 23:02:04.000000000 +0800
-+++ readline-8.2.13/examples/hist_erasedups.c	2024-11-26 16:26:40.422078500 +0800
++++ readline-8.2.13/examples/hist_erasedups.c	2025-02-10 10:53:59.775137500 +0800
 @@ -22,7 +22,11 @@
  #define READLINE_LIBRARY 1
  #endif
@@ -549,7 +29,7 @@ diff -urN readline-8.2.13-orig/examples/hist_erasedups.c readline-8.2.13/example
  
 diff -urN readline-8.2.13-orig/examples/hist_purgecmd.c readline-8.2.13/examples/hist_purgecmd.c
 --- readline-8.2.13-orig/examples/hist_purgecmd.c	2018-05-21 23:00:08.000000000 +0800
-+++ readline-8.2.13/examples/hist_purgecmd.c	2024-11-26 16:26:40.422078500 +0800
++++ readline-8.2.13/examples/hist_purgecmd.c	2025-02-10 10:53:59.775137500 +0800
 @@ -23,7 +23,11 @@
  #define READLINE_LIBRARY 1
  #endif
@@ -564,7 +44,7 @@ diff -urN readline-8.2.13-orig/examples/hist_purgecmd.c readline-8.2.13/examples
  
 diff -urN readline-8.2.13-orig/examples/histexamp.c readline-8.2.13/examples/histexamp.c
 --- readline-8.2.13-orig/examples/histexamp.c	2018-05-21 23:02:45.000000000 +0800
-+++ readline-8.2.13/examples/histexamp.c	2024-11-26 16:26:40.437699400 +0800
++++ readline-8.2.13/examples/histexamp.c	2025-02-10 10:53:59.775137500 +0800
 @@ -27,7 +27,9 @@
  #  include <readline/history.h>
  #endif
@@ -577,7 +57,7 @@ diff -urN readline-8.2.13-orig/examples/histexamp.c readline-8.2.13/examples/his
  
 diff -urN readline-8.2.13-orig/examples/Makefile.in readline-8.2.13/examples/Makefile.in
 --- readline-8.2.13-orig/examples/Makefile.in	2021-03-12 00:50:36.000000000 +0800
-+++ readline-8.2.13/examples/Makefile.in	2024-11-26 16:26:40.437699400 +0800
++++ readline-8.2.13/examples/Makefile.in	2025-02-10 10:53:59.786592000 +0800
 @@ -60,18 +60,20 @@
  ASAN_XCFLAGS = -fsanitize=address -fno-omit-frame-pointer
  ASAN_XLDFLAGS = -fsanitize=address
@@ -759,7 +239,7 @@ diff -urN readline-8.2.13-orig/examples/Makefile.in readline-8.2.13/examples/Mak
 +rl-timeout.$(OBJEXT): $(top_srcdir)/readline.h $(top_srcdir)/history.h
 diff -urN readline-8.2.13-orig/examples/rl.c readline-8.2.13/examples/rl.c
 --- readline-8.2.13-orig/examples/rl.c	2022-04-21 03:34:10.000000000 +0800
-+++ readline-8.2.13/examples/rl.c	2024-11-26 16:26:40.437699400 +0800
++++ readline-8.2.13/examples/rl.c	2025-02-10 10:53:59.790700100 +0800
 @@ -28,7 +28,11 @@
  #  include <config.h>
  #endif
@@ -784,7 +264,7 @@ diff -urN readline-8.2.13-orig/examples/rl.c readline-8.2.13/examples/rl.c
  #endif
 diff -urN readline-8.2.13-orig/examples/rlbasic.c readline-8.2.13/examples/rlbasic.c
 --- readline-8.2.13-orig/examples/rlbasic.c	2022-04-21 03:36:43.000000000 +0800
-+++ readline-8.2.13/examples/rlbasic.c	2024-11-26 16:26:40.437699400 +0800
++++ readline-8.2.13/examples/rlbasic.c	2025-02-10 10:53:59.793815400 +0800
 @@ -1,5 +1,7 @@
  #include <stdlib.h>
 +#ifdef HAVE_UNISTD_H
@@ -795,7 +275,7 @@ diff -urN readline-8.2.13-orig/examples/rlbasic.c readline-8.2.13/examples/rlbas
  
 diff -urN readline-8.2.13-orig/examples/rl-callbacktest.c readline-8.2.13/examples/rl-callbacktest.c
 --- readline-8.2.13-orig/examples/rl-callbacktest.c	2022-06-14 23:49:56.000000000 +0800
-+++ readline-8.2.13/examples/rl-callbacktest.c	2024-11-26 16:39:33.240205700 +0800
++++ readline-8.2.13/examples/rl-callbacktest.c	2025-02-10 10:53:59.796843000 +0800
 @@ -1,11 +1,17 @@
  /* Standard include files. stdio.h is required. */
  #include <stdlib.h>
@@ -837,7 +317,7 @@ diff -urN readline-8.2.13-orig/examples/rl-callbacktest.c readline-8.2.13/exampl
    rl_callback_handler_install (prompt, cb_linehandler);
 diff -urN readline-8.2.13-orig/examples/rlcat.c readline-8.2.13/examples/rlcat.c
 --- readline-8.2.13-orig/examples/rlcat.c	2022-06-14 23:48:09.000000000 +0800
-+++ readline-8.2.13/examples/rlcat.c	2024-11-26 16:35:28.746915700 +0800
++++ readline-8.2.13/examples/rlcat.c	2025-02-10 10:53:59.800889600 +0800
 @@ -29,6 +29,8 @@
  
  #ifdef HAVE_UNISTD_H
@@ -859,7 +339,7 @@ diff -urN readline-8.2.13-orig/examples/rlcat.c readline-8.2.13/examples/rlcat.c
  static char *progname;
 diff -urN readline-8.2.13-orig/examples/rlevent.c readline-8.2.13/examples/rlevent.c
 --- readline-8.2.13-orig/examples/rlevent.c	2022-04-21 03:37:28.000000000 +0800
-+++ readline-8.2.13/examples/rlevent.c	2024-11-26 16:38:04.707087300 +0800
++++ readline-8.2.13/examples/rlevent.c	2025-02-10 10:53:59.801894500 +0800
 @@ -31,9 +31,13 @@
  #ifdef HAVE_UNISTD_H
  #  include <unistd.h>
@@ -899,7 +379,7 @@ diff -urN readline-8.2.13-orig/examples/rlevent.c readline-8.2.13/examples/rleve
  
 diff -urN readline-8.2.13-orig/examples/rlfe/Makefile.in readline-8.2.13/examples/rlfe/Makefile.in
 --- readline-8.2.13-orig/examples/rlfe/Makefile.in	2009-02-23 06:27:18.000000000 +0800
-+++ readline-8.2.13/examples/rlfe/Makefile.in	2024-11-26 16:26:40.453320100 +0800
++++ readline-8.2.13/examples/rlfe/Makefile.in	2025-02-10 10:53:59.801894500 +0800
 @@ -20,6 +20,10 @@
  VERSION = @VERSION@
  SCREEN = screen-$(VERSION)
@@ -946,7 +426,7 @@ diff -urN readline-8.2.13-orig/examples/rlfe/Makefile.in readline-8.2.13/example
 +pty.$(OBJEXT): pty.c config.h
 diff -urN readline-8.2.13-orig/examples/rlfe/pty.c readline-8.2.13/examples/rlfe/pty.c
 --- readline-8.2.13-orig/examples/rlfe/pty.c	2006-11-09 23:55:10.000000000 +0800
-+++ readline-8.2.13/examples/rlfe/pty.c	2024-11-26 16:26:40.453320100 +0800
++++ readline-8.2.13/examples/rlfe/pty.c	2025-02-10 10:53:59.801894500 +0800
 @@ -27,7 +27,9 @@
  #include <fcntl.h>
  #include <signal.h>
@@ -959,7 +439,7 @@ diff -urN readline-8.2.13-orig/examples/rlfe/pty.c readline-8.2.13/examples/rlfe
  
 diff -urN readline-8.2.13-orig/examples/rlfe/rlfe.c readline-8.2.13/examples/rlfe/rlfe.c
 --- readline-8.2.13-orig/examples/rlfe/rlfe.c	2011-05-27 23:54:03.000000000 +0800
-+++ readline-8.2.13/examples/rlfe/rlfe.c	2024-11-26 16:26:40.468986000 +0800
++++ readline-8.2.13/examples/rlfe/rlfe.c	2025-02-10 10:53:59.817518400 +0800
 @@ -68,7 +68,9 @@
  #include <grp.h>
  #include <string.h>
@@ -972,7 +452,7 @@ diff -urN readline-8.2.13-orig/examples/rlfe/rlfe.c readline-8.2.13/examples/rlf
  
 diff -urN readline-8.2.13-orig/examples/rl-fgets.c readline-8.2.13/examples/rl-fgets.c
 --- readline-8.2.13-orig/examples/rl-fgets.c	2004-04-23 04:52:17.000000000 +0800
-+++ readline-8.2.13/examples/rl-fgets.c	2024-11-26 16:26:40.468986000 +0800
++++ readline-8.2.13/examples/rl-fgets.c	2025-02-10 10:53:59.817518400 +0800
 @@ -121,7 +121,9 @@
  #include <stdio.h>
  #include <strings.h>
@@ -985,7 +465,7 @@ diff -urN readline-8.2.13-orig/examples/rl-fgets.c readline-8.2.13/examples/rl-f
  #include <readline/history.h>
 diff -urN readline-8.2.13-orig/examples/rlkeymaps.c readline-8.2.13/examples/rlkeymaps.c
 --- readline-8.2.13-orig/examples/rlkeymaps.c	2018-09-19 01:14:29.000000000 +0800
-+++ readline-8.2.13/examples/rlkeymaps.c	2024-11-26 16:26:40.468986000 +0800
++++ readline-8.2.13/examples/rlkeymaps.c	2025-02-10 10:53:59.817518400 +0800
 @@ -1,5 +1,7 @@
  #include <stdlib.h>
 +#ifdef HAVE_UNISTD_H
@@ -996,7 +476,7 @@ diff -urN readline-8.2.13-orig/examples/rlkeymaps.c readline-8.2.13/examples/rlk
  
 diff -urN readline-8.2.13-orig/examples/rlptytest.c readline-8.2.13/examples/rlptytest.c
 --- readline-8.2.13-orig/examples/rlptytest.c	2022-07-26 22:23:57.000000000 +0800
-+++ readline-8.2.13/examples/rlptytest.c	2024-11-26 16:26:40.468986000 +0800
++++ readline-8.2.13/examples/rlptytest.c	2025-02-10 10:53:59.817518400 +0800
 @@ -15,7 +15,9 @@
  #include <curses.h>
  
@@ -1009,7 +489,7 @@ diff -urN readline-8.2.13-orig/examples/rlptytest.c readline-8.2.13/examples/rlp
  
 diff -urN readline-8.2.13-orig/examples/rl-timeout.c readline-8.2.13/examples/rl-timeout.c
 --- readline-8.2.13-orig/examples/rl-timeout.c	2021-03-12 00:47:57.000000000 +0800
-+++ readline-8.2.13/examples/rl-timeout.c	2024-11-26 16:39:52.339639100 +0800
++++ readline-8.2.13/examples/rl-timeout.c	2025-02-10 10:53:59.833140500 +0800
 @@ -21,13 +21,19 @@
  
  /* Standard include files. stdio.h is required. */
@@ -1042,7 +522,7 @@ diff -urN readline-8.2.13-orig/examples/rl-timeout.c readline-8.2.13/examples/rl
  
 diff -urN readline-8.2.13-orig/gettimeofday.c readline-8.2.13/gettimeofday.c
 --- readline-8.2.13-orig/gettimeofday.c	1970-01-01 08:00:00.000000000 +0800
-+++ readline-8.2.13/gettimeofday.c	2024-11-26 16:26:40.484587200 +0800
++++ readline-8.2.13/gettimeofday.c	2025-02-10 10:53:59.833140500 +0800
 @@ -0,0 +1,120 @@
 +/* Port from gnulib
 +   Provide gettimeofday for systems that don't have it or for which it's broken.
@@ -1166,34 +646,7 @@ diff -urN readline-8.2.13-orig/gettimeofday.c readline-8.2.13/gettimeofday.c
 +}
 diff -urN readline-8.2.13-orig/input.c readline-8.2.13/input.c
 --- readline-8.2.13-orig/input.c	2023-11-20 22:29:14.000000000 +0800
-+++ readline-8.2.13/input.c	2024-11-26 16:26:40.484587200 +0800
-@@ -140,7 +140,7 @@
- 
- /* I don't know how to set a timeout for _getch() in MinGW32, so we use
-    SIGALRM. */
--#if (defined (HAVE_PSELECT) || defined (HAVE_SELECT)) && !defined (__MINGW32__)
-+#if (defined (HAVE_PSELECT) || defined (HAVE_SELECT)) && !defined (__MINGW32__) && !defined (_MSC_VER)
- #  define RL_TIMEOUT_USE_SELECT
- #else
- #  define RL_TIMEOUT_USE_SIGALRM
-@@ -305,7 +305,7 @@
-     }
- #endif /* O_NDELAY */
- 
--#if defined (__MINGW32__)
-+#if defined (__MINGW32__) || defined (_MSC_VER)
-   /* Use getch/_kbhit to check for available console input, in the same way
-      that we read it normally. */
-    chars_avail = isatty (tty) ? _kbhit () : 0;
-@@ -404,7 +404,7 @@
- 
- #endif
- 
--#if defined (__MINGW32__)
-+#if defined (__MINGW32__) || defined (_MSC_VER)
-   if (isatty (tty))
-     return (_kbhit ());
- #endif
++++ readline-8.2.13/input.c	2025-02-10 10:59:37.565503600 +0800
 @@ -543,12 +543,18 @@
      (*secs)++;
    *usecs = 0;
@@ -1249,20 +702,18 @@ diff -urN readline-8.2.13-orig/input.c readline-8.2.13/input.c
  
    reset_alarm ();
  
-@@ -833,8 +845,8 @@
- 
+@@ -834,7 +846,7 @@
        /* We know at this point that _rl_caught_signal == 0 */
  
--#if defined (__MINGW32__)
+ #if defined (__MINGW32__)
 -      if (isatty (fd)
-+#if defined (__MINGW32__) || defined (_MSC_VER)
 +      if (isatty (fd))
  	return (_getch ());	/* "There is no error return." */
  #endif
        result = 0;
 diff -urN readline-8.2.13-orig/Makefile.in readline-8.2.13/Makefile.in
 --- readline-8.2.13-orig/Makefile.in	2021-11-26 02:32:47.000000000 +0800
-+++ readline-8.2.13/Makefile.in	2024-11-26 16:26:40.500184200 +0800
++++ readline-8.2.13/Makefile.in	2025-02-10 10:53:59.843143900 +0800
 @@ -37,6 +37,8 @@
  INSTALL_PROGRAM = @INSTALL_PROGRAM@
  INSTALL_DATA = @INSTALL_DATA@
@@ -1296,16 +747,13 @@ diff -urN readline-8.2.13-orig/Makefile.in readline-8.2.13/Makefile.in
  	   $(srcdir)/shell.c $(srcdir)/savestring.c $(srcdir)/tilde.c \
  	   $(srcdir)/text.c $(srcdir)/misc.c $(srcdir)/compat.c \
 -	   $(srcdir)/mbutil.c
-+	   $(srcdir)/mbutil.c $(srcdir)/dirent.c $(srcdir)/gettimeofday.c
++	   $(srcdir)/gettimeofday.c
  
  # The header files for this library.
  HSOURCES = $(srcdir)/readline.h $(srcdir)/rldefs.h $(srcdir)/chardefs.h \
-@@ -130,16 +134,16 @@
- 	   $(srcdir)/ansi_stdlib.h $(srcdir)/tcap.h $(srcdir)/rlstdc.h \
- 	   $(srcdir)/xmalloc.h $(srcdir)/rlprivate.h $(srcdir)/rlshell.h \
+@@ -132,14 +136,14 @@
  	   $(srcdir)/rltypedefs.h $(srcdir)/rlmbutil.h \
--	   $(srcdir)/colors.h $(srcdir)/parse-colors.h
-+	   $(srcdir)/colors.h $(srcdir)/parse-colors.h $(srcdir)/dirent.h
+ 	   $(srcdir)/colors.h $(srcdir)/parse-colors.h
  
 -HISTOBJ = history.o histexpand.o histfile.o histsearch.o shell.o mbutil.o
 -TILDEOBJ = tilde.o
@@ -1322,7 +770,7 @@ diff -urN readline-8.2.13-orig/Makefile.in readline-8.2.13/Makefile.in
 +	  rltty.$(OBJEXT) complete.$(OBJEXT) bind.$(OBJEXT) isearch.$(OBJEXT) display.$(OBJEXT) signals.$(OBJEXT) \
 +	  util.$(OBJEXT) kill.$(OBJEXT) undo.$(OBJEXT) macro.$(OBJEXT) input.$(OBJEXT) callback.$(OBJEXT) terminal.$(OBJEXT) \
 +	  text.$(OBJEXT) nls.$(OBJEXT) misc.$(OBJEXT) $(HISTOBJ) $(TILDEOBJ) $(COLORSOBJ) \
-+	  xmalloc.$(OBJEXT) xfree.$(OBJEXT) compat.$(OBJEXT) dirent.$(OBJEXT) gettimeofday.$(OBJEXT)
++	  xmalloc.$(OBJEXT) xfree.$(OBJEXT) compat.$(OBJEXT) gettimeofday.$(OBJEXT)
  
  # The texinfo files which document this library.
  DOCSOURCE = doc/rlman.texinfo doc/rltech.texinfo doc/rluser.texinfo
@@ -1384,7 +832,7 @@ diff -urN readline-8.2.13-orig/Makefile.in readline-8.2.13/Makefile.in
  	-( cd shlib; ${MAKE} ${MFLAGS} DESTDIR=${DESTDIR} uninstall )
  
  install-shared: installdirs install-headers shared install-doc install-pc
-@@ -351,260 +353,262 @@
+@@ -351,260 +353,260 @@
  .NOEXPORT:
  
  # Dependencies
@@ -1657,7 +1105,6 @@ diff -urN readline-8.2.13-orig/Makefile.in readline-8.2.13/Makefile.in
 +complete.$(OBJEXT): ansi_stdlib.h posixdir.h posixstat.h
 +complete.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
 +complete.$(OBJEXT): readline.h keymaps.h rltypedefs.h chardefs.h tilde.h rlstdc.h
-+dirent.$(OBJEXT): dirent.h
 +display.$(OBJEXT): ansi_stdlib.h posixstat.h
 +display.$(OBJEXT): rldefs.h ${BUILD_DIR}/config.h rlconf.h
 +display.$(OBJEXT): tcap.h
@@ -1873,7 +1320,6 @@ diff -urN readline-8.2.13-orig/Makefile.in readline-8.2.13/Makefile.in
 +callback.$(OBJEXT): callback.c
 +compat.$(OBJEXT): compat.c
 +complete.$(OBJEXT): complete.c
-+dirent.$(OBJEXT): dirent.c
 +display.$(OBJEXT): display.c
 +funmap.$(OBJEXT): funmap.c
 +input.$(OBJEXT): input.c
@@ -1906,7 +1352,7 @@ diff -urN readline-8.2.13-orig/Makefile.in readline-8.2.13/Makefile.in
 +histsearch.$(OBJEXT): histsearch.c
 diff -urN readline-8.2.13-orig/posixselect.h readline-8.2.13/posixselect.h
 --- readline-8.2.13-orig/posixselect.h	2009-04-20 00:59:16.000000000 +0800
-+++ readline-8.2.13/posixselect.h	2024-11-26 16:26:40.500184200 +0800
++++ readline-8.2.13/posixselect.h	2025-02-10 10:53:59.843143900 +0800
 @@ -27,7 +27,18 @@
  
  #if defined (HAVE_SELECT)
@@ -1929,7 +1375,7 @@ diff -urN readline-8.2.13-orig/posixselect.h readline-8.2.13/posixselect.h
  #if defined (HAVE_SYS_SELECT_H)
 diff -urN readline-8.2.13-orig/posixtime.h readline-8.2.13/posixtime.h
 --- readline-8.2.13-orig/posixtime.h	2021-11-05 21:54:58.000000000 +0800
-+++ readline-8.2.13/posixtime.h	2024-11-26 16:26:40.500184200 +0800
++++ readline-8.2.13/posixtime.h	2025-02-10 10:53:59.858769100 +0800
 @@ -48,6 +48,8 @@
  };
  #endif
@@ -1939,33 +1385,9 @@ diff -urN readline-8.2.13-orig/posixtime.h readline-8.2.13/posixtime.h
  #if !HAVE_GETTIMEOFDAY
  extern int gettimeofday PARAMS((struct timeval *, void *));
  #endif
-diff -urN readline-8.2.13-orig/readline.c readline-8.2.13/readline.c
---- readline-8.2.13-orig/readline.c	2024-08-03 02:53:58.000000000 +0800
-+++ readline-8.2.13/readline.c	2024-11-26 16:26:40.500184200 +0800
-@@ -1401,7 +1401,7 @@
-   rl_bind_keyseq_if_unbound ("\033[1;3C", rl_forward_word);
-   rl_bind_keyseq_if_unbound ("\033[1;3D", rl_backward_word);
- 
--#if defined (__MINGW32__)
-+#if defined (__MINGW32__) || defined (_MSC_VER)
-   rl_bind_keyseq_if_unbound ("\340H", rl_get_previous_history);
-   rl_bind_keyseq_if_unbound ("\340P", rl_get_next_history);
-   rl_bind_keyseq_if_unbound ("\340M", rl_forward_char);
-diff -urN readline-8.2.13-orig/rldefs.h readline-8.2.13/rldefs.h
---- readline-8.2.13-orig/rldefs.h	2021-01-22 23:06:31.000000000 +0800
-+++ readline-8.2.13/rldefs.h	2024-11-26 16:26:40.515832600 +0800
-@@ -40,7 +40,7 @@
- #  if defined (HAVE_TERMIO_H)
- #    define TERMIO_TTY_DRIVER
- #  else
--#    if !defined (__MINGW32__)
-+#    if !defined (__MINGW32__) && !defined (_MSC_VER)
- #      define NEW_TTY_DRIVER
- #    else
- #      define NO_TTY_DRIVER
 diff -urN readline-8.2.13-orig/rlprivate.h readline-8.2.13/rlprivate.h
 --- readline-8.2.13-orig/rlprivate.h	2022-08-12 06:35:16.000000000 +0800
-+++ readline-8.2.13/rlprivate.h	2024-11-26 16:26:40.515832600 +0800
++++ readline-8.2.13/rlprivate.h	2025-02-10 10:53:59.858769100 +0800
 @@ -303,7 +303,7 @@
  
  extern int _rl_timeout_init (void);
@@ -1975,54 +1397,9 @@ diff -urN readline-8.2.13-orig/rlprivate.h readline-8.2.13/rlprivate.h
  /* use as a sentinel for fd_set, struct timeval,  and sigset_t definitions */
  extern int _rl_timeout_select (int, fd_set *, fd_set *, fd_set *, const struct timeval *, const sigset_t *);
  #endif
-diff -urN readline-8.2.13-orig/rlstdc.h readline-8.2.13/rlstdc.h
---- readline-8.2.13-orig/rlstdc.h	2011-03-27 03:00:21.000000000 +0800
-+++ readline-8.2.13/rlstdc.h	2024-11-26 16:26:40.515832600 +0800
-@@ -29,7 +29,7 @@
- 	extern char *func PARAMS((char *, char *, int)); */
- 
- #if !defined (PARAMS)
--#  if defined (__STDC__) || defined (__GNUC__) || defined (__cplusplus)
-+#  if defined (__STDC__) || defined (__GNUC__) || defined (_MSC_VER) || defined (__cplusplus)
- #    define PARAMS(protos) protos
- #  else
- #    define PARAMS(protos) ()
-diff -urN readline-8.2.13-orig/rltty.c readline-8.2.13/rltty.c
---- readline-8.2.13-orig/rltty.c	2024-08-03 02:52:42.000000000 +0800
-+++ readline-8.2.13/rltty.c	2024-11-26 16:26:40.515832600 +0800
-@@ -738,9 +738,9 @@
- int
- rl_restart_output (int count, int key)
- {
--#if defined (__MINGW32__)
-+#if defined (__MINGW32__) || defined (_MSC_VER)
-   return 0;
--#else /* !__MING32__ */
-+#else /* !__MING32__ || !_MSC_VER */
- 
-   int fildes = fileno (rl_outstream);
- #if defined (TIOCSTART)
-@@ -775,7 +775,7 @@
- int
- rl_stop_output (int count, int key)
- {
--#if defined (__MINGW32__)
-+#if defined (__MINGW32__) || defined (_MSC_VER)
-   return 0;
- #else
- 
-@@ -801,7 +801,7 @@
- #endif /* !TIOCSTOP */
- 
-   return 0;
--#endif /* !__MINGW32__ */
-+#endif /* !__MINGW32__ || !_MSC_VER */
- }
- 
- /* **************************************************************** */
 diff -urN readline-8.2.13-orig/shlib/exported.sh readline-8.2.13/shlib/exported.sh
 --- readline-8.2.13-orig/shlib/exported.sh	1970-01-01 08:00:00.000000000 +0800
-+++ readline-8.2.13/shlib/exported.sh	2024-11-26 16:26:40.531476800 +0800
++++ readline-8.2.13/shlib/exported.sh	2025-02-10 10:53:59.874414400 +0800
 @@ -0,0 +1,23 @@
 +#! /bin/sh
 +#
@@ -2049,7 +1426,7 @@ diff -urN readline-8.2.13-orig/shlib/exported.sh readline-8.2.13/shlib/exported.
 +dumpbin -nologo -symbols "$1" | gawk '     {last_section=section; section=$ 3};     /^COFF SYMBOL TABLE/{for(i in hide) delete hide[i]};     /Section length .*#relocs.*(pick any)/{hide[last_section]=1};     /^ *Symbol name *: /{split($ 0,sn,":"); si=substr(sn[2],2)};     /^ *Type *: code/{print "T",si,substr(si,length(prfx))};     /^ *Type *: data/{print "I",si,substr(si,length(prfx))};     $ 0!~/External *\|/{next};     / 0+ UNDEF /{next}; / UNDEF \([^|]\)*()/{next};     {if(hide[section]) next};     {f="D"}; $ 0~/\(\).*\|/{f="T"};     {split($ 0,a,/\||\r/); split(a[2],s)};     s[1]~/^[@?]/{print f,s[1],s[1]; next};     s[1]~prfx {split(s[1],t,"@"); print f,t[1],substr(t[1],length(prfx))}     ' prfx=^ | /usr/bin/sed '/ __gnu_lto/d'
 diff -urN readline-8.2.13-orig/shlib/Makefile.in readline-8.2.13/shlib/Makefile.in
 --- readline-8.2.13-orig/shlib/Makefile.in	2020-10-30 03:47:57.000000000 +0800
-+++ readline-8.2.13/shlib/Makefile.in	2024-11-26 16:26:40.531476800 +0800
++++ readline-8.2.13/shlib/Makefile.in	2025-02-10 10:56:09.098286100 +0800
 @@ -38,6 +38,8 @@
  INSTALL_PROGRAM = @INSTALL_PROGRAM@
  INSTALL_DATA = @INSTALL_DATA@
@@ -2088,7 +1465,7 @@ diff -urN readline-8.2.13-orig/shlib/Makefile.in readline-8.2.13/shlib/Makefile.
  	   $(topdir)/text.c $(topdir)/misc.c $(topdir)/compat.c \
  	   $(topdir)/colors.c $(topdir)/parse-colors.c \
 -	   $(topdir)/mbutil.c
-+	   $(topdir)/mbutil.c $(topdir)/dirent.c $(topdir)/gettimeofday.c
++	   $(topdir)/mbutil.c $(topdir)/gettimeofday.c
  
  # The header files for this library.
  HSOURCES = $(topdir)/readline.h $(topdir)/rldefs.h $(topdir)/chardefs.h \
@@ -2117,7 +1494,7 @@ diff -urN readline-8.2.13-orig/shlib/Makefile.in readline-8.2.13/shlib/Makefile.
 +	  text.$(OBJEXT) nls.$(OBJEXT) misc.$(OBJEXT) \
  	  $(SHARED_HISTOBJ) $(SHARED_TILDEOBJ) $(SHARED_COLORSOBJ) \
 -	  xmalloc.so xfree.so compat.so
-+	  xmalloc.$(OBJEXT) xfree.$(OBJEXT) compat.$(OBJEXT) dirent.$(OBJEXT) gettimeofday.$(OBJEXT)
++	  xmalloc.$(OBJEXT) xfree.$(OBJEXT) compat.$(OBJEXT) gettimeofday.$(OBJEXT)
  
  ##########################################################################
  
@@ -2169,7 +1546,7 @@ diff -urN readline-8.2.13-orig/shlib/Makefile.in readline-8.2.13/shlib/Makefile.
  
  installdirs: $(topdir)/support/mkdirs
  	-$(SHELL) $(topdir)/support/mkdirs $(DESTDIR)$(libdir)
-@@ -224,278 +246,281 @@
+@@ -224,278 +246,278 @@
  .NOEXPORT:
  
  # Dependencies
@@ -2465,7 +1842,6 @@ diff -urN readline-8.2.13-orig/shlib/Makefile.in readline-8.2.13/shlib/Makefile.
 +complete.$(OBJEXT): $(topdir)/readline.h $(topdir)/keymaps.h $(topdir)/chardefs.h
 +complete.$(OBJEXT): $(topdir)/rltypedefs.h
 +complete.$(OBJEXT): $(topdir)/tilde.h
-+dirent.$(OBJEXT): $(topdir)/dirent.h
 +display.$(OBJEXT): $(topdir)/ansi_stdlib.h $(topdir)/posixstat.h
 +display.$(OBJEXT): $(topdir)/rldefs.h ${BUILD_DIR}/config.h $(topdir)/rlconf.h
 +display.$(OBJEXT): $(topdir)/tcap.h
@@ -2656,7 +2032,6 @@ diff -urN readline-8.2.13-orig/shlib/Makefile.in readline-8.2.13/shlib/Makefile.
 +callback.$(OBJEXT): $(topdir)/callback.c
 +compat.$(OBJEXT): $(topdir)/compat.c
 +complete.$(OBJEXT): $(topdir)/complete.c
-+dirent.$(OBJEXT): $(topdir)/dirent.c
 +display.$(OBJEXT): $(topdir)/display.c
 +funmap.$(OBJEXT): $(topdir)/funmap.c
 +input.$(OBJEXT): $(topdir)/input.c
@@ -2692,7 +2067,6 @@ diff -urN readline-8.2.13-orig/shlib/Makefile.in readline-8.2.13/shlib/Makefile.
 +callback.$(OBJEXT): callback.c
 +comapt.$(OBJEXT): compat.c
 +complete.$(OBJEXT): complete.c
-+dirent.$(OBJEXT): dirent.c
 +display.$(OBJEXT): display.c
 +funmap.$(OBJEXT): funmap.c
 +input.$(OBJEXT): input.c
@@ -2728,7 +2102,7 @@ diff -urN readline-8.2.13-orig/shlib/Makefile.in readline-8.2.13/shlib/Makefile.
 +histsearch.$(OBJEXT): histsearch.c
 diff -urN readline-8.2.13-orig/support/shlib-install readline-8.2.13/support/shlib-install
 --- readline-8.2.13-orig/support/shlib-install	2019-12-13 22:46:13.000000000 +0800
-+++ readline-8.2.13/support/shlib-install	2024-11-26 16:26:40.531476800 +0800
++++ readline-8.2.13/support/shlib-install	2025-02-10 10:53:59.890011700 +0800
 @@ -77,7 +77,7 @@
  	fi ;;
  cygwin*|mingw*)
@@ -2749,7 +2123,7 @@ diff -urN readline-8.2.13-orig/support/shlib-install readline-8.2.13/support/shl
  		${echo} ${RM} ${BINDIR}/${LIBNAME}
 diff -urN readline-8.2.13-orig/support/shobj-conf readline-8.2.13/support/shobj-conf
 --- readline-8.2.13-orig/support/shobj-conf	2021-12-03 23:54:46.000000000 +0800
-+++ readline-8.2.13/support/shobj-conf	2024-11-26 16:26:40.547049000 +0800
++++ readline-8.2.13/support/shobj-conf	2025-02-10 10:53:59.890011700 +0800
 @@ -478,7 +478,7 @@
  
  cygwin*)
@@ -2769,33 +2143,3 @@ diff -urN readline-8.2.13-orig/support/shobj-conf readline-8.2.13/support/shobj-
  	SHLIB_LIBSUFF='dll'
  	SHLIB_LIBVERSION='$(SHLIB_DLLVERSION).$(SHLIB_LIBSUFF)'
  	SHLIB_LIBS='$(TERMCAP_LIB)'
-diff -urN readline-8.2.13-orig/terminal.c readline-8.2.13/terminal.c
---- readline-8.2.13-orig/terminal.c	2022-04-05 22:44:17.000000000 +0800
-+++ readline-8.2.13/terminal.c	2024-11-26 16:26:40.547049000 +0800
-@@ -69,7 +69,7 @@
- #include "rlshell.h"
- #include "xmalloc.h"
- 
--#if defined (__MINGW32__)
-+#if defined (__MINGW32__) || defined (_MSC_VER)
- #  include <windows.h>
- #  include <wincon.h>
- 
-@@ -229,7 +229,7 @@
- }
- #endif
- 
--#if defined (__MINGW32__)
-+#if defined (__MINGW32__) || defined (_MSC_VER)
- static void
- _win_get_screensize (int *swp, int *shp)
- {
-@@ -272,7 +272,7 @@
- 
- #if defined (__EMX__)
-   _emx_get_screensize (&wc, &wr);
--#elif defined (__MINGW32__)
-+#elif defined (__MINGW32__) || defined (_MSC_VER)
-   _win_get_screensize (&wc, &wr);
- #endif
- 

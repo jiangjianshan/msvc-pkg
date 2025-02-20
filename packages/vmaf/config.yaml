@@ -7,6 +7,7 @@ steps:
     dependencies:
       - getopt
       - pkg-config
+      - llvm-project
       - nasm
       - winpthreads
     run: build.bat

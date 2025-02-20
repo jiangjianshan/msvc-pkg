@@ -1,0 +1,133 @@
+diff -urN glibmm-2.83.1-orig/gio/src/dbusconnection.hg glibmm-2.83.1/gio/src/dbusconnection.hg
+--- glibmm-2.83.1-orig/gio/src/dbusconnection.hg	2025-02-11 23:29:40.000000000 +0800
++++ glibmm-2.83.1/gio/src/dbusconnection.hg	2025-02-18 11:38:49.860651000 +0800
+@@ -541,7 +541,7 @@
+    *
+    * Note that a Glib::Error is thrown if a local in-process error occured.
+    * That is to say that the returned Message object may be of type
+-   * Gio::DBus::MessageType::ERROR. Use Gio::DBus::Message::to_exception() to
++   * Gio::DBus::MessageType::_ERROR. Use Gio::DBus::Message::to_exception() to
+    * transcode this to a Glib::Error.
+    *
+    * See the C API docs for examples.
+diff -urN glibmm-2.83.1-orig/untracked/gio/giomm/converter.h glibmm-2.83.1/untracked/gio/giomm/converter.h
+--- glibmm-2.83.1-orig/untracked/gio/giomm/converter.h	2025-02-11 23:51:19.773518000 +0800
++++ glibmm-2.83.1/untracked/gio/giomm/converter.h	2025-02-18 11:38:47.664461000 +0800
+@@ -132,7 +132,7 @@
+   /** @addtogroup giommEnums giomm Enums and Flags */
+ 
+   /** 
+-   *  @var Result::ERROR
++   *  @var Result::_ERROR
+    * There was an error during conversion.
+    * 
+    *  @var Result::CONVERTED
+@@ -152,7 +152,11 @@
+    */
+   enum class Result
+   {
++#ifdef _MSC_VER
++    _ERROR,
++#else
+     ERROR,
++#endif
+     CONVERTED,
+     FINISHED,
+     FLUSHED
+@@ -221,7 +225,7 @@
+    * Gio::Converter::Result::CONVERTED is returned, and if no more data is to be output
+    * then Gio::Converter::Result::FINISHED is returned.
+    * 
+-   * On error Gio::Converter::Result::ERROR is returned and @a error is set accordingly.
++   * On error Gio::Converter::Result::i_ERROR is returned and @a error is set accordingly.
+    * Some errors need special handling:
+    * 
+    * Gio::Error::NO_SPACE is returned if there is not enough space
+@@ -287,7 +291,7 @@
+    * from @a inbuf on success.
+    * @param bytes_written Will be set to the number of bytes
+    * written to @a outbuf on success.
+-   * @return A Gio::Converter::Result, Gio::Converter::Result::ERROR on error.
++   * @return A Gio::Converter::Result, Gio::Converter::Result::i_ERROR on error.
+    * 
+    * @throws Glib::Error
+    */
+diff -urN glibmm-2.83.1-orig/untracked/gio/giomm/dbusconnection.h glibmm-2.83.1/untracked/gio/giomm/dbusconnection.h
+--- glibmm-2.83.1-orig/untracked/gio/giomm/dbusconnection.h	2025-02-11 23:51:19.774518300 +0800
++++ glibmm-2.83.1/untracked/gio/giomm/dbusconnection.h	2025-02-18 11:35:14.735114700 +0800
+@@ -1440,7 +1440,7 @@
+    * 
+    * Note that @a error is only set if a local in-process error
+    * occurred. That is to say that the returned Gio::DBus::Message object may
+-   * be of type Gio::DBus::MessageType::ERROR. Use
++   * be of type Gio::DBus::MessageType::_ERROR. Use
+    * g_dbus_message_to_gerror() to transcode this to a Error.
+    * 
+    * See this [server][gdbus-server] and [client][gdbus-unix-fd-client]
+@@ -1473,7 +1473,7 @@
+    *
+    * Note that a Glib::Error is thrown if a local in-process error occured.
+    * That is to say that the returned Message object may be of type
+-   * Gio::DBus::MessageType::ERROR. Use Gio::DBus::Message::to_exception() to
++   * Gio::DBus::MessageType::_ERROR. Use Gio::DBus::Message::to_exception() to
+    * transcode this to a Glib::Error.
+    *
+    * See the C API docs for examples.
+diff -urN glibmm-2.83.1-orig/untracked/gio/giomm/dbusmessage.h glibmm-2.83.1/untracked/gio/giomm/dbusmessage.h
+--- glibmm-2.83.1-orig/untracked/gio/giomm/dbusmessage.h	2025-02-11 23:51:19.774518300 +0800
++++ glibmm-2.83.1/untracked/gio/giomm/dbusmessage.h	2025-02-18 11:36:42.006813000 +0800
+@@ -68,7 +68,7 @@
+  *  @var MessageType::METHOD_RETURN
+  * Method reply.
+  * 
+- *  @var MessageType::ERROR
++ *  @var MessageType::_ERROR
+  * Error reply.
+  * 
+  *  @var MessageType::SIGNAL
+@@ -85,7 +85,11 @@
+   INVALID,
+   METHOD_CALL,
+   METHOD_RETURN,
++#ifdef _MSC_VER
++  _ERROR,
++#else
+   ERROR,
++#endif
+   SIGNAL
+ };
+ 
+@@ -938,7 +942,7 @@
+   guchar* to_blob(gsize& out_size, CapabilityFlags capabilities =  CapabilityFlags::NONE);
+ 
+   
+-  /** If @a message is not of type Gio::DBus::MessageType::ERROR does
++  /** If @a message is not of type Gio::DBus::MessageType::_ERROR does
+    * nothing and returns <tt>false</tt>.
+    * 
+    * Otherwise this method encodes the error in @a message as a Error
+diff -urN glibmm-2.83.1-orig/untracked/glib/glibmm/iochannel.h glibmm-2.83.1/untracked/glib/glibmm/iochannel.h
+--- glibmm-2.83.1-orig/untracked/glib/glibmm/iochannel.h	2025-02-11 23:51:19.731517800 +0800
++++ glibmm-2.83.1/untracked/glib/glibmm/iochannel.h	2025-02-18 11:31:54.718934300 +0800
+@@ -64,7 +64,7 @@
+ 
+ 
+ /** 
+- *  @var IOStatus::ERROR
++ *  @var IOStatus::_ERROR
+  * An error occurred.
+  * 
+  *  @var IOStatus::NORMAL
+@@ -82,7 +82,11 @@
+  */
+ enum class IOStatus
+ {
+-  ERROR,
++#ifdef _MSC_VER
++  _ERROR,
++#else
++   ERROR,
++#endif
+   NORMAL,
+   ENDOFFILE,
+   AGAIN

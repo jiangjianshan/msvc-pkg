@@ -1,0 +1,11 @@
+diff -urN scotch-7.0.6-orig/src/libscotch/common_error.c scotch-7.0.6/src/libscotch/common_error.c
+--- scotch-7.0.6-orig/src/libscotch/common_error.c	2024-12-06 06:09:54.000000000 +0800
++++ scotch-7.0.6/src/libscotch/common_error.c	2025-02-18 21:21:47.244760900 +0800
+@@ -52,6 +52,7 @@
+ **  The defines and includes.
+ */
+ 
++#include "module.h"
+ #include "common.h"
+ 
+ /********************************/

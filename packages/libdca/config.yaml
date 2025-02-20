@@ -1,0 +1,8 @@
+name: libdca
+version: 0.0.6
+url: https://download.videolan.org/pub/videolan/libdca/0.0.6/libdca-0.0.6.tar.bz2
+sha256: 98f98a9aa000a26b927c6facd15d18dcf664238adfc5db24f533c5932cdb1f40
+steps:
+  a:
+    dependencies:
+    run: build.sh

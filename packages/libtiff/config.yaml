@@ -14,6 +14,7 @@ steps:
     run: build.bat
   b:
     dependencies:
+      - libtiff:a
       - getopt
       - libdeflate
       - libjpeg-turbo

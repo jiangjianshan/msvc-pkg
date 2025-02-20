@@ -5,7 +5,7 @@ sha256: e723e7cef18d08c6ece2283af9a9b4d56077c22b4fce998faaa588d389b1aea8
 steps:
   a:
     dependencies:
-      - gmp:b
+      - gmp:a
       - ncurses
       - perl
       - readline

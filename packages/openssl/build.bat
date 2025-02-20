@@ -56,12 +56,6 @@ rem ============================================================================
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%"
 nmake install INSTALLDIR="%PREFIX%" || exit 1
-if not exist "%PREFIX%\lib\crypto.lib" (
-  mklink "%PREFIX%\lib\crypto.lib" "%PREFIX%\lib\libcrypto.lib"
-)
-if not exist "%PREFIX%\lib\ssl.lib" (
-  mklink "%PREFIX%\lib\ssl.lib" "%PREFIX%\lib\libssl.lib"
-)
 call :clean_build
 exit /b 0
 

@@ -1,0 +1,44 @@
+diff -urN eigen-3.4.0-orig/CMakeLists.txt eigen-3.4.0/CMakeLists.txt
+--- eigen-3.4.0-orig/CMakeLists.txt	2021-08-19 04:41:58.000000000 +0800
++++ eigen-3.4.0/CMakeLists.txt	2025-02-17 09:21:12.930340300 +0800
+@@ -74,18 +74,26 @@
+   endif()
+ endmacro()
+ 
+-check_cxx_compiler_flag("-std=c++11" EIGEN_COMPILER_SUPPORT_CPP11)
++if(MSVC)
++  set(EIGEN_COMPILER_SUPPORT_CPP11 ON)
++else()
++  check_cxx_compiler_flag("-std=c++11" EIGEN_COMPILER_SUPPORT_CPP11)
++endif()
+ 
+ if(EIGEN_TEST_CXX11)
+   set(CMAKE_CXX_STANDARD 11)
+   set(CMAKE_CXX_EXTENSIONS OFF)
+   if(EIGEN_COMPILER_SUPPORT_CPP11)
+-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
++    if(NOT MSVC)
++      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
++    endif()
+   endif()
+ else()
+   #set(CMAKE_CXX_STANDARD 03)
+   #set(CMAKE_CXX_EXTENSIONS OFF)
+-  ei_add_cxx_compiler_flag("-std=c++03")
++  if(NOT MSVC)
++    ei_add_cxx_compiler_flag("-std=c++03")
++  endif()
+ endif()
+ 
+ # Determine if we should build shared libraries on this platform.
+@@ -167,7 +175,9 @@
+   ei_add_cxx_compiler_flag("-Wshorten-64-to-32")
+   ei_add_cxx_compiler_flag("-Wlogical-op")
+   ei_add_cxx_compiler_flag("-Wenum-conversion")
+-  ei_add_cxx_compiler_flag("-Wc++11-extensions")
++  if(NOT MSVC)
++    ei_add_cxx_compiler_flag("-Wc++11-extensions")
++  endif()
+   ei_add_cxx_compiler_flag("-Wdouble-promotion")
+ #  ei_add_cxx_compiler_flag("-Wconversion")
+ 

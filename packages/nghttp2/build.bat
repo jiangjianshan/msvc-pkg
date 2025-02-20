@@ -33,8 +33,10 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_BUILD_TYPE=Release                                                   ^
   -DCMAKE_C_COMPILER=cl                                                        ^
   -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS%"                                          ^
+  -DCMAKE_CXX_COMPILER=cl                                                      ^
+  -DCMAKE_CXX_FLAGS="-std:c++20 -EHsc %C_OPTS% %C_DEFS%"                       ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
-  -DENABLE_EXAMPLES=OFF                                                        ^
+  -DENABLE_LIB_ONLY=ON                                                         ^
   .. || exit 1
 exit /b 0
 

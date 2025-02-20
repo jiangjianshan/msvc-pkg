@@ -5,6 +5,7 @@ sha256: 1dcc9ceae8b128f3c0b3f654decd0e1e891afc6ff81098f227ef260449dae208
 steps:
   a:
     dependencies:
+      - dirent
       - pkg-config
       - icu4c
       - libiconv

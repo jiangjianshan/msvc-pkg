@@ -1,15 +1,6 @@
-diff -urN gklib-5.1.1-orig/gk_arch.h gklib-5.1.1/gk_arch.h
---- gklib-5.1.1-orig/gk_arch.h	2020-09-14 03:54:26.000000000 +0800
-+++ gklib-5.1.1/gk_arch.h	2024-10-20 14:58:47.684157600 +0800
-@@ -31,7 +31,7 @@
- #endif
- 
- 
--#ifdef __MSC__ 
-+#ifdef __MSC__
-   #include "ms_stdint.h"
-   #include "ms_inttypes.h"
-   #include "ms_stat.h"
+diff -urN Gklib-5.1.1-orig/gk_arch.h Gklib-5.1.1/gk_arch.h
+--- Gklib-5.1.1-orig/gk_arch.h	2020-09-14 03:54:26.000000000 +0800
++++ Gklib-5.1.1/gk_arch.h	2025-02-13 16:17:49.164187500 +0800
 @@ -61,7 +61,7 @@
  #endif
  
@@ -19,9 +10,9 @@ diff -urN gklib-5.1.1-orig/gk_arch.h gklib-5.1.1/gk_arch.h
  #define INFINITY FLT_MAX
  #endif
  
-diff -urN gklib-5.1.1-orig/ms_stdint.h gklib-5.1.1/ms_stdint.h
---- gklib-5.1.1-orig/ms_stdint.h	2020-09-14 03:54:26.000000000 +0800
-+++ gklib-5.1.1/ms_stdint.h	2024-10-20 15:18:27.879442900 +0800
+diff -urN Gklib-5.1.1-orig/ms_stdint.h Gklib-5.1.1/ms_stdint.h
+--- Gklib-5.1.1-orig/ms_stdint.h	2020-09-14 03:54:26.000000000 +0800
++++ Gklib-5.1.1/ms_stdint.h	2025-02-10 22:00:56.948598300 +0800
 @@ -77,11 +77,15 @@
  
  // 7.18.1.3 Fastest minimum-width integer types

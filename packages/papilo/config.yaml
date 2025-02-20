@@ -6,7 +6,7 @@ steps:
   a:
     dependencies:
       - boost
-      - gmp:b
+      - gmp:a
       - oneTBB
       - winpthreads
     run: build.bat

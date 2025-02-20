@@ -8,4 +8,5 @@ steps:
     run: build.sh
   b:
     dependencies:
+      - fftw:a
     run: build-2.sh

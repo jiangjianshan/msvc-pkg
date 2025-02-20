@@ -19,6 +19,9 @@ patch_package()
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
   patch -Np1 -i "$PKG_DIR/001-GKlib-fix-msvc-type-redefinition.diff"
+  # TODO: The better way is to define a function with particular regular expression
+  #       in a .cmake to convert the objects files to .def file
+  patch -Np1 -i "$PKG_DIR/002-GKlib-fix-build-shared-library-on-msvc.diff"
 }
 
 . $ROOT_DIR/common.sh
