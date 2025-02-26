@@ -1,5 +1,7 @@
 #!/bin/bash
 #
+#  This is a common set of functions used on every library's sync.sh
+#
 #  Copyright (c) 2024 Jianshan Jiang
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a copy
