@@ -79,14 +79,14 @@ configure_stage()
   CFLAGS="$C_OPTS"                                                             \
   CDEFS="$C_DEFS"                                                              \
   CPP="cl -E"                                                                  \
-  CPPFLAGS="$C_DEFS"                                                           \
+  CPPFLAGS="$C_DEFS -I${THIRDPARTY_GLPK_PREFIX:-$PREFIX}/include/coin-or/glpk" \
   CXX="cl"                                                                     \
   CXXCPP="cl -E"                                                               \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
   CXXDEFS="$C_DEFS"                                                            \
-  DLLTOOL="link.exe -verbose -dll"                                             \
+  DLLTOOL="link -verbose -dll"                                                 \
   F77="ifort"                                                                  \
-  FFLAGS="$F_OPTS -f77rtl"                                                     \
+  FFLAGS="-f77rtl $F_OPTS"                                                     \
   LD="$ROOT_DIR/wrappers/compile cl"                                           \
   MPICC="$ROOT_DIR/wrappers/mpicl"                                             \
   MPICXX="$ROOT_DIR/wrappers/mpicl"                                            \
@@ -105,14 +105,13 @@ configure_stage()
     --libdir="$PREFIX/lib"                                                     \
     --enable-static                                                            \
     --enable-shared                                                            \
-    --enable-msvc="MD"                                                         \
+    --enable-msvc                                                              \
     --enable-coinutils-mempool-override-new                                    \
     --enable-coinutils-mempool-maxpooled                                       \
     --enable-gnu-packages                                                      \
     --disable-rpath                                                            \
-    --with-blas                                                                \
     --with-blas-lib="-lopenblas"                                               \
-    --with-lapack                                                              \
+    --with-glpk-lib="-lcoinglpk"                                               \
     --with-lapack-lib="-lopenblas"                                             \
     ac_cv_prog_f77_v="-verbose"                                                \
     gt_cv_locale_zh_CN=none || exit 1

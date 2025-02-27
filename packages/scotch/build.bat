@@ -42,12 +42,9 @@ call "%ROOT_DIR%\compiler.bat" %ARCH%
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
-set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -Qopenmp -Qopenmp-simd
+set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -Qopenmp -Qopenmp-simd -Wno-implicit-function-declaration -Wno-pointer-sign -Xclang -O2 -fms-extensions -fms-compatibility -fms-compatibility-version=19.42
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX -D_WINDLL
 set F_OPTS=-nologo -MD -Qdiag-disable:10448 -fp:precise -Qopenmp -Qopenmp-simd -names:lowercase -assume:underscore
-for /f "delims=" %%i in ('where git.exe') do set GIT_ROOT=%%i
-set BASH_ROOT=!GIT_ROOT:~0,-12!\usr\bin
-set PATH=%PATH%;!BASH_ROOT!
 
 call :configure_stage
 call :build_stage
@@ -61,6 +58,8 @@ rem ============================================================================
 call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
+rem NOTE: In order to avoid overide metis.h from METIS, The variable CMAKE_INSTALL_INCLUDEDIR
+rem       must be set here.
 cmake -G "Ninja"                                                               ^
   -DBUILD_SHARED_LIBS=ON                                                       ^
   -DCMAKE_BUILD_TYPE=Release                                                   ^
@@ -70,6 +69,8 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_Fortran_COMPILER=ifx                                                 ^
   -DCMAKE_Fortran_FLAGS="%F_OPTS%"                                             ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
+  -DCMAKE_INSTALL_INCLUDEDIR="%PREFIX%\include\scotch"                         ^
+  -DINTSIZE="32"                                                               ^
   .. || exit 1
 exit /b 0
 

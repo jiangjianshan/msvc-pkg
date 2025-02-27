@@ -88,7 +88,7 @@ configure_stage()
   CXX="$ROOT_DIR/wrappers/compile cl"                                          \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
   CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
-  DLLTOOL="link.exe -verbose -dll"                                             \
+  DLLTOOL="link -verbose -dll"                                                 \
   LD="link -nologo"                                                            \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
@@ -104,7 +104,6 @@ configure_stage()
     --datarootdir="$PREFIX/share"                                              \
     --enable-static                                                            \
     --enable-shared                                                            \
-    --enable-relocatable                                                       \
     --enable-threads=windows                                                   \
     --disable-rpath                                                            \
     --with-libiconv-prefix="$(cygpath -u "${LIBICONV_PREFIX:-$PREFIX}")"       \

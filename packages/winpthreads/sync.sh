@@ -49,8 +49,8 @@ patch_package()
 
   echo "Patching thread.h in src"
   pushd src || exit 1
-  sed                                                                                    \
-    -e 's|struct _pthread_v \*WINPTHREAD_API|WINPTHREAD_API struct _pthread_v *|g'       \
+  sed                                                                                                \
+    -e 's|struct _pthread_v \*WINPTHREAD_API|WINPTHREAD_API struct _pthread_v *|g'                   \
     -i thread.h
   popd || exit 1
 
@@ -59,15 +59,16 @@ patch_package()
 
   echo "Patching ltmain.sh in build-aux"
   pushd build-aux || exit 1
-  sed                                                                                    \
-    -e 's|old_library=$libname.$libext|old_library=lib$libname.$libext|g'                \
-    -e 's|$output_objdir/$libname.$libext|$output_objdir/lib$libname.$libext|g'          \
+  sed                                                                                                \
+    -e 's|old_library=$libname\.$libext|old_library=lib$libname.$libext|g'                           \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
     -i ltmain.sh
   popd || exit 1
 
   echo "Patching configure in top level"
-  sed                                                                                    \
-    -e 's|.dll.lib|.lib|g'                                                               \
+  sed                                                                                                \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
     -i configure
   chmod +x configure
 }

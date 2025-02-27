@@ -78,7 +78,7 @@ configure_stage()
   CFLAGS="$C_OPTS"                                                             \
   CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
   CPPFLAGS="$C_DEFS"                                                           \
-  DLLTOOL="link.exe -verbose -dll"                                             \
+  DLLTOOL="link -verbose -dll"                                                 \
   LD="link -nologo"                                                            \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \

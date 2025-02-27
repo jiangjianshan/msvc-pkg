@@ -48,6 +48,7 @@ patch_package()
   patch -Np1 -i "$PKG_DIR/001-avm-fix-ninja-multiple-rules-generate.diff"
   patch -Np1 -i "$PKG_DIR/002-avm-msvc-do-not-have-libm.diff"
   patch -Np1 -i "$PKG_DIR/003-avm-enable-install-targets-on-msvc.diff"
+  patch -Np1 -i "$PKG_DIR/004-avm-fix-can-not-found-header-file.diff"
 }
 
 . $ROOT_DIR/common.sh

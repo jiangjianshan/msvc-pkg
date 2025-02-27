@@ -7,5 +7,4 @@ steps:
     dependencies:
       - dlfcn-win32
       - winpthreads
-      - llvm-project
     run: build.sh

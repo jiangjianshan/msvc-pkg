@@ -83,8 +83,6 @@ rem ============================================================================
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
 if %errorlevel% neq 0 exit 1
-if exist "%PREFIX%\lib\openjph.lib" del /q "%PREFIX%\lib\openjph.lib"
-mklink "%PREFIX%\lib\openjph.lib" "%PREFIX%\lib\openjph.0.18.lib"
 call :clean_build
 exit /b 0
 

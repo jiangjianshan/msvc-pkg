@@ -45,12 +45,32 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
-  patch -Np1 -i "$PKG_DIR/001-glpk-fix-link-error.diff"
+  patch -Np1 -i "$PKG_DIR/001-glpk-fix-autogen-warnings.diff"
+  patch -Np1 -i "$PKG_DIR/002-glpk-msvc-missing-some-posix-functions.diff"
 
-  echo "Patching glpk_5_0.def in w64"
-  pushd w64 || exit 1
-  sed -e '/DESCRIPTION/d' -e '/glp_netgen_prob/d' -i glpk_5_0.def
-  popd || exit 1
+  # NOTE: Maybe the export symbol command is not correct in the configure script.
+  #       Because if not do autogen, it will have the issue of
+  #       'unresolve external symbol glp_scale_prob'.
+  #       libglpk.lib and glpscl.obj all have this symbol but only glpk.lib don't have.
+  WANT_AUTOCONF='2.69' WANT_AUTOMAKE='1.16' ./autogen.sh
+  rm -rfv autom4te.cache
+  find . -name "*~" -type f -print -exec rm -rfv {} \;
+
+  # XXX: libtool don't have options can set the naming style of static and
+  #      shared library. Here is only a workaround.
+
+  echo "Patching ltmain.sh in top level"
+  sed                                                                                                \
+    -e 's|old_library="$libname\.$libext"|old_library="lib$libname.$libext"|g'                       \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
+    -i ltmain.sh
+
+  echo "Patching configure in top level"
+  sed                                                                                                \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
+    -i configure
+  chmod +x configure
 }
 
 . $ROOT_DIR/common.sh

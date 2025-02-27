@@ -64,6 +64,7 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS%"                                          ^
   -DCMAKE_C_STANDARD_LIBRARIES="getopt.lib"                                    ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
+  -DCMAKE_POLICY_DEFAULT_CMP0148=OLD                                           ^
   .. || exit 1
 exit /b 0
 

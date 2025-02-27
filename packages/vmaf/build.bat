@@ -42,7 +42,7 @@ call "%ROOT_DIR%\compiler.bat" %ARCH%
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
-set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -Zc:__cplusplus -Wno-implicit-function-declaration -Xclang -O3 -march=native -fms-extensions -fms-compatibility -fms-compatibility-version=19.42
+set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -Wno-implicit-function-declaration -Wno-implicit-int -Wno-incompatible-pointer-types -Wno-pointer-sign -Wno-unknown-argument -Wno-unused-variable -Xclang -O2 -fms-extensions -fms-compatibility -fms-compatibility-version=19.42
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
 
 rem Use clang-cl from llvm-project but not from Intel OneAPI
@@ -65,6 +65,10 @@ cd "%SRC_DIR%/libvmaf"
 rem NOTE: msvc does not support VLA yet, so that use clang-cl.exe instead of cl.exe
 set CC=clang-cl
 set CXX=clang-cl
+rem TODO: If enable the options '-Denable_cuda=true' and '-Denable_nvtx=true', some
+rem       patch need to be done
+rem NOTE: Since from version 3.0.0, the deprecated API compute_vmaf() has been removed,
+rem       but avm need it... So that back to 2.3.1
 meson setup "%BUILD_DIR%"                                                      ^
   --buildtype=release                                                          ^
   --prefix="%PREFIX%"                                                          ^
@@ -76,6 +80,7 @@ meson setup "%BUILD_DIR%"                                                      ^
   -Dc_winlibs="Ole32.lib,User32.lib,pthread.lib,getopt.lib"                    ^
   -Dcpp_winlibs="Ole32.lib,User32.lib,pthread.lib,getopt.lib"                  ^
   -Denable_float=true                                                          ^
+  -Denable_avx512=true                                                         ^
   -Denable_tests=false || exit 1
 exit /b 0
 
@@ -93,6 +98,8 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
+if exist "%PREFIX%\lib\libvmaf.lib" del /Q "%PREFIX%\lib\libvmaf.lib"
+rename "%PREFIX%\lib\libvmaf.a" libvmaf.lib
 call :clean_build
 exit /b 0
 

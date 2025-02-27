@@ -85,7 +85,7 @@ configure_stage()
   CFLAGS="$C_OPTS"                                                             \
   CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
   CPPFLAGS="$C_DEFS -I${NCURSES_PREFIX:-$PREFIX}/include/ncurses"              \
-  DLLTOOL="link.exe -verbose -dll"                                             \
+  DLLTOOL="link -verbose -dll"                                                 \
   LD="link -nologo"                                                            \
   LIBS="-lShell32 -lzdll -licuuc -licuin -llibsqlite3"                         \
   LT_SYS_LIBRARY_PATH="$(cygpath -u "$PREFIX")"                                \
@@ -104,9 +104,9 @@ configure_stage()
     --enable-static                                                            \
     --enable-shared                                                            \
     --with-included-ltdl                                                       \
-    --with-sco                                                                 \
-    --with-sqlite3="$(cygpath -u "${SQLITE_PREFIX:-$PREFIX}")"                 \
     --with-ncurses="$(cygpath -u "${NCURSES_PREFIX:-$PREFIX}")"                \
+    --with-sqlite3="$(cygpath -u "${SQLITE_PREFIX:-$PREFIX}")"                 \
+    --with-sco                                                                 \
     --with-universal-ctags=ctags                                               \
     ac_header_dirent=dirent.h                                                  \
     ac_cv_header_dirent_h=yes                                                  \

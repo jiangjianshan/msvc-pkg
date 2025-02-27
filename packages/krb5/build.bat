@@ -44,13 +44,22 @@ set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\src
 set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
-for /f "delims=" %%i in ('where git.exe') do set GIT_ROOT=%%i
-set BASH_ROOT=!GIT_ROOT:~0,-12!\usr\bin
-set PATH=%PATH%;!BASH_ROOT!
 
+call :configure_stage
 call :build_stage
 call :install_package
 goto :end
+
+rem ==============================================================================
+rem  Configure package and ready to build
+rem ==============================================================================
+:configure_stage
+call :clean_build
+echo "Configuring %PKG_NAME% %PKG_VER%"
+cd "%BUILD_DIR%"
+set KRB_INSTALL_DIR=%PREFIX%
+nmake -f Makefile.in prep-windows || exit 1
+exit /b 0
 
 rem ==============================================================================
 rem  Build package
@@ -67,7 +76,7 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%"
-nmake install NODEBUG=1 NO_LEASH=1 KRB_INSTALL_DIR=%PREFIX% || exit 1
+nmake install NODEBUG=1 NO_LEASH=1 || exit 1
 call :clean_build
 exit /b 0
 

@@ -88,12 +88,12 @@ configure_stage()
   CC_FOR_BUILD="$ROOT_DIR/wrappers/compile cl"                                 \
   CCAS="yasm -Xvc -f $YASM_OBJ_FMT -rraw -pgas"                                \
   CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
-  CPPFLAGS="$C_DEFS -I$SRC_DIR -I$BUILD_DIR"                                    \
+  CPPFLAGS="$C_DEFS -I$SRC_DIR -I$BUILD_DIR"                                   \
   CPP_FOR_BUILD="$ROOT_DIR/wrappers/compile cl -E"                             \
   CXX="$ROOT_DIR/wrappers/compile cl"                                          \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
   CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
-  DLLTOOL="link.exe -verbose -dll"                                             \
+  DLLTOOL="link -verbose -dll"                                                 \
   LD="link -nologo"                                                            \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
@@ -115,6 +115,20 @@ configure_stage()
     ac_cv_type_std__locale=yes                                                 \
     gmp_cv_asm_w32=".word"                                                     \
     gt_cv_locale_zh_CN=none || exit 1
+}
+
+patch_stage()
+{
+  echo "Patching $PKG_NAME $PKG_VER after configure"
+  cd "$BUILD_DIR"
+  # FIXME:
+  # To solve following issue
+  # libtool: warning: undefined symbols not allowed in x86_64-w64-mingw32 shared libraries; building static only
+  echo "Patching libtool in top level"
+  sed                                                                          \
+    -e "s/\(allow_undefined=\)yes/\1no/"                                       \
+    -i libtool
+  chmod +x libtool
 }
 
 build_stage()
@@ -142,5 +156,6 @@ install_package()
 }
 
 configure_stage
+patch_stage
 build_stage
 install_package

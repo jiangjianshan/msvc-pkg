@@ -85,9 +85,6 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
-if not exist "%PREFIX%\include\pixman" (
-  mklink /D "%PREFIX%\include\pixman" "%PREFIX%\include\pixman-1"
-)
 call :clean_build
 exit /b 0
 

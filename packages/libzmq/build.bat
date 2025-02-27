@@ -83,9 +83,6 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
-if not exist "%PREFIX%\lib\zmq.lib" (
-  mklink "%PREFIX%\lib\zmq.lib" "%PREFIX%\lib\zmq-mt-%PKG_VER:.=_%.lib"
-)
 call :clean_build
 exit /b 0
 

@@ -56,9 +56,9 @@ patch_package()
   echo "Patching ltmain.sh in config"
   pushd config || exit 1
   sed                                                                                                \
-    -e 's|old_library=$libname.$libext|old_library=lib$libname.$libext|g'                            \
-    -e 's|$output_objdir/$libname.$libext|$output_objdir/lib$libname.$libext|g'                      \
-    -e 's/*\.dll.a)/*\.dll.a | *\.lib)/g'                                                            \
+    -e 's|old_library=$libname\.$libext|old_library=lib$libname.$libext|g'                           \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
+    -e 's/*\.dll\.a)/*\.dll\.a | *\.lib)/g'                                                          \
     -i ltmain.sh
   popd || exit 1
 
@@ -70,14 +70,14 @@ patch_package()
   #
   # -Vaxlib is an older option for the version 9.0 and older compilers and no longer exists
   echo "Patching configure in top level"
-  # NOTE: The library_names_spec is not correct because it contains .dll name. This will also cause
-  #       the shared library will be converted to symbolic link as .dll file. This issue can be solved
-  #       by changed '*,cl* | *,icl*)' to '*,cl | *,icl* | *,ifort*)'
+  # NOTE: Changed '*,cl* | *,icl*)' to '*,cl| *,icl* | *,ifort*)'
+  #       can solved following issues:
+  #       1) The library_names_spec is not correct because it contains .dll name. This will also cause
+  #          the shared library will be converted to symbolic link as .dll file.
   sed                                                                                                \
     -e "s|-mp -Vaxlib|-MP:$(nproc)|g"                                                                \
     -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
-    -e "s|library_names_spec='\$libname.dll.lib'|library_names_spec='\$libname.lib'|g"               \
-    -e 's|$tool_output_objdir$libname.dll.lib|$tool_output_objdir$libname.lib|g'                     \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
     -e 's/\*,cl\* | \*,icl\*)/\*,cl\* | \*,icl\* | \*,ifort\*)/g'                                    \
     -i configure
   chmod +x configure

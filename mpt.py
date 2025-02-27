@@ -402,7 +402,7 @@ def list_pkgs(arch):
     table.add_column("URL", style="magenta")
     table.add_column("Installed", justify="left", style="green")
     for pkg in os.listdir(pkgs_dir):
-        if pkg == 'gnulib':
+        if pkg == 'gnulib' or pkg == 'BuildTools':
             continue
         conf_file = os.path.join(pkgs_dir, pkg, "config.yaml")
         with open(conf_file, 'r', newline='', encoding="utf-8") as f:

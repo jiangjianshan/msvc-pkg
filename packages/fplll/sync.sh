@@ -46,6 +46,7 @@ patch_package()
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR" || exit 1
   patch -Np1 -i "$PKG_DIR/001-fplll-compile-on-msvc.diff"
+
   WANT_AUTOCONF='2.69' WANT_AUTOMAKE='1.16' ./autogen.sh
   rm -rfv autom4te.cache
   find . -name "*~" -type f -print -exec rm -rfv {} \;
@@ -55,13 +56,14 @@ patch_package()
 
   echo "Patching ltmain.sh in top level"
   sed                                                                                                \
-    -e 's|old_library=$libname.$libext|old_library=lib$libname.$libext|g'                            \
-    -e 's|$output_objdir/$libname.$libext|$output_objdir/lib$libname.$libext|g'                      \
+    -e 's|old_library=$libname\.$libext|old_library=lib$libname.$libext|g'                           \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
     -i ltmain.sh
 
   echo "Patching configure in top level"
   sed                                                                                                \
-    -e 's|.dll.lib|.lib|g'                                                                           \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
     -i configure
   chmod +x configure
 }

@@ -22,6 +22,6 @@ steps:
       - gettext
       - libffi
       - gobject-introspection:a
-      - pcre2:a
+      - pcre2:b
       - zlib
     run: build-2.bat

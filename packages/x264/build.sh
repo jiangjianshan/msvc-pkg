@@ -62,14 +62,6 @@ configure_stage()
   elif [[ "$ARCH" == "x64" ]]; then
     HOST_TRIPLET=x86_64-w64-mingw32
   fi
-  # NOTE:
-  # 1. Don't use CPP="$ROOT_DIR/wrappers/compile cl -nologo -EP" here,
-  #    it will cause checking absolute name of standard files is empty.
-  #    e.g. checking absolute name of <fcntl.h> ... '', but we can use
-  #    CPP="$ROOT_DIR/wrappers/compile cl -nologo -E"
-  # 2. Don't use 'compile cl -nologo' but 'compile cl'. Because configure
-  #    on some libraries will detect whether is msvc compiler according to
-  #    '*cl | cl.exe'
   CC=cl ../configure --host="$HOST_TRIPLET"                                    \
     --prefix="$PREFIX"                                                         \
     --bindir="$PREFIX/bin"                                                     \

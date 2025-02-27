@@ -61,11 +61,11 @@ mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
 cmake -G "Ninja"                                                               ^
   -DBUILD_SHARED_LIBS=ON                                                       ^
   -DCMAKE_BUILD_TYPE=Release                                                   ^
-  -DCMAKE_C_COMPILER=icx-cl                                                    ^
+  -DCMAKE_C_COMPILER=cl                                                        ^
   -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS%"                                          ^
-  -DCMAKE_CXX_COMPILER=icx-cl                                                  ^
+  -DCMAKE_CXX_COMPILER=cl                                                      ^
   -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
-  -DCMAKE_Fortran_COMPILER=ifx                                                 ^
+  -DCMAKE_Fortran_COMPILER=ifort                                               ^
   -DCMAKE_Fortran_FLAGS="%F_OPTS%"                                             ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
   -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld"                                   ^

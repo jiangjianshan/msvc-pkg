@@ -57,9 +57,12 @@ rem ============================================================================
 call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
-rem NOTE: The option '-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON' is not so good, because
-rem       it will also export __local_stdio_printf_options, printf something like that.
-rem       That is why to use the .def files in patch to solved it.
+rem NOTE:
+rem 1. The option '-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON' is not so good, because
+rem    it will also export __local_stdio_printf_options, printf something like that.
+rem    That is why to use the .def files in patch to solved it.
+rem 2. Use icx-cl or clang-cl instead of cl, because the OpenMP version of MSVC is
+rem    too low
 cmake -G "Ninja"                                                               ^
   -DBUILD_SHARED_LIBS=ON                                                       ^
   -DCMAKE_BUILD_TYPE=Release                                                   ^

@@ -7,5 +7,5 @@ steps:
     dependencies:
       - getopt
       - libvideogfx
-      - SDL
+      - SDL2
     run: build.bat

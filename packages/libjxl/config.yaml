@@ -7,7 +7,6 @@ steps:
     dependencies:
       - pkg-config
       - highway
-      - llvm-project
       - brotli
       - googletest
       - highway

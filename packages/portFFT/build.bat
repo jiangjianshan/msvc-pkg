@@ -60,7 +60,7 @@ mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
 cmake -G "Ninja"                                                               ^
   -DBUILD_SHARED_LIBS=ON                                                       ^
   -DCMAKE_BUILD_TYPE=Release                                                   ^
-  -DCMAKE_CXX_COMPILER=icx-cl                                                  ^
+  -DCMAKE_CXX_COMPILER=cl                                                      ^
   -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
   -DPORTFFT_USE_SG_TRANSFERS=ON                                                ^

@@ -9,7 +9,7 @@ steps:
       - libiconv
       - freetype
       - fribidi
-      - harfbuzz:a
+      - harfbuzz:b
       - fontconfig
       - libunibreak
     run: build.bat

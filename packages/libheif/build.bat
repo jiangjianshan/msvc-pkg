@@ -57,15 +57,18 @@ rem ============================================================================
 call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
+rem NOTE: Both AVM and libaom has same installation file name 'aom/aomdx.h', but
+rem       the one from AVM may contain 'config/aom_config.h' which was not installed.
+rem       So the patch for AVM maybe need if compiler said missing 'config/aom_config.h'
 cmake -G "Ninja"                                                               ^
   -DBUILD_SHARED_LIBS=ON                                                       ^
   -DCMAKE_BUILD_TYPE=Release                                                   ^
   -DCMAKE_C_COMPILER=cl                                                        ^
   -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS%"                                          ^
-  -DCMAKE_C_STANDARD_LIBRARIES="pthread.lib"                                   ^
+  -DCMAKE_C_STANDARD_LIBRARIES="vmaf.lib pthread.lib"                          ^
   -DCMAKE_CXX_COMPILER=cl                                                      ^
   -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
-  -DCMAKE_CXX_STANDARD_LIBRARIES="pthread.lib"                                 ^
+  -DCMAKE_CXX_STANDARD_LIBRARIES="vmaf.lib pthread.lib"                        ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
   -DWITH_DAV1D=ON                                                              ^
   -DWITH_SvtEnc=ON                                                             ^

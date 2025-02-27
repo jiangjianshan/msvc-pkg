@@ -10,6 +10,6 @@ steps:
       - libsigsegv
       - libiconv
       - gettext
-      - pcre2:a
+      - pcre2:b
       - winpthreads
     run: build.sh

@@ -6,7 +6,7 @@ steps:
   a:
     dependencies:
       - pkg-config
-      - gmp:a
+      - gmp:b
       - fplll
       - mpfr
       - mpfrcx

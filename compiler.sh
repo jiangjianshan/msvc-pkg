@@ -148,7 +148,7 @@ config_oneapi()
   #
   # Intel OneAPI environment initialized for $ARCH
   #
-  ONEAPI_ROOT='C:\Program Files (x86)\Intel\oneAPI'
+  ONEAPI_ROOT=$(cygpath -d "C:\Program Files (x86)\Intel\oneAPI")
   if [[ "$ARCH" == "x64" ]]; then
     INTEL_TARGET_ARCH=intel64
     IPPCP_TARGET_ARCH=intel64
@@ -215,6 +215,7 @@ config_oneapi()
   OCLOC_ROOT="${ONEAPI_ROOT}"'\ocloc\latest'
   OCL_ICD_FILENAMES=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\bin\intelocl64_emu.dll' "${OCL_ICD_FILENAMES:-}" ";")
   OCL_ICD_FILENAMES=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\bin\intelocl64.dll' "${OCL_ICD_FILENAMES:-}" ";")
+  USE_INTEL_LLVM=1
   PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/tbb/latest/bin${TBB_ARCH_SUFFIX:-}" "${PATH:-}" ":")
   PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/ocloc/latest/bin" "${PATH:-}" ":")
   PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/mpi/latest/opt/mpi/libfabric/bin" "${PATH:-}" ":")
@@ -226,7 +227,9 @@ config_oneapi()
   PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/debugger/latest/opt/debugger/bin" "${PATH:-}" ":")
   PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/compiler/latest/lib/ocloc" "${PATH:-}" ":")
   PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/compiler/latest/bin${TBB_ARCH_SUFFIX:-}" "${PATH:-}" ":")
-  PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/compiler/latest/bin/compiler" "${PATH:-}" ":")
+  if [ $USE_INTEL_LLVM -eq 1 ]; then
+    PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/compiler/latest/bin/compiler" "${PATH:-}" ":")
+  fi
   # PKG_CONFIG_PATH
   PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/tbb/latest/lib${TBB_ARCH_SUFFIX:-}/pkgconfig" "${PKG_CONFIG_PATH:-}" ":")
   PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/mpi/latest/lib/pkgconfig" "${PKG_CONFIG_PATH:-}" ":")
@@ -239,7 +242,6 @@ config_oneapi()
   TBB_BIN_DIR="${ONEAPI_ROOT}"'\tbb\latest\bin'"${TBB_ARCH_SUFFIX:-}"
   TBB_DLL_PATH="${ONEAPI_ROOT}"'\tbb\latest\bin'"${TBB_ARCH_SUFFIX:-}"
   TBB_SCRIPT_DIR="${ONEAPI_ROOT}"'\tbb\latest'
-  USE_INTEL_LLVM=1
   echo ":: initializing oneAPI environment..."
   echo "   Initializing Visual Studio command-line environment..."
   echo "   Visual Studio version $VCToolsVersion environment configured."

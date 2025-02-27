@@ -45,8 +45,8 @@ patch_package()
 
   echo "Patching configure in top level"
   sed                                                                          \
-    -e 's|IMPLIBNAME=libx264.dll.lib|IMPLIBNAME=x264.lib|g'                    \
-    -e 's|SONAME=libx264-$API.dll|SONAME=x264-$API.dll|g'                      \
+    -e 's|IMPLIBNAME=libx264\.dll\.lib|IMPLIBNAME=x264.lib|g'                  \
+    -e 's|SONAME=libx264-$API\.dll|SONAME=x264-$API.dll|g'                     \
     -i configure
   chmod +x configure
 }

@@ -68,7 +68,9 @@ cmake -G "Ninja"                                                               ^
   -DAVIF_CODEC_AOM_ENABLED=ON                                                  ^
   -DAVIF_CODEC_DAV1D_ENABLED=ON                                                ^
   -DAVIF_CODEC_LIBGAV1_ENABLED=ON                                              ^
+  -DAVIF_CODEC_RAV1E_ENABLED=ON                                                ^
   -DAVIF_CODEC_AVM_ENABLED=ON                                                  ^
+  -DAVIF_CODEC_SVT_ENABLED=ON                                                  ^
   .. || exit 1
 exit /b 0
 

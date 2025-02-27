@@ -46,9 +46,7 @@ set OLDPATH=%PATH%
 set PATH=%PATH%;C:\Python312\Scripts;C:\Python312;%HOME%\.cargo\bin;%~dp0%ARCH%\bin;%GIT_ROOT:"=%\bin
 
 cd /d %~dp0
-mkdir %ARCH%\bin
-mkdir tmp
-cd tmp
+if not exist "%ARCH%\bin" mkdir %ARCH%\bin
 
 call :check_wget || goto :end
 call :check_vcbuildtools || goto :end
@@ -58,13 +56,24 @@ call :check_python || goto :end
 call :check_git || goto :end
 call :check_rust || goto :end
 
-echo Dealing with line endings
-rem See https://stackoverflow.com/questions/1967370/git-replacing-lf-with-crlf
-git config --global core.autocrlf false
-echo Speed up git handling if on bash environment
-git config --system core.filemode false
-echo Changed the default behavior of Git for Windows
-git config --global core.ignorecase false
+git config --global --list | findstr core.autocrlf=false >nul 2>&1
+if "%errorlevel%" neq "0" (
+  echo Dealing with line endings
+  rem See https://stackoverflow.com/questions/1967370/git-replacing-lf-with-crlf
+  git config --global core.autocrlf false
+)
+
+git config --system --list | findstr core.filemode=false >nul 2>&1
+if "%errorlevel%" neq "0" (
+  echo Speed up git handling if on bash environment
+  git config --system core.filemode false
+)
+
+git config --global --list | findstr core.ignorecase=false >nul 2>&1
+if "%errorlevel%" neq "0" (
+  echo Changed the default behavior of Git for Windows
+  git config --global core.ignorecase false
+)
 
 call :check_cmake || goto :end
 call :check_ninja || goto :end
@@ -86,29 +95,28 @@ if "%VSINSTALLDIR%" neq "" (
 )
 if exist "%vsinstall%\VC\Auxiliary\Build\vcvarsall.bat" exit /b 0
 :install_vcbuildtools
-  rem Download the Build Tools bootstrapper
-  if not exist "vs_buildTools.exe" curl -SL -o vs_buildTools.exe https://aka.ms/vs/17/release/vs_buildTools.exe || goto :end
-  rem https://learn.microsoft.com/en-us/visualstudio/install/use-command-line-parameters-to-install-visual-studio?view=vs-2022
-  rem https://learn.microsoft.com/en-us/visualstudio/install/command-line-parameter-examples?view=vs-2022
-  rem https://learn.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-build-tools?view=vs-2022
-  echo Installing Visual C++ Build Tools
-  vs_buildTools.exe                                                            ^
-    --includeRecommended                                                       ^
-    --wait                                                                     ^
-    --passive                                                                  ^
-    --norestart		                                                             ^
-    --removeOos true                                                           ^
-    --downloadThenInstall	                                                     ^
-    --addProductLang En-us                                                     ^
-    --add Microsoft.VisualStudio.Workload.VCTools                              ^
-    --add Microsoft.Net.Component.4.8.1.TargetingPack	                         ^
-    --add Microsoft.VisualStudio.Component.VC.ATL	                             ^
-    --add Microsoft.VisualStudio.Component.VC.ATLMFC                           ^
-    --add Microsoft.VisualStudio.Component.VC.ASAN                             ^
-    --remove Microsoft.VisualStudio.Component.VC.CMake.Project	               ^
-    --remove Microsoft.VisualStudio.Component.TestTools.BuildTools
-  echo Done.
-)
+rem Download the Build Tools bootstrapper
+if not exist "vs_buildTools.exe" curl -SL -o vs_buildTools.exe https://aka.ms/vs/17/release/vs_buildTools.exe || goto :end
+rem https://learn.microsoft.com/en-us/visualstudio/install/use-command-line-parameters-to-install-visual-studio?view=vs-2022
+rem https://learn.microsoft.com/en-us/visualstudio/install/command-line-parameter-examples?view=vs-2022
+rem https://learn.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-build-tools?view=vs-2022
+echo Installing Visual C++ Build Tools
+vs_buildTools.exe                                                            ^
+  --includeRecommended                                                       ^
+  --wait                                                                     ^
+  --passive                                                                  ^
+  --norestart		                                                             ^
+  --removeOos true                                                           ^
+  --downloadThenInstall	                                                     ^
+  --addProductLang En-us                                                     ^
+  --add Microsoft.VisualStudio.Workload.VCTools                              ^
+  --add Microsoft.Net.Component.4.8.1.TargetingPack	                         ^
+  --add Microsoft.VisualStudio.Component.VC.ATL	                             ^
+  --add Microsoft.VisualStudio.Component.VC.ATLMFC                           ^
+  --add Microsoft.VisualStudio.Component.VC.ASAN                             ^
+  --remove Microsoft.VisualStudio.Component.VC.CMake.Project	               ^
+  --remove Microsoft.VisualStudio.Component.TestTools.BuildTools
+del /Q vs_buildTools.exe
 exit /b 0
 
 rem ==============================================================================
@@ -141,7 +149,7 @@ echo You don't have CUDA installed
 set CUDA_FULL_VERSION=12.8.0_571.96
 for /f "tokens=1-4 delims=." %%a in ("!CUDA_FULL_VERSION!") do set cuda_major=%%a
 for /f "tokens=1-4 delims=." %%a in ("!CUDA_FULL_VERSION!") do set cuda_major_minor=%%a.%%b
-for /f "delims=_" %%a in ("!CUDA_FULL_VERSION!") do set cuda_version=%%a
+for /f "delims=_" %%a in ("!CUDA_FULL_VERSION!") do set CUDA_VERSION=%%a
 rem https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html
 if not exist "cuda_!CUDA_FULL_VERSION!_windows.exe" (
   echo Downloading CUDA !CUDA_FULL_VERSION!
@@ -149,7 +157,7 @@ if not exist "cuda_!CUDA_FULL_VERSION!_windows.exe" (
 )
 echo Installing CUDA !CUDA_FULL_VERSION!
 cuda_!CUDA_FULL_VERSION!_windows.exe -s cuda_profiler_api_!cuda_major_minor! cudart_!cuda_major_minor! cuobjdump_!cuda_major_minor! cupti_!cuda_major_minor! cuxxfilt_!cuda_major_minor! demo_suite_!cuda_major_minor! nvcc_!cuda_major_minor! nvdisasm_!cuda_major_minor! nvfatbin_!cuda_major_minor! nvjitlink_!cuda_major_minor! nvml_dev_!cuda_major_minor! nvprof_!cuda_major_minor! nvprune_!cuda_major_minor! nvrtc_!cuda_major_minor! nvrtc_dev_!cuda_major_minor! opencl_!cuda_major_minor! visual_profiler_!cuda_major_minor! sanitizer_!cuda_major_minor! thrust_!cuda_major_minor! cublas_!cuda_major_minor! cublas_dev_!cuda_major_minor! cufft_!cuda_major_minor! cufft_dev_!cuda_major_minor! curand_!cuda_major_minor! curand_dev_!cuda_major_minor! cusolver_!cuda_major_minor! cusolver_dev_!cuda_major_minor! cusparse_!cuda_major_minor! cusparse_dev_!cuda_major_minor! npp_!cuda_major_minor! npp_dev_!cuda_major_minor! nvjpeg_!cuda_major_minor! nvjpeg_dev_!cuda_major_minor! occupancy_calculator_!cuda_major_minor!
-echo Done.
+del /Q cuda_!CUDA_FULL_VERSION!_windows.exe
 
 set CUDNN_VERSION=9.7.1.26
 rem https://docs.nvidia.com/deeplearning/cudnn/latest/reference/support-matrix.html#support-matrix
@@ -166,7 +174,8 @@ xcopy /S /F /V bin "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v!cuda_ma
 xcopy /S /F /V include "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v!cuda_major_minor!\include"
 xcopy /S /F /V lib\x64 "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v!cuda_major_minor!\lib\x64"
 popd
-echo Done.
+del /Q cudnn-windows-x86_64-!CUDNN_VERSION!_cuda!cuda_major!-archive.zip
+rmdir /S /Q cudnn-windows-x86_64-!CUDNN_VERSION!_cuda!cuda_major!-archive
 exit /b 0
 
 rem ==============================================================================
@@ -208,6 +217,9 @@ if "!with_basekit!"=="yes" (
   start /wait w_dpcpp_cpp_runtime_p_!oneapi_version!.1084.exe || goto :end
   echo Installing Intel Fortran Compiler Runtime for Windows* ^(IFX/IFORT^)
   start /wait w_ifort_runtime_p_!oneapi_version!.1084.exe || goto :end
+  del /Q w_BaseKit_p_!oneapi_version!.101_offline.exe
+  del /Q w_dpcpp_cpp_runtime_p_!oneapi_version!.1084.exe
+  del /Q w_ifort_runtime_p_!oneapi_version!.1084.exe
 )
 if not exist "!ONEAPI_ROOT!\mpi" (
   if not exist "w_HPCKit_p_!oneapi_version!.80_offline.exe" (
@@ -219,6 +231,7 @@ if not exist "!ONEAPI_ROOT!\mpi" (
 if "!with_hpckit!"=="yes" (
   echo Installing Intel OneAPI HPCKit
   w_HPCKit_p_!oneapi_version!.80_offline.exe -a --silent --eula accept --components intel.oneapi.win.ifort-compiler:intel.oneapi.win.mpi.devel
+  del /Q w_HPCKit_p_!oneapi_version!.80_offline.exe
 )
 exit /b 0
 
@@ -233,7 +246,6 @@ if "%errorlevel%" neq "0" (
   echo Installing wget
   curl -L https://eternallybored.org/misc/wget/!WGET_VERSION!/%ARCH:x=%/wget.exe -o %~dp0%ARCH%\bin\wget.exe || goto :end
 )
-echo Done.
 exit /b 0
 
 rem ==============================================================================
@@ -250,8 +262,8 @@ if "%errorlevel%" neq "0" (
   )
   powershell Expand-Archive -Path ninja-win.zip -DestinationPath . > nul || goto :end
   copy /Y /V ninja.exe %~dp0%ARCH%\bin\ninja.exe
+  del /Q ninja-win.zip ninja.exe
 )
-echo Done.
 exit /b 0
 
 rem ==============================================================================
@@ -263,22 +275,17 @@ set PYTHON_VERSION=3.12.9
 where python >nul 2>&1
 if "%errorlevel%" neq "0" (
   echo Installing python 3
-  if "%ARCH%" == "x64" (
-    if not exist "python-!PYTHON_VERSION!-amd64.exe" (
-      wget --no-check-certificate https://www.python.org/ftp/python/!PYTHON_VERSION!/python-!PYTHON_VERSION!-amd64.exe || goto :end
-    )
-    start /wait python-!PYTHON_VERSION!-amd64.exe InstallAllUsers=1 TargetDir=C:\Python312 PrependPath=1 Include_test=0 || goto :end
-  ) else (
-    if not exist "python-!PYTHON_VERSION!.exe" (
-      wget --no-check-certificate https://www.python.org/ftp/python/!PYTHON_VERSION!/python-!PYTHON_VERSION!.exe || goto :end
-    )
-    start /wait python-!PYTHON_VERSION!.exe InstallAllUsers=1 TargetDir=C:\Python312 PrependPath=1 Include_test=0 || goto :end
+  set host_suffix=
+  if "%ARCH%" == "x64" set host_suffix=-amd64
+  if not exist "python-!PYTHON_VERSION!!host_suffix!.exe" (
+    wget --no-check-certificate https://www.python.org/ftp/python/!PYTHON_VERSION!/python-!PYTHON_VERSION!!host_suffix!.exe || goto :end
   )
+  start /wait python-!PYTHON_VERSION!!host_suffix!.exe InstallAllUsers=1 TargetDir=C:\Python312 PrependPath=1 Include_test=0 || goto :end
+  del /Q python-!PYTHON_VERSION!!host_suffix!.exe
 )
 echo Installing or updating 3rd party libraries for Python
 python -m pip install --upgrade pip setuptools
 python -m pip install --upgrade meson pygments pyyaml requests rich yamllint psutil
-echo Done.
 exit /b 0
 
 rem ==============================================================================
@@ -290,19 +297,14 @@ set CMAKE_VERSION=3.31.5
 where cmake >nul 2>&1
 if "%errorlevel%" neq "0" (
   echo Installing CMake
-  if "%ARCH%" == "x64" (
-    if not exist "cmake-!CMAKE_VERSION!-windows-x86_64.msi" (
-      wget --no-check-certificate https://github.com/Kitware/CMake/releases/download/v!CMAKE_VERSION!/cmake-!CMAKE_VERSION!-windows-x86_64.msi || goto :end
-    )
-    start /wait msiexec -i cmake-!CMAKE_VERSION!-windows-x86_64.msi || goto :end
-  ) else (
-    if not exist "cmake-!CMAKE_VERSION!-windows-i368.msi" (
-      wget --no-check-certificate https://github.com/Kitware/CMake/releases/download/v!CMAKE_VERSION!/cmake-!CMAKE_VERSION!-windows-i368.msi || goto :end
-    )
-    start /wait msiexec -i cmake-!CMAKE_VERSION!-windows-i368.msi || goto :end
+  set host_suffix=i368
+  if "%ARCH%" == "x64" set host_suffix=x86_64
+  if not exist "cmake-!CMAKE_VERSION!-windows-!host_suffix!.msi" (
+    wget --no-check-certificate https://github.com/Kitware/CMake/releases/download/v!CMAKE_VERSION!/cmake-!CMAKE_VERSION!-windows-!host_suffix!.msi || goto :end
   )
+  start /wait msiexec -i cmake-!CMAKE_VERSION!-windows-!host_suffix!.msi || goto :end
+  del /Q cmake-!CMAKE_VERSION!-windows-!host_suffix!.msi
 )
-echo Done.
 exit /b 0
 
 rem ==============================================================================
@@ -321,17 +323,13 @@ if "%errorlevel%" neq "0" (
           set git_patch_version=%%d
       )
   )
-  if "%ARCH%" == "x64" (
-    if not exist "Git-!GIT_VERSION!-64-bit.exe" (
-      wget --no-check-certificate https://github.com/git-for-windows/git/releases/download/v!GIT_VERSION:~0,6!.windows.!git_patch_version!/Git-!GIT_VERSION!-64-bit.exe || goto :end
-    )
-    start /wait Git-!GIT_VERSION!-64-bit.exe || goto :end
-  ) else (
-    if not exist "Git-!GIT_VERSION!-32-bit.exe" (
-      wget --no-check-certificate https://github.com/git-for-windows/git/releases/download/v!GIT_VERSION:~0,6!.windows.!git_patch_version!/Git-!GIT_VERSION!-32-bit.exe || goto :end
-    )
-    start /wait Git-!GIT_VERSION!-32-bit.exe || goto :end
+  set host_suffix=32
+  if "%ARCH%" == "x64" set host_suffix=64
+  if not exist "Git-!GIT_VERSION!-!host_suffix!-bit.exe" (
+    wget --no-check-certificate https://github.com/git-for-windows/git/releases/download/v!GIT_VERSION:~0,6!.windows.!git_patch_version!/Git-!GIT_VERSION!-!host_suffix!-bit.exe || goto :end
   )
+  start /wait Git-!GIT_VERSION!-!host_suffix!-bit.exe || goto :end
+  del /Q Git-!GIT_VERSION!-!host_suffix!-bit.exe
 )
 exit /b 0
 
@@ -350,6 +348,8 @@ if not exist "%archive%" (
 if not exist "%folder%" (
   mkdir %folder% && %SH% -c "tar -I zstd --exclude='.BUILDINFO' --exclude='.MTREE' --exclude='.PKGINFO' -xvf %archive% -C %folder%" || goto :end
   xcopy /Y /F /S %folder% %dest%
+  del /Q %archive%
+  rmdir /S /Q %folders%
 )
 exit /b 0
 
@@ -368,6 +368,8 @@ if exist "!GIT_ROOT!" (
       powershell Expand-Archive -Path zstd-v1.5.6-win!ARCH:x=!.zip -DestinationPath . > nul || goto :end
       copy /Y /V /B zstd-v1.5.6-win!ARCH:x=!\zstd.exe !GIT_ROOT!\mingw64\bin\zstd.exe
     )
+    del /Q zstd-v1.5.6-win!ARCH:x=!.zip
+    rmdir /S /Q zstd-v1.5.6-win!ARCH:x=!
   )
   rem The depencencies can be seen in https://packages.msys2.org for each package,
   rem e.g. https://packages.msys2.org/base/rsync
@@ -429,7 +431,6 @@ if exist "!GIT_ROOT!" (
     call :download_extract https://repo.msys2.org/msys/x86_64/gperf-3.1-6-x86_64.pkg.tar.zst !GIT_ROOT!
   )
 )
-echo Done.
 exit /b 0
 
 rem ==============================================================================
@@ -450,7 +451,6 @@ if "%errorlevel%" neq "0" (
   )
   copy /Y /V yq.exe %~dp0%ARCH%\bin\yq.exe
 )
-echo Done.
 exit /b 0
 
 rem ==============================================================================
@@ -470,13 +470,12 @@ if "%errorlevel%" neq "0" (
   )
   start /wait rustup-init.exe || goto :end
   rustup default stable-msvc
+  del /Q rustup-init.exe
 )
-echo Done.
 exit /b 0
 
 :end
 cd /d %~dp0
-if exist "tmp" rmdir /s /q tmp
 set PATH=%OLDPATH%
 set vsinstall=
 set vswhere=

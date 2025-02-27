@@ -1,5 +1,27 @@
 @echo off
-rem Set Visual C++ Build Tools environment
+rem
+rem  Set Visual C++ Build Tools environment
+rem
+rem  Copyright (c) 2024 Jianshan Jiang
+rem
+rem  Permission is hereby granted, free of charge, to any person obtaining a copy
+rem  of this software and associated documentation files (the "Software"), to deal
+rem  in the Software without restriction, including without limitation the rights
+rem  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+rem  copies of the Software, and to permit persons to whom the Software is
+rem  furnished to do so, subject to the following conditions:
+rem
+rem  The above copyright notice and this permission notice shall be included in all
+rem  copies or substantial portions of the Software.
+rem
+rem  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+rem  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+rem  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+rem  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+rem  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+rem  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+rem  SOFTWARE.
+
 set vsinstall=
 set vswhere=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe
 if "%VSINSTALLDIR%" NEQ "" (
@@ -48,6 +70,11 @@ for /f "tokens=1* delims=;" %%a in ("%remain%") do (
   set remain=%%b
 )
 if defined remain goto :loop
+
+rem The unix tools may be need for some libraries
+for /f "delims=" %%i in ('where git.exe') do set GIT_ROOT=%%i
+set "BASH_ROOT=!GIT_ROOT:~0,-12!\usr\bin"
+set "PATH=%PATH%;!BASH_ROOT!"
 
 :end
 set vsinstall=

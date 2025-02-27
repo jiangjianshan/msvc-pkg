@@ -7,7 +7,7 @@ steps:
     dependencies:
       - cairo
       - cargo-c
-      - gobject-introspection:a
+      - gobject-introspection:b
       - glib:b
       - freetype
       - pkg-config

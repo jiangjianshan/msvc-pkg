@@ -70,12 +70,6 @@ cd "%SRC_DIR%" && b2 install -j%NUMBER_OF_PROCESSORS% --prefix="%PREFIX%"       
   --build-dir="%BUILD_DIR%" --build-type=complete variant=release                      ^
   address-model=!BITS! threading=multi link=static,shared runtime-link=shared          ^
   --without-mpi --without-graph_parallel
-for /f "tokens=1-4 delims=." %%a in ("%PKG_VER%") do set boost_major_minor=%%a_%%b
-rem NOTE:
-rem There are maybe newer version of boost need to be linked, so that remove the old one.
-rem Please use 'rmdir' but not 'rmdir /s' for the symbolic link created by 'mklink /D'
-if exist "%PREFIX%\include\boost" rmdir "%PREFIX%\include\boost"
-mklink /D "%PREFIX%\include\boost" "%PREFIX%\include\boost-!boost_major_minor!"
 call :clean_build
 exit /b 0
 

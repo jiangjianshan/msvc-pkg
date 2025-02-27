@@ -15,6 +15,8 @@ steps:
       - SVT-AV1
       - libtiff:b
       - uvg266
+      - vmaf
+      - x265
       - zlib
       - openh264
       - OpenJPH

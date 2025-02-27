@@ -7,7 +7,7 @@ steps:
     dependencies:
       - boost
       - zlib
-      - gmp:a
+      - gmp:b
       - mpfr
       - papilo
       - winpthreads

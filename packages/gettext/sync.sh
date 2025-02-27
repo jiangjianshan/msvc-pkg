@@ -52,37 +52,39 @@ patch_package()
   echo "Patching ltmain.sh in build-aux"
   pushd build-aux || exit 1
   sed                                                                                                \
-    -e 's|old_library=$libname.$libext|old_library=lib$libname.$libext|g'                            \
-    -e 's|$output_objdir/$libname.$libext|$output_objdir/lib$libname.$libext|g'                      \
+    -e 's|old_library=$libname\.$libext|old_library=lib$libname.$libext|g'                           \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
     -i ltmain.sh
   popd || exit 1
 
   echo "Patching ltmain.sh in gettext-tools/examples/hello-c++-kde/admin"
   pushd gettext-tools/examples/hello-c++-kde/admin || exit 1
   sed                                                                                                \
-    -e 's|old_library=$libname.$libext|old_library=lib$libname.$libext|g'                            \
-    -e 's|$output_objdir/$libname.$libext|$output_objdir/lib$libname.$libext|g'                      \
+    -e 's|old_library=$libname\.$libext|old_library=lib$libname.$libext|g'                           \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
     -i ltmain.sh
   popd || exit 1
 
   echo "Patching ltmain.sh in libtextstyle/build-aux"
   pushd libtextstyle/build-aux || exit 1
   sed                                                                                                \
-    -e 's|old_library=$libname.$libext|old_library=lib$libname.$libext|g'                            \
-    -e 's|$output_objdir/$libname.$libext|$output_objdir/lib$libname.$libext|g'                      \
+    -e 's|old_library=$libname\.$libext|old_library=lib$libname.$libext|g'                           \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
     -i ltmain.sh
   popd || exit 1
 
   echo "Patching configure in top level"
   sed                                                                                                \
-    -e 's|.dll.lib|.lib|g'                                                                           \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
     -i configure
   chmod +x configure
 
   echo "Patching configure in gettext-runtime"
   pushd gettext-runtime || exit 1
   sed                                                                                                \
-    -e 's|.dll.lib|.lib|g'                                                                           \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
     -i configure
   chmod +x configure
   popd || exit 1
@@ -90,7 +92,8 @@ patch_package()
   echo "Patching configure in gettext-runtime/intl"
   pushd gettext-runtime/intl || exit 1
   sed                                                                                                \
-    -e 's|.dll.lib|.lib|g'                                                                           \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
     -i configure
   chmod +x configure
   popd || exit 1
@@ -98,7 +101,8 @@ patch_package()
   echo "Patching configure in gettext-runtime/libasprintf"
   pushd gettext-runtime/libasprintf || exit 1
   sed                                                                                                \
-    -e 's|.dll.lib|.lib|g'                                                                           \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
     -i configure
   chmod +x configure
   popd || exit 1
@@ -106,7 +110,8 @@ patch_package()
   echo "Patching configure in gettext-tools"
   pushd gettext-tools || exit 1
   sed                                                                                                \
-    -e 's|.dll.lib|.lib|g'                                                                           \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
     -i configure
   chmod +x configure
   popd || exit 1
@@ -114,7 +119,8 @@ patch_package()
   echo "Patching configure in gettext-tools/examples"
   pushd gettext-tools/examples || exit 1
   sed                                                                                                \
-    -e 's|.dll.lib|.lib|g'                                                                           \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
     -i configure
   chmod +x configure
   popd || exit 1
@@ -122,7 +128,8 @@ patch_package()
   echo "Patching configure in libtextstyle"
   pushd libtextstyle || exit 1
   sed                                                                                                \
-    -e 's|.dll.lib|.lib|g'                                                                           \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
     -i configure
   chmod +x configure
   popd || exit 1

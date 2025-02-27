@@ -78,7 +78,7 @@ configure_stage()
   CFLAGS="$C_OPTS"                                                             \
   CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
   CPPFLAGS="$C_DEFS"                                                           \
-  DLLTOOL="link.exe -verbose -dll"                                             \
+  DLLTOOL="link -verbose -dll"                                                 \
   LD="link -nologo"                                                            \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
@@ -94,7 +94,6 @@ configure_stage()
     --datarootdir="$PREFIX/share"                                              \
     --enable-static                                                            \
     --enable-shared                                                            \
-    --enable-relocatable                                                       \
     --enable-extra-encodings                                                   \
     --disable-rpath                                                            \
     gt_cv_locale_zh_CN=none || exit 1

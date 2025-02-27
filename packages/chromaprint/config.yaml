@@ -5,7 +5,7 @@ sha256: a1aad8fa3b8b18b78d3755b3767faff9abb67242e01b478ec9a64e190f335e1c
 steps:
   a:
     dependencies:
-      - fftw:a
+      - fftw:c
       - googletest
       - winpthreads
     run: build.bat

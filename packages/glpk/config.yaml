@@ -5,6 +5,6 @@ sha256: 4a1013eebb50f728fc601bdd833b0b2870333c3b3e5a816eeba921d95bec6f15
 steps:
   a:
     dependencies:
-      - gmp:a
+      - gmp:b
       - libtool
-    run: build.bat
+    run: build.sh

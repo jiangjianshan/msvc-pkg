@@ -79,9 +79,9 @@ configure_stage()
   CXX=cl                                                                       \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
   CXXCPP="cl -E"                                                               \
-  DLLTOOL="link.exe -verbose -dll"                                             \
+  DLLTOOL="link -verbose -dll"                                                 \
   F77="ifort"                                                                  \
-  FFLAGS="$F_OPTS -f77rtl"                                                     \
+  FFLAGS="-f77rtl $F_OPTS"                                                     \
   LD="link -nologo"                                                            \
   MPICC="$ROOT_DIR/wrappers/mpicl"                                             \
   NM="dumpbin -nologo -symbols"                                                \
@@ -100,8 +100,8 @@ configure_stage()
     --disable-odbc                                                             \
     --enable-msvc                                                              \
     --enable-shared                                                            \
-    ac_cv_prog_cc_c11="-std:c11"                                                         \
-    ac_cv_prog_f77_v="-verbose"                                                          \
+    ac_cv_prog_cc_c11="-std:c11"                                               \
+    ac_cv_prog_f77_v="-verbose"                                                \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

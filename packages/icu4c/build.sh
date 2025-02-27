@@ -78,7 +78,7 @@ configure_stage()
   CXX="$ROOT_DIR/wrappers/compile cl"                                          \
   CXXFLAGS="-std:c++17 -EHsc $C_OPTS"                                          \
   CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
-  DLLTOOL="link.exe -verbose -dll"                                             \
+  DLLTOOL="link -verbose -dll"                                                 \
   LD="$ROOT_DIR/wrappers/compile cl"                                           \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \

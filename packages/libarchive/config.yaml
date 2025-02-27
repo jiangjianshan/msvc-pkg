@@ -10,7 +10,7 @@ steps:
       - libiconv
       - libxml2
       - lz4
-      - pcre:a
+      - pcre:b
       - xz
       - zlib
       - zstd

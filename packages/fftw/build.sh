@@ -43,10 +43,9 @@ PREFIX=$(cygpath -u "$PREFIX")
 RELS_DIR=$ROOT_DIR/releases
 SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
-C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:contract -Zc:__cplusplus -experimental:c11atomics'
-# FIXME: msvc don't have __FMA4__ predefined macro, define it here and set '-arch:AVX2' via '-mfma4' compile option.
-C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX -D__FMA4__'
-F_OPTS='-nologo -MD -Qdiag-disable:10448 -fp:contract -Qopenmp -Qopenmp-simd -names:lowercase -assume:nounderscore'
+C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:contract -Qopenmp -Qopenmp-simd -Wno-implicit-function-declaration -Wno-pointer-sign -Xclang -O2 -fms-extensions -fms-compatibility -fms-compatibility-version=19.42'
+C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX'
+F_OPTS='-nologo -MD -Qdiag-disable:10448 -fp:contract -Qopenmp -Qopenmp-simd -names:lowercase -assume:underscore'
 
 clean_build()
 {
@@ -80,28 +79,34 @@ configure_stage()
   #    on some libraries will detect whether is msvc compiler according to
   #    '*cl | cl.exe'
   # 3. If not set 'MPILIBS="-limpi"', after the following command:
-  #    /bin/sh ../libtool  --tag=CC   --mode=link /e/Githubs/msvc-pkg/wrappers/mpicl
+  #    /bin/sh ../libtool  --tag=CC   --mode=link /e/Githubs/msvc-pkg/wrappers/mpiicc
   #    it will be not except one as here:
-  #    libtool: link: /e/Githubs/msvc-pkg/wrappers/mpicl
+  #    libtool: link: /e/Githubs/msvc-pkg/wrappers/mpiicc
   #    but will be the one not related to mpi wrapper
   #    libtool: link: /e/Githubs/msvc-pkg/wrappers/compile cl
+  # 4. option '--enable-generic-simd128' and '--enable-generic-simd256'
+  #    will be failed at msvc complie phase. msvc doesn't support
+  #    '__attribute__ ((vector_size(16)))' and '__m128' is not really
+  #    equivalent to it. But use clang-cl or icx-cl instead of cl can
+  #    solve this issue.
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
-  CC="$ROOT_DIR/wrappers/compile cl"                                           \
+  CC="$ROOT_DIR/wrappers/compile icx-cl"                                       \
   CFLAGS="$C_OPTS"                                                             \
-  CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
+  CPP="$ROOT_DIR/wrappers/compile icx-cl -E"                                   \
   CPPFLAGS="$C_DEFS"                                                           \
-  CXX="$ROOT_DIR/wrappers/compile cl"                                          \
+  CXX="$ROOT_DIR/wrappers/compile icx-cl"                                      \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
-  CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
-  DLLTOOL="link.exe -verbose -dll"                                             \
-  F77="ifort"                                                                  \
-  FFLAGS="$F_OPTS -f77rtl"                                                     \
-  FC="ifort"                                                                   \
+  CXXCPP="$ROOT_DIR/wrappers/compile icx-cl -E"                                \
+  DLLTOOL="link -verbose -dll"                                                 \
+  F77="ifx"                                                                    \
+  FFLAGS="-f77rtl $F_OPTS"                                                     \
+  FC="ifx"                                                                     \
   FCFLAGS="$F_OPTS"                                                            \
-  LD="link -nologo"                                                            \
-  MPICC="$ROOT_DIR/wrappers/mpicl"                                             \
-  MPICXX="$ROOT_DIR/wrappers/mpicl"                                            \
-  MPIF77="$ROOT_DIR/wrappers/mpif77"                                           \
+  LD="lld-link"                                                                \
+  LDFLAGS="-fuse-ld=lld"                                                       \
+  MPICC="$ROOT_DIR/wrappers/mpiicc"                                            \
+  MPICXX="$ROOT_DIR/wrappers/mpiicc"                                           \
+  MPIF77="$ROOT_DIR/wrappers/mpiifx"                                           \
   MPILIBS="-limpi"                                                             \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
@@ -121,6 +126,8 @@ configure_stage()
     --enable-avx512                                                            \
     --enable-avx-128-fma                                                       \
     --enable-mips-zbus-timer                                                   \
+    --enable-generic-simd128                                                   \
+    --enable-generic-simd256                                                   \
     --enable-fma                                                               \
     --enable-mpi                                                               \
     --enable-openmp                                                            \
@@ -128,13 +135,9 @@ configure_stage()
     --with-our-malloc                                                          \
     --with-our-malloc16                                                        \
     --with-windows-f77-mangling                                                \
-    --with-g77-wrappers                                                        \
     ac_cv_prog_f77_v="-verbose"                                                \
     gt_cv_locale_zh_CN=none || exit 1
-  # TODO: option '--enable-generic-simd128' and '--enable-generic-simd256'
-  #       will be failed at msvc complie phase. msvc doesn't support
-  #       '__attribute__ ((vector_size(16)))' and '__m128' is not really
-  #       equivalent to it.
+
 }
 
 patch_stage()

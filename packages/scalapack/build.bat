@@ -42,7 +42,7 @@ call "%ROOT_DIR%\compiler.bat" %ARCH%
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
-set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -Qopenmp -Qopenmp-simd -Wno-implicit-function-declaration -Wno-deprecated-non-prototype
+set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -openmp:experimental
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX -D__STDC__ -DNDEBUG
 set F_OPTS=-nologo -MD -Qdiag-disable:10448 -fp:precise -Qopenmp -Qopenmp-simd -names:lowercase -assume:underscore
 
@@ -60,13 +60,11 @@ echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
 cmake -G "Ninja"                                                               ^
   -DCMAKE_BUILD_TYPE=Release                                                   ^
-  -DCMAKE_C_COMPILER=icx-cl                                                    ^
+  -DCMAKE_C_COMPILER=cl                                                        ^
   -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS%"                                          ^
-  -DCMAKE_Fortran_COMPILER=ifx                                                 ^
+  -DCMAKE_Fortran_COMPILER=ifort                                               ^
   -DCMAKE_Fortran_FLAGS="%F_OPTS%"                                             ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
-  -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld"                                   ^
-  -DCMAKE_POSITION_INDEPENDENT_CODE=ON                                         ^
   -DSCALAPACK_BUILD_TESTS=OFF                                                  ^
   .. || exit 1
 exit /b 0
@@ -85,8 +83,6 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
-if exist "%PREFIX%/lib/cmake/scalapack" rmdir /q "%PREFIX%/lib/cmake/scalapack"
-mklink /D "%PREFIX%/lib/cmake/scalapack" "%PREFIX%/lib/cmake/scalapack-%PKG_VER%" || exit 1
 call :clean_build
 exit /b 0
 

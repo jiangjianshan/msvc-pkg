@@ -5,7 +5,7 @@ sha256: 806a77355a40bee98179ccac3b5a2d17140311dde766838829c4c9166650f72e
 steps:
   a:
     dependencies:
-      - gmp:a
+      - gmp:b
       - mpfr
       - qd
       - winpthreads

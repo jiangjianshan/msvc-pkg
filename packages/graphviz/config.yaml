@@ -11,7 +11,7 @@ steps:
       - cairo
       - glib:b
       - fontconfig
-      - harfbuzz:a
+      - harfbuzz:b
       - libgd
       - libpng
       - libjpeg-turbo

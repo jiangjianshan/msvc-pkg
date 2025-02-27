@@ -82,6 +82,7 @@ configure_stage()
   # 3. Taken care of the logic of func_resolve_sysroot() and func_replace_sysroot()
   #    in ltmain.sh, otherwise may have '-L=*' in the filed of 'dependency_libs' in
   #    *.la. So don't set --with-sysroot if --libdir has been set
+  # TODO: '--enable-ampi', '--with-mpicc' and '--with-mpicxx' options
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
   CC="$ROOT_DIR/wrappers/compile cl"                                           \
   CFLAGS="$C_OPTS"                                                             \
@@ -90,7 +91,7 @@ configure_stage()
   CXX="$ROOT_DIR/wrappers/compile cl"                                          \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
   CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
-  DLLTOOL="link.exe -verbose -dll"                                             \
+  DLLTOOL="link -verbose -dll"                                                 \
   LD="link -nologo"                                                            \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
@@ -107,7 +108,7 @@ configure_stage()
     --enable-static                                                            \
     --enable-shared                                                            \
     --with-boost="$(cygpath -u "${BOOST_PREFIX:-$PREFIX}")"                    \
-    ac_cv_prog_cc_c99="-std=c99"                                               \
+    ac_cv_prog_cc_c99="-std:c11"                                               \
     gt_cv_locale_zh_CN=none
 }
 

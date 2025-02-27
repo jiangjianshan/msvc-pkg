@@ -1,0 +1,35 @@
+diff -urN glpk-5.0-orig/src/env/stdc.c glpk-5.0/src/env/stdc.c
+--- glpk-5.0-orig/src/env/stdc.c	2020-12-16 17:00:00.000000000 +0800
++++ glpk-5.0/src/env/stdc.c	2025-02-25 09:41:27.600427900 +0800
+@@ -76,19 +76,31 @@
+ 
+ struct tm *xgmtime(const time_t *timer)
+ {     static TLS struct tm result;
++#ifdef _MSC_VER
++      gmtime_s(timer, &result);
++#else
+       gmtime_r(timer, &result);
++#endif
+       return &result;
+ }
+ 
+ char *xstrerr(int errnum)
+ {     static TLS char s[1023+1];
++#ifdef _MSC_VER
++      strerror_s(errnum, s, sizeof(s));
++#else
+       strerror_r(errnum, s, sizeof(s));
++#endif
+       return s;
+ }
+ 
+ char *xstrtok(char *s1, const char *s2)
+ {     static TLS char *ptr;
++#ifdef _MSC_VER
++      return strtok_s(s1, s2, &ptr);
++#else
+       return strtok_r(s1, s2, &ptr);
++#endif
+ }
+ 
+ #endif

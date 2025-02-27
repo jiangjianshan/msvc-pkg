@@ -10,3 +10,7 @@ steps:
     dependencies:
       - fftw:a
     run: build-2.sh
+  c:
+    dependencies:
+      - fftw:b
+    run: build-3.sh

@@ -82,7 +82,7 @@ configure_stage()
   CXX="$ROOT_DIR/wrappers/compile cl"                                          \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
   CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
-  DLLTOOL="link.exe -verbose -dll"                                             \
+  DLLTOOL="link -verbose -dll"                                                 \
   LD="link -nologo"                                                            \
   LIBS="-lAdvapi32 -lOle32 -lShell32 -lUser32"                                 \
   NM="dumpbin -nologo -symbols"                                                \

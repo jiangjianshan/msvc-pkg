@@ -81,7 +81,7 @@ configure_stage()
   CXX="$ROOT_DIR/wrappers/compile cl"                                          \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
   CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
-  DLLTOOL="link.exe -verbose -dll"                                             \
+  DLLTOOL="link -verbose -dll"                                                 \
   LD="link -nologo"                                                            \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
@@ -97,6 +97,7 @@ configure_stage()
     --libdir="$PREFIX/lib"                                                     \
     --datarootdir="$PREFIX/share"                                              \
     --disable-oggtest                                                          \
+    --with-ogg="$(cygpath -u "${OGG_PREFIX:-$PREFIX}")"                        \
     ac_cv_lib_getopt_getopt=yes                                                \
     ac_cv_func_getopt_long=yes                                                 \
     gt_cv_locale_zh_CN=none || exit 1

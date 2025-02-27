@@ -67,6 +67,7 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
   -DCMAKE_CXX_STANDARD_LIBRARIES="pthread.lib"                                 ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
+  -DCMAKE_POLICY_DEFAULT_CMP0074=OLD                                           ^
   -DENABLE_DOCS=OFF                                                            ^
   -DENABLE_EXAMPLES=ON                                                         ^
   -DENABLE_TESTS=OFF                                                           ^

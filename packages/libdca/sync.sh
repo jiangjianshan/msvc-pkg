@@ -51,17 +51,31 @@ patch_package()
 
   echo "Patching ltmain.sh in .auto"
   pushd .auto || exit 1
-  sed                                                                                    \
-    -e 's|old_library=$libname.$libext|old_library=lib$libname.$libext|g'                \
-    -e 's|$output_objdir/$libname.$libext|$output_objdir/lib$libname.$libext|g'          \
+  sed                                                                                                \
+    -e 's|old_library=$libname\.$libext|old_library=lib$libname.$libext|g'                           \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
     -i ltmain.sh
   popd || exit 1
 
   echo "Patching configure in top level"
-  sed                                                                                    \
-    -e 's|.dll.lib|.lib|g'                                                               \
+  sed                                                                                                \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
     -i configure
   chmod +x configure
+
+  pushd libdca || exit 1
+  echo "Patching Makefile.am in top level"
+  sed                                                                                                \
+    -e 's|libdca\.a|libdca.lib|g'                                                                    \
+    -e 's|libdts.a|libdts.lib|g'                                                                     \
+    -i Makefile.am
+  echo "Patching Makefile.in in top level"
+  sed                                                                                                \
+    -e 's|libdca\.a|libdca\.lib|g'                                                                   \
+    -e 's|libdts.a|libdts.lib|g'                                                                     \
+    -i Makefile.in
+  popd || exit 1
 }
 
 . $ROOT_DIR/common.sh

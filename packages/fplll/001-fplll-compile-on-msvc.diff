@@ -1,6 +1,6 @@
 diff -urN fplll-5.5.0-orig/fplll/defs.h fplll-5.5.0/fplll/defs.h
 --- fplll-5.5.0-orig/fplll/defs.h	2024-11-12 17:49:46.000000000 +0800
-+++ fplll-5.5.0/fplll/defs.h	2025-01-06 13:23:00.660503200 +0800
++++ fplll-5.5.0/fplll/defs.h	2025-02-23 14:37:37.484477800 +0800
 @@ -26,7 +26,9 @@
  #define FPLLL_WITH_DPE
  #define FPLLL_WITH_ZDOUBLE
@@ -13,7 +13,7 @@ diff -urN fplll-5.5.0-orig/fplll/defs.h fplll-5.5.0/fplll/defs.h
  #include <climits>
 diff -urN fplll-5.5.0-orig/fplll/enum/enumerate_base.h fplll-5.5.0/fplll/enum/enumerate_base.h
 --- fplll-5.5.0-orig/fplll/enum/enumerate_base.h	2024-11-12 17:49:46.000000000 +0800
-+++ fplll-5.5.0/fplll/enum/enumerate_base.h	2025-01-06 13:23:00.664508600 +0800
++++ fplll-5.5.0/fplll/enum/enumerate_base.h	2025-02-23 14:37:37.500117500 +0800
 @@ -19,7 +19,7 @@
  #ifndef FPLLL_ENUMERATE_BASE_H
  #define FPLLL_ENUMERATE_BASE_H
@@ -23,9 +23,21 @@ diff -urN fplll-5.5.0-orig/fplll/enum/enumerate_base.h fplll-5.5.0/fplll/enum/en
  #include "../nr/nr.h"
  #include "./enumerate_ext_api.h"
  #include <array>
+diff -urN fplll-5.5.0-orig/fplll/fplll.h fplll-5.5.0/fplll/fplll.h
+--- fplll-5.5.0-orig/fplll/fplll.h	2024-11-12 17:49:46.000000000 +0800
++++ fplll-5.5.0/fplll/fplll.h	2025-02-24 08:54:35.544214600 +0800
+@@ -18,7 +18,7 @@
+ #ifndef FPLLL_H
+ #define FPLLL_H
+ 
+-#if __cplusplus < 201103L
++#if !defined(_MSC_VER) && (__cplusplus < 201103L)
+ #error fplll needs at least a C++11 compliant compiler
+ #endif
+ 
 diff -urN fplll-5.5.0-orig/fplll/nr/nr_rand.inl fplll-5.5.0/fplll/nr/nr_rand.inl
 --- fplll-5.5.0-orig/fplll/nr/nr_rand.inl	2024-11-12 17:49:46.000000000 +0800
-+++ fplll-5.5.0/fplll/nr/nr_rand.inl	2025-01-06 13:23:00.668701900 +0800
++++ fplll-5.5.0/fplll/nr/nr_rand.inl	2025-02-23 14:37:37.515723700 +0800
 @@ -7,6 +7,10 @@
  #ifndef FPLLL_NR_RAND_H
  #define FPLLL_NR_RAND_H
@@ -64,7 +76,7 @@ diff -urN fplll-5.5.0-orig/fplll/nr/nr_rand.inl fplll-5.5.0/fplll/nr/nr_rand.inl
    static bool get_initialized() { return initialized; }
 diff -urN fplll-5.5.0-orig/fplll/pruner/pruner_optimize.cpp fplll-5.5.0/fplll/pruner/pruner_optimize.cpp
 --- fplll-5.5.0-orig/fplll/pruner/pruner_optimize.cpp	2024-11-12 17:49:46.000000000 +0800
-+++ fplll-5.5.0/fplll/pruner/pruner_optimize.cpp	2025-01-06 13:26:43.321531500 +0800
++++ fplll-5.5.0/fplll/pruner/pruner_optimize.cpp	2025-02-23 14:37:37.531344600 +0800
 @@ -87,7 +87,11 @@
  #endif
  

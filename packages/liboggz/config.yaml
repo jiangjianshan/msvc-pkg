@@ -7,5 +7,6 @@ steps:
     dependencies:
       - dlfcn-win32
       - getopt
+      - libogg
       - libvorbis
     run: build.sh

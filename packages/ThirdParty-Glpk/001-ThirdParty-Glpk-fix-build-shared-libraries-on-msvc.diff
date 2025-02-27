@@ -1,0 +1,23 @@
+diff -urN ThirdParty-Glpk-1.10.7-orig/configure ThirdParty-Glpk-1.10.7/configure
+--- ThirdParty-Glpk-1.10.7-orig/configure	2020-01-31 18:29:07.000000000 +0800
++++ ThirdParty-Glpk-1.10.7/configure	2025-02-25 10:15:24.199952500 +0800
+@@ -8224,8 +8224,7 @@
+       enable_shared_with_static_runtimes=yes
+       export_symbols_cmds='$NM $libobjs $convenience | $global_symbol_pipe | $SED -e '\''/^[BCDGRS] /s/.* \([^ ]*\)/\1 DATA/'\'' | $SED -e '\''/^[AITW] /s/.* //'\'' | sort | uniq > $export_symbols'
+ 
+-      if $LD --help 2>&1 | grep 'auto-import' > /dev/null; then
+-        archive_cmds='$CC -shared $libobjs $deplibs $compiler_flags -o $output_objdir/$soname ${wl}--enable-auto-image-base -Xlinker --out-implib -Xlinker $lib'
++      archive_cmds='$CC -shared $libobjs $deplibs $compiler_flags -o $output_objdir/$soname ${wl}--enable-auto-image-base -Xlinker --out-implib -Xlinker $lib'
+ 	# If the export-symbols file already is a .def file (1st line
+ 	# is EXPORTS), use it as is; otherwise, prepend...
+ 	archive_expsym_cmds='if test "x`$SED 1q $export_symbols`" = xEXPORTS; then
+@@ -8235,9 +8234,6 @@
+ 	  cat $export_symbols >> $output_objdir/$soname.def;
+ 	fi~
+ 	$CC -shared $output_objdir/$soname.def $libobjs $deplibs $compiler_flags -o $output_objdir/$soname ${wl}--enable-auto-image-base -Xlinker --out-implib -Xlinker $lib'
+-      else
+-	ld_shlibs=no
+-      fi
+       ;;
+ 
+     interix3*)

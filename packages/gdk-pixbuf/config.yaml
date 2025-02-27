@@ -7,7 +7,7 @@ steps:
     dependencies:
       - pkg-config
       - gettext
-      - gobject-introspection:a
+      - gobject-introspection:b
       - glib:b
       - libjpeg-turbo
       - libpng

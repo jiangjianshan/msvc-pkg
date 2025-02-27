@@ -57,8 +57,6 @@ configure_stage()
   echo "Configuring $PKG_NAME $PKG_VER"
   clean_build
   mkdir -p "$BUILD_DIR" && cd "$BUILD_DIR" || exit 1
-  # NOTE: Use clang-cl from llvm-project but not from Intel OneAPI
-  export PATH=$(cygpath -u "${LLVM_PROJECT_PREFIX:-$PREFIX}/bin"):$PATH
   if [[ "$ARCH" == "x86" ]]; then
     HOST_TRIPLET=i686-w64-mingw32
   elif [[ "$ARCH" == "x64" ]]; then
@@ -80,15 +78,16 @@ configure_stage()
   #    on some libraries will detect whether is msvc compiler according to
   #    '*cl | cl.exe'
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
-  CC="$ROOT_DIR/wrappers/compile clang-cl"                                     \
+  CC="$ROOT_DIR/wrappers/compile icx-cl"                                       \
   CFLAGS="$C_OPTS"                                                             \
-  CPP="$ROOT_DIR/wrappers/compile clang-cl -E"                                 \
+  CPP="$ROOT_DIR/wrappers/compile icx-cl -E"                                   \
   CPPFLAGS="$C_DEFS"                                                           \
-  CXX="$ROOT_DIR/wrappers/compile clang-cl"                                    \
+  CXX="$ROOT_DIR/wrappers/compile icx-cl"                                      \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
-  CXXCPP="$ROOT_DIR/wrappers/compile clang-cl -E"                              \
-  DLLTOOL="link.exe -verbose -dll"                                             \
-  LD="link -nologo"                                                            \
+  CXXCPP="$ROOT_DIR/wrappers/compile icx-cl -E"                                \
+  DLLTOOL="link -verbose -dll"                                                 \
+  LD="lld-link"                                                                \
+  LDFLAGS="-fuse-ld=lld"                                                       \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
   RANLIB=":"                                                                   \

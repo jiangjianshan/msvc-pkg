@@ -57,25 +57,30 @@ rem ============================================================================
 call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
-cmake -G "Ninja"                                                               ^
-  -DBUILD_SHARED_LIBS=ON                                                       ^
-  -DCMAKE_BUILD_TYPE=Release                                                   ^
-  -DCMAKE_C_COMPILER=cl                                                        ^
-  -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS%"                                          ^
-  -DCMAKE_C_STANDARD_LIBRARIES="pthread.lib"                                   ^
-  -DCMAKE_CXX_COMPILER=cl                                                      ^
-  -DCMAKE_CXX_FLAGS="-std:c++20 -EHsc %C_OPTS% %C_DEFS%"                       ^
-  -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
-  -DCMAKE_CXX_STANDARD_LIBRARIES="pthread.lib"                                 ^
-  -DENABLE_DOCS=OFF                                                            ^
-  -DENABLE_EXAMPLES=OFF                                                        ^
-  -DENABLE_NASM=ON                                                             ^
-  -DENABLE_TESTS=OFF                                                           ^
-  -DCONFIG_TENSORFLOW_LITE=OFF                                                 ^
-  -DCONFIG_AV1_DECODER=1                                                       ^
-  -DCONFIG_ML_PART_SPLIT=0                                                     ^
-  -DCONFIG_ENTROPY_STATS=1                                                     ^
-  -DCONFIG_MULTITHREAD=1                                                       ^
+rem NOTE: 'libvmaf.h' can't be found during build. This can be solved to patch CMake files or
+rem       add '-I' option here
+if not defined VMAF_PREFIX set VMAF_PREFIX=%PREFIX%
+cmake -G "Ninja"                                                                                     ^
+  -DBUILD_SHARED_LIBS=ON                                                                             ^
+  -DCMAKE_BUILD_TYPE=Release                                                                         ^
+  -DCMAKE_C_COMPILER=cl                                                                              ^
+  -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS% -I!VMAF_PREFIX!/include/libvmaf"                                ^
+  -DCMAKE_C_STANDARD_LIBRARIES="vmaf.lib pthread.lib"                                                ^
+  -DCMAKE_CXX_COMPILER=cl                                                                            ^
+  -DCMAKE_CXX_FLAGS="-std:c++20 -EHsc %C_OPTS% %C_DEFS% -I!VMAF_PREFIX!/include/libvmaf"             ^
+  -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                                                  ^
+  -DCMAKE_CXX_STANDARD_LIBRARIES="vmaf.lib pthread.lib"                                              ^
+  -DCMAKE_POLICY_DEFAULT_CMP0074=OLD                                                                 ^
+  -DENABLE_DOCS=OFF                                                                                  ^
+  -DENABLE_EXAMPLES=OFF                                                                              ^
+  -DENABLE_NASM=ON                                                                                   ^
+  -DENABLE_TESTS=OFF                                                                                 ^
+  -DCONFIG_TENSORFLOW_LITE=OFF                                                                       ^
+  -DCONFIG_TUNE_VMAF=1                                                                               ^
+  -DCONFIG_AV1_DECODER=1                                                                             ^
+  -DCONFIG_ML_PART_SPLIT=0                                                                           ^
+  -DCONFIG_ENTROPY_STATS=1                                                                           ^
+  -DCONFIG_MULTITHREAD=1                                                                             ^
   .. || exit 1
 exit /b 0
 

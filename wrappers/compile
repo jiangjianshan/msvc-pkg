@@ -1,9 +1,13 @@
 #! /bin/sh
 # Wrapper for compilers which do not understand '-c -o'.
+#
+# Jianshan Jiang has modified it from
+# https://git.savannah.gnu.org/gitweb/?p=automake.git;a=blob_plain;f=lib/compile;hb=HEAD
+#
 
-scriptversion=2024-06-19.01; # UTC
+scriptversion=2025-02-03.05; # UTC
 
-# Copyright (C) 1999-2024 Free Software Foundation, Inc.
+# Copyright (C) 1999-2025 Free Software Foundation, Inc.
 # Written by Tom Tromey <tromey@cygnus.com>.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -37,42 +41,55 @@ IFS=" ""	$nl"
 
 file_conv=
 
-# func_file_conv build_file lazy
+# func_file_conv build_file unneeded_conversions
 # Convert a $build file to $host form and store it in $file
 # Currently only supports Windows hosts. If the determined conversion
-# type is listed in (the comma separated) LAZY, no conversion will
-# take place.
+# type is listed in (the comma separated) UNNEEDED_CONVERSIONS, no
+# conversion will take place.
 func_file_conv ()
 {
   file=$1
   case $file in
     / | /[!/]*) # absolute file, and not a UNC file
       if test -z "$file_conv"; then
-        # lazily determine how to convert abs files
-        case `uname -s` in
-          MINGW*)
-            file_conv=mingw
-            ;;
-          CYGWIN* | MSYS*)
-            file_conv=cygwin
-            ;;
-          *)
-            file_conv=wine
-            ;;
-        esac
+	# lazily determine how to convert abs files
+	case `uname -s` in
+	  MINGW*)
+	    if test -n "$MSYSTEM" && (cygpath --version) >/dev/null 2>&1; then
+	      # MSYS2 environment.
+	      file_conv=cygwin
+	    else
+	      # Original MinGW environment.
+	      file_conv=mingw
+	    fi
+	    ;;
+	  MSYS*)
+	    # Old MSYS environment, or MSYS2 with 32-bit MSYS2 shell.
+	    file_conv=cygwin
+	    ;;
+	  CYGWIN*)
+	    # Cygwin environment.
+	    file_conv=cygwin
+	    ;;
+	  *)
+	    file_conv=wine
+	    ;;
+	esac
       fi
       case $file_conv/,$2, in
-        *,$file_conv,*)
-          ;;
-        mingw/*)
-          file=`cmd //C echo "$file " | sed -e 's/"\(.*\) " *$/\1/'`
-          ;;
-        cygwin/* | msys/*)
-          file=`cygpath -m "$file" || echo "$file"`
-          ;;
-        wine/*)
-          file=`winepath -w "$file" || echo "$file"`
-          ;;
+	*,$file_conv,*)
+	  # This is the optimization mentioned above:
+	  # If UNNEEDED_CONVERSIONS contains $file_conv, don't convert.
+	  ;;
+	mingw/*)
+	  file=`cmd //C echo "$file " | sed -e 's/"\(.*\) " *$/\1/'`
+	  ;;
+	cygwin/*)
+	  file=`cygpath -w "$file" || echo "$file"`
+	  ;;
+	wine/*)
+	  file=`winepath -w "$file" || echo "$file"`
+	  ;;
       esac
       ;;
   esac
@@ -133,159 +150,24 @@ func_cl_wrapper ()
   lib_path=
   shared=:
   linker_opts=
-  compiler_version=
   for arg
   do
     if test -n "$eat"; then
       eat=
     else
       case $1 in
-        -c99)
-          set x "$@" "-std:c11"
-          shift
-          ;;
-        --coverage)
-          # TODO
-          ;;
-        -dumpversion)
-          # TODO
-          ;;
-        --export-all-symbols)
-          # TODO
-          ;;
-        -fanalyzer) 
-          # TODO
-          ;;
-        -fdata-sections)
-          # TODO
-          ;;
-        -fdiagnostics-color=always)
-          # TODO
-          ;;
-        -fdiagnostics-show-option)
-          # TODO
-          ;;
-        -ffast-math)
-          # TODO
-          ;;
-        -ffp-contract=fast)
-          set x "$@" "-fp:fast"
-          shift
-          ;;
-        -ffp-contract=off)
-          set x "$@" "-fp:strict"
-          shift
-          ;;
-        -ffunction-sections)
-          # TODO
-          ;;
-        -finline-functions)
-          set x "$@" "-Ob2"
-          shift
-          ;;
-        -flto)
-          # TODO
-          ;;
-        -fno-analyzer)
-          set x "$@" "-analyze-"
-          shift
-          ;;
-        -fno-common)
-          # TODO
-          ;;
-        -fno-inline)
-          set x "$@" "-Ob0"
-          shift
-          ;;
-        -fno-rtti)
-          set x "$@" "-GR-"
-          shift
-          ;;
-        -fno-threadsafe-statics)
-          set x "$@" "-Zc:threadSafeInit-"
-          shift
-          ;;
-        -fno-omit-frame-pointer)
-          set x "$@" "-Oy-"
-          shift
-          ;;
-        -fno-sized-deallocation)
-          set x "$@" "-Zc:sizedDealloc-"
-          shift
-          ;;
-        -fno-whole-program)
-          set x "$@" "-GL-"
-          shift
-          ;;
-        -fomit-frame-pointer)
-          set x "$@" "-Oy"
-          shift
-          ;;
-        -fopenmp)
-          set x "$@" "-openmp"
-          shift
-          ;;
-        -fpermissive)
-          set x "$@" "-permissive"
-          shift
-          ;;
-        -frtti)
-          set x "$@" "-GR"
-          shift
-          ;;
-        -fsanitize=undefined)
-          # TODO
-          ;;
-        -fsigned-char)
-          # TODO
-          ;;
-        -fsized-deallocation)
-          set x "$@" "-Zc:sizedDealloc"
-          shift
-          ;;
-        -fstack-check)
-          set x "$@" "-GS"
-          shift
-          ;;
-        -fstack-protector)
-          set x "$@" "-GS"
-          shift
-          ;;
-        -fstrict-flex-arrays)
-          # TODO
-          ;;
-        -fthreadsafe-statics)
-          set x "$@" "-Zc:threadSafeInit"
-          shift
-          ;;
-        -ftrivial-auto-var-init=zero)
-          # TODO
-          ;;
-        -fvisibility=hidden)
-          # TODO
-          ;;
-        -funsigned-char)
-          set x "$@" "-J"
-          shift
-          ;;
-        -fwrapv)
-          # TODO
-          ;;
-        -fwhole-program)
-          set x "$@" "-GL"
-          shift
-          ;;
-        -Fe)
+        -Fe | -o)
+          # configure might choose to run compile as 'compile cc -o foo foo.c'.
           eat=1
           case $2 in
+            *.o | *.lo | *.[oO][bB][jJ])
+              func_file_conv "$2"
+              set x "$@" -Fo"$file"
+              shift
+              ;;
             *.dll)
               func_file_conv "$2"
               set x "$@" -LD -Fe"$file"
-              shift
-              ;;
-            *.exe)
-              func_file_conv "$2"
-              set x "$@" -Fe"$file"
               shift
               ;;
             *)
@@ -295,45 +177,16 @@ func_cl_wrapper ()
               ;;
           esac
           ;;
-        -g)
-          set x "$@" "-Zi"
-          shift
-          ;;
-        -mavx)
-          set x "$@" "-arch:AVX"
-          shift
-          ;;
-        -mavx2)
-          set x "$@" "-arch:AVX2"
-          shift
-          ;;
-        -mavx512f)
-          set x "$@" "-arch:AVX512"
-          shift
-          ;;
-        -mfma4)
-          set x "$@" "-arch:AVX2"
-          shift
-          ;;
-        -municode)
-          # TODO
-          ;;
-        -mwindows)
-          # TODO
-          ;;
-        -I | -include)
+        -I)
           eat=1
-          func_file_conv "$2"
+          func_file_conv "$2" mingw
           set x "$@" -I"$file"
           shift
           ;;
         -I*)
-          func_file_conv "${1#-I}"
+          func_file_conv "${1#-I}" mingw
           set x "$@" -I"$file"
           shift
-          ;;
-        -iquote.)
-          # TODO
           ;;
         -l)
           eat=1
@@ -353,57 +206,19 @@ func_cl_wrapper ()
         -L*)
           func_cl_dashL "${1#-L}"
           ;;
-        -n32)
-          # TODO
-          ;;
-        --no-inline)
-          # TODO
-          ;;
-        -no-undefined)
-          # TODO
-          ;;
-        -O)
-          # TODO
-          ;;
-        -o)
-          # configure might choose to run compile as 'compile cc -o foo foo.c'.
-          eat=1
-          case $2 in
-	          *.o | *.lo | *.[oO][bB][jJ])
-              func_file_conv "$2"
-              set x "$@" -Fo"$file"
-              shift
-              ;;
-            *.dll)
-              func_file_conv "$2"
-              set x "$@" -LD -Fe"$file"
-              shift
-              ;;
-            *.exe)
-              func_file_conv "$2"
-              set x "$@" -Fe"$file"
-              shift
-              ;;
-            *)
-              func_file_conv "$2"
-              set x "$@" -Fe"$file"
-              shift
-              ;;
-          esac
-          ;;
         --out-implib)
           eat=1
-          func_file_conv "$2"
+          func_file_conv "$2" mingw
           linker_opts="$linker_opts -implib:$file"
           ;;
         --out-implib=*)
           implib=${1#--out-implib=}
-          func_file_conv "$implib"
+          func_file_conv "$implib" mingw
           linker_opts="$linker_opts -implib:$file"
           ;;
         --output-def)
           eat=1
-          func_file_conv "$2"
+          func_file_conv "$2" mingw
           if test -f "$file"; then
             linker_opts="$linker_opts -def:$file"
           fi
@@ -411,57 +226,12 @@ func_cl_wrapper ()
         --output-def=*)
           def=${1#--output-def=}
           if test -f "$def"; then
-            func_file_conv "$def"
+            func_file_conv "$def" mingw
             linker_opts="$linker_opts -def:$file"
           fi
           ;;
-        -pedantic)
-          set x "$@" "-Wall"
-          shift
-          ;;
-        -qversion)
-          # TODO
-          compiler_version=1
-          ;;
-        -shared)
-          shared=true
-          ;;
         -static)
           shared=false
-          ;;
-        -std=*)
-          arg=${1#-std=}
-          case $arg in
-            gnu11 | c11 | gnu99 | c99)
-              set x "$@" "-std:c11"
-              shift
-              ;;
-            gnu17 | c17)
-              set x "$@" "-std:c17"
-              shift
-              ;;
-            gnu++98 | gnu++11 | c++11 | gnu++14 | c++14)
-              set x "$@" "-std:c++14"
-              shift
-              ;;
-            gnu++17 | c++17)
-              set x "$@" "-std:c++17"
-              shift
-              ;;
-            gnu++20 | c++20)
-              set x "$@" "-std:c++20"
-              shift
-              ;;
-            *)
-              ;;
-          esac
-          ;;
-        -S)
-          # TODO
-          ;;
-        -v | -V | -version | --version)
-          # TODO
-          compiler_version=1
           ;;
         -Wl,*)
           implib_option=
@@ -472,24 +242,6 @@ func_cl_wrapper ()
           for flag in $arg; do
             IFS="$save_ifs"
             case $flag in
-              --enable-auto-image-base)
-                # TODO
-                ;;
-              --enable-auto-import)
-                # TODO
-                ;;
-              --export-all)
-                # TODO
-                ;;
-              --export-all-symbols)
-                # TODO
-                ;;
-              --gc-sections)
-                # TODO
-                ;;
-              --no-whole-archive)
-                # TODO
-                ;;
               --whole-archive)
                 linker_opts="$linker_opts -wholearchive"
                 ;;
@@ -514,22 +266,15 @@ func_cl_wrapper ()
                   linker_opts="$linker_opts -def:$file"
                 fi
                 ;;
-              --version-script=*)
-                # ignore, because MSVC doesn't support to specify the name of a
-                # version script to the linker
-                ;;
               -DLL)
                 dll_option=1
                 ;;
               -IMPLIB:*)
                 if test -n "$dll_option"; then
                   implib=${flag#-IMPLIB:}
-                  func_file_conv "$implib"
+                  func_file_conv "$implib" mingw
                   linker_opts="$linker_opts -implib:$file"
                 fi
-                ;;
-              -no-undefined)
-                # TODO
                 ;;
               *)
                 if test -n "$def_option"; then
@@ -548,121 +293,6 @@ func_cl_wrapper ()
           done
           IFS="$save_ifs"
           ;;
-        -warn)
-          # TODO
-          eat=1
-          ;;
-        -W)
-          # TODO
-          ;;
-        -Waggregate-return)
-          ;;
-        -Wall)
-          set x "$@" "-W3"
-          shift
-          ;;
-        -Wbad-function-cast)
-          # TODO
-          ;;
-        -Wcast-align)
-          # TODO
-          ;;
-        -Wcomment)
-          # TODO
-          ;;
-        -Wextra)
-          set x "$@" "-Wall"
-          shift
-          ;;
-        -Werror)
-          set x "$@" "-WX"
-          shift
-          ;;
-        -Werror=*)
-          arg=${1#-Werror=}
-          case $arg in
-            attributes)
-              # TODO
-              ;;
-            implicit)
-              # TODO
-              ;;
-            missing-braces)
-              # TODO
-              ;;
-            missing-declarations)
-              # TODO
-              ;;
-            missing-prototypes)
-              # TODO
-              ;;
-            pointer-arith)
-              # TODO
-              ;;
-            return-type)
-              # TODO
-              ;;
-            strict-prototypes)
-              # TODO
-              ;;
-            trigraphs)
-              # TODO
-              ;;
-            unknown-warning-option)
-              # TODO
-              ;;
-            *)
-              ;;
-          esac
-          ;;
-        -Wformat*)
-          # TODO
-          ;;
-        -Wimplicit-function-declaration)
-          # TODO
-          ;;
-        -Wmissing-declarations)
-          # TODO
-          ;;
-        -Wmissing-prototypes)
-          # TODO
-          ;;
-        -Wnested-externs)
-          # TODO
-          ;;
-        -Wno-pedantic-ms-format)
-          # TODO
-          ;;
-        -Wno-unused-parameter)
-          # TODO
-          ;;
-        -Wno-unused-function)
-          # TODO
-          ;;
-        -Wpacked)
-          # TODO
-          ;;
-        -Wpointer-arith)
-          # TODO
-          ;;
-        -Wredundant-decls)
-          # TODO
-          ;;
-        -Wshadow)
-          # TODO
-          ;;
-        -Wstrict-prototypes)
-          # TODO
-          ;;
-        -Wunused-macros)
-          # TODO
-          ;;
-        -Wundef)
-          # TODO
-          ;;
-        -Wwrite-strings)
-          # TODO
-          ;;
         -Xlinker)
           eat=1
           linker_opts="$linker_opts $2"
@@ -677,7 +307,7 @@ func_cl_wrapper ()
           shift
           ;;
         *.c | *.cpp | *.CPP | *.lib | *.LIB | *.Lib | *.OBJ | *.obj | *.[oO])
-          func_file_conv "$1"
+          func_file_conv "$1" mingw
           set x "$@" "$file"
           shift
           ;;
@@ -692,11 +322,7 @@ func_cl_wrapper ()
   if test -n "$linker_opts"; then
     linker_opts="-link$linker_opts"
   fi
-  if test -n "$compiler_version"; then
-    exec $1
-  else
-    exec "$@" $linker_opts
-  fi
+  exec "$@" $linker_opts
   exit 1
 }
 
@@ -731,7 +357,10 @@ EOF
   cl | *[/\\]cl | cl.exe | *[/\\]cl.exe | \
   clang-cl | *[/\\]clang-cl | clang-cl.exe | *[/\\]clang-cl.exe | \
   icl | *[/\\]icl | icl.exe | *[/\\]icl.exe | \
-  icx-cl | *[/\\]icx-cl | icx-cl.exe | *[/\\]icx-cl.exe )
+  icx | *[/\\]icx | icx.exe | *[/\\]icx.exe | \
+  icx-cl | *[/\\]icx-cl | icx-cl.exe | *[/\\]icx-cl.exe | \
+  ifx | *[/\\]ifx | ifx.exe | *[/\\]ifx.exe | \
+  ifort | *[/\\]ifort | ifort.exe | *[/\\]ifort.exe )
     func_cl_wrapper "$@"      # Doesn't return...
     ;;
 esac
@@ -753,9 +382,6 @@ do
           *.o | *.obj)
             ofile=$2
             ;;
-          *.dll)
-            dllfile=$2
-            ;;
           *)
             set x "$@" -o "$2"
             shift
@@ -776,7 +402,7 @@ do
   shift
 done
 
-if test -z "$ofile" || test -z "$cfile" || test -z "$dllfile"; then
+if test -z "$ofile" || test -z "$cfile"; then
   # If no '-o' option was seen then we might have been invoked from a
   # pattern rule where we don't need one.  That is ok -- this is a
   # normal compilation that the losing compiler can handle.  If no
@@ -818,7 +444,7 @@ exit $ret
 # Local Variables:
 # mode: shell-script
 # sh-indentation: 2
-# eval: (add-hook 'before-save-hook 'time-stamp)
+# eval: (add-hook 'before-save-hook 'time-stamp nil t)
 # time-stamp-start: "scriptversion="
 # time-stamp-format: "%:y-%02m-%02d.%02H"
 # time-stamp-time-zone: "UTC0"

@@ -49,19 +49,22 @@ patch_package()
   patch -Np1 -i "$PKG_DIR/002-liboggz-fix-unresolved-external-symbol.diff"
   patch -Np1 -i "$PKG_DIR/003-liboggz-msvc-do-not-have-unistd-h.diff"
   patch -Np1 -i "$PKG_DIR/004-liboggz-fix-strcasecmp-on-msvc.diff"
+  # TODO: The configure script of liboggz is old, some patch have to be done
+  #       if want to enable msvc can build shared library
 
   # XXX: libtool don't have options can set the naming style of static and
   #      shared library. Here is only a workaround.
 
   echo "Patching ltmain.sh in top level"
-  sed                                                                                    \
-    -e 's|old_library="$libname.$libext"|old_library="lib$libname.$libext"|g'            \
-    -e 's|$output_objdir/$libname.$libext|$output_objdir/lib$libname.$libext|g'          \
+  sed                                                                                                \
+    -e 's|old_library="$libname\.$libext"|old_library="lib$libname.$libext"|g'                       \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
     -i ltmain.sh
 
   echo "Patching configure in top level"
-  sed                                                                                    \
-    -e 's|.dll.lib|.lib|g'                                                               \
+  sed                                                                                                \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
     -i configure
   chmod +x configure
 }

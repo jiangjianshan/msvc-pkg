@@ -1,0 +1,66 @@
+diff -urN vmaf-2.3.1-orig/libvmaf/src/feature/mkdirp.c vmaf-2.3.1/libvmaf/src/feature/mkdirp.c
+--- vmaf-2.3.1-orig/libvmaf/src/feature/mkdirp.c	2022-04-12 01:06:37.000000000 +0800
++++ vmaf-2.3.1/libvmaf/src/feature/mkdirp.c	2025-02-27 16:42:04.500862900 +0800
+@@ -6,7 +6,9 @@
+ // MIT licensed
+ //
+ 
++#if HAVE_UNISTD_H
+ #include <unistd.h>
++#endif
+ #include <errno.h>
+ #include <stdlib.h>
+ #include <string.h>
+diff -urN vmaf-2.3.1-orig/libvmaf/src/feature/mkdirp.h vmaf-2.3.1/libvmaf/src/feature/mkdirp.h
+--- vmaf-2.3.1-orig/libvmaf/src/feature/mkdirp.h	2022-04-12 01:06:37.000000000 +0800
++++ vmaf-2.3.1/libvmaf/src/feature/mkdirp.h	2025-02-27 16:46:24.446852200 +0800
+@@ -12,6 +12,10 @@
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ 
++#ifdef _MSC_VER
++typedef unsigned short mode_t;
++#endif
++
+ /*
+  * Recursively `mkdir(path, mode)`
+  */
+diff -urN vmaf-2.3.1-orig/libvmaf/src/log.c vmaf-2.3.1/libvmaf/src/log.c
+--- vmaf-2.3.1-orig/libvmaf/src/log.c	2022-04-12 01:06:37.000000000 +0800
++++ vmaf-2.3.1/libvmaf/src/log.c	2025-02-27 16:42:04.504855300 +0800
+@@ -19,7 +19,9 @@
+ #include "libvmaf/libvmaf.h"
+ 
+ #include <stdarg.h>
++#if HAVE_UNISTD_H
+ #include <unistd.h>
++#endif
+ 
+ static enum VmafLogLevel vmaf_log_level = VMAF_LOG_LEVEL_INFO;
+ static int istty = 0;
+diff -urN vmaf-2.3.1-orig/libvmaf/tools/vmaf.c vmaf-2.3.1/libvmaf/tools/vmaf.c
+--- vmaf-2.3.1-orig/libvmaf/tools/vmaf.c	2022-04-12 01:06:37.000000000 +0800
++++ vmaf-2.3.1/libvmaf/tools/vmaf.c	2025-02-27 16:42:04.507845900 +0800
+@@ -1,7 +1,9 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <time.h>
++#if HAVE_UNISTD_H
+ #include <unistd.h>
++#endif
+ 
+ #include "cli_parse.h"
+ #include "spinner.h"
+diff -urN vmaf-2.3.1-orig/third_party/libsvm/svm-toy/gtk/interface.c vmaf-2.3.1/third_party/libsvm/svm-toy/gtk/interface.c
+--- vmaf-2.3.1-orig/third_party/libsvm/svm-toy/gtk/interface.c	2022-04-12 01:06:37.000000000 +0800
++++ vmaf-2.3.1/third_party/libsvm/svm-toy/gtk/interface.c	2025-02-27 16:42:04.513829700 +0800
+@@ -4,7 +4,9 @@
+ 
+ #include <sys/types.h>
+ #include <sys/stat.h>
++#if HAVE_UNISTD_H
+ #include <unistd.h>
++#endif
+ #include <string.h>
+ 
+ #include <gdk/gdkkeysyms.h>

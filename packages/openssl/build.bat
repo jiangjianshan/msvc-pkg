@@ -62,7 +62,7 @@ if "%ARCH%"=="x86" set HOST_TRIPLET=VC-WIN32
 perl Configure !HOST_TRIPLET!                                                  ^
   --prefix="%PREFIX:\=/%"                                                      ^
   --openssldir="%PREFIX:\=/%/ssl"                                              ^
-  shared                                                                       ^
+  shared zlib-dynamic                                                          ^
   CFLAGS="%C_OPTS%"                                                            ^
   CPPFLAGS="%C_DEFS%"                                                          ^
   CXXFLAGS="-EHsc %C_OPTS%"                                                    ^

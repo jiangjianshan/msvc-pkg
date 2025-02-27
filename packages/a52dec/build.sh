@@ -78,7 +78,7 @@ configure_stage()
   CXX="cl"                                                                     \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
   CXXCPP="cl -E"                                                               \
-  DLLTOOL="link.exe -verbose -dll"                                             \
+  DLLTOOL="link -verbose -dll"                                                 \
   LD="link -nologo"                                                            \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
@@ -92,6 +92,7 @@ configure_stage()
     --includedir="$PREFIX/include"                                             \
     --libdir="$PREFIX/lib"                                                     \
     --datarootdir="$PREFIX/share"                                              \
+    --enable-shared                                                            \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

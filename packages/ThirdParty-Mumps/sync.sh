@@ -51,23 +51,15 @@ patch_package()
   #      shared library. Here is only a workaround.
 
   echo "Patching ltmain.sh in top level"
-  sed                                                                                                \
-    -e 's|old_library=$libname\.$libext|old_library=lib$libname\.$libext|g'                          \
-    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname\.$libext|g'                    \
+  sed                                                                                                                                                          \
+    -e 's|old_library=$libname\.$libext|old_library=lib$libname\.$libext|g'                                                                                    \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname\.$libext|g'                                                                              \
     -i ltmain.sh
 
-  # NOTE: To fix following issues:
-  #       libtool: warning: Linking the shared library libcoinmumps.la against the static library
-  #       /c/PROGRA~2/Intel/oneAPI/mkl/latest/lib/mkl_intel_ilp64_dll.lib is not portable!
-  #       libtool: warning: Linking the shared library libcoinmumps.la against the static library
-  #       /c/PROGRA~2/Intel/oneAPI/mkl/latest/lib/mkl_sequential_dll.lib is not portable!
-  #       libtool: warning: Linking the shared library libcoinmumps.la against the static library
-  #       /c/PROGRA~2/Intel/oneAPI/mkl/latest/lib/mkl_core_dll.lib is not portable!
   echo "Patching configure in top level"
   sed                                                                                                                                                          \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                                                                                    \
     -e 's|\.dll\.lib|\.lib|g'                                                                                                                                  \
-    -e 's|"$d/mkl_intel_ilp64_dll\.lib $d/mkl_sequential_dll\.lib $d/mkl_core_dll\.lib"|"-lmkl_intel_ilp64_dll -lmkl_sequential_dll -lmkl_core_dll"|g'         \
-    -e 's|"$d/mkl_intel_lp64_dll\.lib $d/mkl_sequential_dll\.lib $d/mkl_core_dll\.lib"|"-lmkl_intel_lp64_dll -lmkl_sequential_dll -lmkl_core_dll"|g'           \
     -i configure
   chmod +x configure
 }

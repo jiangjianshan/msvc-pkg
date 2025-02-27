@@ -85,7 +85,7 @@ configure_stage()
   CXX="$ROOT_DIR/wrappers/compile cl"                                          \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
   CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
-  DLLTOOL="link.exe -verbose -dll"                                             \
+  DLLTOOL="link -verbose -dll"                                                 \
   LD="link -nologo"                                                            \
   LIBS="-lgetopt"                                                              \
   NM="dumpbin -nologo -symbols"                                                \
@@ -102,7 +102,6 @@ configure_stage()
     --datarootdir="$PREFIX/share"                                              \
     --enable-static                                                            \
     --enable-shared                                                            \
-    --enable-relocatable                                                       \
     --enable-threads=windows                                                   \
     --disable-java                                                             \
     --disable-csharp                                                           \

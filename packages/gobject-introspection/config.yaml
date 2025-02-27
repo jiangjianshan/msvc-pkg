@@ -16,7 +16,7 @@ steps:
     dependencies:
       - gobject-introspection:a
       - pkg-config
-      - pcre2:a
+      - pcre2:b
       - glib:b
       - cairo
       - libffi

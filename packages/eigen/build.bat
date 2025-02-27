@@ -69,8 +69,9 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_Fortran_FLAGS="%F_OPTS%"                                             ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
   -DCMAKE_INCLUDE_CURRENT_DIR=ON                                               ^
-  -DCMAKE_POLICY_DEFAULT_CMP0153=OLD                                           ^
   -DCMAKE_POLICY_DEFAULT_CMP0146=OLD                                           ^
+  -DCMAKE_POLICY_DEFAULT_CMP0153=OLD                                           ^
+  -DCMAKE_POLICY_DEFAULT_CMP0167=OLD                                           ^
   -DEIGEN_BUILD_BTL=ON                                                         ^
   -DEIGEN_TEST_SSE2=ON                                                         ^
   -DEIGEN_TEST_SSE3=ON                                                         ^

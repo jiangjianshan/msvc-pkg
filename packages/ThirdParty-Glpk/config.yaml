@@ -6,5 +6,5 @@ steps:
   a:
     dependencies:
       - dlfcn-win32
-      - gmp:a
+      - gmp:b
     run: build.sh

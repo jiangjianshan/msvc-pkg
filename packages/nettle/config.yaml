@@ -7,7 +7,7 @@ steps:
     dependencies:
       - dlfcn-win32
       - getopt
-      - gmp:a
+      - gmp:b
       - openssl
       - yasm
     run: build.sh

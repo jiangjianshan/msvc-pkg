@@ -71,6 +71,8 @@ configure_stage()
   # 2. Don't use 'compile cl -nologo' but 'compile cl'. Because configure
   #    on some libraries will detect whether is msvc compiler according to
   #    '*cl | cl.exe'
+  # 3. Don't set '--enable-relocatable', otherwise the key 'prefix' in .pc will be
+  #    'prefix=${pcfiledir}/../..'
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                             \
   CC="cl"                                                                                \
   CFLAGS="$C_OPTS"                                                                       \
@@ -80,9 +82,9 @@ configure_stage()
   CXX="cl"                                                                               \
   CXXFLAGS="-EHsc $C_OPTS"                                                               \
   CXXCPP="cl -E"                                                                         \
-  DLLTOOL="link.exe -verbose -dll"                                                       \
+  DLLTOOL="link -verbose -dll"                                                           \
   F77="ifort"                                                                            \
-  FFLAGS="$F_OPTS -f77rtl"                                                               \
+  FFLAGS="-f77rtl $F_OPTS"                                                               \
   ADD_FFLAGS="$F_OPTS"                                                                   \
   FC="ifort"                                                                             \
   FCFLAGS="$F_OPTS"                                                                      \
@@ -101,9 +103,8 @@ configure_stage()
     --libdir="$PREFIX/lib"                                                               \
     --datarootdir="$PREFIX/share"                                                        \
     --enable-msvc                                                                        \
-    --enable-relocatable                                                                 \
     --enable-shared                                                                      \
-    --with-lapack-lflags="-lmkl_intel_ilp64_dll -lmkl_sequential_dll -lmkl_core_dll"     \
+    --with-lapack-lflags="-lmkl_intel_lp64_dll -lmkl_sequential_dll -lmkl_core_dll"      \
     --with-metis-lflags="-lmetis"                                                        \
     ac_cv_prog_cc_c11="-std:c11"                                                         \
     ac_cv_prog_f77_v="-verbose"                                                          \

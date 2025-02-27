@@ -71,7 +71,6 @@ meson setup "%BUILD_DIR%"                                                       
   -Dcpp_winlibs="Advapi32.lib,Ole32.lib,Shell32.lib,User32.lib,iconv.lib,intl.lib"       ^
   -Ddefault_library=shared                                                               ^
   -Dothers=enabled                                                                       ^
-  -Drelocatable=true                                                                     ^
   -Dtests=false                                                                          ^
   -Dinstalled_tests=false                                                                ^
   -Dbuiltin_loaders=all                                                                  ^

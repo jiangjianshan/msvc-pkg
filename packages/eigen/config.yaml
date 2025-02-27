@@ -7,7 +7,7 @@ steps:
     dependencies:
       - pkg-config
       - boost
-      - fftw:a
+      - fftw:c
       - sparsehash
       - gmp
       - gsl

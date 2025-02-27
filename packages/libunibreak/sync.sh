@@ -55,14 +55,21 @@ patch_package()
   #      shared library. Here is only a workaround.
 
   echo "Patching ltmain.sh in top level"
-  sed                                                                                    \
-    -e 's|old_library=$libname.$libext|old_library=lib$libname.$libext|g'                \
-    -e 's|$output_objdir/$libname.$libext|$output_objdir/lib$libname.$libext|g'          \
+  sed                                                                                                \
+    -e 's|old_library=$libname\.$libext|old_library=lib$libname.$libext|g'                           \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
     -i ltmain.sh
 
+  # NOTE: Changed '*,cl*)' to '*,cl| *,icx-cl*)' and 'cl*)' to 'cl* | icx-cl*)'
+  #       can solved following issues:
+  #       1) The library_names_spec is not correct because it contains .dll name. This will also cause
+  #       the shared library will be converted to symbolic link as .dll file.
   echo "Patching configure in top level"
-  sed                                                                                    \
-    -e 's|.dll.lib|.lib|g'                                                               \
+  sed                                                                                                \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
+    -e 's/ cl\* | icl\*)/ cl* | icl* | icx-cl*)/g'                                                   \
+    -e 's/ \*,cl\* | \*,icl\*)/ *,cl* | *,icl* | *,icx-cl*)/g'                                       \
     -i configure
   chmod +x configure
 }

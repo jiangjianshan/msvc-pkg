@@ -1,0 +1,12 @@
+diff -urN glpk-5.0-orig/configure.ac glpk-5.0/configure.ac
+--- glpk-5.0-orig/configure.ac	2020-12-16 17:00:00.000000000 +0800
++++ glpk-5.0/configure.ac	2025-02-25 12:33:48.525632300 +0800
+@@ -6,7 +6,7 @@
+ 
+ AC_CONFIG_MACRO_DIR([m4])
+ 
+-AM_INIT_AUTOMAKE
++AM_INIT_AUTOMAKE([subdir-objects])
+ 
+ AC_CONFIG_HEADERS([config.h])
+ 

@@ -1,0 +1,19 @@
+diff -urN SDL2-2.32.0-orig/CMakeLists.txt SDL2-2.32.0/CMakeLists.txt
+--- SDL2-2.32.0-orig/CMakeLists.txt	2025-02-09 01:10:22.000000000 +0800
++++ SDL2-2.32.0/CMakeLists.txt	2025-02-23 14:53:20.675223100 +0800
+@@ -3622,13 +3622,8 @@
+   endif()
+ 
+   ##### Export files #####
+-  if (WINDOWS AND NOT MINGW)
+-    set(SDL_INSTALL_CMAKEDIR_DEFAULT "cmake")
+-    set(LICENSES_PREFIX "licenses/SDL2")
+-  else ()
+-    set(SDL_INSTALL_CMAKEDIR_DEFAULT "${CMAKE_INSTALL_LIBDIR}/cmake/SDL2")
+-    set(LICENSES_PREFIX "${CMAKE_INSTALL_DATAROOTDIR}/licenses/${PROJECT_NAME}")
+-  endif ()
++  set(SDL_INSTALL_CMAKEDIR_DEFAULT "${CMAKE_INSTALL_LIBDIR}/cmake/SDL2")
++  set(LICENSES_PREFIX "${CMAKE_INSTALL_DATAROOTDIR}/licenses/${PROJECT_NAME}")
+   set(SDL_INSTALL_CMAKEDIR "${SDL_INSTALL_CMAKEDIR_DEFAULT}" CACHE STRING "Location where to install SDL2Config.cmake")
+ 
+   include(CMakePackageConfigHelpers)

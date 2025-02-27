@@ -50,14 +50,14 @@ patch_package()
   # NOTE: To fix the extension of library from .a to .lib
   echo "Patching configure in the top level"
   sed                                                                          \
-    -e 's/ICL\*)/ICL\* | \*mpicl)/g'                                           \
+    -e 's/ \*\/ICL\*)/ *\/ICL* | *\/mpicl*)/g'                                 \
     -i configure
   chmod +x configure
 
   echo "Patching configure in the CoinUtils"
   pushd CoinUtils || exit 1
   sed                                                                          \
-    -e 's/ICL\*)/ICL\* | \*mpicl)/g'                                           \
+    -e 's/ \*\/ICL\*)/ *\/ICL* | *\/mpicl*)/g'                                 \
     -i configure
   chmod +x configure
   popd || exit 1

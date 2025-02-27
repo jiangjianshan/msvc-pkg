@@ -89,7 +89,7 @@ configure_stage()
   CXX="$ROOT_DIR/wrappers/compile cl"                                          \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
   CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
-  DLLTOOL="link.exe -verbose -dll"                                             \
+  DLLTOOL="link -verbose -dll"                                                 \
   LD="$ROOT_DIR/wrappers/compile cl"                                           \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
@@ -109,7 +109,7 @@ configure_stage()
     --with-readline="$(cygpath -u "${READLINE_PREFIX:-$PREFIX}")"              \
     --with-ncurses-lib="$(cygpath -u "${NCURSES_PREFIX:-$PREFIX}/lib")"        \
     --with-gmp="$(cygpath -u "${GMP_PREFIX:-$PREFIX}")"                        \
-    --with-fltk="$(cygpath -u "${FLTK_PREFIX:-$PREFIX}")"
+    --with-fltk="$(cygpath -u "${FLTK_PREFIX:-$PREFIX}")" || exit 1
 }
 
 build_stage()

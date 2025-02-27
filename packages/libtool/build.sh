@@ -89,9 +89,9 @@ configure_stage()
   CXX="$ROOT_DIR/wrappers/compile cl"                                          \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
   CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
-  DLLTOOL="link.exe -verbose -dll"                                             \
+  DLLTOOL="link -verbose -dll"                                                 \
   F77="ifort"                                                                  \
-  FFLAGS="$F_OPTS -f77rtl"                                                     \
+  FFLAGS="-f77rtl $F_OPTS"                                                     \
   FC="ifort"                                                                   \
   FCFLAGS="$F_OPTS"                                                            \
   LD="link -nologo"                                                            \
