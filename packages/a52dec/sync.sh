@@ -45,7 +45,11 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
-  patch -Np1 -i "$PKG_DIR/001-a52dec-fix-msvc-can-not-build-shared-library.diff"
+
+  # NOTE: Update version of autotools so that msvc can build shared library
+  WANT_AUTOCONF='2.69' WANT_AUTOMAKE='1.16' autoreconf -ifv
+  rm -rfv autom4te.cache
+  find . -name "*~" -type f -print -exec rm -rfv {} \;
 
   # XXX: libtool don't have options can set the naming style of static and
   #      shared library. Here is only a workaround.

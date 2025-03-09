@@ -1,0 +1,349 @@
+diff -urN liboggz-1.0.2-orig/configure.ac liboggz-1.0.2/configure.ac
+--- liboggz-1.0.2-orig/configure.ac	2010-04-29 09:44:08.000000000 +0800
++++ liboggz-1.0.2/configure.ac	2025-02-28 13:56:24.289277600 +0800
+@@ -1,13 +1,14 @@
+ # Process this file with autoconf to produce a configure script.
+-AC_INIT
++AC_INIT([liboggz],[1.0.2])
+ AC_CONFIG_SRCDIR([src/liboggz/oggz.c])
+ 
+ AC_PREREQ(2.53)
+ 
++AC_CONFIG_MACRO_DIRS([m4])
+ AC_CANONICAL_TARGET
+ 
+-AM_INIT_AUTOMAKE(liboggz, 1.0.2)
+-AM_CONFIG_HEADER(config.h)
++AM_INIT_AUTOMAKE([subdir-objects foreign])
++AC_CONFIG_HEADERS([config.h])
+ 
+ ################################################################################
+ # Set the shared versioning info, according to section 6.3 of the libtool info #
+@@ -35,7 +36,7 @@
+ AC_PROG_INSTALL
+ AC_PROG_LN_S
+ AC_PROG_MAKE_SET
+-AC_PROG_LIBTOOL
++LT_INIT
+ 
+ AC_C_CONST
+ AC_C_BIGENDIAN
+@@ -352,20 +353,20 @@
+ # MacOS 10.4 only declares timezone for _XOPEN_SOURCE. Check for this.
+ AC_MSG_CHECKING([for timezone])
+ AC_COMPILE_IFELSE(
+-  AC_LANG_PROGRAM([#include <time.h>], [
++  [AC_LANG_PROGRAM([[#include <time.h>]], [[
+     int seconds = 1234567;
+     seconds -= timezone;
+-  ]), AC_MSG_RESULT([ok]),
++  ]])], AC_MSG_RESULT([ok]),
+   AC_MSG_RESULT([no])
+   AC_MSG_CHECKING([for timezone with _XOPEN_SOURCE])
+   AC_COMPILE_IFELSE(
+-    AC_LANG_PROGRAM([
++    [AC_LANG_PROGRAM([[
+ #define _XOPEN_SOURCE
+ #include <time.h>
+-    ], [
++    ]], [[
+       int seconds = 1234567;
+       seconds -= timezone;
+-    ]),
++    ]])],
+    dnl _XOPEN_SOURCE is required
+     AC_MSG_RESULT([ok])
+     AC_DEFINE([_XOPEN_SOURCE], [1], 
+@@ -379,7 +380,7 @@
+ 
+ dnl Add some useful warnings if we have gcc.
+ dnl changequote(,)dnl
+-if test "x$ac_cv_prog_gcc" = xyes ; then
++if test "x$ac_cv_c_compiler_gnu" = xyes ; then
+   CFLAGS="$CFLAGS -Wall -Wextra -g -std=gnu99 -Wdeclaration-after-statement -Wno-unused"
+ fi
+ dnl changequote([,])dnl
+@@ -473,7 +474,7 @@
+ AC_SUBST(SHLIB_VERSION_ARG)
+ AC_SUBST(SHARED_VERSION_INFO)
+ 
+-AC_OUTPUT([
++AC_CONFIG_FILES([
+ Makefile
+ doc/Makefile
+ doc/Doxyfile
+@@ -492,6 +493,7 @@
+ oggz.pc
+ oggz-uninstalled.pc
+ ])
++AC_OUTPUT
+ 
+ AC_MSG_RESULT([
+ ------------------------------------------------------------------------
+diff -urN liboggz-1.0.2-orig/Makefile.am liboggz-1.0.2/Makefile.am
+--- liboggz-1.0.2-orig/Makefile.am	2010-02-11 16:35:05.000000000 +0800
++++ liboggz-1.0.2/Makefile.am	2025-02-28 14:05:00.700010100 +0800
+@@ -11,7 +11,7 @@
+ #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  
+ ## Process this file with automake to produce Makefile.in
+-
++ACLOCAL_AMFLAGS = -I m4
+ DISTCHECK_CONFIGURE_FLAGS = --enable-gcc-werror
+ 
+ SUBDIRS = doc include src
+diff -urN liboggz-1.0.2-orig/src/examples/Makefile.am liboggz-1.0.2/src/examples/Makefile.am
+--- liboggz-1.0.2-orig/src/examples/Makefile.am	2010-01-30 13:55:59.000000000 +0800
++++ liboggz-1.0.2/src/examples/Makefile.am	2025-02-28 14:02:44.612839900 +0800
+@@ -1,6 +1,6 @@
+ ## Process this file with automake to produce Makefile.in
+ 
+-INCLUDES = -I$(top_builddir) -I$(top_builddir)/include \
++AM_CPPFLAGS = -I$(top_builddir) -I$(top_builddir)/include \
+            -I$(top_srcdir)/include \
+            @OGG_CFLAGS@
+ 
+@@ -26,28 +26,28 @@
+ 	$(oggz_write_programs)
+ 
+ identity_SOURCES = identity.c
+-identity_LDADD = $(OGGZ_LIBS)
++identity_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ modify_headers_SOURCES = modify-headers.c
+-modify_headers_LDADD = $(OGGZ_LIBS)
++modify_headers_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ rewrite_pages_SOURCES = rewrite-pages.c
+-rewrite_pages_LDADD = $(OGGZ_LIBS)
++rewrite_pages_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ fix_eos_SOURCES = fix-eos.c
+-fix_eos_LDADD = $(OGGZ_LIBS)
++fix_eos_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ read_file_SOURCES = read-file.c
+-read_file_LDADD = $(OGGZ_LIBS)
++read_file_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ read_io_SOURCES = read-io.c
+-read_io_LDADD = $(OGGZ_LIBS)
++read_io_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ dump_comments_SOURCES = dump-comments.c
+-dump_comments_LDADD = $(OGGZ_LIBS)
++dump_comments_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ write_feed_SOURCES = write-feed.c
+-write_feed_LDADD = $(OGGZ_LIBS)
++write_feed_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ write_hungry_SOURCES = write-hungry.c
+-write_hungry_LDADD = $(OGGZ_LIBS)
++write_hungry_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+diff -urN liboggz-1.0.2-orig/src/liboggz/Makefile.am liboggz-1.0.2/src/liboggz/Makefile.am
+--- liboggz-1.0.2-orig/src/liboggz/Makefile.am	2010-01-30 13:55:59.000000000 +0800
++++ liboggz-1.0.2/src/liboggz/Makefile.am	2025-02-28 13:56:24.301421500 +0800
+@@ -1,6 +1,6 @@
+ ## Process this file with automake to produce Makefile.in
+ 
+-INCLUDES = $(INCLTDL) \
++AM_CPPFLAGS = $(INCLTDL) \
+            -I$(top_builddir) -I$(top_builddir)/include \
+            -I$(top_srcdir)/include \
+            -I$(top_srcdir)/src/liboggz \
+@@ -27,4 +27,4 @@
+ 	dirac.c dirac.h
+ 
+ liboggz_la_LDFLAGS = -version-info @SHARED_VERSION_INFO@ @SHLIB_VERSION_ARG@
+-liboggz_la_LIBADD = @OGG_LIBS@
++liboggz_la_LIBADD = @OGG_LIBS@ @LIBS@
+diff -urN liboggz-1.0.2-orig/src/tests/Makefile.am liboggz-1.0.2/src/tests/Makefile.am
+--- liboggz-1.0.2-orig/src/tests/Makefile.am	2010-04-29 08:36:42.000000000 +0800
++++ liboggz-1.0.2/src/tests/Makefile.am	2025-02-28 14:02:44.613837400 +0800
+@@ -1,6 +1,6 @@
+ ## Process this file with automake to produce Makefile.in
+ 
+-INCLUDES = -I$(top_builddir) -I$(top_builddir)/include \
++AM_CPPFLAGS = -I$(top_builddir) -I$(top_builddir)/include \
+            -I$(top_srcdir)/include \
+            @OGG_CFLAGS@
+ 
+@@ -44,72 +44,72 @@
+ TESTS = $(comment_tests) $(write_tests) $(rw_tests)
+ 
+ comment_test_SOURCES = comment-test.c
+-comment_test_LDADD = $(OGGZ_LIBS)
++comment_test_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ write_bad_guard_SOURCES = write-bad-guard.c
+-write_bad_guard_LDADD = $(OGGZ_LIBS)
++write_bad_guard_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ write_unmarked_guard_SOURCES = write-unmarked-guard.c
+-write_unmarked_guard_LDADD = $(OGGZ_LIBS)
++write_unmarked_guard_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ write_recursive_SOURCES = write-recursive.c
+-write_recursive_LDADD = $(OGGZ_LIBS)
++write_recursive_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ write_bad_bytes_SOURCES = write-bad-bytes.c
+-write_bad_bytes_LDADD = $(OGGZ_LIBS)
++write_bad_bytes_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ write_bad_bos_SOURCES = write-bad-bos.c
+-write_bad_bos_LDADD = $(OGGZ_LIBS)
++write_bad_bos_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ write_dup_bos_SOURCES = write-dup-bos.c
+-write_dup_bos_LDADD = $(OGGZ_LIBS)
++write_dup_bos_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ write_bad_eos_SOURCES = write-bad-eos.c
+-write_bad_eos_LDADD = $(OGGZ_LIBS)
++write_bad_eos_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ write_bad_granulepos_SOURCES = write-bad-granulepos.c
+-write_bad_granulepos_LDADD = $(OGGZ_LIBS)
++write_bad_granulepos_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ write_bad_packetno_SOURCES = write-bad-packetno.c
+-write_bad_packetno_LDADD = $(OGGZ_LIBS)
++write_bad_packetno_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ write_bad_serialno_SOURCES = write-bad-serialno.c
+-write_bad_serialno_LDADD = $(OGGZ_LIBS)
++write_bad_serialno_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ write_prefix_SOURCES = write-prefix.c
+-write_prefix_LDADD = $(OGGZ_LIBS)
++write_prefix_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ write_suffix_SOURCES = write-suffix.c
+-write_suffix_LDADD = $(OGGZ_LIBS)
++write_suffix_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ read_generated_SOURCES = read-generated.c
+-read_generated_LDADD = $(OGGZ_LIBS)
++read_generated_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ read_stop_ok_SOURCES = read-stop-ok.c
+-read_stop_ok_LDADD = $(OGGZ_LIBS)
++read_stop_ok_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ read_stop_err_SOURCES = read-stop-err.c
+-read_stop_err_LDADD = $(OGGZ_LIBS)
++read_stop_err_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ io_count_SOURCES = io-count.c
+-io_count_LDADD = $(OGGZ_LIBS)
++io_count_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ io_read_SOURCES = io-read.c
+-io_read_LDADD = $(OGGZ_LIBS)
++io_read_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ io_run_SOURCES = io-run.c
+-io_run_LDADD = $(OGGZ_LIBS)
++io_run_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ io_seek_SOURCES = io-seek.c
+-io_seek_LDADD = $(OGGZ_LIBS)
++io_seek_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ io_write_SOURCES = io-write.c
+-io_write_LDADD = $(OGGZ_LIBS)
++io_write_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ io_read_single_SOURCES = io-read-single.c
+-io_read_single_LDADD = $(OGGZ_LIBS)
++io_read_single_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ io_write_flush_SOURCES = io-write-flush.c
+-io_write_flush_LDADD = $(OGGZ_LIBS)
++io_write_flush_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ seek_stress_SOURCES = seek-stress.c
+-seek_stress_LDADD = $(OGGZ_LIBS)
++seek_stress_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+diff -urN liboggz-1.0.2-orig/src/tools/Makefile.am liboggz-1.0.2/src/tools/Makefile.am
+--- liboggz-1.0.2-orig/src/tools/Makefile.am	2010-01-30 13:55:59.000000000 +0800
++++ liboggz-1.0.2/src/tools/Makefile.am	2025-02-28 14:02:44.719988200 +0800
+@@ -6,7 +6,7 @@
+ 
+ bin_SCRIPTS = oggz-diff
+ 
+-INCLUDES = -I$(top_builddir) -I$(top_builddir)/include \
++AM_CPPFLAGS = -I$(top_builddir) -I$(top_builddir)/include \
+            -I$(top_srcdir)/include \
+            -I$(top_srcdir)/src/liboggz \
+            @OGG_CFLAGS@
+@@ -39,37 +39,37 @@
+ oggz_LDADD =
+ 
+ oggz_known_codecs_SOURCES = oggz-known-codecs.c
+-oggz_known_codecs_LDADD = $(OGGZ_LIBS)
++oggz_known_codecs_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ oggz_info_SOURCES = oggz-info.c skeleton.c $(COMMON_SRCS)
+-oggz_info_LDADD = $(OGGZ_LIBS) -lm
++oggz_info_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ oggz_comment_SOURCES = oggz-comment.c $(COMMON_SRCS)
+-oggz_comment_LDADD = $(OGGZ_LIBS)
++oggz_comment_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ oggz_dump_SOURCES = oggz-dump.c $(COMMON_SRCS)
+-oggz_dump_LDADD = $(OGGZ_LIBS)
++oggz_dump_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ oggz_merge_SOURCES = oggz-merge.c $(COMMON_SRCS)
+-oggz_merge_LDADD = $(OGGZ_LIBS)
++oggz_merge_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ oggz_rip_SOURCES = oggz-rip.c $(COMMON_SRCS)
+-oggz_rip_LDADD = $(OGGZ_LIBS)
++oggz_rip_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ oggz_validate_SOURCES = oggz-validate.c $(COMMON_SRCS)
+-oggz_validate_LDADD = $(OGGZ_LIBS)
++oggz_validate_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ oggz_basetime_SOURCES = oggz-basetime.c $(COMMON_SRCS)
+-oggz_basetime_LDADD = $(OGGZ_LIBS)
++oggz_basetime_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ oggz_scan_SOURCES = oggz-scan.c $(COMMON_SRCS)
+-oggz_scan_LDADD = $(OGGZ_LIBS)
++oggz_scan_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ oggz_sort_SOURCES = oggz-sort.c $(COMMON_SRCS)
+-oggz_sort_LDADD = $(OGGZ_LIBS)
++oggz_sort_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ oggz_codecs_SOURCES = oggz-codecs.c mimetypes.c $(COMMON_SRCS)
+-oggz_codecs_LDADD = $(OGGZ_LIBS)
++oggz_codecs_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ # Add symlinks for deprecated tool names, if they are already installed;
+ # see http://lists.xiph.org/pipermail/ogg-dev/2008-July/001083.html
+diff -urN liboggz-1.0.2-orig/src/tools/oggz-chop/Makefile.am liboggz-1.0.2/src/tools/oggz-chop/Makefile.am
+--- liboggz-1.0.2-orig/src/tools/oggz-chop/Makefile.am	2010-01-30 13:55:59.000000000 +0800
++++ liboggz-1.0.2/src/tools/oggz-chop/Makefile.am	2025-02-28 14:02:44.719988200 +0800
+@@ -1,6 +1,6 @@
+ ## Process this file with automake to produce Makefile.in
+ 
+-INCLUDES = -I$(top_builddir) -I$(top_builddir)/include \
++AM_CPPFLAGS = -I$(top_builddir) -I$(top_builddir)/include \
+            -I$(top_srcdir)/include -I$(top_srcdir)/src/tools \
+            -I$(top_srcdir)/src/liboggz \
+            -I$(top_srcdir)/src/tests \
+@@ -28,7 +28,7 @@
+ 
+ oggz_chop_SOURCES = oggz-chop.c $(srcdir)/../oggz_tools.c $(srcdir)/../skeleton.c $(srcdir)/../mimetypes.c \
+                     $(srcdir)/../../liboggz/dirac.c cmd.c cgi.c header.c httpdate.c main.c timespec.c
+-oggz_chop_LDADD = $(OGGZ_LIBS) -lm
++oggz_chop_LDADD = $(OGGZ_LIBS) $(GETOPT_LIBS)
+ 
+ httpdate_test_SOURCES = httpdate.c httpdate_test.c
+ 

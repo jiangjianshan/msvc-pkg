@@ -1,0 +1,35 @@
+diff -urN ThirdParty-Glpk-1.10.7-orig/configure ThirdParty-Glpk-1.10.7/configure
+--- ThirdParty-Glpk-1.10.7-orig/configure	2020-01-31 18:29:07.000000000 +0800
++++ ThirdParty-Glpk-1.10.7/configure	2025-03-05 18:12:40.782427500 +0800
+@@ -6943,7 +6943,30 @@
+   symxfrm="\\1 $ac_symprfx\\2 \\2"
+ 
+   # Write the raw and C identifiers.
+-  lt_cv_sys_global_symbol_pipe="sed -n -e 's/^.*[ 	]\($symcode$symcode*\)[ 	][ 	]*$ac_symprfx$sympat$opt_cr$/$symxfrm/p'"
++  if test "$lt_cv_nm_interface" = "MS dumpbin"; then
++    # Fake it for dumpbin and say T for any non-static function,
++    # D for any global variable and I for any imported variable.
++    # Also find C++ and __fastcall symbols from MSVC++,
++    # which start with @ or ?.
++    lt_cv_sys_global_symbol_pipe="$AWK '"\
++"     {last_section=section; section=\$ 3};"\
++"     /^COFF SYMBOL TABLE/{for(i in hide) delete hide[i]};"\
++"     /Section length .*#relocs.*(pick any)/{hide[last_section]=1};"\
++"     /^ *Symbol name *: /{split(\$ 0,sn,\":\"); si=substr(sn[2],2)};"\
++"     /^ *Type *: code/{print \"T\",si,substr(si,length(prfx))};"\
++"     /^ *Type *: data/{print \"I\",si,substr(si,length(prfx))};"\
++"     \$ 0!~/External *\|/{next};"\
++"     / 0+ UNDEF /{next}; / UNDEF \([^|]\)*()/{next};"\
++"     {if(hide[section]) next};"\
++"     {f=\"D\"}; \$ 0~/\(\).*\|/{f=\"T\"};"\
++"     {split(\$ 0,a,/\||\r/); split(a[2],s)};"\
++"     s[1]~/^[@?]/{print f,s[1],s[1]; next};"\
++"     s[1]~prfx {split(s[1],t,\"@\"); print f,t[1],substr(t[1],length(prfx))}"\
++"     ' prfx=^$ac_symprfx"
++  else
++    lt_cv_sys_global_symbol_pipe="sed -n -e 's/^.*[	 ]\($symcode$symcode*\)[	 ][	 ]*$ac_symprfx$sympat$opt_cr$/$symxfrm/p'"
++  fi
++  lt_cv_sys_global_symbol_pipe="$lt_cv_sys_global_symbol_pipe | sed '/ __gnu_lto/d'"
+ 
+   # Check to see that the pipe works correctly.
+   pipe_works=no

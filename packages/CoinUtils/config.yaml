@@ -6,7 +6,8 @@ steps:
   a:
     dependencies:
       - bzip2
-      - lapack
+      - ThirdParty-Blas
+      - ThirdParty-Lapack
       - ThirdParty-Glpk
       - zlib
     run: build.sh

@@ -29,70 +29,185 @@
 # MPIVERSION is the version of the Intel(R) MPI Library that mpicc is intended for
 MPIVERSION=2021.13
 
+nl='
+'
+
+# We need space, tab and new line, in precisely that order.  Quoting is
+# there to prevent tools from complaining about whitespace usage.
+IFS=" ""	$nl"
+
+# func_file_conv build_file unneeded_conversions
+# Convert a $build file to $host form and store it in $file
+# Currently only supports Windows hosts. If the determined conversion
+# type is listed in (the comma separated) UNNEEDED_CONVERSIONS, no
+# conversion will take place.
+func_file_conv ()
+{
+  cygpath -w "$1" | sed -E 's|^/([a-zA-Z])|\1:|; s|[\\/]|\\\\|g'
+}
+
+# func_cl_dashL linkdir
+# Make cl look for libraries in LINKDIR
+func_cl_dashL ()
+{
+  file=$(func_file_conv "$1")
+  if test -z "$lib_path"; then
+    lib_path=$file
+  else
+    lib_path="$lib_path;$file"
+  fi
+  linker_opts="$linker_opts -LIBPATH:$file"
+}
+
+# func_cl_dashl library
+# Do a library search-path lookup for cl
+func_cl_dashl ()
+{
+  lib=$1
+  found=no
+  save_IFS=$IFS
+  IFS=';'
+  for dir in $lib_path $LIB
+	do
+		IFS=$save_IFS
+		if $shared && test -f "$dir/$lib.dll.lib"; then
+			found=yes
+      lib=$(func_file_conv "$dir/$lib.dll.lib")
+			break
+		fi
+		if test -f "$dir/$lib.lib"; then
+			found=yes
+      lib=$(func_file_conv "$dir/$lib.lib")
+			break
+		fi
+		if test -f "$dir/lib$lib.a"; then
+			found=yes
+      lib=$(func_file_conv "$dir/lib$lib.a")
+			break
+		fi
+	done
+  IFS=$save_IFS
+
+  if test "$found" != yes; then
+    lib=$lib.lib
+  fi
+}
+
+if [ $# -eq 0 ] ; then
+  echo "Error: Command line argument is needed!"
+  "$0" -help
+  exit 1
+fi
+
+case $1 in
+  -help)
+    # Print mini-help if started without parameters
+    echo "Simple script to compile and/or link MPI programs."
+    echo "This script knows the default flags and libraries, and can handle"
+    echo "alternative C compilers and the associated flags and libraries."
+    echo "Usage: `basename $0` [options] <files>"
+    echo "----------------------------------------------------------------------------"
+    echo "The following options are supported:"
+    echo "   -cc=<name>      to specify a C compiler name: i.e. -cc=icl.exe"
+    echo "   -cxx=<name>     to specify a C++ compiler name: i.e. -cxx=icpc.exe"
+    echo "   -echo           to print the scripts during its execution"
+    echo "   -show           to show command lines without real calling"
+    echo "   -show_env       to show environment variables"
+    echo "   -v              to print version of the script"
+    echo "   -ilp64          to link ilp64 wrapper library"
+    echo "   -t or -trace"
+    echo "                   to build with the Intel(R) Trace Collector Library"
+    echo "   -check_mpi      to build with the Intel(R) Trace Collector correctness"
+    echo "                   checking library"
+    echo "   -profile=<name> to specify a profile configuration file in"
+    echo "                   the I_MPI_COMPILER_CONFIG_DIR folder: i.e. -profile=myprofile"
+    echo "   -link_mpi=<name>"
+    echo "                   link against the specified version of the Intel(R) MPI Library"
+    echo "                   i.e -link_mpi=opt|dbg"
+    echo "All other options will be passed to the compiler without changing."
+    echo "----------------------------------------------------------------------------"
+    echo "The following environment variables are used:"
+    echo "   I_MPI_ROOT      Intel(R) MPI Library installation directory path"
+    echo "   I_MPI_{CC,CXX} or MPICH_{CC,CXX}"
+    echo "                   the path/name of the underlying compiler to be used"
+    echo "   I_MPI_{CC,CXX}_PROFILE or MPI_{CC,CXX}_PROFILE"
+    echo "                   name of profile file (without extension)"
+    echo "   I_MPI_COMPILER_CONFIG_DIR"
+    echo "                   folder which contains configuration files *.conf"
+    echo "   VT_ROOT         Intel(R) Trace Collector installation directory path"
+    echo "----------------------------------------------------------------------------"
+    exit 0
+    ;;
+  -v|-V|-verbose)
+    # Pass this argument to the compiler as well.
+    echo "$(basename $0) for the Intel(R) MPI Library $MPIVERSION for Windows*"
+    echo "Copyright Intel Corporation."
+    exit 0
+    ;;
+esac
+
 # The I_MPI_ROOT should be defined by a installer
 if [ -z "$I_MPI_ROOT" ]; then
-    echo 'You have to source <Intel MPI>\env\vars.bat'
-    exit 1
+  echo 'You have to source compiler.sh'
+  exit 1
 fi
 I_MPI_INCDIR="${I_MPI_ROOT}/include"
 I_MPI_LIBDIR="${I_MPI_ROOT}/lib"
 I_MPI_CFGDIR="${I_MPI_ROOT}/etc"
 if [ -d "${I_MPI_ROOT}/lib/mpi/debug" ]; then
-    I_MPI_DBG_LIB_DIR='/lib/mpi/debug'
-    I_MPI_RELEASE_LIB_DIR='/lib'
+  I_MPI_DBG_LIB_DIR='/lib/mpi/debug'
+  I_MPI_RELEASE_LIB_DIR='/lib'
 else
-    I_MPI_DBG_LIB_DIR='/lib/debug'
-    I_MPI_RELEASE_LIB_DIR='/lib/release'
+  I_MPI_DBG_LIB_DIR='/lib/debug'
+  I_MPI_RELEASE_LIB_DIR='/lib/release'
 fi
 # The environment variables I_MPI_COMPILER_CONFIG_DIR may be used
 # to override directory where *.conf files are placed.
 if [ -n "$I_MPI_COMPILER_CONFIG_DIR" ]; then
-    I_MPI_CFGDIR="$I_MPI_COMPILER_CONFIG_DIR"
+  I_MPI_CFGDIR="$I_MPI_COMPILER_CONFIG_DIR"
 fi
 
 # The environment variables I_MPI_{CC,CXX} and MPICH_{CC,CXX} may
 # be used to override the default choice (the CC has highest priority).
-CC=cl.exe
+CC=cl
 if [ -n "$I_MPI_CC" ]; then
-    CC=$I_MPI_CC
+  CC=$I_MPI_CC
 elif [ -n "$MPICH_CC" ]; then
-    CC=$MPICH_CC
+  CC=$MPICH_CC
 fi
 if [ -n "$I_MPI_CXX" ]; then
-    CC=$I_MPI_CXX
+  CC=$I_MPI_CXX
 elif [ -n "$MPICH_CXX" ]; then
-    CC=$MPICH_CXX
+  CC=$MPICH_CXX
 fi
 
 # The environment variables I_MPI_{CC,CXX}_PROFILE and MPI{CC,CXX}_RPOFILE
 # may be used to select profile file.
 profConf=
 if [ -n "$I_MPI_CC_PROFILE" ]; then
-    profConf=$I_MPI_CC_PROFILE
+  profConf=$I_MPI_CC_PROFILE
 elif [ -n "$MPICC_PROFILE" ]; then
-    profConf=$MPICC_PROFILE
+  profConf=$MPICC_PROFILE
 fi
 if [ -n "$I_MPI_CXX_PROFILE" ]; then
-    profConf=$I_MPI_CXX_PROFILE
+  profConf=$I_MPI_CXX_PROFILE
 elif [ -n "$MPICXX_PROFILE" ]; then
-    profConf=$MPICXX_PROFILE
+  profConf=$MPICXX_PROFILE
 fi
 
 # Override default mpi library
 mpilib_override=
 if [ -n "$I_MPI_LINK" ]; then
-    mpilib_override=$I_MPI_LINK
+  mpilib_override=$I_MPI_LINK
 fi
 
 # Default settings for compiler, flags, and libraries.
 I_MPI_CFLAGS=
 I_MPI_LDFLAGS=
 I_MPI_LIBNAME=impi
-I_MPI_OTHERLIBS=
 I_MPI_TRACE_PATH=
 VTTRACE_LIBS_START=
 # NEEDSPLIB=no
-# PI_MPI_LIBNAME=
 
 # Internal variables
 # Show is set to echo to cause the compilation command to be echoed instead
@@ -104,7 +219,6 @@ handle_executable=
 ilp64=no
 case_trace=no
 trace_opt=no
-param_was_processed=
 PROFILE_INCPATHS=""
 PROFILE_PRELIB=""
 PROFILE_POSTLIB=""
@@ -124,264 +238,285 @@ LINKER_OPTION='-link'
 # Look through the arguments for arguments that indicate compile only.
 # If these are *not* found, add the library options
 
-linking=yes
-allargs=
-argt=
-paramt=
-link_arg_was_processed=
-link_args=
-
-for arg in "$@" ; do
-    # Set addarg to no if this arg should be ignored by the C compiler
-    addarg=yes
-    qarg=$arg
-    # Only one -link must be present in the command line
-    if [ "$link_arg_was_processed" == "yes" ]; then
-        link_args="$link_args $qarg"
-        continue
-    fi
-    case "$arg" in
-        -link)
-            link_arg_was_processed=yes
-            addarg=no
-            ;;
-        -show_env)
-            show_env=yes
-            ;;
+eat=
+# Assume a capable shell
+lib_path=
+shared=:
+linker_opts=
+for arg
+do
+  if test -n "$eat"; then
+    eat=
+  else
+    case $1 in
+      -show_env)
+        show_env=yes
+        ;;
+      # ----------------------------------------------------------------
+      # Options that control how we use mpicc (e.g., -show, etc.)
+      -echo)
+        set -x
+        ;;
+      -cc=*)
+        CC=`echo A$arg | sed -e 's/A-cc=//g'`
+        if [ "$#" -eq "1" ] ; then
+          echo "Error: extra arguments required"
+          echo "usage: mpicc -cc=<name> -v"
+          exit 1
+        fi
+        ;;
+      -link_mpi=*)
+        mpilib_override=`echo A$arg | sed -e 's/A-link_mpi=//g'`
+        ;;
+      -cxx=*)
+        CC=`echo A$arg | sed -e 's/A-cxx=//g'`
+        if [ "$#" -eq "1" ] ; then
+          echo "Error: extra arguments required"
+          echo "usage: $(basename $0) -cxx=<name> -v"
+          exit 1
+        fi
+        need_cxx_lib=yes
+        if [ "$CC" == "icpx" ]; then
+          USE_ICPX=yes
+          LIB_PREFIX=/l
+          LINKER_OPTION=
+        fi
+        ;;
+      -show)
+        Show=echo
+        ;;
+      -shared)
+        static_mpi=no
+        ;;
         # ----------------------------------------------------------------
-        # Compiler options that affect whether we are linking or no
-        -c|-S|-E|-QM|-QMM)
-            linking=no
-            ;;
-        -o)
-            handle_executable=yes
-            addarg=no
-            ;;
+        # -compile_info included for backward compatibility
+        -compile-info|-compile_info)
+        Show=echo
+        ;;
         # ----------------------------------------------------------------
-        # Options that control how we use mpicc (e.g., -show, etc.)
-        -echo)
-            addarg=no
-            set -x
-            ;;
-        -cc=*)
-            CC=`echo A$arg | sed -e 's/A-cc=//g'`
-            addarg=no
-            ;;
-        -link_mpi=*)
-            mpilib_override=`echo A$arg | sed -e 's/A-link_mpi=//g'`
-            addarg=no
-            ;;
-        -cxx=*)
-            CC=`echo A$arg | sed -e 's/A-cxx=//g'`
-            addarg=no
-            need_cxx_lib=yes
-            if [ "$CC" == "icpx" ]; then
-                USE_ICPX=yes
-                LIB_PREFIX=/l
-                LINKER_OPTION=
-            fi
-            ;;
-        -show)
-            addarg=no
-            Show=echo
-            ;;
-        -static)
-            static_mpi=yes
-            addarg=no
-            ;;
-        -shared)
-            static_mpi=no
-            addarg=no
-            ;;
-        -config=*)
-            addarg=no
-            CCname=`echo A$arg | sed -e 's/A-config=//g'`
-            if [ -f "$I_MPI_CFGDIR/mpicc-$CCname.conf" ]; then
-                . "$I_MPI_CFGDIR/mpicc-$CCname.conf"
-            else
-                echo "Configuration file mpicc-$CCname.conf was not found."
-            fi
-            ;;
-            # ----------------------------------------------------------------
-            # -compile_info included for backward compatibility
-            -compile-info|-compile_info)
-            Show=echo
-            addarg=no
-            ;;
-            # ----------------------------------------------------------------
-            # -link_info included for backward compatibility
-            -link-info|-link_info)
-            Show=echo
-            addarg=no
-            ;;
-        -v)
-            # Pass this argument to the compiler as well.
-            echo "$(basename $0) for the Intel(R) MPI Library $MPIVERSION for Windows*"
-            echo "Copyright Intel Corporation."
-            addarg=no
+        # -link_info included for backward compatibility
+        -link-info|-link_info)
+        Show=echo
+        ;;
+      -profile=*)
+        # Pass the name of a profiling configuration.  As
+        # a special case, <name>.lib or <name>.dll may be used
+        # if the library is in $libdir
+        # Loading the profConf file is handled below
+        profConf=`echo A$arg | sed -e 's/A-profile=//g'`
+        ;;
+      -Z7|-Zi|-ZI)
+        MPILIBDIR=$I_MPI_DBG_LIB_DIR
+        ;;
+      -debug|-debug:extended|-debug:semantic_stepping|-debug:full|-debug:partial|-debug:minimal)
+        MPILIBDIR=$I_MPI_DBG_LIB_DIR
+        ;;
+      -debug:none)
+        ;;
+      -mt_mpi)
+        ;;
+      -ilp64)
+        ilp64=yes
+        ;;
+      -t | -trace)
+        if [ -z "$VT_ROOT" ]; then
+          echo "You need to set VT_ROOT env variable to use -trace option"
+          exit 3
+        fi
+        if [ -z "$VT_LIB_DIR" ]; then
+          if [ -z "$VT_SLIB_DIR" ]; then
+            echo "You have to source <ITAC>/bin/itacvars.bat <mpi> to use -trace option"
             exit 3
+          fi
+        fi
+        I_MPI_TRACE_LIB=VT.lib
+        I_MPI_TRACE_EXTRA_LIB=$VT_ADD_LIBS
+        I_MPI_CFLAGS="$I_MPI_CFLAGS -I\"${VT_ROOT}/include\""
+        trace_opt=yes
+        case_trace=no
+        if [ "$2" == "log" ]; then
+          MPILIBDIR='/log'
+          eat=1
+        fi
+        ;;
+      -check_mpi)
+        if [ -z "$VT_ROOT" ]; then
+          echo "You need to set VT_ROOT env variable to use -check_mpi option"
+          exit 3
+        fi
+        if [ -z "$VT_LIB_DIR" ]; then
+          if [ -z "$VT_SLIB_DIR" ]; then
+            echo "You have to source <ITAC>/bin/itacvars.bat <mpi> to use -check_mpi option"
+            exit 3
+          fi
+        fi
+        I_MPI_TRACE_LIB=VTmc.lib
+        I_MPI_TRACE_EXTRA_LIB=$VT_ADD_LIBS
+        I_MPI_CFLAGS="$I_MPI_CFLAGS -I\"${VT_ROOT}/include\""
+        trace_opt=yes
+        ;;
+      -Fe | -o)
+        # configure might choose to run compile as 'compile cc -o foo foo.c'.
+        eat=1
+        case $2 in
+          *.o | *.lo | *.[oO][bB][jJ])
+            file=$(func_file_conv "$2")
+            set x "$@" -Fo"$file"
+            shift
             ;;
-        -profile=*)
-            # Pass the name of a profiling configuration.  As
-            # a special case, <name>.lib or <name>.dll may be used
-            # if the library is in $libdir
-            profConf=`echo A$arg | sed -e 's/A-profile=//g'`
-            addarg=no
-            # Loading the profConf file is handled below
+          *.dll)
+            file=$(func_file_conv "$2")
+            set x "$@" -LD -Fe"$file"
+            shift
             ;;
-        -help)
-            # Print mini-help if started without parameters
-            echo "Simple script to compile and/or link MPI programs."
-            echo "This script knows the default flags and libraries, and can handle"
-            echo "alternative C compilers and the associated flags and libraries."
-            echo "Usage: `basename $0` [options] <files>"
-            echo "----------------------------------------------------------------------------"
-            echo "The following options are supported:"
-            echo "   -cc=<name>      to specify a C compiler name: i.e. -cc=icl.exe"
-            echo "   -cxx=<name>     to specify a C++ compiler name: i.e. -cxx=icpc.exe"
-            echo "   -echo           to print the scripts during its execution"
-            echo "   -show           to show command lines without real calling"
-            echo "   -show_env       to show environment variables"
-            echo "   -v              to print version of the script"
-            echo "   -ilp64          to link ilp64 wrapper library"
-            echo "   -t or -trace"
-            echo "                   to build with the Intel(R) Trace Collector Library"
-            echo "   -check_mpi      to build with the Intel(R) Trace Collector correctness"
-            echo "                   checking library"
-            echo "   -profile=<name> to specify a profile configuration file in"
-            echo "                   the I_MPI_COMPILER_CONFIG_DIR folder: i.e. -profile=myprofile"
-            echo "   -link_mpi=<name>"
-            echo "                   link against the specified version of the Intel(R) MPI Library"
-            echo "                   i.e -link_mpi=opt|dbg"
-            echo "All other options will be passed to the compiler without changing."
-            echo "----------------------------------------------------------------------------"
-            echo "The following environment variables are used:"
-            echo "   I_MPI_ROOT      Intel(R) MPI Library installation directory path"
-            echo "   I_MPI_{CC,CXX} or MPICH_{CC,CXX}"
-            echo "                   the path/name of the underlying compiler to be used"
-            echo "   I_MPI_{CC,CXX}_PROFILE or MPI_{CC,CXX}_PROFILE"
-            echo "                   name of profile file (without extension)"
-            echo "   I_MPI_COMPILER_CONFIG_DIR"
-            echo "                   folder which contains configuration files *.conf"
-            echo "   VT_ROOT         Intel(R) Trace Collector installation directory path"
-            echo "----------------------------------------------------------------------------"
-            exit 0
+          *)
+            file=$(func_file_conv "$2")
+            set x "$@" -Fe"$file"
+            shift
             ;;
-        -Z7|-Zi|-ZI)
-            MPILIBDIR=$I_MPI_DBG_LIB_DIR
-            ;;
-        -debug|-debug:extended|-debug:semantic_stepping|-debug:full|-debug:partial|-debug:minimal)
-            MPILIBDIR=$I_MPI_DBG_LIB_DIR
-            ;;
-        -debug:none)
-            ;;
-        -mt_mpi)
-            addarg=no
-            ;;
-        -ilp64)
-            ilp64=yes
-            addarg=no
-            ;;
-        -l*)
-            qarg="${arg#-l}.lib"
-            ;;
-        -t | -trace)
-            if [ -z "$VT_ROOT" ]; then
-                echo "You need to set VT_ROOT env variable to use -trace option"
-                exit 3
-            fi
-            if [ -z "$VT_LIB_DIR" ]; then
-                if [ -z "$VT_SLIB_DIR" ]; then
-                    echo "You have to source <ITAC>/bin/itacvars.bat <mpi> to use -trace option"
-                    exit 3
+        esac
+        ;;
+      -I*)
+        file=$(func_file_conv "${1#-I}")
+        set x "$@" -I"$file"
+        shift
+        ;;
+      -l*)
+        func_cl_dashl "${1#-l}"
+        set x "$@" "$lib"
+        shift
+        ;;
+      -L*)
+        func_cl_dashL "${1#-L}"
+        ;;
+      --out-implib)
+        eat=1
+        file=$(func_file_conv "$2")
+        linker_opts="$linker_opts -implib:$file"
+        ;;
+      --out-implib=*)
+        implib=${1#--out-implib=}
+        file=$(func_file_conv "$implib")
+        linker_opts="$linker_opts -implib:$file"
+        ;;
+      --output-def)
+        eat=1
+        file=$(func_file_conv "$2")
+        if test -f "$file"; then
+          linker_opts="$linker_opts -def:$file"
+        fi
+        ;;
+      --output-def=*)
+        def=${1#--output-def=}
+        if test -f "$def"; then
+          file=$(func_file_conv "$def")
+          linker_opts="$linker_opts -def:$file"
+        fi
+        ;;
+      -static)
+        # static_mpi=yes
+        shared=false
+        ;;
+      -Wl,*)
+        implib_option=
+        def_option=
+        dll_option=
+        arg=${1#-Wl,}
+        save_ifs="$IFS"; IFS=','
+        for flag in $arg; do
+          IFS="$save_ifs"
+          case $flag in
+            --whole-archive)
+              linker_opts="$linker_opts -wholearchive"
+              ;;
+            --out-implib)
+              implib_option=1
+              ;;
+            --out-implib=*)
+              implib=${flag#--out-implib=}
+              file=$(func_file_conv "$implib")
+              linker_opts="$linker_opts -implib:$file"
+              ;;
+            --output-def)
+              def_option=1
+              ;;
+            --output-def=*)
+              # FIXME:
+              # msvc don't support to generate .def from linker, but use this option
+              # for those library hasn't use libtool to generate .def/.exp
+              def=${flag#--output-def=}
+              if test -f "$def"; then
+                file=$(func_file_conv "$def")
+                linker_opts="$linker_opts -def:$file"
+              fi
+              ;;
+            -DLL)
+              dll_option=1
+              ;;
+            -IMPLIB:*)
+              if test -n "$dll_option"; then
+                implib=${flag#-IMPLIB:}
+                file=$(func_file_conv "$implib")
+                linker_opts="$linker_opts -implib:$file"
+              fi
+              ;;
+            *)
+              if test -n "$def_option"; then
+                if test -f "$flag"; then
+                  file=$(func_file_conv "$flag")
+                  linker_opts="$linker_opts -def:$file"
                 fi
-            fi
-            I_MPI_TRACE_LIB=VT.lib
-            I_MPI_TRACE_EXTRA_LIB=$VT_ADD_LIBS
-            I_MPI_CFLAGS="$I_MPI_CFLAGS -I$VT_ROOT/include"
-            trace_opt=yes
-            addarg=no
-            ;;
-        -check_mpi)
-            if [ -z "$VT_ROOT" ]; then
-                echo "You need to set VT_ROOT env variable to use -check_mpi option"
-                exit 3
-            fi
-            if [ -z "$VT_LIB_DIR" ]; then
-                if [ -z "$VT_SLIB_DIR" ]; then
-                    echo "You have to source <ITAC>/bin/itacvars.bat <mpi> to use -check_mpi option"
-                    exit 3
-                fi
-            fi
-            I_MPI_TRACE_LIB=VTmc.lib
-            I_MPI_TRACE_EXTRA_LIB=$VT_ADD_LIBS
-            I_MPI_CFLAGS="$I_MPI_CFLAGS -I${VT_ROOT}/include"
-            trace_opt=yes
-            addarg=no
-            ;;
-        *.cc | *.CC | *.cxx | *.CXX | *.[cC]++ | *.c | *.cpp | *.CPP)
-            qarg="$(cygpath -m "$arg")"
-            ;;
-        *.o | *.lo | *.[oO][bB][jJ])
-            if [ "x$handle_executable" = "xyes" ] ; then
-                qarg='-Fo'"$(cygpath -m "$arg")"
-                handle_executable=
-            fi
-            ;;
-        *.dll)
-            if [ "x$handle_executable" = "xyes" ] ; then
-                qarg='-LD -Fe'"$(cygpath -m "$arg")"
-                handle_executable=
-            fi
-            ;;
-        *.exe)
-            if [ "x$handle_executable" = "xyes" ] ; then
-                qarg='-Fe'"$(cygpath -m "$arg")"
-                handle_executable=
-            fi
-            ;;
-        # Other arguments.  We are careful to handle arguments with
-        # quotes (we try to quote all arguments in case they include
-        # any spaces)
-        *\"*)
-            qarg="'"$arg"'"
-            ;;
-        *\'*)
-            qarg=`echo \"$arg\"`
-            ;;
-        *)
-            if [ "x$handle_executable" = "xyes" ] ; then
-                qarg='-Fe'"$arg"
-                handle_executable=
-            else
-                qarg=$arg
-            fi
-            ;;
+              elif test -n "$implib_option"; then
+                file=$(func_file_conv "$flag")
+                linker_opts="$linker_opts -implib:$file"
+              else
+                linker_opts="$linker_opts $flag"
+              fi
+              ;;
+          esac
+        done
+        IFS="$save_ifs"
+        ;;
+      -Xlinker)
+        eat=1
+        linker_opts="$linker_opts $2"
+        ;;
+      -*)
+        set x "$@" "$1"
+        shift
+        ;;
+      *.cc | *.CC | *.cxx | *.CXX | *.[cC]++)
+        file=$(func_file_conv "$1")
+        set x "$@" -Tp"$file"
+        shift
+        ;;
+      *.c | *.cpp | *.CPP | *.lib | *.LIB | *.Lib | *.OBJ | *.obj | *.[oO])
+        file=$(func_file_conv "$1")
+        set x "$@" "$file"
+        shift
+        ;;
+      *)
+        set x "$@" "$1"
+        shift
+        ;;
     esac
-    if [ $addarg = yes ] ; then
-        allargs="$allargs $qarg"
-    fi
+  fi
+  shift
 done
-
-if [ $# -eq 0 ] ; then
-    echo "Error: Command line argument is needed!"
-    "$0" -help
-    exit 1
-fi
 
 # Override mpi library in regards to -link_mpi
 if [ "$mpilib_override" == "opt" ]; then
-    MPILIBDIR="$I_MPI_RELEASE_LIB_DIR"
-    I_MPI_LIBNAME=impi
+  MPILIBDIR="$I_MPI_RELEASE_LIB_DIR"
+  I_MPI_LIBNAME=impi
 elif [ "$mpilib_override" == "dbg" ]; then
-    MPILIBDIR=$I_MPI_DBG_LIB_DIR
-    I_MPI_LIBNAME=impi
+  MPILIBDIR=$I_MPI_DBG_LIB_DIR
+  I_MPI_LIBNAME=impi
 elif [ -n "$mpilib_override" ]; then
-    echo "Warning: incorrect library version specified. Automatically selected library will be used"
+  echo "Warning: incorrect library version specified. Automatically selected library will be used"
 fi
 
 if [ -z "$MPILIBDIR" ]; then
-    MPILIBDIR=$I_MPI_RELEASE_LIB_DIR
+  MPILIBDIR=$I_MPI_RELEASE_LIB_DIR
 fi
 
 # If there is a file $I_MPI_CFGDIR/mpicc-$CCname.conf,
@@ -392,18 +527,18 @@ fi
 CCname=$CC
 # echo CCname=$CCname
 if [ -f "${I_MPI_CFGDIR}/mpicc-$CCname.conf" ]; then
-    . "${I_MPI_CFGDIR}/mpicc-$CCname.conf"
+  . "${I_MPI_CFGDIR}/mpicc-$CCname.conf"
 fi
 
 if [ "$trace_opt" == "yes" ]; then
-    if [ -z "$I_MPI_TRACE_PATH" ]; then
-        if [ "$static_log" == "yes" ]; then
-            I_MPI_TRACE_PATH="$VT_LIB_DIR"
-        else
-            I_MPI_TRACE_PATH="$VT_SLIB_DIR"
-        fi
+  if [ -z "$I_MPI_TRACE_PATH" ]; then
+    if [ "$static_log" == "yes" ]; then
+      I_MPI_TRACE_PATH="$VT_LIB_DIR"
+    else
+      I_MPI_TRACE_PATH="$VT_SLIB_DIR"
     fi
-    VTTRACE_LIBS_START="$I_MPI_TRACE_PATH $I_MPI_TRACE_LIB $I_MPI_TRACE_EXTRA_LIB"
+  fi
+  VTTRACE_LIBS_START="$I_MPI_TRACE_PATH $I_MPI_TRACE_LIB $I_MPI_TRACE_EXTRA_LIB"
 fi
 
 # Derived variables.  These are assembled from variables set from the
@@ -412,68 +547,51 @@ fi
 
 mpilibs="${LIB_PREFIX}${I_MPI_LIBNAME}.lib"
 if [ "$need_cxx_lib" == "yes" ]; then
-    mpilibs="$mpilibs ${LIB_PREFIX}${I_MPI_LIBNAME}cxx.lib"
+  mpilibs="$mpilibs ${LIB_PREFIX}${I_MPI_LIBNAME}cxx.lib"
 fi
-
-# if [ "$NEEDSPLIB" == "yes" ]; then
-#     mpilibs="${PI_MPI_LIBNAME}.lib $mpilibs"
-# fi
 
 # Handle the case of a profile switch
 if [ -n "$profConf" ]; then
-    if [ -f "${I_MPI_LIBDIR}/${profConf}.lib" ]; then
-        profConfLibExists=yes
-    fi
-    if [ -f "${I_MPI_CFGDIR}/${profConf}.conf" ]; then
-        profConfFileExists=yes
-    fi
+  if [ -f "${I_MPI_LIBDIR}/${profConf}.lib" ]; then
+    profConfLibExists=yes
+  fi
+  if [ -f "${I_MPI_CFGDIR}/${profConf}.conf" ]; then
+    profConfFileExists=yes
+  fi
 fi
 if [ "$profConfLibExists" == "yes" ]; then
-    mpilibs="${profConf}.lib $mpilibs"
+  mpilibs="${I_MPI_LIBDIR}/${profConf}.lib $mpilibs"
 elif [ -n "$profConf" ]; then
-    if [ "$profConfFileExists" == "yes" ]; then
-        . "${I_MPI_CFGDIR}/${profConf}.conf"
-    else
-        echo "The configuration file ${I_MPI_CFGDIR}/${profConf}.conf is not found!"
-    fi
+  if [ "$profConfFileExists" == "yes" ]; then
+    . "${I_MPI_CFGDIR}/${profConf}.conf"
+  else
+    echo "The configuration file ${I_MPI_CFGDIR}/${profConf}.conf is not found!"
+  fi
 fi
 if [ -n "$PROFILE_INCPATHS" ]; then I_MPI_CFLAGS="$PROFILE_INCPATHS $I_MPI_CFLAGS"; fi
 if [ -n "$PROFILE_PRELIB" ]; then mpilibs="$PROFILE_PRELIB $mpilibs"; fi
 if [ -n "$PROFILE_POSTLIB" ]; then mpilibs="$mpilibs $PROFILE_POSTLIB"; fi
 
 if [ "$ilp64" == "yes" ]; then
-    mpilibs="libmpi_ilp64.lib $mpilibs"
+  mpilibs="libmpi_ilp64.lib $mpilibs"
 fi
-
-# A temporary statement to invoke the compiler
-# Place the -L before any args incase there are any mpi libraries in there.
-# Eventually, we'll want to move this after any non-MPI implementation
-# libraries.
-# We use a single invocation of the compiler.  This will be adequate until
-# we run into a system that uses a separate linking command.  With any luck,
-# such archaic systems are no longer with us.  This also lets us
-# accept any argument; we don't need to know if we've seen a source
-# file or an object file.  Instead, we just check for an option that
-# suppressing linking, such as -c or -M.
 
 if [ "$show_env" == "yes" ]; then
-    env | more
-    exit 0
+  env | more
+  exit 0
 fi
 
-if [ "$linking" == "yes" ]; then
-    if [ -z "$I_MPI_TRACE_PATH" ]; then
-        # Place default mpi library at end for linking with ITAC
-        $Show $CC $I_MPI_CFLAGS $I_MPI_LDFLAGS "$allargs" -I\"${I_MPI_INCDIR}\" -I\"${I_MPI_INCDIR}/mpi\" $LINKER_OPTION /LIBPATH:\"${I_MPI_ROOT}${MPILIBDIR}\" /LIBPATH:\"${I_MPI_LIBDIR}\" $I_MPI_OTHERLIBS $link_args $mpilibs
-    else
-        $Show $CC $I_MPI_CFLAGS $I_MPI_LDFLAGS "$allargs" -I\"${I_MPI_INCDIR}\" -I\"${I_MPI_INCDIR}/mpi\" $LINKER_OPTION /LIBPATH:\"${I_MPI_TRACE_PATH}\" /LIBPATH:\"${I_MPI_ROOT}${MPILIBDIR}\" /LIBPATH:\"${I_MPI_LIBDIR}\" $VTTRACE_LIBS_START $mpilibs $I_MPI_OTHERLIBS $link_args
-    fi
-else
-    $Show $CC $I_MPI_CFLAGS "$allargs" -I\"${I_MPI_INCDIR}\" -I\"${I_MPI_INCDIR}/mpi\"
+if test -n "$linker_opts"; then
+  if [ -z "$I_MPI_TRACE_PATH" ]; then
+    linker_opts="$I_MPI_LDFLAGS ${LINKER_OPTION}$linker_opts -LIBPATH:\'${I_MPI_ROOT}${MPILIBDIR}\' -LIBPATH:\'${I_MPI_LIBDIR}\' $mpilibs"
+  else
+    linker_opts="$I_MPI_LDFLAGS ${LINKER_OPTION}$linker_opts -LIBPATH:\'${I_MPI_ROOT}${MPILIBDIR}\' -LIBPATH:\'${I_MPI_LIBDIR}\' $VTTRACE_LIBS_START $mpilibs"
+  fi
 fi
+$Show $CC $I_MPI_CFLAGS -I\'${I_MPI_INCDIR}\' -I\'${I_MPI_INCDIR}/mpi\' "$@" $linker_opts
 
 rc=$?
 if [ $rc -eq 1 ]; then
-    echo ERROR in the compiling/linking [$rc]
-    exit 3
+  echo ERROR in the compiling/linking [$rc]
+  exit 3
 fi

@@ -49,8 +49,13 @@ patch_package()
   patch -Np1 -i "$PKG_DIR/002-liboggz-fix-unresolved-external-symbol.diff"
   patch -Np1 -i "$PKG_DIR/003-liboggz-msvc-do-not-have-unistd-h.diff"
   patch -Np1 -i "$PKG_DIR/004-liboggz-fix-strcasecmp-on-msvc.diff"
-  # TODO: The configure script of liboggz is old, some patch have to be done
-  #       if want to enable msvc can build shared library
+  # NOTE: In order to fix msvc build shared library, the configure and ltmain.sh
+  #       need to be updated.
+  patch -Np1 -i "$PKG_DIR/005-liboggz-update-autotools-version.diff"
+
+  WANT_AUTOCONF='2.69' WANT_AUTOMAKE='1.16' autoreconf -ifv
+  rm -rfv autom4te.cache
+  find . -name "*~" -type f -print -exec rm -rfv {} \;
 
   # XXX: libtool don't have options can set the naming style of static and
   #      shared library. Here is only a workaround.

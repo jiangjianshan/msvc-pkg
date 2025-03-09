@@ -45,7 +45,7 @@ SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
 C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:contract -Qopenmp -Qopenmp-simd -Wno-implicit-function-declaration -Wno-pointer-sign -Xclang -O2 -fms-extensions -fms-compatibility -fms-compatibility-version=19.42'
 C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX'
-F_OPTS='-nologo -MD -Qdiag-disable:10448 -fp:contract -Qopenmp -Qopenmp-simd -names:lowercase -assume:underscore -fpp'
+F_OPTS='-nologo -MD -Qdiag-disable:10448 -fp:contract -Qopenmp -Qopenmp-simd -fpp'
 
 clean_build()
 {
@@ -79,9 +79,9 @@ configure_stage()
   #    on some libraries will detect whether is msvc compiler according to
   #    '*cl | cl.exe'
   # 3. If not set 'MPILIBS="-limpi"', after the following command:
-  #    /bin/sh ../libtool  --tag=CC   --mode=link /e/Githubs/msvc-pkg/wrappers/mpiicc
+  #    /bin/sh ../libtool  --tag=CC   --mode=link /e/Githubs/msvc-pkg/wrappers/mpiicl
   #    it will be not except one as here:
-  #    libtool: link: /e/Githubs/msvc-pkg/wrappers/mpiicc
+  #    libtool: link: /e/Githubs/msvc-pkg/wrappers/mpiicl
   #    but will be the one not related to mpi wrapper
   #    libtool: link: /e/Githubs/msvc-pkg/wrappers/compile cl
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
@@ -99,8 +99,8 @@ configure_stage()
   FCFLAGS="$F_OPTS"                                                            \
   LD="lld-link"                                                                \
   LDFLAGS="-fuse-ld=lld"                                                       \
-  MPICC="$ROOT_DIR/wrappers/mpiicc"                                            \
-  MPICXX="$ROOT_DIR/wrappers/mpiicc"                                           \
+  MPICC="$ROOT_DIR/wrappers/mpiicl"                                            \
+  MPICXX="$ROOT_DIR/wrappers/mpiicl"                                           \
   MPIF77="$ROOT_DIR/wrappers/mpiifx"                                           \
   MPILIBS="-limpi"                                                             \
   NM="dumpbin -nologo -symbols"                                                \

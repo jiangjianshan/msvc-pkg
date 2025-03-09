@@ -6,6 +6,7 @@ steps:
   a:
     dependencies:
       - pkg-config
+      - ADOL-C
       - boost
       - fftw:c
       - sparsehash

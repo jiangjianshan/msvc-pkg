@@ -48,6 +48,8 @@ patch_package()
   patch -Np1 -i "$PKG_DIR/001-cmh-compile-on-msvc.diff"
   export GNULIB_SRCDIR=$RELS_DIR/gnulib
   WANT_AUTOCONF='2.69' WANT_AUTOMAKE='1.16' ./autogen.sh
+  rm -rfv autom4te.cache
+  find . -name "*~" -type f -print -exec rm -rfv {} \;
 
   # XXX: libtool don't have options can set the naming style of static and
   #      shared library. Here is only a workaround.

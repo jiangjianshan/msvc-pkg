@@ -76,35 +76,37 @@ tionFolder\s{4}REG_SZ\s{4}).*')
     WindowsSDKVersion=$(cmd //c REG QUERY "HKLM\SOFTWARE\WOW6432Node\Microsoft\Microsoft SDKs\Windows\v10.0" -v "ProductVersion" | grep -oP '(?<=\s{4}ProductVersion\s{4}REG_SZ\s{4}).*')
   fi
   WindowsSDKVersion=$WindowsSDKVersion'.0'
+  WindowsSdkDir=$(cygpath -d "${WindowsSdkDir}")
   # for creating 32-bit or 64-bit binaries: through the following bash commands:
   # Set environment variables for using MSVC 14,
   # for creating native 32-bit or 64-bit Windows executables.
   # Windows tools
-  PATH=$(prepend_path "$(cygpath -u 'C:\Program Files (x86)\Windows Kits\10')/bin/${WindowsSDKVersion}/${ARCH}" "${PATH:-}" ":")
+  PATH=$(prepend_path "$(cygpath -u "${WindowsSdkDir}")bin/${WindowsSDKVersion}/${ARCH}" "${PATH:-}" ":")
   # Windows C library headers and libraries.
-  WindowsCrtIncludeDir='C:\Program Files (x86)\Windows Kits\10\Include\'"${WindowsSDKVersion}"'\ucrt'
-  WindowsCrtLibDir='C:\Program Files (x86)\Windows Kits\10\Lib\'"${WindowsSDKVersion}"'\ucrt\'
+  WindowsCrtIncludeDir="${WindowsSdkDir}"'Include\'"${WindowsSDKVersion}"'\ucrt'
+  WindowsCrtLibDir="${WindowsSdkDir}"'Lib\'"${WindowsSDKVersion}"'\ucrt\'
   INCLUDE=$(prepend_path "${WindowsCrtIncludeDir}" "${INCLUDE:-}" ";")
   LIB=$(prepend_path "${WindowsCrtLibDir}${ARCH}" "${LIB:-}" ";")
   # Windows API headers and libraries.
-  WindowsSdkIncludeDir='C:\Program Files (x86)\Windows Kits\10\Include\'"${WindowsSDKVersion}"'\'
-  WindowsSdkLibDir='C:\Program Files (x86)\Windows Kits\10\Lib\'"${WindowsSDKVersion}"'\um\'
+  WindowsSdkIncludeDir="${WindowsSdkDir}"'Include\'"${WindowsSDKVersion}"'\'
+  WindowsSdkLibDir="${WindowsSdkDir}"'Lib\'"${WindowsSDKVersion}"'\um\'
   INCLUDE=$(prepend_path "${WindowsSdkIncludeDir}um" "${INCLUDE:-}" ";")
   INCLUDE=$(prepend_path "${WindowsSdkIncludeDir}shared" "${INCLUDE:-}" ";")
   LIB=$(prepend_path "${WindowsSdkLibDir}${ARCH}" "${LIB:-}" ";")
   # Windows WinRT library headers and libraries.
-  WindowsWinrtIncludeDir='C:\Program Files (x86)\Windows Kits\10\Include\'"${WindowsSDKVersion}"'\winrt'
-  WindowsWinrtLibDir='C:\Program Files (x86)\Windows Kits\10\Lib\'"${WindowsSDKVersion}"'\winrt\'
+  WindowsWinrtIncludeDir="${WindowsSdkDir}"'Include\'"${WindowsSDKVersion}"'\winrt'
+  WindowsWinrtLibDir="${WindowsSdkDir}"'Lib\'"${WindowsSDKVersion}"'\winrt\'
   INCLUDE=$(prepend_path "${WindowsWinrtIncludeDir}" "${INCLUDE:-}" ";")
   LIB=$(prepend_path "${WindowsWinrtLibDir}${ARCH}" "${LIB:-}" ";")
   # Windows CppWinRT library headers and libraries.
-  WindowsCppWinrtIncludeDir='C:\Program Files (x86)\Windows Kits\10\Include\'"${WindowsSDKVersion}"'\cppwinrt'
-  WindowsCppWinrtLibDir='C:\Program Files (x86)\Windows Kits\10\Lib\'"${WindowsSDKVersion}"'\cppwinrt\'
+  WindowsCppWinrtIncludeDir="${WindowsSdkDir}"'Include\'"${WindowsSDKVersion}"'\cppwinrt'
+  WindowsCppWinrtLibDir="${WindowsSdkDir}"'Lib\'"${WindowsSDKVersion}"'\cppwinrt\'
   INCLUDE=$(prepend_path "${WindowsCppWinrtIncludeDir}" "${INCLUDE:-}" ";")
   LIB=$(prepend_path "${WindowsCppWinrtLibDir}${ARCH}" "${LIB:-}" ";")
   # Visual C++ tools, headers and libraries.
   VSWHERE=$(cygpath -u 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe')
   VSINSTALLDIR=$("$VSWHERE" -nologo -latest -products "*" -all -property installationPath | tr -d '\r')
+  VSINSTALLDIR=$(cygpath -d "${VSINSTALLDIR}")
   VSINSTALLVERSION=$("$VSWHERE" -nologo -latest -products "*" -all -property installationVersion | tr -d '\r')
   VCToolsVersion=$(head -1 "${VSINSTALLDIR}"'\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt' | tr -d '\r')
   VCINSTALLDIR="${VSINSTALLDIR}"'\VC\Tools\MSVC\'"${VCToolsVersion}"
@@ -126,11 +128,11 @@ tionFolder\s{4}REG_SZ\s{4}).*')
   # location of Microsoft.Cpp.Default.props
   PATH=$(prepend_path "$(cygpath -u "${VSINSTALLDIR}")/MSBuild/Microsoft/VC/v${VSINSTALLVERSION%%.*}0" "${PATH:-}" ":")
   echo "Initializing Visual Studio command-line environment..."
-  echo "Visual C++ Tools Version                               : $VCToolsVersion"
-  echo "Visual C++ Install Directory                           : $VCINSTALLDIR"
-  echo "Windows SDK Install Directory                          : $WindowsSdkDir"
-  echo "Windows SDK version                                    : $WindowsSDKVersion"
-  echo "Visual Studio command-line environment initialized for : $ARCH"
+  echo "Visual C++ Tools Version                               : ${VCToolsVersion}"
+  echo "Visual C++ Install Directory                           : $(cygpath -w -l "${VCINSTALLDIR}")"
+  echo "Windows SDK Install Directory                          : $(cygpath -w -l "${WindowsSdkDir}")"
+  echo "Windows SDK version                                    : ${WindowsSDKVersion}"
+  echo "Visual Studio command-line environment initialized for : ${ARCH}"
   export WindowsSdkDir
   export WindowsSDKVersion
   export PATH
@@ -148,7 +150,7 @@ config_oneapi()
   #
   # Intel OneAPI environment initialized for $ARCH
   #
-  ONEAPI_ROOT=$(cygpath -d "C:\Program Files (x86)\Intel\oneAPI")
+  ONEAPI_ROOT=$(cygpath -d 'C:\Program Files (x86)\Intel\oneAPI')
   if [[ "$ARCH" == "x64" ]]; then
     INTEL_TARGET_ARCH=intel64
     IPPCP_TARGET_ARCH=intel64
@@ -242,10 +244,11 @@ config_oneapi()
   TBB_BIN_DIR="${ONEAPI_ROOT}"'\tbb\latest\bin'"${TBB_ARCH_SUFFIX:-}"
   TBB_DLL_PATH="${ONEAPI_ROOT}"'\tbb\latest\bin'"${TBB_ARCH_SUFFIX:-}"
   TBB_SCRIPT_DIR="${ONEAPI_ROOT}"'\tbb\latest'
+  echo "Intel OneAPI Install Directory                         : $(cygpath -w -l "${ONEAPI_ROOT}")"
   echo ":: initializing oneAPI environment..."
   echo "   Initializing Visual Studio command-line environment..."
   echo "   Visual Studio version $VCToolsVersion environment configured."
-  echo "   \"$VSINSTALLDIR\""
+  echo "   \"$(cygpath -w -l "${VSINSTALLDIR}")\""
   echo "   Visual Studio command-line environment initialized for: '${ARCH}'"
   echo ":  compiler -- latest"
   echo ":  debugger -- latest"
@@ -299,16 +302,16 @@ config_oneapi()
 config_cuda()
 {
   if [ -n "${CUDA_PATH:-}" ]; then
-    CUDA_HOME=${CUDA_PATH}
+    CUDA_HOME=$(cygpath -d "${CUDA_PATH}")
     PATH=$(prepend_path "$(cygpath -u "${CUDA_HOME}")/bin" "${PATH:-}" ":")
     PATH=$(prepend_path "$(cygpath -u "${CUDA_HOME}")/extras/demo_suite" "${PATH:-}" ":")
     INCLUDE=$(prepend_path "${CUDA_HOME}"'\include' "${INCLUDE:-}" ";")
     LIB=$(prepend_path "${CUDA_HOME}"'\lib\x64' "${LIB:-}" ";")
     NV_COMPUTE=$(deviceQuery | awk '/CUDA Capability Major/{print $(NF)}')
     echo "Initializing CUDA command-line environment..."
-    echo "CUDA Install Directory                                 : $CUDA_HOME"
-    echo "CUDA Capability Major/Minor version number             : $NV_COMPUTE"
-    echo "CUDA command-line environment initialized for          : $ARCH"
+    echo "CUDA Install Directory                                 : $(cygpath -w -l "${CUDA_HOME}")"
+    echo "CUDA Capability Major/Minor version number             : ${NV_COMPUTE}"
+    echo "CUDA command-line environment initialized for          : ${ARCH}"
     export CUDA_HOME
     export PATH
     export LIB

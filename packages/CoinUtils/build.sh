@@ -45,7 +45,7 @@ SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
 C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics'
 C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX -DCOINUTILS_BUILD'
-F_OPTS='-nologo -MD -Qdiag-disable:10448 -fp:precise -Qopenmp -Qopenmp-simd -names:lowercase -assume:underscore'
+F_OPTS='-nologo -MD -Qdiag-disable:10448 -fp:precise -Qopenmp -Qopenmp-simd -fpp'
 
 clean_build()
 {
@@ -74,46 +74,46 @@ configure_stage()
   # 3. Taken care of the logic of func_resolve_sysroot() and func_replace_sysroot()
   #    in ltmain.sh, otherwise may have '-L=*' in the filed of 'dependency_libs' in
   #    *.la. So don't set --with-sysroot if --libdir has been set
-  AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
-  CC="cl"                                                                      \
-  CFLAGS="$C_OPTS"                                                             \
-  CDEFS="$C_DEFS"                                                              \
-  CPP="cl -E"                                                                  \
-  CPPFLAGS="$C_DEFS -I${THIRDPARTY_GLPK_PREFIX:-$PREFIX}/include/coin-or/glpk" \
-  CXX="cl"                                                                     \
-  CXXCPP="cl -E"                                                               \
-  CXXFLAGS="-EHsc $C_OPTS"                                                     \
-  CXXDEFS="$C_DEFS"                                                            \
-  DLLTOOL="link -verbose -dll"                                                 \
-  F77="ifort"                                                                  \
-  FFLAGS="-f77rtl $F_OPTS"                                                     \
-  LD="$ROOT_DIR/wrappers/compile cl"                                           \
-  MPICC="$ROOT_DIR/wrappers/mpicl"                                             \
-  MPICXX="$ROOT_DIR/wrappers/mpicl"                                            \
-  MPIF77="$ROOT_DIR/wrappers/mpif77"                                           \
-  NM="dumpbin -nologo -symbols"                                                \
-  PKG_CONFIG="/usr/bin/pkg-config"                                             \
-  RANLIB=":"                                                                   \
-  RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                \
-  STRIP=":"                                                                    \
-  WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                           \
-  ../CoinUtils/configure --build="$(sh ../config.guess)"                       \
-    --host="$HOST_TRIPLET"                                                     \
-    --prefix="$PREFIX"                                                         \
-    --bindir="$PREFIX/bin"                                                     \
-    --includedir="$PREFIX/include"                                             \
-    --libdir="$PREFIX/lib"                                                     \
-    --enable-static                                                            \
-    --enable-shared                                                            \
-    --enable-msvc                                                              \
-    --enable-coinutils-mempool-override-new                                    \
-    --enable-coinutils-mempool-maxpooled                                       \
-    --enable-gnu-packages                                                      \
-    --disable-rpath                                                            \
-    --with-blas-lib="-lopenblas"                                               \
-    --with-glpk-lib="-lcoinglpk"                                               \
-    --with-lapack-lib="-lopenblas"                                             \
-    ac_cv_prog_f77_v="-verbose"                                                \
+  AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                                       \
+  CC="cl"                                                                                          \
+  CFLAGS="$C_OPTS"                                                                                 \
+  CDEFS="$C_DEFS"                                                                                  \
+  CPP="cl -E"                                                                                      \
+  CPPFLAGS="$C_DEFS"                                                                               \
+  CXX="cl"                                                                                         \
+  CXXCPP="cl -E"                                                                                   \
+  CXXFLAGS="-EHsc $C_OPTS"                                                                         \
+  CXXDEFS="$C_DEFS"                                                                                \
+  DLLTOOL="link -verbose -dll"                                                                     \
+  F77="ifort"                                                                                      \
+  FFLAGS="-f77rtl $F_OPTS"                                                                         \
+  LD="link -nologo"                                                                                \
+  MPICC="$ROOT_DIR/wrappers/mpicl"                                                                 \
+  MPICXX="$ROOT_DIR/wrappers/mpicl"                                                                \
+  MPIF77="$ROOT_DIR/wrappers/mpif77"                                                               \
+  NM="dumpbin -nologo -symbols"                                                                    \
+  PKG_CONFIG="/usr/bin/pkg-config"                                                                 \
+  RANLIB=":"                                                                                       \
+  RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                                    \
+  STRIP=":"                                                                                        \
+  WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                               \
+  ../configure --build="$(sh ../config.guess)"                                                     \
+    --host="$HOST_TRIPLET"                                                                         \
+    --prefix="$PREFIX"                                                                             \
+    --bindir="$PREFIX/bin"                                                                         \
+    --includedir="$PREFIX/include"                                                                 \
+    --libdir="$PREFIX/lib"                                                                         \
+    --enable-msvc                                                                                  \
+    --enable-coinutils-mempool-override-new                                                        \
+    --enable-coinutils-mempool-maxpooled                                                           \
+    --enable-gnu-packages                                                                          \
+    --disable-rpath                                                                                \
+    --with-blas-lib="-lmkl_intel_lp64_dll -lmkl_sequential_dll -lmkl_core_dll"                     \
+    --with-glpk-incdir="${THIRDPARTY_GLPK_PREFIX:-$PREFIX}/include/coin/ThirdParty"                \
+    --with-glpk-lib="-L$(cygpath -u "${THIRDPARTY_GLPK_PREFIX:-$PREFIX}")/lib -lcoinglpk"          \
+    --with-lapack-lib="-lmkl_intel_lp64_dll -lmkl_sequential_dll -lmkl_core_dll"                   \
+    ac_cv_prog_f77_v="-verbose"                                                                    \
+    lt_cv_nm_interface="MS dumpbin"                                                                \
     gt_cv_locale_zh_CN=none || exit 1
 }
 
@@ -125,8 +125,8 @@ patch_stage()
   # To solve following issue
   # libtool: warning: undefined symbols not allowed in x86_64-w64-mingw32 shared libraries; building static only
   echo "Patching libtool in top level"
-  sed                                                                          \
-    -e "s/\(allow_undefined=\)yes/\1no/"                                       \
+  sed                                                                                              \
+    -e "s/\(allow_undefined=\)yes/\1no/"                                                           \
     -i libtool
   chmod +x libtool
 }

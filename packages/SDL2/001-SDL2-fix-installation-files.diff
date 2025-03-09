@@ -1,6 +1,6 @@
 diff -urN SDL2-2.32.0-orig/CMakeLists.txt SDL2-2.32.0/CMakeLists.txt
 --- SDL2-2.32.0-orig/CMakeLists.txt	2025-02-09 01:10:22.000000000 +0800
-+++ SDL2-2.32.0/CMakeLists.txt	2025-02-23 14:53:20.675223100 +0800
++++ SDL2-2.32.0/CMakeLists.txt	2025-02-28 22:24:44.509946500 +0800
 @@ -3622,13 +3622,8 @@
    endif()
  
@@ -17,3 +17,17 @@ diff -urN SDL2-2.32.0-orig/CMakeLists.txt SDL2-2.32.0/CMakeLists.txt
    set(SDL_INSTALL_CMAKEDIR "${SDL_INSTALL_CMAKEDIR_DEFAULT}" CACHE STRING "Location where to install SDL2Config.cmake")
  
    include(CMakePackageConfigHelpers)
+@@ -3732,10 +3727,10 @@
+           install(FILES ${SDL2_BINARY_DIR}/libSDL2${SOPOSTFIX}${SOEXT} DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+       endif()
+     endif()
+-    install(PROGRAMS ${SDL2_BINARY_DIR}/sdl2-config DESTINATION "${CMAKE_INSTALL_BINDIR}")
+-    # TODO: what about the .spec file? Is it only needed for RPM creation?
+-    install(FILES "${SDL2_SOURCE_DIR}/sdl2.m4" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/aclocal")
+   endif()
++  install(PROGRAMS ${SDL2_BINARY_DIR}/sdl2-config DESTINATION "${CMAKE_INSTALL_BINDIR}")
++  # TODO: what about the .spec file? Is it only needed for RPM creation?
++  install(FILES "${SDL2_SOURCE_DIR}/sdl2.m4" DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/aclocal")
+ endif()
+ 
+ ##### Uninstall target #####

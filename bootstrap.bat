@@ -28,7 +28,6 @@ setlocal enabledelayedexpansion
 
 rem  Fix error C2226: syntax error: unexpected type 'llvmrem sysrem UnicodeCharRange'
 for /f "tokens=2*" %%a in ('powershell -command "Get-WinSystemLocale" ^| findstr en-US') do set SYSTEM_LOCALE=%%a
-echo Current system locale: %SYSTEM_LOCALE%
 if "%SYSTEM_LOCALE%" neq "en-US" powershell -command "Set-WinSystemLocale -SystemLocale en-US"
 
 rem  https://docs.python.org/3/using/windows.html#removing-the-max-path-limitation
@@ -58,20 +57,20 @@ call :check_rust || goto :end
 
 git config --global --list | findstr core.autocrlf=false >nul 2>&1
 if "%errorlevel%" neq "0" (
-  echo Dealing with line endings
+  rem Dealing with line endings
   rem See https://stackoverflow.com/questions/1967370/git-replacing-lf-with-crlf
   git config --global core.autocrlf false
 )
 
 git config --system --list | findstr core.filemode=false >nul 2>&1
 if "%errorlevel%" neq "0" (
-  echo Speed up git handling if on bash environment
+  rem Speed up git handling if on bash environment
   git config --system core.filemode false
 )
 
 git config --global --list | findstr core.ignorecase=false >nul 2>&1
 if "%errorlevel%" neq "0" (
-  echo Changed the default behavior of Git for Windows
+  rem Changed the default behavior of Git for Windows
   git config --global core.ignorecase false
 )
 
@@ -85,7 +84,6 @@ rem ============================================================================
 rem Check Visual C++ Build Tools whether has been installed
 rem ==============================================================================
 :check_vcbuildtools
-echo Checking VC Build Tools whether has been installed
 set vsinstall=
 if "%VSINSTALLDIR%" neq "" (
   set "vsinstall=%VSINSTALLDIR%"
@@ -120,7 +118,7 @@ del /Q vs_buildTools.exe
 exit /b 0
 
 rem ==============================================================================
-rem Check CUDA whether has been installed
+rem Check CUDA and CUDNN whether has been installed
 rem ==============================================================================
 :check_cuda
 for /f "usebackq tokens=*" %%i in (`wmic path win32_VideoController get name ^| findstr "NVIDIA"`) do (
@@ -130,14 +128,10 @@ if "!nv_gpu!" == "" (
   echo You don't have NVIDIA GPU on your PC
   exit /b 0
 ) else (
-  echo You NVIDIA GPU is !nv_gpu!
-  echo Checking CUDA and CUDNN whether has been installed
   if "%CUDA_PATH%" == "" (
     set with_cuda=
-    echo:
     echo Do you want to install CUDA and CUDNN? [yes/y/no/n]
     echo If you do not want, just press Enter to cancel
-    echo:
     set /p with_cuda=
     if "!with_cuda!"=="yes" goto :install_cuda
     if "!with_cuda!"=="y" goto :install_cuda
@@ -239,7 +233,6 @@ rem ============================================================================
 rem Check wget whether has been installed
 rem ==============================================================================
 :check_wget
-echo Checking wget whether has been installed
 set WGET_VERSION=1.21.4
 where wget >nul 2>&1
 if "%errorlevel%" neq "0" (
@@ -252,7 +245,6 @@ rem ============================================================================
 rem  Check ninja whether has been installed. If not, install it automatically
 rem ==============================================================================
 :check_ninja
-echo Checking Ninja whether has been installed
 set NINJA_VERSION=1.12.1
 where ninja >nul 2>&1
 if "%errorlevel%" neq "0" (
@@ -270,7 +262,6 @@ rem ============================================================================
 rem  Check python whether has been installed, If not, install it automatically
 rem ==============================================================================
 :check_python
-echo Checking Python whether has been installed
 set PYTHON_VERSION=3.12.9
 where python >nul 2>&1
 if "%errorlevel%" neq "0" (
@@ -283,16 +274,23 @@ if "%errorlevel%" neq "0" (
   start /wait python-!PYTHON_VERSION!!host_suffix!.exe InstallAllUsers=1 TargetDir=C:\Python312 PrependPath=1 Include_test=0 || goto :end
   del /Q python-!PYTHON_VERSION!!host_suffix!.exe
 )
-echo Installing or updating 3rd party libraries for Python
-python -m pip install --upgrade pip setuptools
-python -m pip install --upgrade meson pygments pyyaml requests rich yamllint psutil
+pip list | findstr meson >nul 2>&1
+if "%errorlevel%" neq "0" goto :install_pylibs
+pip list | findstr Pygments >nul 2>&1
+if "%errorlevel%" neq "0" goto :install_pylibs
+pip list | findstr PyYAML >nul 2>&1
+if "%errorlevel%" neq "0" goto :install_pylibs
+pip list | findstr rich >nul 2>&1
+if "%errorlevel%" neq "0" goto :install_pylibs
+exit /b 0
+:install_pylibs
+python -m pip install --upgrade pip setuptools meson Pygments PyYAML rich
 exit /b 0
 
 rem ==============================================================================
 rem  check cmake whether has been installed
 rem ==============================================================================
 :check_cmake
-echo Checking CMake whether has been installed
 set CMAKE_VERSION=3.31.5
 where cmake >nul 2>&1
 if "%errorlevel%" neq "0" (
@@ -311,7 +309,6 @@ rem ============================================================================
 rem  check git whether has been installed
 rem ==============================================================================
 :check_git
-echo Checking Git whether has been installed
 set GIT_VERSION=2.47.1.2
 where git >nul 2>&1
 if "%errorlevel%" neq "0" (
@@ -349,7 +346,7 @@ if not exist "%folder%" (
   mkdir %folder% && %SH% -c "tar -I zstd --exclude='.BUILDINFO' --exclude='.MTREE' --exclude='.PKGINFO' -xvf %archive% -C %folder%" || goto :end
   xcopy /Y /F /S %folder% %dest%
   del /Q %archive%
-  rmdir /S /Q %folders%
+  rmdir /S /Q %folder%
 )
 exit /b 0
 
@@ -357,7 +354,6 @@ rem ============================================================================
 rem  Add more tools in Git for Windows
 rem ==============================================================================
 :git_bash_add_tools
-echo Adding more tools into Git Bash on Windows
 if exist "!GIT_ROOT!" (
   rem zstd
   if not exist "!GIT_ROOT!\mingw64\bin\zstd.exe" (
@@ -384,8 +380,7 @@ if exist "!GIT_ROOT!" (
     call :download_extract https://repo.msys2.org/msys/x86_64/make-4.4.1-2-x86_64.pkg.tar.zst !GIT_ROOT!
   )
   if not exist "!GIT_ROOT!\usr\bin\libtool" (
-    call :download_extract https://repo.msys2.org/msys/x86_64/libtool-2.4.7-3-x86_64.pkg.tar.zst !GIT_ROOT!
-    call :download_extract https://repo.msys2.org/msys/x86_64/libltdl-2.4.7-4-x86_64.pkg.tar.zst !GIT_ROOT!
+    call :download_extract https://repo.msys2.org/msys/x86_64/libtool-2.5.4-1-x86_64.pkg.tar.zst !GIT_ROOT!
   )
   if not exist "!GIT_ROOT!\usr\bin\pkgconf.exe" (
     call :download_extract https://repo.msys2.org/msys/x86_64/pkgconf-2.3.0-1-x86_64.pkg.tar.zst !GIT_ROOT!
@@ -397,7 +392,6 @@ if exist "!GIT_ROOT!" (
     call :download_extract https://repo.msys2.org/msys/x86_64/flex-2.6.4-3-x86_64.pkg.tar.zst !GIT_ROOT!
   )
   rem autoconf
-  if not exist "!GIT_ROOT!\usr\share\autoconf-2.13" call :download_extract https://repo.msys2.org/msys/x86_64/autoconf2.13-2.13-6-any.pkg.tar.zst !GIT_ROOT!
   if not exist "!GIT_ROOT!\usr\share\autoconf-2.69" call :download_extract https://repo.msys2.org/msys/x86_64/autoconf2.69-2.69-4-any.pkg.tar.zst !GIT_ROOT!
   if not exist "!GIT_ROOT!\usr\share\autoconf-2.71" call :download_extract https://repo.msys2.org/msys/x86_64/autoconf2.71-2.71-3-any.pkg.tar.zst !GIT_ROOT!
   if not exist "!GIT_ROOT!\usr\share\autoconf-2.72" call :download_extract https://repo.msys2.org/msys/x86_64/autoconf2.72-2.72-1-any.pkg.tar.zst !GIT_ROOT!
@@ -406,11 +400,6 @@ if exist "!GIT_ROOT!" (
     call :download_extract https://repo.msys2.org/msys/x86_64/autoconf-archive-2023.02.20-1-any.pkg.tar.zst !GIT_ROOT!
   )
   rem automake
-  if not exist "!GIT_ROOT!\usr\share\automake-1.10" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.10-1.10.3-5-any.pkg.tar.zst !GIT_ROOT!
-  if not exist "!GIT_ROOT!\usr\share\automake-1.11" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.11-1.11.6-6-any.pkg.tar.zst !GIT_ROOT!
-  if not exist "!GIT_ROOT!\usr\share\automake-1.12" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.12-1.12.6-6-any.pkg.tar.zst !GIT_ROOT!
-  if not exist "!GIT_ROOT!\usr\share\automake-1.13" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.13-1.13.4-7-any.pkg.tar.zst !GIT_ROOT!
-  if not exist "!GIT_ROOT!\usr\share\automake-1.14" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.14-1.14.1-6-any.pkg.tar.zst !GIT_ROOT!
   if not exist "!GIT_ROOT!\usr\share\automake-1.15" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.15-1.15.1-4-any.pkg.tar.zst !GIT_ROOT!
   if not exist "!GIT_ROOT!\usr\share\automake-1.16" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.16-1.16.5-1-any.pkg.tar.zst !GIT_ROOT!
   if not exist "!GIT_ROOT!\usr\share\automake-1.17" call :download_extract https://repo.msys2.org/msys/x86_64/automake1.17-1.17-1-any.pkg.tar.zst !GIT_ROOT!
@@ -437,7 +426,6 @@ rem ============================================================================
 rem Check yq whether has been installed. If not, install it automatically
 rem ==============================================================================
 :check_yq
-echo Checking yq whether has been installed
 set YQ_VERSION=4.45.1
 where yq >nul 2>&1
 if "%errorlevel%" neq "0" (
@@ -457,7 +445,6 @@ rem ============================================================================
 rem  check rust whether has been installed
 rem ==============================================================================
 :check_rust
-echo Checking Rust whether has been installed
 where rustc >nul 2>&1
 if "%errorlevel%" neq "0" (
   echo Installing Rust

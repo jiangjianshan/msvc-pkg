@@ -1,16 +1,15 @@
 # msvc-pkg
 
-- ⚓ Have you ever encountered a build failure after spending a lot of time to build libraries and their dependencies?
-- 🏛️ Do you want to compile Autotools-based libraries on Windows without installing Cygwin or MSYS2?
-- 🏗️ Do you want to have a colorful and meaningful terminal for the compilation process?
-- ✨ Do you want each build process to be output to the terminal and also logged to a file?
-- 🏘️ Do you want to have .lib instead of .dll.a or .lib as suffix for the generated library files when using GNU libtool?
-- 🥁 Do you want to use MSVC or MSVC-like toolchain for native compilation on Windows without using MinGW?
-- 🏆 Do you want to automatically compile all build dependencies when compiling a library?
-- 🚗 Do you want to have independent compilation process for each library?
-- and etc.
+🚀 ***msvc-pkg*** offer you the scripts and following features to build all libraries from sources:
 
-🚀 ***msvc-pkg*** is the right lightweight build manager you are looking for. It consists of more than 230+ open source libraries, which are available under👝 ***packages*** folder. Some of these libraries are not easy to be built on Windows, e.g. 💘 gmp 💚, 💘 ncurses 💚 and so on. More and more libraries are comming.
+- No need to install Cygwin or MSYS2, but let you still can compile autotools based libraries on Git for Windows.
+- Each build process of libraries have a rich colorful and meaningful terminal and save logging files separately.
+- No need to install IDE, but only those [Dependencies](#dependencies) which can be installed automatically when run ***mpt*** in windows terminal.
+- Use MSVC or MSVC-like toolsets for native build on Windows, i.e. without using MinGW.
+- Build all dependencies on neccessary when build a library.
+- Each dependencies for a library have a nice tree view on terminal
+- Set up independent build process for each libraries, which is more convenience for Win32 and Bash environment build.
+- and etc.
 
 ## Dependencies
 
@@ -28,19 +27,15 @@
 - [yq](https://github.com/mikefarah/yq)
 - [Windows Terminal](https://learn.microsoft.com/en-us/windows/terminal/)
 
+📝Note
+
+- We need Intel compiler mostly because MSVC is missing Fortran compiler and some C/C++ language extension are not supported yet.
+- The final version of Intel compiler can support both 32 and 64bit are 2024.2.1, and this is also the last version to have ***ifort***.
+
+
 ## Quick Start
 
-Before you start to use ***msvc-pkg***, the following steps are needed.
-
-```bat
-git clone https://github.com/jiangjianshan/msvc-pkg.git
-cd msvc-pkg
-bootstrap.bat
-```
-
-📝Please note that this🚂 ***bootstrap.bat*** will not only install those [Dependencies](#dependencies) above, but also install some neccessary build essentials into Git for windows. So that ***msvc-pkg*** can build autotools base projects on Windows without install Cygwin or MSYS2.
-
-Then, it is recommand to create a file ***settings.yaml*** and put it in the root folder of ***msvc-pkg***. In case you want to install some libraries to your pre-defined location. Here is an example.
+Before you start to use ***msvc-pkg***, it is recommand to create a file ***settings.yaml*** and put it in the root folder of ***msvc-pkg***. In case you want to install some libraries to your pre-defined location. Here is an example.
 
 ```yaml
 # settings.yaml
@@ -85,6 +80,14 @@ In case you don't want to build all but just some of them, e.g. gmp, gettext, nc
 ```bat
 mpt gmp gettext ncurses readline
 ```
+
+## How to add a new package
+
+Many examples are available on ***packages*** folder, only following files are need in the libraries that you want to add:
+- ***sync.sh*** work with ***common.sh***, it is used to get the source of libraries and make patched if necessary before build.
+- ***build.bat*** or ***build.sh*** is the build script on Win32 or Bash environment which depend on the libraries.
+- ***config.yaml*** is the configuration file for libraries, some essential information have been defined and will be used on ***mpt.py***, ***sync.sh*** and ***build.bat*** or ***build.sh***. Please notice that the name section in this file must be same as the folder name that contain ***config.yaml***.
+- The ***.diff*** files are depend on the libraries. If no patch needed before build, they will be not needed.
 
 ## Contributors
 

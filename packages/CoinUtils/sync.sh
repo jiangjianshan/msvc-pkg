@@ -44,20 +44,46 @@ EXT=${ARCHIVE#$(echo "$ARCHIVE" | sed 's/\.[^[:digit:]].*$//g')}
 patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
+
   cd "$SRC_DIR" || exit 1
   patch -Np1 -i "$PKG_DIR/001-CoinUtils-fix-pkgconfig-path-syntax-error.diff"
+  patch -Np1 -i "$PKG_DIR/002-CoinUtils-fix-dumpbin-export-symbols-failed.diff"
 
-  # NOTE: To fix the extension of library from .a to .lib
+  # XXX: libtool don't have options can set the naming style of static and
+  #      shared library. Here is only a workaround.
+
+  echo "Patching ltmain.sh in top level"
+  sed                                                                                                \
+    -e 's|old_library="$libname\.$libext"|old_library="lib$libname.$libext"|g'                       \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
+    -i ltmain.sh
+
+  echo "Patching ltmain.sh in CoinUtils"
+  pushd CoinUtils || exit 1
+  sed                                                                                                \
+    -e 's|old_library="$libname\.$libext"|old_library="lib$libname.$libext"|g'                       \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
+    -i ltmain.sh
+  popd || exit 1
+
   echo "Patching configure in the top level"
-  sed                                                                          \
-    -e 's/ \*\/ICL\*)/ *\/ICL* | *\/mpicl*)/g'                                 \
+  sed                                                                                                \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
+    -e 's/ CL\* | \*\/CL\* )/ CL* | *\/CL* | mpicl* | *\/mpicl* )/g'                                 \
+    -e 's/ CL\* | \*\/CL\*)/ CL* | *\/CL* | mpicl* | *\/mpicl*)/g'                                   \
+    -e 's/ ICL\* | \*\/ICL\*)/ ICL* | *\/ICL* | mpicl* | *\/mpicl*)/g'                               \
     -i configure
   chmod +x configure
 
   echo "Patching configure in the CoinUtils"
   pushd CoinUtils || exit 1
-  sed                                                                          \
-    -e 's/ \*\/ICL\*)/ *\/ICL* | *\/mpicl*)/g'                                 \
+  sed                                                                                                \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
+    -e 's/ CL\* | \*\/CL\* )/ CL* | *\/CL* | mpicl* | *\/mpicl* )/g'                                 \
+    -e 's/ CL\* | \*\/CL\*)/ CL* | *\/CL* | mpicl* | *\/mpicl*)/g'                                   \
+    -e 's/ ICL\* | \*\/ICL\*)/ ICL* | *\/ICL* | mpicl* | *\/mpicl*)/g'                               \
     -i configure
   chmod +x configure
   popd || exit 1

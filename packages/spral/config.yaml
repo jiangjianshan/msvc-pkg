@@ -5,7 +5,6 @@ sha256: c141878e36cb01a3c6f5e677a43d0f7781781755036f59ef91f38090a8f26f71
 steps:
   a:
     dependencies:
-      - OpenBLAS
       - lapack
       - METIS
       - hwloc

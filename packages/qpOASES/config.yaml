@@ -1,0 +1,8 @@
+name: qpOASES
+version: 3.2.2
+url: https://github.com/coin-or/qpOASES/archive/refs/tags/releases/3.2.2.tar.gz
+sha256: e36d795a17b067ea333793d96f17a14fb2bfbd92a4ab86c7f6f513cd9e3e640d
+steps:
+  a:
+    dependencies:
+    run: build.bat

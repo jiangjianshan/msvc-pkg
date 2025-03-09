@@ -95,13 +95,11 @@ configure_stage()
     --includedir="$PREFIX/include"                                             \
     --libdir="$PREFIX/lib"                                                     \
     --datarootdir="$PREFIX/share"                                              \
-    --enable-msvc                                                              \
     --enable-shared                                                            \
-    --with-intsize=32                                                          \
+    --enable-msvc                                                              \
     ac_cv_prog_cc_c11="-std:c11"                                               \
     gt_cv_locale_zh_CN=none || exit 1
 }
-
 
 build_stage()
 {

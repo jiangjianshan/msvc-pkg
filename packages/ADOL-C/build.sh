@@ -107,18 +107,17 @@ configure_stage()
     --datarootdir="$PREFIX/share"                                              \
     --enable-static                                                            \
     --enable-shared                                                            \
+    --enable-sparse                                                            \
     --with-boost="$(cygpath -u "${BOOST_PREFIX:-$PREFIX}")"                    \
     ac_cv_prog_cc_c99="-std:c11"                                               \
     gt_cv_locale_zh_CN=none
 }
-
 
 build_stage()
 {
   echo "Building $PKG_NAME $PKG_VER"
   cd "$BUILD_DIR" && make -j$(nproc)
 }
-
 
 install_package()
 {
@@ -127,7 +126,6 @@ install_package()
   [[ $? -ne 0 ]] && exit 1
   clean_build
 }
-
 
 configure_stage
 build_stage

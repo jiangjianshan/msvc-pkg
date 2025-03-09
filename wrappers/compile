@@ -48,293 +48,310 @@ file_conv=
 # conversion will take place.
 func_file_conv ()
 {
-  file=$1
-  case $file in
-    / | /[!/]*) # absolute file, and not a UNC file
-      if test -z "$file_conv"; then
-	# lazily determine how to convert abs files
-	case `uname -s` in
-	  MINGW*)
-	    if test -n "$MSYSTEM" && (cygpath --version) >/dev/null 2>&1; then
-	      # MSYS2 environment.
-	      file_conv=cygwin
-	    else
-	      # Original MinGW environment.
-	      file_conv=mingw
-	    fi
-	    ;;
-	  MSYS*)
-	    # Old MSYS environment, or MSYS2 with 32-bit MSYS2 shell.
-	    file_conv=cygwin
-	    ;;
-	  CYGWIN*)
-	    # Cygwin environment.
-	    file_conv=cygwin
-	    ;;
-	  *)
-	    file_conv=wine
-	    ;;
+	file=$1
+	case $file in
+		/ | /[!/]*) # absolute file, and not a UNC file
+			if test -z "$file_conv"; then
+				# lazily determine how to convert abs files
+				case `uname -s` in
+					MINGW*)
+						if test -n "$MSYSTEM" && (cygpath --version) >/dev/null 2>&1; then
+							# MSYS2 environment.
+							file_conv=cygwin
+						else
+							# Original MinGW environment.
+							file_conv=mingw
+						fi
+						;;
+					MSYS*)
+						# Old MSYS environment, or MSYS2 with 32-bit MSYS2 shell.
+						file_conv=cygwin
+						;;
+					CYGWIN*)
+						# Cygwin environment.
+						file_conv=cygwin
+						;;
+					*)
+						file_conv=wine
+						;;
+				esac
+			fi
+			case $file_conv/,$2, in
+				*,$file_conv,*)
+					# This is the optimization mentioned above:
+					# If UNNEEDED_CONVERSIONS contains $file_conv, don't convert.
+					;;
+				mingw/*)
+					file=`cmd //C echo "$file " | sed -e 's/"\(.*\) " *$/\1/'`
+					;;
+				cygwin/*)
+					file=`cygpath -w "$file" || echo "$file"`
+					;;
+				wine/*)
+					file=`winepath -w "$file" || echo "$file"`
+					;;
+			esac
+			;;
 	esac
-      fi
-      case $file_conv/,$2, in
-	*,$file_conv,*)
-	  # This is the optimization mentioned above:
-	  # If UNNEEDED_CONVERSIONS contains $file_conv, don't convert.
-	  ;;
-	mingw/*)
-	  file=`cmd //C echo "$file " | sed -e 's/"\(.*\) " *$/\1/'`
-	  ;;
-	cygwin/*)
-	  file=`cygpath -w "$file" || echo "$file"`
-	  ;;
-	wine/*)
-	  file=`winepath -w "$file" || echo "$file"`
-	  ;;
-      esac
-      ;;
-  esac
 }
 
 # func_cl_dashL linkdir
 # Make cl look for libraries in LINKDIR
 func_cl_dashL ()
 {
-  func_file_conv "$1"
-  if test -z "$lib_path"; then
-    lib_path=$file
-  else
-    lib_path="$lib_path;$file"
-  fi
-  linker_opts="$linker_opts -LIBPATH:$file"
+	func_file_conv "$1"
+	if test -z "$lib_path"; then
+		lib_path=$file
+	else
+		lib_path="$lib_path;$file"
+	fi
+	linker_opts="$linker_opts -LIBPATH:$file"
 }
 
 # func_cl_dashl library
 # Do a library search-path lookup for cl
 func_cl_dashl ()
 {
-  lib=$1
-  found=no
-  save_IFS=$IFS
-  IFS=';'
-  for dir in $lib_path $LIB
-  do
-    IFS=$save_IFS
-    if $shared && test -f "$dir/$lib.dll.lib"; then
-      found=yes
-      lib=$dir/$lib.dll.lib
-      break
-    fi
-    if test -f "$dir/$lib.lib"; then
-      found=yes
-      lib=$dir/$lib.lib
-      break
-    fi
-    if test -f "$dir/lib$lib.a"; then
-      found=yes
-      lib=$dir/lib$lib.a
-      break
-    fi
-  done
-  IFS=$save_IFS
+	lib=$1
+	found=no
+	save_IFS=$IFS
+	IFS=';'
+	for dir in $lib_path $LIB
+	do
+		IFS=$save_IFS
+		if $shared && test -f "$dir/$lib.dll.lib"; then
+			found=yes
+			lib=$dir/$lib.dll.lib
+			break
+		fi
+		if test -f "$dir/$lib.lib"; then
+			found=yes
+			lib=$dir/$lib.lib
+			break
+		fi
+		if test -f "$dir/lib$lib.a"; then
+			found=yes
+			lib=$dir/lib$lib.a
+			break
+		fi
+	done
+	IFS=$save_IFS
 
-  if test "$found" != yes; then
-    lib=$lib.lib
-  fi
+	if test "$found" != yes; then
+		lib=$lib.lib
+	fi
 }
 
 # func_cl_wrapper cl arg...
 # Adjust compile command to suit cl
 func_cl_wrapper ()
 {
-  # Assume a capable shell
-  lib_path=
-  shared=:
-  linker_opts=
-  for arg
-  do
-    if test -n "$eat"; then
-      eat=
-    else
-      case $1 in
-        -Fe | -o)
-          # configure might choose to run compile as 'compile cc -o foo foo.c'.
-          eat=1
-          case $2 in
-            *.o | *.lo | *.[oO][bB][jJ])
-              func_file_conv "$2"
-              set x "$@" -Fo"$file"
-              shift
-              ;;
-            *.dll)
-              func_file_conv "$2"
-              set x "$@" -LD -Fe"$file"
-              shift
-              ;;
-            *)
-              func_file_conv "$2"
-              set x "$@" -Fe"$file"
-              shift
-              ;;
-          esac
-          ;;
-        -I)
-          eat=1
-          func_file_conv "$2" mingw
-          set x "$@" -I"$file"
-          shift
-          ;;
-        -I*)
-          func_file_conv "${1#-I}" mingw
-          set x "$@" -I"$file"
-          shift
-          ;;
-        -l)
-          eat=1
-          func_cl_dashl "$2"
-          set x "$@" "$lib"
-          shift
-          ;;
-        -l*)
-          func_cl_dashl "${1#-l}"
-          set x "$@" "$lib"
-          shift
-          ;;
-        -L)
-          eat=1
-          func_cl_dashL "$2"
-          ;;
-        -L*)
-          func_cl_dashL "${1#-L}"
-          ;;
-        --out-implib)
-          eat=1
-          func_file_conv "$2" mingw
-          linker_opts="$linker_opts -implib:$file"
-          ;;
-        --out-implib=*)
-          implib=${1#--out-implib=}
-          func_file_conv "$implib" mingw
-          linker_opts="$linker_opts -implib:$file"
-          ;;
-        --output-def)
-          eat=1
-          func_file_conv "$2" mingw
-          if test -f "$file"; then
-            linker_opts="$linker_opts -def:$file"
-          fi
-          ;;
-        --output-def=*)
-          def=${1#--output-def=}
-          if test -f "$def"; then
-            func_file_conv "$def" mingw
-            linker_opts="$linker_opts -def:$file"
-          fi
-          ;;
-        -static)
-          shared=false
-          ;;
-        -Wl,*)
-          implib_option=
-          def_option=
-          dll_option=
-          arg=${1#-Wl,}
-          save_ifs="$IFS"; IFS=','
-          for flag in $arg; do
-            IFS="$save_ifs"
-            case $flag in
-              --whole-archive)
-                linker_opts="$linker_opts -wholearchive"
-                ;;
-              --out-implib)
-                implib_option=1
-                ;;
-              --out-implib=*)
-                implib=${flag#--out-implib=}
-                func_file_conv "$implib"
-                linker_opts="$linker_opts -implib:$file"
-                ;;
-              --output-def)
-                def_option=1
-                ;;
-              --output-def=*)
-                # FIXME:
-                # msvc don't support to generate .def from linker, but use this option
-                # for those library hasn't use libtool to generate .def/.exp
-                def=${flag#--output-def=}
-                if test -f "$def"; then
-                  func_file_conv "$def"
-                  linker_opts="$linker_opts -def:$file"
-                fi
-                ;;
-              -DLL)
-                dll_option=1
-                ;;
-              -IMPLIB:*)
-                if test -n "$dll_option"; then
-                  implib=${flag#-IMPLIB:}
-                  func_file_conv "$implib" mingw
-                  linker_opts="$linker_opts -implib:$file"
-                fi
-                ;;
-              *)
-                if test -n "$def_option"; then
-                  if test -f "$flag"; then
-                    func_file_conv "$flag"
-                    linker_opts="$linker_opts -def:$file"
-                  fi
-                elif test -n "$implib_option"; then
-                  func_file_conv "$flag"
-                  linker_opts="$linker_opts -implib:$file"
-                else
-                  linker_opts="$linker_opts $flag"
-                fi
-                ;;
-            esac
-          done
-          IFS="$save_ifs"
-          ;;
-        -Xlinker)
-          eat=1
-          linker_opts="$linker_opts $2"
-          ;;
-        -*)
-          set x "$@" "$1"
-          shift
-          ;;
-        *.cc | *.CC | *.cxx | *.CXX | *.[cC]++)
-          func_file_conv "$1"
-          set x "$@" -Tp"$file"
-          shift
-          ;;
-        *.c | *.cpp | *.CPP | *.lib | *.LIB | *.Lib | *.OBJ | *.obj | *.[oO])
-          func_file_conv "$1" mingw
-          set x "$@" "$file"
-          shift
-          ;;
-        *)
-          set x "$@" "$1"
-          shift
-          ;;
-      esac
-    fi
-    shift
-  done
-  if test -n "$linker_opts"; then
-    linker_opts="-link$linker_opts"
-  fi
-  exec "$@" $linker_opts
-  exit 1
+	# Assume a capable shell
+	lib_path=
+	shared=:
+	linker_opts=
+	for arg
+	do
+		if test -n "$eat"; then
+			eat=
+		else
+			case $1 in
+				-Fe | -o)
+					# configure might choose to run compile as 'compile cc -o foo foo.c'.
+					eat=1
+					case $2 in
+						*.o | *.lo | *.[oO][bB][jJ])
+							func_file_conv "$2"
+							set x "$@" -Fo"$file"
+							shift
+							;;
+						*.dll)
+							func_file_conv "$2"
+							set x "$@" -LD -Fe"$file"
+							shift
+							;;
+						*)
+							func_file_conv "$2"
+							set x "$@" -Fe"$file"
+							shift
+							;;
+					esac
+					;;
+				-Fe*)
+					func_file_conv "${1#-Fe}"
+					case $file in
+						*.o | *.lo | *.[oO][bB][jJ])
+							set x "$@" -Fo"$file"
+							shift
+							;;
+						*.dll)
+							set x "$@" -LD -Fe"$file"
+							shift
+							;;
+						*)
+							set x "$@" -Fe"$file"
+							shift
+							;;
+					esac
+					;;
+				-I)
+					eat=1
+					func_file_conv "$2" mingw
+					set x "$@" -I"$file"
+					shift
+					;;
+				-I*)
+					func_file_conv "${1#-I}" mingw
+					set x "$@" -I"$file"
+					shift
+					;;
+				-l)
+					eat=1
+					func_cl_dashl "$2"
+					set x "$@" "$lib"
+					shift
+					;;
+				-l*)
+					func_cl_dashl "${1#-l}"
+					set x "$@" "$lib"
+					shift
+					;;
+				-L)
+					eat=1
+					func_cl_dashL "$2"
+					;;
+				-L*)
+					func_cl_dashL "${1#-L}"
+					;;
+				--out-implib)
+					eat=1
+					func_file_conv "$2" mingw
+					linker_opts="$linker_opts -implib:$file"
+					;;
+				--out-implib=*)
+					implib=${1#--out-implib=}
+					func_file_conv "$implib" mingw
+					linker_opts="$linker_opts -implib:$file"
+					;;
+				--output-def)
+					eat=1
+					func_file_conv "$2" mingw
+					if test -f "$file"; then
+						linker_opts="$linker_opts -def:$file"
+					fi
+					;;
+				--output-def=*)
+					def=${1#--output-def=}
+					if test -f "$def"; then
+						func_file_conv "$def" mingw
+						linker_opts="$linker_opts -def:$file"
+					fi
+					;;
+				-static)
+					shared=false
+					;;
+				-Wl,*)
+					implib_option=
+					def_option=
+					dll_option=
+					arg=${1#-Wl,}
+					save_ifs="$IFS"; IFS=','
+					for flag in $arg; do
+						IFS="$save_ifs"
+						case $flag in
+							--whole-archive)
+								linker_opts="$linker_opts -wholearchive"
+								;;
+							--out-implib)
+								implib_option=1
+								;;
+							--out-implib=*)
+								implib=${flag#--out-implib=}
+								func_file_conv "$implib"
+								linker_opts="$linker_opts -implib:$file"
+								;;
+							--output-def)
+								def_option=1
+								;;
+							--output-def=*)
+								# FIXME:
+								# msvc don't support to generate .def from linker, but use this option
+								# for those library hasn't use libtool to generate .def/.exp
+								def=${flag#--output-def=}
+								if test -f "$def"; then
+									func_file_conv "$def"
+									linker_opts="$linker_opts -def:$file"
+								fi
+								;;
+							-DLL)
+								dll_option=1
+								;;
+							-IMPLIB:*)
+								if test -n "$dll_option"; then
+									implib=${flag#-IMPLIB:}
+									func_file_conv "$implib" mingw
+									linker_opts="$linker_opts -implib:$file"
+								fi
+								;;
+							*)
+								if test -n "$def_option"; then
+									if test -f "$flag"; then
+										func_file_conv "$flag"
+										linker_opts="$linker_opts -def:$file"
+									fi
+								elif test -n "$implib_option"; then
+									func_file_conv "$flag"
+									linker_opts="$linker_opts -implib:$file"
+								else
+									linker_opts="$linker_opts $flag"
+								fi
+								;;
+						esac
+					done
+					IFS="$save_ifs"
+					;;
+				-Xlinker)
+					eat=1
+					linker_opts="$linker_opts $2"
+					;;
+				-*)
+					set x "$@" "$1"
+					shift
+					;;
+				*.cc | *.CC | *.cxx | *.CXX | *.[cC]++)
+					func_file_conv "$1"
+					set x "$@" -Tp"$file"
+					shift
+					;;
+				*.c | *.cpp | *.CPP | *.lib | *.LIB | *.Lib | *.OBJ | *.obj | *.[oO])
+					func_file_conv "$1" mingw
+					set x "$@" "$file"
+					shift
+					;;
+				*)
+					set x "$@" "$1"
+					shift
+					;;
+			esac
+		fi
+		shift
+	done
+	if test -n "$linker_opts"; then
+		linker_opts="-link$linker_opts"
+	fi
+	exec "$@" $linker_opts
+	exit 1
 }
 
 eat=
 
 case $1 in
-  '')
-     echo "$0: No command.  Try '$0 --help' for more information." 1>&2
-     exit 1;
-     ;;
-  -h | --h*)
-    cat <<\EOF
+	'')
+		echo "$0: No command.  Try '$0 --help' for more information." 1>&2
+		exit 1;
+		;;
+	-h | --h*)
+		cat <<\EOF
 Usage: compile [--help] [--version] PROGRAM [ARGS]
 
 Wrapper for compilers which do not understand '-c -o'.
@@ -348,68 +365,68 @@ Report bugs to <bug-automake@gnu.org>.
 GNU Automake home page: <https://www.gnu.org/software/automake/>.
 General help using GNU software: <https://www.gnu.org/gethelp/>.
 EOF
-    exit $?
-    ;;
-  -v | --v*)
-    echo "compile (GNU Automake) $scriptversion"
-    exit $?
-    ;;
-  cl | *[/\\]cl | cl.exe | *[/\\]cl.exe | \
-  clang-cl | *[/\\]clang-cl | clang-cl.exe | *[/\\]clang-cl.exe | \
-  icl | *[/\\]icl | icl.exe | *[/\\]icl.exe | \
-  icx | *[/\\]icx | icx.exe | *[/\\]icx.exe | \
-  icx-cl | *[/\\]icx-cl | icx-cl.exe | *[/\\]icx-cl.exe | \
-  ifx | *[/\\]ifx | ifx.exe | *[/\\]ifx.exe | \
-  ifort | *[/\\]ifort | ifort.exe | *[/\\]ifort.exe )
-    func_cl_wrapper "$@"      # Doesn't return...
-    ;;
-esac
+exit $?
+;;
+-v | --v*)
+	echo "compile (GNU Automake) $scriptversion"
+	exit $?
+	;;
+	cl | *[/\\]cl | cl.exe | *[/\\]cl.exe | \
+		clang-cl | *[/\\]clang-cl | clang-cl.exe | *[/\\]clang-cl.exe | \
+		icl | *[/\\]icl | icl.exe | *[/\\]icl.exe | \
+		icx | *[/\\]icx | icx.exe | *[/\\]icx.exe | \
+		icx-cl | *[/\\]icx-cl | icx-cl.exe | *[/\\]icx-cl.exe | \
+		ifx | *[/\\]ifx | ifx.exe | *[/\\]ifx.exe | \
+		ifort | *[/\\]ifort | ifort.exe | *[/\\]ifort.exe )
+			func_cl_wrapper "$@"      # Doesn't return...
+			;;
+	esac
 
-ofile=
-cfile=
+	ofile=
+	cfile=
 
-for arg
-do
-  if test -n "$eat"; then
-    eat=
-  else
-    case $1 in
-      -o)
-        # configure might choose to run compile as 'compile cc -o foo foo.c'.
-        # So we strip '-o arg' only if arg is an object.
-        eat=1
-        case $2 in
-          *.o | *.obj)
-            ofile=$2
-            ;;
-          *)
-            set x "$@" -o "$2"
-            shift
-            ;;
-        esac
-        ;;
-      *.c)
-        cfile=$1
-        set x "$@" "$1"
-        shift
-        ;;
-      *)
-        set x "$@" "$1"
-        shift
-        ;;
-    esac
-  fi
-  shift
-done
+	for arg
+	do
+		if test -n "$eat"; then
+			eat=
+		else
+			case $1 in
+				-o)
+					# configure might choose to run compile as 'compile cc -o foo foo.c'.
+					# So we strip '-o arg' only if arg is an object.
+					eat=1
+					case $2 in
+						*.o | *.obj)
+							ofile=$2
+							;;
+						*)
+							set x "$@" -o "$2"
+							shift
+							;;
+					esac
+					;;
+				*.c)
+					cfile=$1
+					set x "$@" "$1"
+					shift
+					;;
+				*)
+					set x "$@" "$1"
+					shift
+					;;
+			esac
+		fi
+		shift
+	done
 
-if test -z "$ofile" || test -z "$cfile"; then
-  # If no '-o' option was seen then we might have been invoked from a
-  # pattern rule where we don't need one.  That is ok -- this is a
-  # normal compilation that the losing compiler can handle.  If no
-  # '.c' file was seen then we are probably linking.  That is also
-  # ok.
-  exec "$@"
-fi
+	if test -z "$ofile" || test -z "$cfile"; then
+		# If no '-o' option was seen then we might have been invoked from a
+		# pattern rule where we don't need one.  That is ok -- this is a
+		# normal compilation that the losing compiler can handle.  If no
+		# '.c' file was seen then we are probably linking.  That is also
+		# ok.
+		exec "$@"
+	fi
 
 # Name of file we expect compiler to create.
 cofile=`echo "$cfile" | sed 's|^.*[\\/]||; s|^[a-zA-Z]:||; s/\.c$/.o/'`
@@ -420,10 +437,10 @@ cofile=`echo "$cfile" | sed 's|^.*[\\/]||; s|^[a-zA-Z]:||; s/\.c$/.o/'`
 # object file name, since that is what matters with a parallel build.
 lockdir=`echo "$cofile" | sed -e 's|[/\\:.-]|_|g'`.d
 while true; do
-  if mkdir "$lockdir" >/dev/null 2>&1; then
-    break
-  fi
-  sleep 1
+	if mkdir "$lockdir" >/dev/null 2>&1; then
+		break
+	fi
+	sleep 1
 done
 # FIXME: race condition here if user kills between mkdir and trap.
 trap "rmdir '$lockdir'; exit 1" 1 2 15
@@ -433,9 +450,9 @@ trap "rmdir '$lockdir'; exit 1" 1 2 15
 ret=$?
 
 if test -f "$cofile"; then
-  test "$cofile" = "$ofile" || mv "$cofile" "$ofile"
+	test "$cofile" = "$ofile" || mv "$cofile" "$ofile"
 elif test -f "${cofile}bj"; then
-  test "${cofile}bj" = "$ofile" || mv "${cofile}bj" "$ofile"
+	test "${cofile}bj" = "$ofile" || mv "${cofile}bj" "$ofile"
 fi
 
 rmdir "$lockdir"

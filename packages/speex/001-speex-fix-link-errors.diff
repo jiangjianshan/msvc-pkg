@@ -1,0 +1,36 @@
+diff -urN speex-1.2.1-orig/include/speex/speex_types.h speex-1.2.1/include/speex/speex_types.h
+--- speex-1.2.1-orig/include/speex/speex_types.h	2018-09-08 06:20:02.000000000 +0800
++++ speex-1.2.1/include/speex/speex_types.h	2025-02-28 15:38:15.946441200 +0800
+@@ -30,7 +30,7 @@
+      typedef _G_uint32_t spx_uint32_t;
+      typedef _G_int16_t spx_int16_t;
+      typedef _G_uint16_t spx_uint16_t;
+-#  elif defined(__MINGW32__)
++#  elif defined(__MINGW32__) || defined(_MSC_VER)
+      typedef short spx_int16_t;
+      typedef unsigned short spx_uint16_t;
+      typedef int spx_int32_t;
+diff -urN speex-1.2.1-orig/src/speexdec.c speex-1.2.1/src/speexdec.c
+--- speex-1.2.1-orig/src/speexdec.c	2022-05-03 20:40:08.000000000 +0800
++++ speex-1.2.1/src/speexdec.c	2025-02-28 15:38:00.039943400 +0800
+@@ -56,7 +56,7 @@
+ #endif
+ #include <math.h>
+ 
+-#ifdef __MINGW32__
++#if defined(__MINGW32__) || defined(_MSC_VER)
+ #include "wave_out.c"
+ #endif
+ 
+diff -urN speex-1.2.1-orig/src/wave_out.h speex-1.2.1/src/wave_out.h
+--- speex-1.2.1-orig/src/wave_out.h	2018-09-08 06:20:02.000000000 +0800
++++ speex-1.2.1/src/wave_out.h	2025-02-28 15:37:45.234769600 +0800
+@@ -35,7 +35,7 @@
+ 
+ #include <stdio.h>
+ #include <windows.h>
+-#ifdef __MINGW32__
++#if defined(__MINGW32__) || defined(_MSC_VER)
+ #include <mmsystem.h>
+ #endif
+ 

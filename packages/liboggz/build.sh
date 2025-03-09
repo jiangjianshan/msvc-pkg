@@ -103,6 +103,20 @@ configure_stage()
     gt_cv_locale_zh_CN=none || exit 1
 }
 
+patch_stage()
+{
+  echo "Patching $PKG_NAME $PKG_VER after configure"
+  cd "$BUILD_DIR"
+  # FIXME:
+  # To solve following issue
+  # libtool: warning: undefined symbols not allowed in x86_64-w64-mingw32 shared libraries; building static only
+  echo "Patching libtool in top level"
+  sed                                                                          \
+    -e "s/\(allow_undefined=\)yes/\1no/"                                       \
+    -i libtool
+  chmod +x libtool
+}
+
 build_stage()
 {
   echo "Building $PKG_NAME $PKG_VER"
@@ -120,5 +134,6 @@ install_package()
 }
 
 configure_stage
+patch_stage
 build_stage
 install_package

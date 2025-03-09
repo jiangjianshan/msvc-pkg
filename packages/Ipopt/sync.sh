@@ -46,6 +46,51 @@ patch_package()
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR" || exit 1
 
+  pushd contrib/sIPOPT/src || exit 1
+  sed -e 's|coin-or|coin|g' -i Makefile.am
+  sed -e 's|coin-or|coin|g' -i Makefile.in
+  popd || exit 1
+
+  pushd examples/Cpp_example || exit 1
+  sed -e 's|coin-or|coin|g' -i Makefile.in
+  popd || exit 1
+
+  pushd examples/hs071_c || exit 1
+  sed -e 's|coin-or|coin|g' -i Makefile.in
+  popd || exit 1
+
+  pushd examples/hs071_cpp || exit 1
+  sed -e 's|coin-or|coin|g' -i Makefile.in
+  popd || exit 1
+
+  pushd examples/hs071_f || exit 1
+  sed -e 's|coin-or|coin|g' -i Makefile.in
+  popd || exit 1
+
+  pushd examples/recursive_nlp || exit 1
+  sed -e 's|coin-or|coin|g' -i Makefile.in
+  popd || exit 1
+
+  pushd examples/ScalableProblems || exit 1
+  sed -e 's|coin-or|coin|g' -i Makefile.in
+  popd || exit 1
+
+  pushd src || exit 1
+  sed -e 's|coin-or|coin|g' -i ipopt.pc.in
+  sed -e 's|coin-or|coin|g' -i Makefile.am
+  sed -e 's|coin-or|coin|g' -i Makefile.in
+  popd || exit 1
+
+  pushd src/Apps/AmplSolver || exit 1
+  sed -e 's|coin-or|coin|g' -i ipoptamplinterface.pc.in
+  sed -e 's|coin-or|coin|g' -i Makefile.am
+  sed -e 's|coin-or|coin|g' -i Makefile.in
+  popd || exit 1
+
+  pushd src/Interfaces || exit 1
+  sed -e 's|coin-or|coin|g' -i Ipopt.java
+  popd || exit 1
+
   # XXX: libtool don't have options can set the naming style of static and
   #      shared library. Here is only a workaround.
 

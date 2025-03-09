@@ -65,6 +65,9 @@ configure_stage()
     HOST_TRIPLET=x86_64-w64-mingw32
     YASM_OBJ_FMT=win64
   fi
+  export OMP_CANCELLATION=TRUE
+  export OMP_PROC_BIND=TRUE
+  export OMP_NESTED=TRUE
   # NOTE:
   # 1. Don't use CPP="$ROOT_DIR/wrappers/compile cl -nologo -EP" here,
   #    it will cause checking absolute name of standard files is empty.
@@ -75,51 +78,53 @@ configure_stage()
   #    '*cl | cl.exe'
   # 3. Don't set '--enable-relocatable', otherwise the key 'prefix' in .pc will be
   #    'prefix=${pcfiledir}/../..'
-  AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                                                                             \
-  AS="yasm -Xvc -f $YASM_OBJ_FMT -rraw -pgas"                                                                                            \
-  CC="cl"                                                                                                                                \
-  CFLAGS="$C_OPTS"                                                                                                                       \
-  ADD_CFLAGS="$C_OPTS"                                                                                                                   \
-  CPP="cl -E"                                                                                                                            \
-  CPPFLAGS="$C_DEFS"                                                                                                                     \
-  CXX="cl"                                                                                                                               \
-  CXXFLAGS="-EHsc $C_OPTS"                                                                                                               \
-  ADD_CXXFLAGS="-EHsc $C_OPTS"                                                                                                           \
-  CXXCPP="cl -E"                                                                                                                         \
-  DLLTOOL="link -verbose -dll"                                                                                                           \
-  F77="ifort"                                                                                                                            \
-  FFLAGS="-f77rtl $F_OPTS"                                                                                                               \
-  ADD_FFLAGS="-f77rtl $F_OPTS"                                                                                                           \
-  LD="link -nologo"                                                                                                                      \
-  NM="dumpbin -nologo -symbols"                                                                                                          \
-  PKG_CONFIG="/usr/bin/pkg-config"                                                                                                       \
-  RANLIB=":"                                                                                                                             \
-  RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                                                                          \
-  STRIP=":"                                                                                                                              \
-  WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                                                                     \
-  ../configure --host="$HOST_TRIPLET"                                                                                                    \
-    --prefix="$PREFIX"                                                                                                                   \
-    --bindir="$PREFIX/bin"                                                                                                               \
-    --includedir="$PREFIX/include"                                                                                                       \
-    --libdir="$PREFIX/lib"                                                                                                               \
-    --datarootdir="$PREFIX/share"                                                                                                        \
-    --disable-java                                                                                                                       \
-    --enable-msvc                                                                                                                        \
-    --enable-shared                                                                                                                      \
-    --with-dot                                                                                                                           \
-    --with-precision="single"                                                                                                            \
-    --with-asl-cflags="-I$(cygpath -u "${THIRDPARTY_ASL_PREFIX:-$PREFIX}/include/coin-or/asl")"                                          \
-    --with-asl-lflags="-lcoinasl"                                                                                                        \
-    --with-hsl-cflags="-I$(cygpath -u "${THIRDPARTY_HSL_PREFIX:-$PREFIX}/include/coin-or/hsl")"                                          \
-    --with-hsl-lflags="-lcoinhsl"                                                                                                        \
-    --with-lapack-lflags="-lmkl_intel_lp64_dll -lmkl_sequential_dll -lmkl_core_dll"                                                      \
-    --with-mumps-cflags="-I$(cygpath -u "${THIRDPARTY_MUMPS_PREFIX:-$PREFIX}/include/coin-or/mumps")"                                    \
-    --with-mumps-lflags="-lcoinmumps"                                                                                                    \
-    --with-spral-lflags="-lspral"                                                                                                        \
-    --with-intsize=32                                                                                                                    \
-    ac_cv_prog_cc_c11="-std:c11"                                                                                                         \
-    ac_cv_prog_f77_v="-verbose"                                                                                                          \
-    ac_cv_prog_fc_v="-verbose"                                                                                                           \
+  # TODO: if remove '--with-precision="single"', will fail to build
+  AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                                                 \
+  AS="yasm -Xvc -f $YASM_OBJ_FMT -rraw -pgas"                                                                \
+  CC="cl"                                                                                                    \
+  CFLAGS="$C_OPTS"                                                                                           \
+  ADD_CFLAGS="$C_OPTS"                                                                                       \
+  CPP="cl -E"                                                                                                \
+  CPPFLAGS="$C_DEFS"                                                                                         \
+  CXX="cl"                                                                                                   \
+  CXXFLAGS="-EHsc $C_OPTS"                                                                                   \
+  ADD_CXXFLAGS="-EHsc $C_OPTS"                                                                               \
+  CXXCPP="cl -E"                                                                                             \
+  DLLTOOL="link -verbose -dll"                                                                               \
+  F77="ifort"                                                                                                \
+  FFLAGS="-f77rtl $F_OPTS"                                                                                   \
+  ADD_FFLAGS="-f77rtl $F_OPTS"                                                                               \
+  LD="link -nologo"                                                                                          \
+  NM="dumpbin -nologo -symbols"                                                                              \
+  PKG_CONFIG="/usr/bin/pkg-config"                                                                           \
+  RANLIB=":"                                                                                                 \
+  RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                                              \
+  STRIP=":"                                                                                                  \
+  WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                                         \
+  ../configure --host="$HOST_TRIPLET"                                                                        \
+    --prefix="$PREFIX"                                                                                       \
+    --bindir="$PREFIX/bin"                                                                                   \
+    --includedir="$PREFIX/include"                                                                           \
+    --libdir="$PREFIX/lib"                                                                                   \
+    --datarootdir="$PREFIX/share"                                                                            \
+    --disable-java                                                                                           \
+    --enable-msvc                                                                                            \
+    --enable-shared                                                                                          \
+    --with-dot                                                                                               \
+    --with-precision="single"                                                                                \
+    --with-asl-cflags="-I$(cygpath -u "${THIRDPARTY_ASL_PREFIX:-$PREFIX}/include/coin/asl")"                 \
+    --with-asl-lflags="-L$(cygpath -u "${THIRDPARTY_ASL_PREFIX:-$PREFIX}")/lib -lcoinasl"                    \
+    --with-hsl-cflags="-I$(cygpath -u "${THIRDPARTY_HSL_PREFIX:-$PREFIX}/include/coin/hsl")"                 \
+    --with-hsl-lflags="-L$(cygpath -u "${THIRDPARTY_HSL_PREFIX:-$PREFIX}")/lib -lcoinhsl"                    \
+    --with-lapack-lflags="-lmkl_intel_lp64_dll -lmkl_sequential_dll -lmkl_core_dll"                          \
+    --with-mumps-cflags="-I$(cygpath -u "${THIRDPARTY_MUMPS_PREFIX:-$PREFIX}/include/coin/mumps")"           \
+    --with-mumps-lflags="-L$(cygpath -u "${THIRDPARTY_MUMPS_PREFIX:-$PREFIX}")/lib -lcoinmumps"              \
+    --with-spral-cflags="-I$(cygpath -u "${THIRDPARTY_SPRAL_PREFIX:-$PREFIX}/include")"                      \
+    --with-spral-lflags="-lspral"                                                                            \
+    ac_cv_prog_cc_c11="-std:c11"                                                                             \
+    ac_cv_prog_cxx_cxx11="-std:c++17"                                                                        \
+    ac_cv_prog_f77_v="-verbose"                                                                              \
+    ac_cv_prog_fc_v="-verbose"                                                                               \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

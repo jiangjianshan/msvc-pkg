@@ -44,7 +44,7 @@ EXT=${ARCHIVE#$(echo "$ARCHIVE" | sed 's/\.[^[:digit:]].*$//g')}
 patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
-  cd "$SRC_DIR"
+  cd "$SRC_DIR" || exit 1
   # NOTE: If here can't download metis-4.0.3.tar.gz from wget, you can try to use web browser to download it.
   #       And then following the uncompress and patch steps inside .get.Metis
   ./get.Metis
@@ -64,6 +64,22 @@ patch_package()
     -e 's|\.dll\.lib|.lib|g'                                                                         \
     -i configure
   chmod +x configure
+
+  # Fix install location of files
+  echo "Patching coinmetis.pc.in in top level"
+  sed                                                                                                \
+    -e 's|/coin-or/|/coin/|g'                                                                        \
+    -i coinmetis.pc.in
+
+  echo "Patching Makefile.am in top level"
+  sed                                                                                                \
+    -e 's|/coin-or/|/coin/|g'                                                                        \
+    -i Makefile.am
+
+  echo "Patching Makefile.in in top level"
+  sed                                                                                                \
+    -e 's|/coin-or/|/coin/|g'                                                                        \
+    -i Makefile.in
 }
 
 . $ROOT_DIR/common.sh

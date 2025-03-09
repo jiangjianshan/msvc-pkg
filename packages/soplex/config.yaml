@@ -9,6 +9,7 @@ steps:
       - zlib
       - gmp:b
       - mpfr
+      - Osi
       - papilo
       - winpthreads
     run: build.bat

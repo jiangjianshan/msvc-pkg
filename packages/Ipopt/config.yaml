@@ -9,7 +9,7 @@ steps:
       - ThirdParty-ASL
       - ThirdParty-HSL
       - ThirdParty-Mumps
-      - METIS
+      - ThirdParty-Metis
       - spral
       - graphviz
     run: build.sh

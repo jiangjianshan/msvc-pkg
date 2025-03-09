@@ -1,6 +1,6 @@
 diff -urN OpenBLAS-0.3.28-orig/cmake/arch.cmake OpenBLAS-0.3.28/cmake/arch.cmake
 --- OpenBLAS-0.3.28-orig/cmake/arch.cmake	2024-08-09 04:41:46.000000000 +0800
-+++ OpenBLAS-0.3.28/cmake/arch.cmake	2025-02-22 20:28:00.151479700 +0800
++++ OpenBLAS-0.3.28/cmake/arch.cmake	2025-03-09 14:15:43.655419000 +0800
 @@ -18,7 +18,7 @@
          set(CCOMMON_OPT "${CCOMMON_OPT} -DEXPRECISION -m128bit-long-double")
          set(FCOMMON_OPT	"${FCOMMON_OPT} -m128bit-long-double")
@@ -12,7 +12,7 @@ diff -urN OpenBLAS-0.3.28-orig/cmake/arch.cmake OpenBLAS-0.3.28/cmake/arch.cmake
          set(FCOMMON_OPT	"${FCOMMON_OPT} -m128bit-long-double")
 diff -urN OpenBLAS-0.3.28-orig/cmake/cc.cmake OpenBLAS-0.3.28/cmake/cc.cmake
 --- OpenBLAS-0.3.28-orig/cmake/cc.cmake	2024-08-09 04:41:46.000000000 +0800
-+++ OpenBLAS-0.3.28/cmake/cc.cmake	2025-02-22 20:28:00.151479700 +0800
++++ OpenBLAS-0.3.28/cmake/cc.cmake	2025-03-09 14:15:43.655419000 +0800
 @@ -5,11 +5,15 @@
  include(CheckCCompilerFlag)
  
@@ -33,7 +33,7 @@ diff -urN OpenBLAS-0.3.28-orig/cmake/cc.cmake OpenBLAS-0.3.28/cmake/cc.cmake
    set(NO_UNINITIALIZED_WARN "-Wno-uninitialized")
 diff -urN OpenBLAS-0.3.28-orig/cmake/fc.cmake OpenBLAS-0.3.28/cmake/fc.cmake
 --- OpenBLAS-0.3.28-orig/cmake/fc.cmake	2024-08-09 04:41:46.000000000 +0800
-+++ OpenBLAS-0.3.28/cmake/fc.cmake	2025-02-22 21:08:19.468031000 +0800
++++ OpenBLAS-0.3.28/cmake/fc.cmake	2025-03-09 14:15:43.671016100 +0800
 @@ -36,9 +36,9 @@
    endif ()
  endif ()
@@ -69,7 +69,7 @@ diff -urN OpenBLAS-0.3.28-orig/cmake/fc.cmake OpenBLAS-0.3.28/cmake/fc.cmake
             set(FCOMMON_OPT "${FCOMMON_OPT} -m32")
  	endif ()
      endif ()
-@@ -117,14 +117,19 @@
+@@ -117,14 +117,18 @@
    endif ()
  endif ()
  
@@ -81,7 +81,6 @@ diff -urN OpenBLAS-0.3.28-orig/cmake/fc.cmake OpenBLAS-0.3.28/cmake/fc.cmake
    endif ()
 -  set(FCOMMON_OPT "${FCOMMON_OPT} -recursive -fp-model=consistent")
 +  if (WIN32)
-+    set(FCOMMON_OPT "${FCOMMON_OPT} -names:lowercase -assume:underscore")
 +    set(FCOMMON_OPT "${FCOMMON_OPT} -recursive -fp:consistent")
 +  else()
 +    set(FCOMMON_OPT "${FCOMMON_OPT} -recursive -fp-model=consistent")
@@ -94,7 +93,7 @@ diff -urN OpenBLAS-0.3.28-orig/cmake/fc.cmake OpenBLAS-0.3.28/cmake/fc.cmake
  
 diff -urN OpenBLAS-0.3.28-orig/cmake/os.cmake OpenBLAS-0.3.28/cmake/os.cmake
 --- OpenBLAS-0.3.28-orig/cmake/os.cmake	2024-08-09 04:41:46.000000000 +0800
-+++ OpenBLAS-0.3.28/cmake/os.cmake	2025-02-22 20:28:00.167044300 +0800
++++ OpenBLAS-0.3.28/cmake/os.cmake	2025-03-09 14:15:43.671016100 +0800
 @@ -30,7 +30,7 @@
    set(PSUFFIX "pobj")
    set(LIBSUFFIX "a")
@@ -115,7 +114,7 @@ diff -urN OpenBLAS-0.3.28-orig/cmake/os.cmake OpenBLAS-0.3.28/cmake/os.cmake
      set(FCOMMON_OPT "${FCOMMON_OPT} -mincoming-stack-boundary=2")
 diff -urN OpenBLAS-0.3.28-orig/cmake/prebuild.cmake OpenBLAS-0.3.28/cmake/prebuild.cmake
 --- OpenBLAS-0.3.28-orig/cmake/prebuild.cmake	2024-08-09 04:41:46.000000000 +0800
-+++ OpenBLAS-0.3.28/cmake/prebuild.cmake	2025-02-22 20:28:00.182665300 +0800
++++ OpenBLAS-0.3.28/cmake/prebuild.cmake	2025-03-09 14:15:43.686667500 +0800
 @@ -58,7 +58,7 @@
  
  # c_check
@@ -127,7 +126,7 @@ diff -urN OpenBLAS-0.3.28-orig/cmake/prebuild.cmake OpenBLAS-0.3.28/cmake/prebui
  if(MINGW AND NOT MINGW64)
 diff -urN OpenBLAS-0.3.28-orig/cmake/system.cmake OpenBLAS-0.3.28/cmake/system.cmake
 --- OpenBLAS-0.3.28-orig/cmake/system.cmake	2024-08-09 04:41:46.000000000 +0800
-+++ OpenBLAS-0.3.28/cmake/system.cmake	2025-02-22 20:28:00.182665300 +0800
++++ OpenBLAS-0.3.28/cmake/system.cmake	2025-03-09 14:15:43.686667500 +0800
 @@ -110,7 +110,7 @@
    set(HAVE_GAS 1)
    if (CMAKE_ASM_COMPILER_ID STREQUAL "GNU")
@@ -206,22 +205,19 @@ diff -urN OpenBLAS-0.3.28-orig/cmake/system.cmake OpenBLAS-0.3.28/cmake/system.c
  
 diff -urN OpenBLAS-0.3.28-orig/lapack-netlib/CMAKE/FortranMangling.cmake OpenBLAS-0.3.28/lapack-netlib/CMAKE/FortranMangling.cmake
 --- OpenBLAS-0.3.28-orig/lapack-netlib/CMAKE/FortranMangling.cmake	2024-08-09 04:41:46.000000000 +0800
-+++ OpenBLAS-0.3.28/lapack-netlib/CMAKE/FortranMangling.cmake	2025-02-22 20:56:31.518371700 +0800
-@@ -15,9 +15,9 @@
++++ OpenBLAS-0.3.28/lapack-netlib/CMAKE/FortranMangling.cmake	2025-03-09 14:15:43.717907900 +0800
+@@ -15,7 +15,7 @@
    get_filename_component(F77_PATH ${CMAKE_Fortran_COMPILER} PATH)
    set(F77 ${F77_NAME} CACHE INTERNAL "Name of the fortran compiler.")
  
 -  if(${F77} STREQUAL "ifort.exe")
 +  if(${F77} STREQUAL "ifort.exe" OR ${F77} STREQUAL "ifx.exe")
      #settings for Intel Fortran
--    set(F77_OPTION_COMPILE "/c" CACHE INTERNAL
-+    set(F77_OPTION_COMPILE "/names:lowercase /assume:underscore /c" CACHE INTERNAL
+     set(F77_OPTION_COMPILE "/c" CACHE INTERNAL
        "Fortran compiler option for compiling without linking.")
-     set(F77_OUTPUT_OBJ "/Fo" CACHE INTERNAL
-       "Fortran compiler option for setting object file name.")
 diff -urN OpenBLAS-0.3.28-orig/lapack-netlib/LAPACKE/include/lapacke_config.h OpenBLAS-0.3.28/lapack-netlib/LAPACKE/include/lapacke_config.h
 --- OpenBLAS-0.3.28-orig/lapack-netlib/LAPACKE/include/lapacke_config.h	2024-08-09 04:41:46.000000000 +0800
-+++ OpenBLAS-0.3.28/lapack-netlib/LAPACKE/include/lapacke_config.h	2025-02-22 20:28:00.213908000 +0800
++++ OpenBLAS-0.3.28/lapack-netlib/LAPACKE/include/lapacke_config.h	2025-03-09 14:15:43.717907900 +0800
 @@ -68,7 +68,7 @@
  #endif
  

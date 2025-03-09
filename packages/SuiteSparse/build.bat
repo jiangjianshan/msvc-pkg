@@ -44,7 +44,7 @@ set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
 C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -Qopenmp -Qopenmp-simd -Wno-implicit-function-declaration -Wno-pointer-sign -Xclang -O2 -fms-extensions -fms-compatibility -fms-compatibility-version=19.42
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX -DBLAS_UNDERSCORE
-set F_OPTS=-nologo -MD -Qdiag-disable:10448 -fp:precise -Qopenmp -Qopenmp-simd -names:lowercase -assume:underscore
+set F_OPTS=-nologo -MD -Qdiag-disable:10448 -fp:precise -Qopenmp -Qopenmp-simd -fpp
 
 call :configure_stage
 call :build_stage
