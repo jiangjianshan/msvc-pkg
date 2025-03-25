@@ -50,4 +50,24 @@ patch_package()
 
 . $ROOT_DIR/common.sh
 wget_sync $PKG_URL $SRC_DIR $PKG_NAME-$PKG_VER$EXT
-git_sync https://gitlab.gnome.org/GNOME/gobject-introspection-tests.git $SRC_DIR/gobject-introspection-tests gobject-introspection-tests main
+
+repo_name=gobject-introspection-tests
+cd "$SRC_DIR" || exit 1
+if [ ! -d "$repo_name" ]; then
+  if ! git clone https://gitlab.gnome.org/GNOME/${repo_name}.git; then
+    echo "Failed to clone $repo_name into $SRC_DIR/$repo_name"
+    exit 1
+  fi
+elif [ ! -d "$repo_name/.git" ]; then
+  rm -rf "$repo_name"
+  if ! git clone https://gitlab.gnome.org/GNOME/${repo_name}.git; then
+    echo "Failed to clone $repo_name into $SRC_DIR/$repo_name"
+    exit 1
+  fi
+else
+  echo "Updating repository $repo_name"
+  pushd "$repo_name" || exit 1
+  git fetch origin main
+  git reset --hard origin/main
+  popd || exit 1
+fi

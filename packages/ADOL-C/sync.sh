@@ -68,11 +68,11 @@ patch_package()
   pushd ADOL-C/src || exit 1
   echo "Patching Makefile.am in ADOL-C/src"
   sed                                                                                    \
-    -e 's|-std=gnu99|-std:c11|g'                                                         \
+    -e 's|-std=gnu99|-std:c17|g'                                                         \
     -i Makefile.am
   echo "Patching Makefile.in in ADOL-C/src"
   sed                                                                                    \
-    -e 's|-std=gnu99|-std:c11|g'                                                         \
+    -e 's|-std=gnu99|-std:c17|g'                                                         \
     -i Makefile.in
   popd || exit 1
 }

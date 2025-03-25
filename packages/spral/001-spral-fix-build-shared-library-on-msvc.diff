@@ -1,420 +1,625 @@
-diff -urN spral-2025.01.08-orig/meson.build spral-2025.01.08/meson.build
---- spral-2025.01.08-orig/meson.build	2025-01-08 18:02:47.000000000 +0800
-+++ spral-2025.01.08/meson.build	2025-02-19 16:44:11.496438700 +0800
-@@ -172,6 +172,7 @@
-                    link_language : 'fortran',
-                    link_args : lstdcpp,
-                    include_directories: libspral_include,
-+                   vs_module_defs : 'spral.def',
-                    install : true)
+diff -urN spral-2025.03.06-orig/configure.ac spral-2025.03.06/configure.ac
+--- spral-2025.03.06-orig/configure.ac	2025-03-06 16:53:00.000000000 +0800
++++ spral-2025.03.06/configure.ac	2025-03-15 15:29:14.475786700 +0800
+@@ -33,7 +33,7 @@
+ AC_PROG_CXX
+ AC_PROG_F77
+ AC_PROG_FC
+-AC_PROG_RANLIB
++LT_INIT
  
- # Binary
-diff -urN spral-2025.01.08-orig/spral.def spral-2025.01.08/spral.def
---- spral-2025.01.08-orig/spral.def	1970-01-01 08:00:00.000000000 +0800
-+++ spral-2025.01.08/spral.def	2025-02-19 16:42:46.679297900 +0800
-@@ -0,0 +1,405 @@
-+LIBRARY  spral
-+EXPORTS
-+  spral_lsmr_ciface._
-+  spral_lsmr_ciface_mp_copy_options_in_
-+  spral_lsmr_ciface_mp_copy_inform_in_
-+  spral_lsmr_ciface_mp_copy_inform_out_
-+  spral_lsmr_solve
-+  spral_lsmr_free
-+  spral_lsmr_default_options
-+  spral_print_matrix
-+  spral_print_matrix_i64d
-+  spral_half_to_full_i64d
-+  spral_random_real
-+  spral_random_integer
-+  spral_random_long
-+  spral_random_logical
-+  spral_random_matrix_generate
-+  spral_random_matrix_generate_long
-+  spral_rutherford_boeing_ciface._
-+  spral_rutherford_boeing_ciface_mp_copy_read_options_in_
-+  spral_rutherford_boeing_ciface_mp_copy_write_options_in_
-+  spral_rutherford_boeing_ciface_mp_convert_string_f2c_
-+  spral_rb_peek
-+  spral_rb_read
-+  spral_rb_read_ptr32
-+  spral_rb_write
-+  spral_rutherford_boeing_ciface_mp_convert_string_c2f_
-+  spral_rb_write_ptr32
-+  spral_rb_free_handle
-+  spral_rb_default_write_options
-+  spral_rb_default_read_options
-+  spral_scaling_ciface._
-+  spral_scaling_ciface_mp_copy_auction_options_in_
-+  spral_scaling_ciface_mp_copy_auction_inform_out_
-+  spral_scaling_ciface_mp_copy_equilib_options_in_
-+  spral_scaling_ciface_mp_copy_equilib_inform_out_
-+  spral_scaling_ciface_mp_copy_hungarian_options_in_
-+  spral_scaling_ciface_mp_copy_hungarian_inform_out_
-+  spral_scaling_auction_sym
-+  spral_scaling_auction_sym_long
-+  spral_scaling_equilib_sym
-+  spral_scaling_equilib_sym_long
-+  spral_scaling_hungarian_sym
-+  spral_scaling_hungarian_sym_long
-+  spral_scaling_auction_unsym
-+  spral_scaling_auction_unsym_long
-+  spral_scaling_equilib_unsym
-+  spral_scaling_equilib_unsym_long
-+  spral_scaling_hungarian_unsym
-+  spral_scaling_hungarian_unsym_long
-+  spral_scaling_hungarian_default_options
-+  spral_scaling_equilib_default_options
-+  spral_scaling_auction_default_options
-+  spral_ssids_ciface._
-+  spral_ssids_ciface_mp_copy_options_in_
-+  spral_ssids_ciface_mp_copy_inform_out_
-+  spral_ssids_analyse
-+  spral_ssids_analyse_ptr32
-+  spral_ssids_analyse_coord
-+  spral_ssids_factor
-+  spral_ssids_factor_ptr32
-+  spral_ssids_solve1
-+  spral_ssids_solve
-+  spral_ssids_free_akeep
-+  spral_ssids_free_fkeep
-+  spral_ssids_free
-+  spral_ssids_enquire_posdef
-+  spral_ssids_enquire_indef
-+  spral_ssids_alter
-+  spral_ssids_default_options
-+  spral_ssmfe_ciface._
-+  spral_ssmfe_standard_double
-+  spral_ssmfe_standard_double_complex
-+  spral_ssmfe_standard_shift_double
-+  spral_ssmfe_standard_shift_double_complex
-+  spral_ssmfe_generalized_double
-+  spral_ssmfe_generalized_double_complex
-+  spral_ssmfe_generalized_shift_double
-+  spral_ssmfe_generalized_shift_double_complex
-+  spral_ssmfe_buckling_double
-+  spral_ssmfe_buckling_double_complex
-+  spral_ssmfe_free_double
-+  spral_ssmfe_free_double_complex
-+  spral_ssmfe_core_ciface._
-+  spral_ssmfe_core_ciface_mp_copy_core_options_in_
-+  spral_ssmfe_core_ciface_mp_copy_rci_out_double_complex_
-+  spral_ssmfe_core_ciface_mp_copy_rci_out_double_
-+  spral_ssmfe_core_ciface_mp_copy_inform_out_
-+  spral_ssmfe_double
-+  spral_ssmfe_double_complex
-+  spral_ssmfe_largest_double
-+  spral_ssmfe_largest_double_complex
-+  spral_ssmfe_core_free
-+  spral_ssmfe_core_default_options
-+  spral_ssmfe_expert_ciface._
-+  spral_ssmfe_expert_ciface_mp_copy_options_in_
-+  spral_ssmfe_expert_standard_double
-+  spral_ssmfe_expert_standard_double_complex
-+  spral_ssmfe_expert_standard_shift_double
-+  spral_ssmfe_expert_standard_shift_double_complex
-+  spral_ssmfe_expert_generalized_double
-+  spral_ssmfe_expert_generalized_double_complex
-+  spral_ssmfe_expert_generalized_shift_double
-+  spral_ssmfe_expert_generalized_shift_double_complex
-+  spral_ssmfe_expert_buckling_double
-+  spral_ssmfe_expert_buckling_double_complex
-+  spral_ssmfe_expert_free
-+  spral_ssmfe_default_options
-+  spral_blas_iface._
-+  spral_core_analyse._
-+  spral_core_analyse_mp_basic_analyse_
-+  spral_core_analyse_mp_find_etree_
-+  spral_core_analyse_mp_find_postorder_
-+  spral_core_analyse_mp_find_col_counts_
-+  spral_core_analyse_mp_find_supernodes_
-+  spral_core_analyse_mp_sort_by_val_
-+  spral_core_analyse_mp_sort_by_val_ms_
-+  spral_core_analyse_mp_do_merge_
-+  spral_core_analyse_mp_merge_nodes_
-+  spral_core_analyse_mp_find_row_lists_
-+  spral_core_analyse_mp_dbl_tr_sort_
-+  spral_core_analyse_mp_find_
-+  spral_core_analyse_mp_calc_stats_
-+  spral_core_analyse_mp_apply_perm_
-+  spral_cuda._
-+  spral_cuda_mp_detect_gpu_
-+  spral_cuda_mp_cudageterrorstring_
-+  spral_hw_topology_guess
-+  spral_hw_topology_free
-+  spral_hw_topology._
-+  spral_hw_topology_mp_guess_topology_
-+  spral_lapack_iface._
-+  spral_lsmr._
-+  spral_lsmr_mp_lsmr_solve_double_
-+  spral_lsmr_mp_lsmr_free_double_
-+  spral_lsmrlsmr_solve_double_mp_msg_
-+  spral_match_order._
-+  spral_match_order_mp_match_order_metis_ptr32_
-+  spral_match_order_mp_mo_scale_
-+  spral_match_order_mp_mo_match_
-+  spral_match_order_mp_mo_split_
-+  spral_match_order_mp_match_order_metis_ptr64_
-+  spral_matrix_util._
-+  spral_matrix_util_mp_cscl_verify_double_
-+  spral_matrix_util_mp_print_matrix_long_double_
-+  spral_matrix_util_mp_print_matrix_int_double_
-+  spral_matrix_util_mp_digit_format_
-+  spral_matrix_util_mp_clean_cscl_oop_ptr32_double_
-+  spral_matrix_util_mp_clean_cscl_oop_main_ptr32_
-+  spral_matrix_util_mp_pushdown32_
-+  spral_matrix_util_mp_print_matrix_flag_
-+  spral_matrix_util_mp_cleanup_dup32_
-+  spral_matrix_util_mp_apply_conversion_map_ptr32_double_
-+  spral_matrix_util_mp_clean_cscl_oop_ptr64_double_
-+  spral_matrix_util_mp_clean_cscl_oop_main_
-+  spral_matrix_util_mp_pushdown64_
-+  spral_matrix_util_mp_cleanup_dup64_
-+  spral_matrix_util_mp_apply_conversion_map_ptr64_double_
-+  spral_matrix_util_mp_convert_coord_to_cscl_ptr32_double_
-+  spral_matrix_util_mp_convert_coord_to_cscl_ptr64_double_
-+  spral_matrix_util_mp_sort32_
-+  spral_matrix_util_mp_sort64_
-+  spral_matrix_util_mp_half_to_full_int32_
-+  spral_matrix_util_mp_half_to_full_int64_
-+  spral_metis_wrapper._
-+  spral_metis_wrapper_mp_metis_order32_
-+  spral_metis_wrapper_mp_metis_order64_
-+  spral_metis_wrapper_mp_half_to_full_drop_diag32_32_
-+  spral_metis_wrapper_mp_half_to_full_drop_diag32_64_
-+  spral_metis_wrapper_mp_half_to_full_drop_diag64_32_
-+  spral_metis_wrapper_mp_half_to_full_drop_diag64_64_
-+  spral_pgm._
-+  spral_pgm_mp_writematrixpattern_
-+  spral_pgm_mp_writepgm_
-+  spral_pgm_mp_writeppm_
-+  spral_random._
-+  spral_random_mp_random_get_seed_
-+  spral_random_mp_random_set_seed_
-+  spral_random_mp_random_real_
-+  spral_random_mp_random_integer64_
-+  spral_random_mp_random_integer32_
-+  spral_random_mp_random_logical_
-+  spral_random_matrix._
-+  spral_random_matrix_mp_random_matrix_generate32_
-+  spral_random_matrix_mp_random_matrix_generate64_
-+  spral_random_matrix_mp_random_perm_
-+  spral_random_matrix_mp_dbl_tr_sort_
-+  spral_random_matrix_mp_random_sym_wt_integer_
-+  spral_random_matrix_mp_random_integer_in_range_
-+  spral_rutherford_boeing._
-+  spral_rutherford_boeing_mp_rb_peek_file_
-+  spral_rutherford_boeing_mp_rb_read_double_int32_
-+  spral_rutherford_boeing_mp_rb_read_double_int64_
-+  spral_rutherford_boeing_mp_sym_to_skew_
-+  spral_rutherford_boeing_mp_rb_peek_unit_
-+  spral_rutherford_boeing_mp_read_data_integer_
-+  spral_rutherford_boeing_mp_read_data_real_
-+  spral_rutherford_boeing_mp_add_missing_diag_
-+  spral_rutherford_boeing_mp_flip_lwr_upr_
-+  spral_rutherford_boeing_mp_rb_write_double_int32_
-+  spral_rutherford_boeing_mp_rb_write_double_int64_
-+  spral_rutherford_boeing_mp_create_format_
-+  spral_rutherford_boeing_mp_matrix_type_to_sym_
-+  spral_rutherford_boeing_mp_sym_to_matrix_type_
-+  spral_scaling._
-+  spral_scaling_mp_hungarian_scale_sym_int32_
-+  spral_scaling_mp_hungarian_wrapper_
-+  spral_scaling_mp_hungarian_match_
-+  spral_scaling_mp_heap_update_
-+  spral_scaling_mp_heap_delete_
-+  spral_scaling_mp_match_postproc_
-+  spral_scaling_mp_hungarian_scale_sym_int64_
-+  spral_scaling_mp_hungarian_scale_unsym_int32_
-+  spral_scaling_mp_hungarian_scale_unsym_int64_
-+  spral_scaling_mp_auction_scale_sym_int32_
-+  spral_scaling_mp_auction_match_
-+  spral_scaling_mp_auction_match_core_
-+  spral_scaling_mp_auction_scale_sym_int64_
-+  spral_scaling_mp_auction_scale_unsym_int32_
-+  spral_scaling_mp_auction_scale_unsym_int64_
-+  spral_scaling_mp_equilib_scale_sym_int32_
-+  spral_scaling_mp_equilib_scale_sym_int64_
-+  spral_scaling_mp_equilib_scale_unsym_int32_
-+  spral_scaling_mp_equilib_scale_unsym_int64_
-+  spral_scaling_mp_inf_norm_equilib_sym_
-+  spral_scaling_mp_inf_norm_equilib_unsym_
-+  spral_scaling_mp_heap_pop_
-+  spral_scaling_mp_hungarian_init_heurisitic_
-+  spral_ssids_akeep._
-+  spral_ssids_akeep_mp_free_akeep_
-+  spral_ssids_anal._
-+  spral_ssids_anal_mp_expand_pattern_
-+  spral_ssids_anal_mp_expand_matrix_
-+  spral_ssids_anal_mp_check_order_
-+  spral_ssids_anal_mp_compute_flops_
-+  spral_ssids_anal_mp_print_atree_
-+  spral_ssids_anal_mp_print_atree_part_
-+  spral_ssids_anal_mp_analyse_phase_
-+  spral_ssids_anal_mp_build_map_
-+  spral_ssids_anal_mp_find_subtree_partition_
-+  spral_ssids_anal_mp_split_tree_
-+  spral_ssids_anal_mp_calc_exec_alloc_
-+  spral_ssids_anal_mp_create_size_order_
-+  spral_ssids_contrib._
-+  spral_ssids_contrib_get_data
-+  spral_ssids_contrib_free._
-+  spral_ssids_contrib_free_mp_contrib_free_
-+  spral_ssids_contrib_free_dbl
-+  spral_ssids_cpu_iface._
-+  spral_ssids_cpu_iface_mp_cpu_copy_options_in_
-+  spral_ssids_cpu_iface_mp_cpu_copy_stats_out_
-+  spral_c_dgemm
-+  spral_c_dpotrf
-+  spral_c_dsytrf
-+  spral_c_dtrsm
-+  spral_c_dsyrk
-+  spral_c_dtrsv
-+  spral_c_dgemv
-+  spral_ssids_cpu_create_num_subtree_dbl
-+  spral_ssids_cpu_destroy_num_subtree_dbl
-+  spral_ssids_cpu_subtree_solve_fwd_dbl
-+  spral_ssids_cpu_subtree_solve_diag_dbl
-+  spral_ssids_cpu_subtree_solve_diag_bwd_dbl
-+  spral_ssids_cpu_subtree_solve_bwd_dbl
-+  spral_ssids_cpu_subtree_enquire_dbl
-+  spral_ssids_cpu_subtree_alter_dbl
-+  spral_ssids_cpu_subtree_get_contrib_dbl
-+  spral_ssids_cpu_subtree_free_contrib_dbl
-+  spral_ssids_cpu_subtree._
-+  spral_ssids_cpu_subtree_mp_construct_cpu_symbolic_subtree_
-+  spral_ssids_cpu_subtree_mp_symbolic_cleanup_
-+  spral_ssids_cpu_subtree_mp_factor_
-+  spral_ssids_cpu_subtree_mp_numeric_cleanup_
-+  spral_ssids_cpu_subtree_mp_get_contrib_
-+  spral_ssids_cpu_subtree_mp_solve_fwd_
-+  spral_ssids_cpu_subtree_mp_solve_diag_
-+  spral_ssids_cpu_subtree_mp_solve_diag_bwd_
-+  spral_ssids_cpu_subtree_mp_solve_bwd_
-+  spral_ssids_cpu_subtree_mp_enquire_posdef_
-+  spral_ssids_cpu_subtree_mp_enquire_indef_
-+  spral_ssids_cpu_subtree_mp_alter_
-+  spral_ssids_cpu_subtree_mp_cpu_free_contrib_
-+  spral_ssids_cpu_create_symbolic_subtree
-+  spral_ssids_cpu_destroy_symbolic_subtree
-+  spral_ssids_datatypes._
-+  spral_ssids_datatypes_mp_print_summary_analyse_
-+  spral_ssids_datatypes_mp_print_summary_factor_
-+  spral_ssids_fkeep._
-+  spral_ssids_fkeep_mp_inner_factor_cpu_
-+  spral_ssids_fkeep_mp_inner_solve_cpu_
-+  spral_ssids_fkeep_mp_enquire_posdef_cpu_
-+  spral_ssids_fkeep_mp_enquire_indef_cpu_
-+  spral_ssids_fkeep_mp_alter_cpu_
-+  spral_ssids_fkeep_mp_free_fkeep_
-+  spral_ssids_gpu_subtree._
-+  spral_ssids_gpu_subtree_mp_construct_gpu_symbolic_subtree_
-+  spral_ssids_gpu_subtree_mp_symbolic_cleanup_
-+  spral_ssids_gpu_subtree_mp_factor_
-+  spral_ssids_gpu_subtree_mp_numeric_cleanup_
-+  spral_ssids_gpu_subtree_mp_get_contrib_
-+  spral_ssids_gpu_subtree_mp_gpu_free_contrib_
-+  spral_ssids_gpu_subtree_mp_solve_fwd_
-+  spral_ssids_gpu_subtree_mp_solve_diag_
-+  spral_ssids_gpu_subtree_mp_solve_diag_bwd_
-+  spral_ssids_gpu_subtree_mp_solve_bwd_
-+  spral_ssids_gpu_subtree_mp_enquire_posdef_
-+  spral_ssids_gpu_subtree_mp_enquire_indef_
-+  spral_ssids_gpu_subtree_mp_alter_
-+  spral_ssids_inform._
-+  spral_ssids_inform_mp_flag_to_character_
-+  spral_ssids_inform_mp_print_flag_
-+  spral_ssids_inform_mp_reduce_
-+  spral_ssids_profile_begin
-+  spral_ssids_profile_end
-+  spral_ssids_profile_create_task
-+  spral_ssids_profile_end_task
-+  spral_ssids_profile_set_state
-+  spral_ssids_profile_add_event
-+  spral_ssids_profile._
-+  spral_ssids_profile_mp_profile_begin_
-+  spral_ssids_profile_mp_profile_create_task_
-+  spral_ssids_profile_mp_end_task_
-+  spral_ssids_profile_mp_profile_set_state_
-+  spral_ssids_profile_mp_profile_add_event_
-+  spral_ssids_profile_mp_f2c_string_
-+  spral_ssids._
-+  spral_ssids_mp_analyse_double_ptr32_
-+  spral_ssids_mp_analyse_double_
-+  spral_ssids_mp_free_akeep_double_
-+  spral_ssids_mp_squash_topology_
-+  spral_ssids_mp_ssids_analyse_coord_double_
-+  spral_ssids_mp_ssids_factor_ptr32_double_
-+  spral_ssids_mp_ssids_factor_ptr64_double_
-+  spral_ssids_mp_push_omp_settings_
-+  spral_ssids_mp_pop_omp_settings_
-+  spral_ssids_mp_ssids_solve_one_double_
-+  spral_ssids_mp_ssids_solve_mult_double_
-+  spral_ssids_mp_ssids_enquire_posdef_double_
-+  spral_ssids_mp_ssids_enquire_indef_double_
-+  spral_ssids_mp_ssids_alter_double_
-+  spral_ssids_mp_free_fkeep_double_
-+  spral_ssids_mp_free_both_double_
-+  spral_ssids_subtree._
-+  spral_ssmfe_core._
-+  spral_ssmfe_core_mp_ssmfe_double_
-+  spral_ssmfe_core_mp_ssmfe_engine_double_
-+  spral_ssmfe_core_mp_solve_sevp_
-+  spral_ssmfe_core_mp_solve_gsevp_
-+  spral_ssmfe_core_mp_lwork_sevp_
-+  spral_ssmfe_core_mp_ssmfe_double_complex_
-+  spral_ssmfe_core_mp_ssmfe_engine_double_complex_
-+  spral_ssmfe_core_mp_solve_hevp_
-+  spral_ssmfe_core_mp_solve_ghevp_
-+  spral_ssmfe_core_mp_lwork_hevp_
-+  spral_ssmfe_core_mp_ssmfe_largest_double_
-+  spral_ssmfe_core_mp_ssmfe_largest_double_complex_
-+  spral_ssmfe_core_mp_ssmfe_core_free_double_
-+  spral_ssmfe_core_mp_ssmfe_core_free_keep_double_
-+  spral_ssmfe_core_mp_ssmfe_free_info_double_
-+  spral_ssmfe_expert._
-+  spral_ssmfe_expert_mp_ssmfe_expert_double_
-+  spral_ssmfe_expert_mp_ssmfe_direct_rci_double_
-+  spral_ssmfe_expert_mp_ssmfe_expert_double_complex_
-+  spral_ssmfe_expert_mp_ssmfe_direct_rci_double_complex_
-+  spral_ssmfe_expert_mp_ssmfe_expert_gen_double_
-+  spral_ssmfe_expert_mp_ssmfe_expert_gen_double_complex_
-+  spral_ssmfe_expert_mp_ssmfe_expert_shift_double_
-+  spral_ssmfe_expert_mp_ssmfe_inverse_rci_double_
-+  spral_ssmfe_expert_mp_ssmfe_msg_
-+  spral_ssmfe_expert_mp_ssmfe_expert_shift_double_complex_
-+  spral_ssmfe_expert_mp_ssmfe_inverse_rci_double_complex_
-+  spral_ssmfe_expert_mp_ssmfe_expert_gen_shift_double_
-+  spral_ssmfe_expert_mp_ssmfe_expert_gen_shift_double_complex_
-+  spral_ssmfe_expert_mp_ssmfe_expert_buckling_double_
-+  spral_ssmfe_expert_mp_ssmfe_expert_buckling_double_complex_
-+  spral_ssmfe_expert_mp_ssmfe_expert_free_keep_double_
-+  spral_ssmfe_expert_mp_ssmfe_expert_free_double_
-+  spral_ssmfe_expert_mp_ssmfe_errmsg_
-+  spral_ssmfe._
-+  spral_ssmfe_mp_ssmfe_std_double_
-+  spral_ssmfe_mp_ssmfe_direct_srci_double_
-+  spral_ssmfe_mp_ssmfe_vector_operations_double_
-+  spral_ssmfe_mp_ssmfe_gen_double_
-+  spral_ssmfe_mp_ssmfe_shift_double_
-+  spral_ssmfe_mp_ssmfe_inverse_srci_double_
-+  spral_ssmfe_mp_ssmfe_gen_shift_double_
-+  spral_ssmfe_mp_ssmfe_buckling_double_
-+  spral_ssmfe_mp_ssmfe_std_double_complex_
-+  spral_ssmfe_mp_ssmfe_direct_srci_double_complex_
-+  spral_ssmfe_mp_ssmfe_vector_operations_double_complex_
-+  spral_ssmfe_mp_ssmfe_gen_double_complex_
-+  spral_ssmfe_mp_ssmfe_shift_double_complex_
-+  spral_ssmfe_mp_ssmfe_inverse_srci_double_complex_
-+  spral_ssmfe_mp_ssmfe_gen_shift_double_complex_
-+  spral_ssmfe_mp_ssmfe_buckling_double_complex_
-+  spral_ssmfe_mp_ssmfe_free_double_
-+  spral_ssmfe_mp_ssmfe_free_keep_double_
-+  spral_ssmfe_mp_ssmfe_free_double_complex_
-+  spral_ssmfe_mp_ssmfe_free_keep_double_complex_
-+  spral_ssmfessmfe_vector_operations_double_complex_mp_nil_
-+  spral_timespec._
-+  spral_timer._
-+  spral_timer_mp_tdiff_
-+  spral_timer_mp_log_start_
-+  spral_timer_mp_log_stop_
+ # Add OpenMP support
+ AS_IF([test "x$enable_openmp" != "xno"], [
+diff -urN spral-2025.03.06-orig/Makefile.am spral-2025.03.06/Makefile.am
+--- spral-2025.03.06-orig/Makefile.am	2025-03-06 16:53:00.000000000 +0800
++++ spral-2025.03.06/Makefile.am	2025-03-15 15:52:34.638197900 +0800
+@@ -8,7 +8,7 @@
+ if HAVE_OPENMP
+ OPENMP_LIB = -Xcompiler="$(OPENMP_CXXFLAGS)"
+ else
+-OPENMP_LIB = #-lgomp # FIXME: autoconf this
++OPENMP_LIB =
+ endif
+ if HAVE_GPUDBG
+ AM_NVCC_FLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src -Xptxas="${PTX_FLAGS}" -G -src-in-ptx
+@@ -26,11 +26,13 @@
+ AM_NVCC_FLAGS += -gencode arch=compute_86,code=sm_86
+ AM_NVCC_FLAGS += -gencode arch=compute_87,code=sm_87
+ AM_NVCC_FLAGS += -gencode arch=compute_86,code=compute_86
+-AM_LD_FLAGS = -lcuda
+-NVCCLINK = \
+-	$(NVCC) $(NVCCFLAGS) $(AM_NVCC_FLAGS) $(AM_LD_FLAGS) $(LDFLAGS) $(OPENMP_LIB) -o $@
++
+ .cu.o:
+-	$(NVCC) $(NVCCFLAGS) $(AM_NVCC_FLAGS) -rdc false -c -o $@ $<
++	$(NVCC) $(NVCCFLAGS) $(AM_NVCC_FLAGS) -c -o $@ $<
++.cu.obj:
++	$(NVCC) $(NVCCFLAGS) $(AM_NVCC_FLAGS) -c -o $@ $<
++.cu.lo:
++	$(LIBTOOL) --mode=compile --tag=CC $(NVCC) $(NVCCFLAGS) $(AM_NVCC_FLAGS) -c -o $@ $<
+ 
+ # Include directory for standard C
+ AM_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src $(OPENMP_CFLAGS) \
+@@ -41,16 +43,14 @@
+ 
+ # FIXME: make below configurable
+ if HAVE_NVCC
+-LDADD = -L. -lspral $(METIS_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GTG_LIBS) -L$(CUDA_HOME)/lib64 $(HWLOC_LIBS) $(FCLIBS)
+-SPRAL_LINK_LIBS = -lcublas
+-SPRALLINK = $(NVCCLINK)
++SPRAL_LINK_LIBS = -lcuda -lcublas -lcudart
+ else
+-LDADD = -L. -lspral $(METIS_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GTG_LIBS) $(HWLOC_LIBS) $(FCLIBS)
+ SPRAL_LINK_LIBS = $(CXXLIB)
+-SPRALLINK = $(FCLINK)
+ endif
+ 
+-lib_LIBRARIES = libspral.a
++lib_LTLIBRARIES = libspral.la
++libspral_la_LIBADD = $(METIS_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) $(GTG_LIBS) $(HWLOC_LIBS) $(FCLIBS) $(SPRAL_LINK_LIBS)
++
+ # Note: first so not +=
+ include_HEADERS = \
+    include/spral.h \
+@@ -58,42 +58,42 @@
+ 
+ # BLAS_IFACE
+ # Note: first so not +=
+-libspral_a_SOURCES = \
++libspral_la_SOURCES = \
+ 	src/blas_iface.f90
+ 
+ # CORE_ANALYSE
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/core_analyse.f90
+ 
+ # COMPAT (compatability header)
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+    src/compat.cxx
+ 
+ # CUDA
+ if HAVE_NVCC
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/cuda/api_wrappers.cu \
+ 	src/cuda/cuda.f90 \
+ 	src/cuda/cuda_check.h
+ else
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/cuda/cuda_nocuda.f90
+ endif
+ 
+ # HW_TOPOLOGY
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+    src/hw_topology/hw_topology.f90 \
+ 	src/hw_topology/guess_topology.cxx \
+ 	src/hw_topology/guess_topology.hxx \
+ 	src/hw_topology/hwloc_wrapper.hxx
+ 
+ # LAPACK_IFACE
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/lapack_iface.f90
+ 
+ # LSMR
+ include_HEADERS += include/spral_lsmr.h
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/lsmr.f90 \
+ 	interfaces/C/lsmr.f90
+ check_PROGRAMS = \
+@@ -102,38 +102,38 @@
+ 	examples/C/lsmr
+ lsmr_test_SOURCES = tests/lsmr.f90
+ examples_Fortran_lsmr_SOURCES = examples/Fortran/lsmr.f90
+-tests/lsmr.$(OBJEXT): libspral.a
+-examples/C/lsmr.$(OBJEXT): libspral.a
+-examples/Fortran/lsmr.$(OBJEXT): libspral.a
++tests/lsmr.$(OBJEXT): libspral.la
++examples/C/lsmr.$(OBJEXT): libspral.la
++examples/Fortran/lsmr.$(OBJEXT): libspral.la
+ TESTS = lsmr_test
+ 
+ # MATCH_ORDER
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/match_order.f90
+ 
+ # MATRIX_UTIL
+ include_HEADERS += include/spral_matrix_util.h
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/matrix_util.f90 \
+ 	interfaces/C/matrix_util.f90
+ 
+ # METIS_WRAPPER
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/metis$(METIS_VERSION)_wrapper.F90
+ EXTRA_DIST = src/metis4_wrapper.F90 src/metis5_wrapper.F90
+ 
+ # OMP
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/omp.cxx \
+ 	src/omp.hxx
+ 
+ # PGM
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/pgm.f90
+ 
+ # RUTHERFORD_BOEING
+ include_HEADERS += include/spral_rutherford_boeing.h
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/rutherford_boeing.f90 \
+ 	interfaces/C/rutherford_boeing.f90
+ check_PROGRAMS += \
+@@ -151,16 +151,16 @@
+ 	examples/C/rutherford_boeing/rb_read.c
+ examples_C_rutherford_boeing_rb_write_SOURCES = \
+ 	examples/C/rutherford_boeing/rb_write.c
+-tests/rutherford_boeing.$(OBJEXT): libspral.a
+-examples/Fortran/rutherford_boeing/rb_read.$(OBJEXT): libspral.a
+-examples/Fortran/rutherford_boeing/rb_write.$(OBJEXT): libspral.a
+-examples/C/rutherford_boeing/rb_read.$(OBJEXT): libspral.a
+-examples/C/rutherford_boeing/rb_write.$(OBJEXT): libspral.a
++tests/rutherford_boeing.$(OBJEXT): libspral.la
++examples/Fortran/rutherford_boeing/rb_read.$(OBJEXT): libspral.la
++examples/Fortran/rutherford_boeing/rb_write.$(OBJEXT): libspral.la
++examples/C/rutherford_boeing/rb_read.$(OBJEXT): libspral.la
++examples/C/rutherford_boeing/rb_write.$(OBJEXT): libspral.la
+ TESTS += rutherford_boeing_test
+ 
+ # SCALING
+ include_HEADERS += include/spral_scaling.h
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/scaling.f90 \
+ 	interfaces/C/scaling.f90
+ check_PROGRAMS += \
+@@ -190,28 +190,28 @@
+ examples_C_scaling_equilib_unsym_SOURCES = examples/C/scaling/equilib_unsym.c
+ examples_C_scaling_hungarian_sym_SOURCES = examples/C/scaling/hungarian_sym.c
+ examples_C_scaling_hungarian_unsym_SOURCES = examples/C/scaling/hungarian_unsym.c
+-tests/scaling.$(OBJEXT): libspral.a
+-examples/Fortran/scaling/auction_sym.$(OBJEXT): libspral.a
+-examples/Fortran/scaling/auction_unsym.$(OBJEXT): libspral.a
+-examples/Fortran/scaling/equilib_sym.$(OBJEXT): libspral.a
+-examples/Fortran/scaling/equilib_unsym.$(OBJEXT): libspral.a
+-examples/Fortran/scaling/hungarian_sym.$(OBJEXT): libspral.a
+-examples/Fortran/scaling/hungarian_unsym.$(OBJEXT): libspral.a
+-examples/C/scaling/auction_sym.$(OBJEXT): libspral.a
+-examples/C/scaling/auction_unsym.$(OBJEXT): libspral.a
+-examples/C/scaling/equilib_sym.$(OBJEXT): libspral.a
+-examples/C/scaling/equilib_unsym.$(OBJEXT): libspral.a
+-examples/C/scaling/hungarian_sym.$(OBJEXT): libspral.a
+-examples/C/scaling/hungarian_unsym.$(OBJEXT): libspral.a
++tests/scaling.$(OBJEXT): libspral.la
++examples/Fortran/scaling/auction_sym.$(OBJEXT): libspral.la
++examples/Fortran/scaling/auction_unsym.$(OBJEXT): libspral.la
++examples/Fortran/scaling/equilib_sym.$(OBJEXT): libspral.la
++examples/Fortran/scaling/equilib_unsym.$(OBJEXT): libspral.la
++examples/Fortran/scaling/hungarian_sym.$(OBJEXT): libspral.la
++examples/Fortran/scaling/hungarian_unsym.$(OBJEXT): libspral.la
++examples/C/scaling/auction_sym.$(OBJEXT): libspral.la
++examples/C/scaling/auction_unsym.$(OBJEXT): libspral.la
++examples/C/scaling/equilib_sym.$(OBJEXT): libspral.la
++examples/C/scaling/equilib_unsym.$(OBJEXT): libspral.la
++examples/C/scaling/hungarian_sym.$(OBJEXT): libspral.la
++examples/C/scaling/hungarian_unsym.$(OBJEXT): libspral.la
+ TESTS += scaling_test
+ 
+ # TIMER
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/timer.f90
+ 
+ # RANDOM
+ include_HEADERS += include/spral_random.h
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/random.f90 \
+ 	interfaces/C/random.f90
+ check_PROGRAMS += \
+@@ -221,14 +221,14 @@
+ random_test_SOURCES = tests/random.f90
+ examples_Fortran_random_SOURCES = examples/Fortran/random.f90
+ examples_C_random_SOURCES = examples/C/random.c
+-tests/random.$(OBJEXT): libspral.a
+-examples/Fortran/random.$(OBJEXT): libspral.a
+-examples/C/random.$(OBJEXT): libspral.a
++tests/random.$(OBJEXT): libspral.la
++examples/Fortran/random.$(OBJEXT): libspral.la
++examples/C/random.$(OBJEXT): libspral.la
+ TESTS += random_test
+ 
+ # RANDOM_MATRIX
+ include_HEADERS += include/spral_random_matrix.h
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/random_matrix.f90 \
+ 	interfaces/C/random_matrix.f90
+ check_PROGRAMS += \
+@@ -238,15 +238,15 @@
+ random_matrix_test_SOURCES = tests/random_matrix.f90
+ examples_Fortran_random_matrix_SOURCES = examples/Fortran/random_matrix.f90
+ examples_C_random_matrix_SOURCES = examples/C/random_matrix.c
+-tests/random_matrix.$(OBJEXT): libspral.a
+-examples/Fortran/random_matrix.$(OBJEXT): libspral.a
+-examples/C/random_matrix.$(OBJEXT): libspral.a
++tests/random_matrix.$(OBJEXT): libspral.la
++examples/Fortran/random_matrix.$(OBJEXT): libspral.la
++examples/C/random_matrix.$(OBJEXT): libspral.la
+ TESTS += random_matrix_test
+ 
+ # SSIDS
+ include_HEADERS += include/spral_ssids.h
+ if HAVE_NVCC
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/ssids/gpu/alloc.f90 \
+ 	src/ssids/gpu/cpu_solve.f90 \
+ 	src/ssids/gpu/datatypes.f90 \
+@@ -264,10 +264,10 @@
+ 	src/ssids/gpu/kernels/solve.cu \
+ 	src/ssids/gpu/kernels/syrk.cu
+ else
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/ssids/gpu/subtree_no_cuda.f90
+ endif
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/ssids/akeep.f90 \
+ 	src/ssids/anal.f90 \
+ 	src/ssids/contrib.f90 \
+@@ -347,24 +347,20 @@
+ 									 tests/ssids/kernels/ldlt_tpp.cxx \
+ 									 tests/ssids/kernels/ldlt_tpp.hxx
+ examples_Fortran_ssids_SOURCES = examples/Fortran/ssids.f90
+-examples/Fortran/ssids.$(OBJEXT): libspral.a
++examples/Fortran/ssids.$(OBJEXT): libspral.la
+ examples_C_ssids_SOURCES = examples/C/ssids.c
+-tests/ssids/ssids.$(OBJEXT): libspral.a
+-tests/ssids/kernels.$(OBJEXT): libspral.a
+-examples/C/ssids.$(OBJEXT): libspral.a
++tests/ssids/ssids.$(OBJEXT): libspral.la
++tests/ssids/kernels.$(OBJEXT): libspral.la
++examples/C/ssids.$(OBJEXT): libspral.la
+ TESTS += ssids_test ssids_kernel_test
+-spral_ssids_LDADD = $(LDADD) $(SPRAL_LINK_LIBS)
+-ssids_test_LDADD = $(LDADD) $(SPRAL_LINK_LIBS)
+-examples_Fortran_ssids_LDADD = $(LDADD) $(SPRAL_LINK_LIBS)
+-examples_C_ssids_LDADD = $(LDADD) $(SPRAL_LINK_LIBS)
+-spral_ssids_LINK = $(SPRALLINK)
+-ssids_test_LINK = $(SPRALLINK)
+-examples_Fortran_ssids_LINK = $(SPRALLINK)
+-examples_C_ssids_LINK = $(SPRALLINK) $(NO_FORT_MAIN)
++spral_ssids_LDADD = libspral.la
++ssids_test_LDADD = libspral.la
++examples_Fortran_ssids_LDADD = libspral.la
++examples_C_ssids_LDADD = libspral.la
+ 
+ # SSMFE
+ include_HEADERS += include/spral_ssmfe.h
+-libspral_a_SOURCES += \
++libspral_la_SOURCES += \
+ 	src/ssmfe/ssmfe.f90 \
+ 	src/ssmfe/core.f90 \
+ 	src/ssmfe/expert.f90 \
+@@ -388,8 +384,8 @@
+ ssmfe_ciface_test_SOURCES = tests/ssmfe/ssmfe_ciface.c \
+ 									 tests/ssmfe/laplace2d.h \
+ 									 tests/ssmfe/ldltf.h
+-tests/ssmfe/ssmfe.$(OBJEXT): libspral.a
+-tests/ssmfe/ssmfe_ciface.$(OBJEXT): libspral.a
++tests/ssmfe/ssmfe.$(OBJEXT): libspral.la
++tests/ssmfe/ssmfe_ciface.$(OBJEXT): libspral.la
+ TESTS += ssmfe_test \
+ 			ssmfe_ciface_test
+ examples_C_ssmfe_hermitian_SOURCES = \
+@@ -422,19 +418,19 @@
+ 	examples/Fortran/ssmfe/shift_invert.f90 \
+ 	examples/Fortran/ssmfe/laplace2d.f90 \
+ 	examples/Fortran/ssmfe/ldltf.f90
+-examples/C/ssmfe/hermitian.$(OBJEXT): libspral.a
+-examples/C/ssmfe/precond_core.$(OBJEXT): libspral.a
+-examples/C/ssmfe/precond_expert.$(OBJEXT): libspral.a
+-examples/C/ssmfe/precond_ssmfe.$(OBJEXT): libspral.a
+-examples/C/ssmfe/shift_invert.$(OBJEXT): libspral.a
+-examples/Fortran/ssmfe/hermitian.$(OBJEXT): libspral.a
+-examples/Fortran/ssmfe/precond_core.$(OBJEXT): libspral.a \
++examples/C/ssmfe/hermitian.$(OBJEXT): libspral.la
++examples/C/ssmfe/precond_core.$(OBJEXT): libspral.la
++examples/C/ssmfe/precond_expert.$(OBJEXT): libspral.la
++examples/C/ssmfe/precond_ssmfe.$(OBJEXT): libspral.la
++examples/C/ssmfe/shift_invert.$(OBJEXT): libspral.la
++examples/Fortran/ssmfe/hermitian.$(OBJEXT): libspral.la
++examples/Fortran/ssmfe/precond_core.$(OBJEXT): libspral.la \
+    examples/Fortran/ssmfe/laplace2d.$(OBJEXT)
+-examples/Fortran/ssmfe/precond_expert.$(OBJEXT): libspral.a \
++examples/Fortran/ssmfe/precond_expert.$(OBJEXT): libspral.la \
+    examples/Fortran/ssmfe/laplace2d.$(OBJEXT)
+-examples/Fortran/ssmfe/precond_ssmfe.$(OBJEXT): libspral.a \
++examples/Fortran/ssmfe/precond_ssmfe.$(OBJEXT): libspral.la \
+    examples/Fortran/ssmfe/laplace2d.$(OBJEXT)
+-examples/Fortran/ssmfe/shift_invert.$(OBJEXT): libspral.a \
++examples/Fortran/ssmfe/shift_invert.$(OBJEXT): libspral.la \
+    examples/Fortran/ssmfe/laplace2d.$(OBJEXT) \
+    examples/Fortran/ssmfe/ldltf.$(OBJEXT)
+ 
+@@ -443,145 +439,144 @@
+ 	-rm *.mod
+ 
+ # Fortran 90 dependencies
+-driver/ssids_spral.$(OBJEXT): libspral.a
+-src/match_order.$(OBJEXT): src/metis$(METIS_VERSION)_wrapper.$(OBJEXT) \
+-                           src/scaling.$(OBJEXT)
+-src/random_matrix.$(OBJEXT): src/random.$(OBJEXT)
+-src/rutherford_boeing.$(OBJEXT): src/matrix_util.$(OBJEXT) \
+-                                 src/random.$(OBJEXT)
+-src/scaling.$(OBJEXT): src/matrix_util.$(OBJEXT)
+-src/ssids/akeep.$(OBJEXT): src/ssids/datatypes.$(OBJEXT) \
+-                           src/hw_topology/hw_topology.$(OBJEXT) \
+-                           src/ssids/inform.$(OBJEXT) \
+-									src/ssids/subtree.$(OBJEXT)
++src/match_order.lo: src/metis$(METIS_VERSION)_wrapper.lo \
++                           src/scaling.lo
++src/random_matrix.lo: src/random.lo
++src/rutherford_boeing.lo: src/matrix_util.lo \
++                                 src/random.lo
++src/scaling.lo: src/matrix_util.lo
++src/ssids/akeep.lo: src/ssids/datatypes.lo \
++                           src/hw_topology/hw_topology.lo \
++                           src/ssids/inform.lo \
++									src/ssids/subtree.lo
+ if HAVE_NVCC
+-src/ssids/anal.$(OBJEXT): src/core_analyse.$(OBJEXT) \
+-                          src/cuda/cuda.$(OBJEXT) \
+-                          src/hw_topology/hw_topology.$(OBJEXT) \
+-                          src/pgm.$(OBJEXT) \
+-                          src/ssids/akeep.$(OBJEXT) \
+-                          src/ssids/datatypes.$(OBJEXT) \
+-                          src/ssids/inform.$(OBJEXT) \
+-                          src/ssids/cpu/subtree.$(OBJEXT) \
+-                          src/ssids/gpu/subtree.$(OBJEXT)
++src/ssids/anal.lo: src/core_analyse.lo \
++                          src/cuda/cuda.lo \
++                          src/hw_topology/hw_topology.lo \
++                          src/pgm.lo \
++                          src/ssids/akeep.lo \
++                          src/ssids/datatypes.lo \
++                          src/ssids/inform.lo \
++                          src/ssids/cpu/subtree.lo \
++                          src/ssids/gpu/subtree.lo
+ else
+-src/ssids/anal.$(OBJEXT): src/core_analyse.$(OBJEXT) \
+-                          src/cuda/cuda_nocuda.$(OBJEXT) \
+-                          src/hw_topology/hw_topology.$(OBJEXT) \
+-                          src/pgm.$(OBJEXT) \
+-                          src/ssids/akeep.$(OBJEXT) \
+-                          src/ssids/datatypes.$(OBJEXT) \
+-                          src/ssids/inform.$(OBJEXT) \
+-                          src/ssids/cpu/subtree.$(OBJEXT) \
+-                          src/ssids/gpu/subtree_no_cuda.$(OBJEXT)
++src/ssids/anal.lo: src/core_analyse.lo \
++                          src/cuda/cuda_nocuda.lo \
++                          src/hw_topology/hw_topology.lo \
++                          src/pgm.lo \
++                          src/ssids/akeep.lo \
++                          src/ssids/datatypes.lo \
++                          src/ssids/inform.lo \
++                          src/ssids/cpu/subtree.lo \
++                          src/ssids/gpu/subtree_no_cuda.lo
+ endif
+-src/ssids/contrib.$(OBJEXT): src/ssids/datatypes.$(OBJEXT)
+-src/ssids/datatypes.$(OBJEXT): src/scaling.$(OBJEXT)
+-src/ssids/fkeep.$(OBJEXT): src/ssids/akeep.$(OBJEXT) \
+-                           src/ssids/datatypes.$(OBJEXT) \
+-                           src/ssids/inform.$(OBJEXT) \
+-                           src/ssids/profile_iface.$(OBJEXT) \
+-                           src/ssids/cpu/subtree.$(OBJEXT)
+-src/ssids/inform.$(OBJEXT): src/scaling.$(OBJEXT) \
+-                            src/ssids/datatypes.$(OBJEXT)
+-src/ssids/subtree.$(OBJEXT): src/ssids/contrib.$(OBJEXT) \
+-                             src/ssids/datatypes.$(OBJEXT) \
+-									  src/ssids/inform.$(OBJEXT)
+-src/ssids/cpu/cpu_iface.$(OBJEXT): src/ssids/datatypes.$(OBJEXT) \
+-                                   src/ssids/inform.$(OBJEXT)
+-src/ssids/cpu/subtree.$(OBJEXT): src/ssids/contrib.$(OBJEXT) \
+-                                 src/ssids/datatypes.$(OBJEXT) \
+-                                 src/ssids/inform.$(OBJEXT) \
+-                                 src/ssids/subtree.$(OBJEXT) \
+-                                 src/ssids/cpu/cpu_iface.$(OBJEXT)
+-src/ssids/gpu/cpu_solve.$(OBJEXT): src/ssids/datatypes.$(OBJEXT)
+-src/ssids/gpu/datatypes.$(OBJEXT): src/cuda/cuda.$(OBJEXT)
+-src/ssids/gpu/interfaces.$(OBJEXT): src/ssids/gpu/datatypes.$(OBJEXT)
+-src/ssids/gpu/dense_factor.$(OBJEXT): src/cuda/cuda.$(OBJEXT) \
+-                                      src/ssids/gpu/alloc.$(OBJEXT) \
+-                                      src/ssids/gpu/datatypes.$(OBJEXT) \
+-                                      src/ssids/gpu/interfaces.$(OBJEXT) \
+-                                      src/ssids/datatypes.$(OBJEXT)
+-src/ssids/gpu/factor.$(OBJEXT): src/cuda/cuda.$(OBJEXT) \
+-										  src/ssids/contrib.$(OBJEXT) \
+-                                src/ssids/datatypes.$(OBJEXT) \
+-                                src/ssids/profile_iface.$(OBJEXT) \
+-                                src/ssids/gpu/alloc.$(OBJEXT) \
+-                                src/ssids/gpu/datatypes.$(OBJEXT) \
+-                                src/ssids/gpu/interfaces.$(OBJEXT) \
+-                                src/ssids/gpu/dense_factor.$(OBJEXT) \
+-                                src/ssids/gpu/solve.$(OBJEXT) \
+-                                src/ssids/gpu/smalloc.$(OBJEXT)
+-src/ssids/gpu/solve.$(OBJEXT): src/cuda/cuda.$(OBJEXT) \
+-                               src/ssids/gpu/alloc.$(OBJEXT) \
+-                               src/ssids/gpu/datatypes.$(OBJEXT) \
+-                               src/ssids/gpu/interfaces.$(OBJEXT) \
+-                               src/ssids/datatypes.$(OBJEXT)
+-src/ssids/gpu/smalloc.$(OBJEXT): src/ssids/datatypes.$(OBJEXT)
+-src/ssids/gpu/subtree.$(OBJEXT): src/cuda/cuda.$(OBJEXT) \
+-                                 src/ssids/contrib.$(OBJEXT) \
+-                                 src/ssids/datatypes.$(OBJEXT) \
+-                                 src/ssids/inform.$(OBJEXT) \
+-                                 src/ssids/subtree.$(OBJEXT) \
+-                                 src/ssids/gpu/datatypes.$(OBJEXT) \
+-                                 src/ssids/gpu/factor.$(OBJEXT) \
+-                                 src/ssids/gpu/solve.$(OBJEXT) \
+-                                 src/ssids/gpu/smalloc.$(OBJEXT)
+-src/ssids/gpu/subtree_no_cuda.$(OBJEXT): src/ssids/contrib.$(OBJEXT) \
+-                                         src/ssids/datatypes.$(OBJEXT) \
+-                                         src/ssids/subtree.$(OBJEXT) \
+-                                         src/ssids/inform.$(OBJEXT)
++src/ssids/contrib.lo: src/ssids/datatypes.lo
++src/ssids/datatypes.lo: src/scaling.lo
++src/ssids/fkeep.lo: src/ssids/akeep.lo \
++                           src/ssids/datatypes.lo \
++                           src/ssids/inform.lo \
++                           src/ssids/profile_iface.lo \
++                           src/ssids/cpu/subtree.lo
++src/ssids/inform.lo: src/scaling.lo \
++                            src/ssids/datatypes.lo
++src/ssids/subtree.lo: src/ssids/contrib.lo \
++                             src/ssids/datatypes.lo \
++									  src/ssids/inform.lo
++src/ssids/cpu/cpu_iface.lo: src/ssids/datatypes.lo \
++                                   src/ssids/inform.lo
++src/ssids/cpu/subtree.lo: src/ssids/contrib.lo \
++                                 src/ssids/datatypes.lo \
++                                 src/ssids/inform.lo \
++                                 src/ssids/subtree.lo \
++                                 src/ssids/cpu/cpu_iface.lo
++src/ssids/gpu/cpu_solve.lo: src/ssids/datatypes.lo
++src/ssids/gpu/datatypes.lo: src/cuda/cuda.lo
++src/ssids/gpu/interfaces.lo: src/ssids/gpu/datatypes.lo
++src/ssids/gpu/dense_factor.lo: src/cuda/cuda.lo \
++                                      src/ssids/gpu/alloc.lo \
++                                      src/ssids/gpu/datatypes.lo \
++                                      src/ssids/gpu/interfaces.lo \
++                                      src/ssids/datatypes.lo
++src/ssids/gpu/factor.lo: src/cuda/cuda.lo \
++										  src/ssids/contrib.lo \
++                                src/ssids/datatypes.lo \
++                                src/ssids/profile_iface.lo \
++                                src/ssids/gpu/alloc.lo \
++                                src/ssids/gpu/datatypes.lo \
++                                src/ssids/gpu/interfaces.lo \
++                                src/ssids/gpu/dense_factor.lo \
++                                src/ssids/gpu/solve.lo \
++                                src/ssids/gpu/smalloc.lo
++src/ssids/gpu/solve.lo: src/cuda/cuda.lo \
++                               src/ssids/gpu/alloc.lo \
++                               src/ssids/gpu/datatypes.lo \
++                               src/ssids/gpu/interfaces.lo \
++                               src/ssids/datatypes.lo
++src/ssids/gpu/smalloc.lo: src/ssids/datatypes.lo
++src/ssids/gpu/subtree.lo: src/cuda/cuda.lo \
++                                 src/ssids/contrib.lo \
++                                 src/ssids/datatypes.lo \
++                                 src/ssids/inform.lo \
++                                 src/ssids/subtree.lo \
++                                 src/ssids/gpu/datatypes.lo \
++                                 src/ssids/gpu/factor.lo \
++                                 src/ssids/gpu/solve.lo \
++                                 src/ssids/gpu/smalloc.lo
++src/ssids/gpu/subtree_no_cuda.lo: src/ssids/contrib.lo \
++                                         src/ssids/datatypes.lo \
++                                         src/ssids/subtree.lo \
++                                         src/ssids/inform.lo
+ if HAVE_NVCC
+-src/ssids/ssids.$(OBJEXT): src/match_order.$(OBJEXT) \
+-                           src/matrix_util.$(OBJEXT) \
+-                           src/metis$(METIS_VERSION)_wrapper.$(OBJEXT) \
+-                           src/scaling.$(OBJEXT) \
+-                           src/ssids/akeep.$(OBJEXT) \
+-                           src/ssids/anal.$(OBJEXT) \
+-                           src/ssids/datatypes.$(OBJEXT) \
+-                           src/ssids/fkeep.$(OBJEXT) \
+-                           src/ssids/inform.$(OBJEXT)
++src/ssids/ssids.lo: src/match_order.lo \
++                           src/matrix_util.lo \
++                           src/metis$(METIS_VERSION)_wrapper.lo \
++                           src/scaling.lo \
++                           src/ssids/akeep.lo \
++                           src/ssids/anal.lo \
++                           src/ssids/datatypes.lo \
++                           src/ssids/fkeep.lo \
++                           src/ssids/inform.lo
+ else
+-src/ssids/ssids.$(OBJEXT): src/hw_topology/hw_topology.$(OBJEXT) \
+-                           src/match_order.$(OBJEXT) \
+-                           src/matrix_util.$(OBJEXT) \
+-                           src/metis$(METIS_VERSION)_wrapper.$(OBJEXT) \
+-                           src/scaling.$(OBJEXT) \
+-                           src/ssids/akeep.$(OBJEXT) \
+-                           src/ssids/anal.$(OBJEXT) \
+-                           src/ssids/datatypes.$(OBJEXT) \
+-                           src/ssids/fkeep.$(OBJEXT) \
+-                           src/ssids/inform.$(OBJEXT)
++src/ssids/ssids.lo: src/hw_topology/hw_topology.lo \
++                           src/match_order.lo \
++                           src/matrix_util.lo \
++                           src/metis$(METIS_VERSION)_wrapper.lo \
++                           src/scaling.lo \
++                           src/ssids/akeep.lo \
++                           src/ssids/anal.lo \
++                           src/ssids/datatypes.lo \
++                           src/ssids/fkeep.lo \
++                           src/ssids/inform.lo
+ endif
+-src/ssmfe/core.$(OBJEXT): src/blas_iface.$(OBJEXT) \
+-                          src/lapack_iface.$(OBJEXT)
+-src/ssmfe/expert.$(OBJEXT): src/ssmfe/core.$(OBJEXT)
+-src/ssmfe/ssmfe.$(OBJEXT): src/ssmfe/expert.$(OBJEXT)
++src/ssmfe/core.lo: src/blas_iface.lo \
++                          src/lapack_iface.lo
++src/ssmfe/expert.lo: src/ssmfe/core.lo
++src/ssmfe/ssmfe.lo: src/ssmfe/expert.lo
+ if HAVE_NVCC
+-driver/spral_ssids.$(OBJEXT): libspral.a \
++driver/spral_ssids.$(OBJEXT): libspral.la \
+    driver/cuda_helper_gpu.$(OBJEXT)
+ else
+-driver/spral_ssids.$(OBJEXT): libspral.a \
++driver/spral_ssids.$(OBJEXT): libspral.la \
+    driver/cuda_helper_nogpu.$(OBJEXT)
+ endif
+ 
+ # CUDA header deps
+-src/ssids/gpu/kernels/solve.$(OBJEXT): src/ssids/gpu/kernels/dtrsv.h
++src/ssids/gpu/kernels/solve.lo: src/ssids/gpu/kernels/dtrsv.h
+ 
+ # C interface deps
+-interfaces/C/random.$(OBJEXT): src/random.$(OBJEXT)
+-interfaces/C/random_matrix.$(OBJEXT): src/random_matrix.$(OBJEXT)
+-interfaces/C/rutherford_boeing.$(OBJEXT): src/rutherford_boeing.$(OBJEXT)
+-interfaces/C/scaling.$(OBJEXT): src/scaling.$(OBJEXT)
++interfaces/C/random.lo: src/random.lo
++interfaces/C/random_matrix.lo: src/random_matrix.lo
++interfaces/C/rutherford_boeing.lo: src/rutherford_boeing.lo
++interfaces/C/scaling.lo: src/scaling.lo
+ if HAVE_NVCC
+-interfaces/C/ssids.$(OBJEXT): src/ssids/ssids.$(OBJEXT) \
+-                              src/ssids/inform.$(OBJEXT)
++interfaces/C/ssids.lo: src/ssids/ssids.lo \
++	src/ssids/inform.lo
+ else
+-interfaces/C/ssids.$(OBJEXT): src/ssids/ssids.$(OBJEXT) \
+-                              src/ssids/inform.$(OBJEXT)
++interfaces/C/ssids.lo: src/ssids/ssids.lo \
++	src/ssids/inform.lo
+ endif
+-interfaces/C/ssmfe.$(OBJEXT): src/ssmfe/ssmfe.$(OBJEXT) \
+-                              interfaces/C/ssmfe_expert.$(OBJEXT)
+-interfaces/C/ssmfe_core.$(OBJEXT): src/ssmfe/core.$(OBJEXT)
+-interfaces/C/ssmfe_expert.$(OBJEXT): src/ssmfe/core.$(OBJEXT) \
+-                                     interfaces/C/ssmfe_core.$(OBJEXT)
++interfaces/C/ssmfe.lo: src/ssmfe/ssmfe.lo \
++	interfaces/C/ssmfe_expert.lo
++interfaces/C/ssmfe_core.lo: src/ssmfe/core.lo
++interfaces/C/ssmfe_expert.lo: src/ssmfe/core.lo \
++	interfaces/C/ssmfe_core.lo

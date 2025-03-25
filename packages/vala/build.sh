@@ -91,10 +91,6 @@ configure_stage()
   WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                           \
   ../configure --host="$HOST_TRIPLET"                                          \
     --prefix="$PREFIX"                                                         \
-    --bindir="$PREFIX/bin"                                                     \
-    --includedir="$PREFIX/include"                                             \
-    --libdir="$PREFIX/lib"                                                     \
-    --datarootdir="$PREFIX/share"                                              \
     --disable-valadoc                                                          \
     gt_cv_locale_zh_CN=none || exit 1
 }

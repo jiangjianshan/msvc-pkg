@@ -79,7 +79,7 @@ cmake -G "Ninja"                                                                
   -DLLVM_ENABLE_EH=ON                                                                              ^
   -DLLVM_ENABLE_RTTI=ON                                                                            ^
   -DLLVM_ENABLE_ZSTD=ON                                                                            ^
-  -DLLVM_ENABLE_PROJECTS="bolt;clang;clang-tools-extra;libc;lld;lldb;openmp;polly;pstl"            ^
+  -DLLVM_ENABLE_PROJECTS="bolt;clang;clang-tools-extra;lld;openmp;polly;pstl"                      ^
   -DLLVM_ENABLE_RUNTIMES="compiler-rt;libcxx"                                                      ^
   -DLLVM_INCLUDE_BENCHMARKS=ON                                                                     ^
   -DLLVM_INCLUDE_TOOLS=ON                                                                          ^

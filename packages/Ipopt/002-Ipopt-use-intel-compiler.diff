@@ -1,0 +1,140 @@
+diff -urN Ipopt-3.14.17-orig/compile Ipopt-3.14.17/compile
+--- Ipopt-3.14.17-orig/compile	2024-12-14 21:40:06.000000000 +0800
++++ Ipopt-3.14.17/compile	2025-03-25 20:49:37.932171500 +0800
+@@ -296,6 +296,7 @@
+   clang-cl | *[/\\]clang-cl | clang-cl.exe | *[/\\]clang-cl.exe | \
+   icl | *[/\\]icl | icl.exe | *[/\\]icl.exe | \
+   icx | *[/\\]icx | icx.exe | *[/\\]icx.exe | \
++  icx-cl | *[/\\]icx-cl | icx-cl.exe | *[/\\]icx-cl.exe | \
+   ifx | *[/\\]ifx | ifx.exe | *[/\\]ifx.exe | \
+   ifort | *[/\\]ifort | ifort.exe | *[/\\]ifort.exe )
+     func_cl_wrapper "$@"      # Doesn't return...
+diff -urN Ipopt-3.14.17-orig/configure Ipopt-3.14.17/configure
+--- Ipopt-3.14.17-orig/configure	2024-12-14 21:40:06.000000000 +0800
++++ Ipopt-3.14.17/configure	2025-03-25 20:59:56.767630200 +0800
+@@ -3658,7 +3658,7 @@
+   e) enable_msvc=no
+      case $build in
+        *-mingw* | *-cygwin* | *-msys* )
+-         for ac_prog in gcc clang icx icl cl
++         for ac_prog in gcc clang icx icx-cl icl cl
+ do
+   # Extract the first word of "$ac_prog", so it can be a program name with args.
+ set dummy $ac_prog; ac_word=$2
+@@ -4745,7 +4745,7 @@
+ 
+ 
+   if test $enable_msvc = yes ; then
+-    for ac_prog in icx icl cl
++    for ac_prog in icx icx-cl icl cl
+ do
+   # Extract the first word of "$ac_prog", so it can be a program name with args.
+ set dummy $ac_prog; ac_word=$2
+@@ -4809,7 +4809,7 @@
+ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ ac_compiler_gnu=$ac_cv_c_compiler_gnu
+ if test -n "$ac_tool_prefix"; then
+-  for ac_prog in gcc clang cc icx icc icl cl cc xlc xlc_r pgcc
++  for ac_prog in gcc clang cc icx icx-cl icc icl cl cc xlc xlc_r pgcc
+   do
+     # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
+ set dummy $ac_tool_prefix$ac_prog; ac_word=$2
+@@ -4859,7 +4859,7 @@
+ fi
+ if test -z "$CC"; then
+   ac_ct_CC=$CC
+-  for ac_prog in gcc clang cc icx icc icl cl cc xlc xlc_r pgcc
++  for ac_prog in gcc clang cc icx icx-cl icc icl cl cc xlc xlc_r pgcc
+ do
+   # Extract the first word of "$ac_prog", so it can be a program name with args.
+ set dummy $ac_prog; ac_word=$2
+@@ -5703,7 +5703,7 @@
+ 
+ 
+   if test $enable_msvc = yes ; then
+-    for ac_prog in icx icl cl
++    for ac_prog in icx icx-cl icl cl
+ do
+   # Extract the first word of "$ac_prog", so it can be a program name with args.
+ set dummy $ac_prog; ac_word=$2
+@@ -5771,7 +5771,7 @@
+     CXX=$CCC
+   else
+     if test -n "$ac_tool_prefix"; then
+-  for ac_prog in g++ clang++ c++ pgCC icx icpc gpp cxx cc++ icl cl FCC KCC RCC xlC_r aCC CC
++  for ac_prog in g++ clang++ c++ pgCC icx icx-cl icpc gpp cxx cc++ icl cl FCC KCC RCC xlC_r aCC CC
+   do
+     # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
+ set dummy $ac_tool_prefix$ac_prog; ac_word=$2
+@@ -5821,7 +5821,7 @@
+ fi
+ if test -z "$CXX"; then
+   ac_ct_CXX=$CXX
+-  for ac_prog in g++ clang++ c++ pgCC icx icpc gpp cxx cc++ icl cl FCC KCC RCC xlC_r aCC CC
++  for ac_prog in g++ clang++ c++ pgCC icx icx-cl icpc gpp cxx cc++ icl cl FCC KCC RCC xlC_r aCC CC
+ do
+   # Extract the first word of "$ac_prog", so it can be a program name with args.
+ set dummy $ac_prog; ac_word=$2
+@@ -13839,7 +13839,7 @@
+       # hardcode_libdir_flag_spec is actually meaningless, as there is
+       # no search path for DLLs.
+       case $cc_basename in
+-      cl* | icl* | ifort* | icx* | ifx*)
++      cl* | icl* | ifort* | icx* | icx-cl* | ifx*)
+ 	# Native MSVC or classic or new Intel Compilers
+ 	hardcode_libdir_flag_spec=' '
+ 	allow_undefined_flag=unsupported
+@@ -14942,7 +14942,7 @@
+     dynamic_linker='Win32 ld.exe'
+     ;;
+ 
+-  *,cl* | *,icl* | *,ifort* | *,icx* | *,ifx*)
++  *,cl* | *,icl* | *,ifort* | *,icx* | *,icx-cl* | *,ifx*)
+     # Native MSVC or classic or new Intel Compilers
+     libname_spec='$name'
+     soname_spec='$libname`echo $release | $SED -e 's/[.]/-/g'`$versuffix$shared_ext'
+@@ -17660,7 +17660,7 @@
+ 
+       cygwin* | mingw* | windows* | pw32* | cegcc*)
+ 	case $GXX,$cc_basename in
+-	,cl* | no,cl* | ,icl* | no,icl* | ,ifort* | no,ifort* | ,icx* | no,icx* | ,ifx* | no,ifx*)
++	,cl* | no,cl* | ,icl* | no,icl* | ,ifort* | no,ifort* | ,icx* | no,icx* | ,icx-cl* | no,icx-cl* | ,ifx* | no,ifx*)
+ 	  # Native MSVC or classic or new Intel compilers
+ 	  # hardcode_libdir_flag_spec is actually meaningless, as there is
+ 	  # no search path for DLLs.
+@@ -19258,7 +19258,7 @@
+     ;;
+   cygwin* | mingw* | windows* | cegcc*)
+     case $cc_basename in
+-    cl* | icl* | ifort* | icx* | ifx*)
++    cl* | icl* | ifort* | icx* | icx-cl* | ifx*)
+       exclude_expsyms_CXX='_NULL_IMPORT_DESCRIPTOR|_IMPORT_DESCRIPTOR_.*'
+       ;;
+     *)
+@@ -19636,7 +19636,7 @@
+     dynamic_linker='Win32 ld.exe'
+     ;;
+ 
+-  *,cl* | *,icl* | *,ifort* | *,icx* | *,ifx*)
++  *,cl* | *,icl* | *,ifort* | *,icx* | *,icx-cl* | *,ifx*)
+     # Native MSVC or classic or new Intel Compilers
+     libname_spec='$name'
+     soname_spec='$libname`echo $release | $SED -e 's/[.]/-/g'`$versuffix$shared_ext'
+@@ -22307,7 +22307,7 @@
+       # hardcode_libdir_flag_spec is actually meaningless, as there is
+       # no search path for DLLs.
+       case $cc_basename in
+-      cl* | icl* | ifort* | icx* | ifx*)
++      cl* | icl* | ifort* | icx* | icx-cl* | ifx*)
+ 	# Native MSVC or classic or new Intel Compilers
+ 	hardcode_libdir_flag_spec_F77=' '
+ 	allow_undefined_flag_F77=unsupported
+@@ -23199,7 +23199,7 @@
+     dynamic_linker='Win32 ld.exe'
+     ;;
+ 
+-  *,cl* | *,icl* | *,ifort* | *,icx* | *,ifx*)
++  *,cl* | *,icl* | *,ifort* | *,icx* | *,icx-cl* | *,ifx*)
+     # Native MSVC or classic or new Intel Compilers
+     libname_spec='$name'
+     soname_spec='$libname`echo $release | $SED -e 's/[.]/-/g'`$versuffix$shared_ext'

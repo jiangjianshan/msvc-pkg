@@ -1,0 +1,17 @@
+name: Clp
+version: master
+url: https://github.com/coin-or/Clp.git
+sha256:
+steps:
+  a:
+    dependencies:
+      - CoinUtils
+      - dlfcn-win32
+      - ThirdParty-Glpk
+      - ThirdParty-Mumps
+      - Data-Sample
+      - Data-Netlib
+      - Osi
+      - readline
+      - SuiteSparse
+    run: build.sh

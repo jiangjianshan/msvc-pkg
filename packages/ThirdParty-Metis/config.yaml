@@ -5,4 +5,5 @@ sha256: 3b1025e6202b87095407f50a01e644d520f6ba6231c64a3aeaca30692007ff12
 steps:
   a:
     dependencies:
+      - dlfcn-win32
     run: build.sh

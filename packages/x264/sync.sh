@@ -53,4 +53,3 @@ patch_package()
 
 . $ROOT_DIR/common.sh
 git_sync $PKG_URL $SRC_DIR $PKG_NAME $PKG_VER
-patch_package

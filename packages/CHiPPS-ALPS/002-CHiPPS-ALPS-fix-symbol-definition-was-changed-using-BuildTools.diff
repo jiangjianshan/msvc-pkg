@@ -1,0 +1,67 @@
+diff -urN CHiPPS-ALPS-1.5.12-orig/Alps/examples/Abc/AbcMain.cpp CHiPPS-ALPS-1.5.12/Alps/examples/Abc/AbcMain.cpp
+--- CHiPPS-ALPS-1.5.12-orig/Alps/examples/Abc/AbcMain.cpp	2024-03-27 20:35:13.000000000 +0800
++++ CHiPPS-ALPS-1.5.12/Alps/examples/Abc/AbcMain.cpp	2025-03-18 20:27:02.489323500 +0800
+@@ -35,7 +35,7 @@
+ #include "CglKnapsackCover.hpp"
+ #include "CglOddHole.hpp"
+ 
+-#ifdef COIN_HAS_MPI
++#ifdef ALPS_HAS_MPI
+ #  include "AlpsKnowledgeBrokerMPI.h"
+ #else
+ #  include "AlpsKnowledgeBrokerSerial.h"
+@@ -58,7 +58,7 @@
+ 	solver1.getModelPtr()->setDualBound(1.0e10);
+ 	//solver1.messageHandler()->setLogLevel(0);
+ 
+-#ifdef COIN_HAS_MPI
++#ifdef ALPS_HAS_MPI
+ 	AlpsKnowledgeBrokerMPI broker(argc, argv, model);
+ #else
+ 	AlpsKnowledgeBrokerSerial broker(argc, argv, model); 
+diff -urN CHiPPS-ALPS-1.5.12-orig/Alps/examples/Knap/KnapMain.cpp CHiPPS-ALPS-1.5.12/Alps/examples/Knap/KnapMain.cpp
+--- CHiPPS-ALPS-1.5.12-orig/Alps/examples/Knap/KnapMain.cpp	2024-03-27 20:35:13.000000000 +0800
++++ CHiPPS-ALPS-1.5.12/Alps/examples/Knap/KnapMain.cpp	2025-03-18 20:27:04.984716500 +0800
+@@ -20,7 +20,7 @@
+ #include "CoinError.hpp"
+ #include "CoinTime.hpp"
+ 
+-#ifdef COIN_HAS_MPI
++#ifdef ALPS_HAS_MPI
+ #  include "AlpsKnowledgeBrokerMPI.h"
+ #else
+ #  include "AlpsKnowledgeBrokerSerial.h"
+@@ -38,7 +38,7 @@
+ 	// 1: Declare application parameter set, model and knowledge broker
+ 	KnapModel model;
+ 
+-#ifdef COIN_HAS_MPI
++#ifdef ALPS_HAS_MPI
+ 	AlpsKnowledgeBrokerMPI broker(argc, argv, model);
+ #else
+ 	AlpsKnowledgeBrokerSerial broker(argc, argv, model);
+diff -urN CHiPPS-ALPS-1.5.12-orig/Alps/src/AlpsTime.h CHiPPS-ALPS-1.5.12/Alps/src/AlpsTime.h
+--- CHiPPS-ALPS-1.5.12-orig/Alps/src/AlpsTime.h	2024-03-27 20:35:13.000000000 +0800
++++ CHiPPS-ALPS-1.5.12/Alps/src/AlpsTime.h	2025-03-18 20:26:32.865584700 +0800
+@@ -33,7 +33,7 @@
+ 
+ #include "CoinTime.hpp"
+ 
+-#ifdef COIN_HAS_MPI
++#ifdef ALPS_HAS_MPI
+ # include "mpi.h"
+ #endif
+ 
+@@ -46,10 +46,10 @@
+ static inline double AlpsGetTimeOfDay()
+ {
+ 
+-#ifndef COIN_HAS_MPI
++#ifndef ALPS_HAS_MPI
+     return CoinGetTimeOfDay();
+ #else
+-    // COIN_HAS_MPI
++    // ALPS_HAS_MPI
+     return MPI_Wtime();
+ #endif
+ }

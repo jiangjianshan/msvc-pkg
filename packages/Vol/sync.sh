@@ -45,43 +45,35 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR" || exit 1
-  patch -Np1 -i "$PKG_DIR/001-Vol-fix-dumpbin-export-symbols-failed.diff"
+  patch -Np1 -i "$PKG_DIR/001-Vol-fix-build-shared-library-on-msvc.diff"
+
+  cd $RELS_DIR/BuildTools
+  export COIN_AUTOTOOLS_DIR=/usr
+  WANT_AUTOCONF='2.72' WANT_AUTOMAKE='1.17' ./run_autotools $SRC_DIR/Vol
+
+  cd "$SRC_DIR" || exit 1
+  rm -rfv Vol/autom4te.cache
+  find . -name "*~" -type f -print -exec rm -rfv {} \;
 
   # XXX: libtool don't have options can set the naming style of static and
   #      shared library. Here is only a workaround.
 
-  echo "Patching ltmain.sh in top level"
-  sed                                                                                                \
-    -e 's|old_library="$libname\.$libext"|old_library="lib$libname.$libext"|g'                       \
-    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
-    -i ltmain.sh
-
   echo "Patching ltmain.sh in Vol"
   pushd Vol || exit 1
-  sed                                                                                                \
-    -e 's|old_library="$libname\.$libext"|old_library="lib$libname.$libext"|g'                       \
-    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
+  sed                                                                                                          \
+    -e 's|old_library="$libname\.$libext"|old_library="lib$libname.$libext"|g'                                 \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                               \
     -i ltmain.sh
   popd || exit 1
 
-  echo "Patching configure in top level"
-  sed                                                                                                \
-    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
-    -e 's|\.dll\.lib|.lib|g'                                                                         \
-    -e 's/ CL\* | \*\/CL\* )/ CL* | *\/CL* | mpicl* | *\/mpicl* )/g'                                 \
-    -e 's/ CL\* | \*\/CL\*)/ CL* | *\/CL* | mpicl* | *\/mpicl*)/g'                                   \
-    -e 's/ ICL\* | \*\/ICL\*)/ ICL* | *\/ICL* | mpicl* | *\/mpicl*)/g'                               \
-    -i configure
-  chmod +x configure
-
   echo "Patching configure in Vol"
   pushd Vol || exit 1
-  sed                                                                                                \
-    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
-    -e 's|\.dll\.lib|.lib|g'                                                                         \
-    -e 's/ CL\* | \*\/CL\* )/ CL* | *\/CL* | mpicl* | *\/mpicl* )/g'                                 \
-    -e 's/ CL\* | \*\/CL\*)/ CL* | *\/CL* | mpicl* | *\/mpicl*)/g'                                   \
-    -e 's/ ICL\* | \*\/ICL\*)/ ICL* | *\/ICL* | mpicl* | *\/mpicl*)/g'                               \
+  sed                                                                                                          \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                                    \
+    -e 's|\.dll\.lib|.lib|g'                                                                                   \
+    -e 's/\*,cl\* | \*,icl\*)/*,cl* | *,icl* | *,ifort* | *,icx* | *,ifx*)/g'                                  \
+    -e 's/cl\* | icl\*)/cl* | icl* | ifort* | icx* | ifx*)/g'                                                  \
+    -e 's/,icl\* | no,icl\*)/,icl* | no,icl* | ,ifort* | no,ifort* | ,icx* | no,icx* | ,ifx* | no,ifx*)/g'     \
     -i configure
   chmod +x configure
   popd || exit 1

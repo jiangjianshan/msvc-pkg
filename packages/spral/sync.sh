@@ -44,10 +44,39 @@ EXT=${ARCHIVE#$(echo "$ARCHIVE" | sed 's/\.[^[:digit:]].*$//g')}
 patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
-  cd "$SRC_DIR"
-  # TODO: The better way is to define a function with particular regular expression
-  #       in a meson.build to convert the objects files to .def file
+  cd "$SRC_DIR" || exit 1
   patch -Np1 -i "$PKG_DIR/001-spral-fix-build-shared-library-on-msvc.diff"
+  patch -Np1 -i "$PKG_DIR/002-spral-msvc-do-not-have-libm.diff"
+  patch -Np1 -i "$PKG_DIR/003-spral-fix-unknown-Fe-option-on-nvcc-if-change-default-compiler.diff"
+
+  if [ ! -f "AUTHORS" ]; then
+    touch ./AUTHORS
+  fi
+  if [ ! -f "NEWS" ]; then
+    touch ./NEWS
+  fi
+  WANT_AUTOCONF='2.69' WANT_AUTOMAKE='1.16' autoreconf -ifv
+  rm -rfv autom4te.cache
+  find . -name "*~" -type f -print -exec rm -rfv {} \;
+
+  # XXX: libtool don't have options can set the naming style of static and
+  #      shared library. Here is only a workaround.
+
+  echo "Patching ltmain.sh in top level"
+  sed                                                                                                        \
+    -e 's|old_library=$libname\.$libext|old_library=lib$libname.$libext|g'                                   \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                             \
+    -i ltmain.sh
+
+  echo "Patching configure in top level"
+  sed                                                                                                        \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                                  \
+    -e 's|\.dll\.lib|.lib|g'                                                                                 \
+    -e 's/\*,cl\* | \*,icl\*)/*,cl* | *,icl* | *,ifort* | *,icx* | *,ifx*)/g'                                \
+    -e 's/cl\* | icl\*)/cl* | icl* | ifort* | icx* | ifx*)/g'                                                \
+    -e 's/,icl\* | no,icl\*)/,icl* | no,icl* | ,ifort* | no,ifort* | ,icx* | no,icx* | ,ifx* | no,ifx*)/g'   \
+    -i configure
+  chmod +x configure
 }
 
 . $ROOT_DIR/common.sh

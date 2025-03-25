@@ -70,12 +70,11 @@ configure_stage()
   # 2. Don't use 'compile cl -nologo' but 'compile cl'. Because configure
   #    on some libraries will detect whether is msvc compiler according to
   #    '*cl | cl.exe'
-  # 3. Don't set '--enable-relocatable', otherwise the key 'prefix' in .pc will be 
+  # 3. Don't set '--enable-relocatable', otherwise the key 'prefix' in .pc will be
   #    'prefix=${pcfiledir}/../..'
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
   CC="cl"                                                                      \
   CFLAGS="$C_OPTS"                                                             \
-  ADD_CFLAGS="$C_OPTS"                                                         \
   CPP="cl -E"                                                                  \
   CPPFLAGS="$C_DEFS"                                                           \
   CXX="cl"                                                                     \
@@ -97,7 +96,6 @@ configure_stage()
     --datarootdir="$PREFIX/share"                                              \
     --enable-shared                                                            \
     --enable-msvc                                                              \
-    ac_cv_prog_cc_c11="-std:c11"                                               \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

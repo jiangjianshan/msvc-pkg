@@ -41,5 +41,13 @@ SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 ARCHIVE=$(basename -- "$PKG_URL")
 EXT=${ARCHIVE#$(echo "$ARCHIVE" | sed 's/\.[^[:digit:]].*$//g')}
 
+patch_package()
+{
+  echo "Patching package $PKG_NAME $PKG_VER"
+  cd "$SRC_DIR" || exit 1
+  patch -Np1 -i "$PKG_DIR/001-lapack-fix-complex-type-on-msvc.diff"
+  patch -Np1 -i "$PKG_DIR/002-lapack-fix-link-errors.diff"
+}
+
 . $ROOT_DIR/common.sh
 wget_sync $PKG_URL $SRC_DIR $PKG_NAME-$PKG_VER$EXT

@@ -1,0 +1,242 @@
+diff -urN CHiPPS-ALPS-1.5.12-orig/Alps/alps.pc.in CHiPPS-ALPS-1.5.12/Alps/alps.pc.in
+--- CHiPPS-ALPS-1.5.12-orig/Alps/alps.pc.in	2024-03-27 20:35:13.000000000 +0800
++++ CHiPPS-ALPS-1.5.12/Alps/alps.pc.in	2025-03-21 02:31:56.357221600 +0800
+@@ -1,12 +1,12 @@
+ prefix=@prefix@
+ exec_prefix=@exec_prefix@
+ libdir=@libdir@
+-includedir=@includedir@/coin
++includedir=@includedir@/coin-or
+ 
+ Name: ALPS
+ Description: Abstract Library for Parallel Search
+ URL: https://projects.coin-or.org/CHiPPS
+ Version: @PACKAGE_VERSION@
+-Libs: -L${libdir} -lAlps @ALPSLIB_PCLIBS@
++Libs: -L${libdir} -lAlps @ALPSLIB_LFLAGS@
+ Cflags: -I${includedir}
+-Requires: @ALPSLIB_PCREQUIRES@
++Requires: @ALPSLIB_PCFILES@
+diff -urN CHiPPS-ALPS-1.5.12-orig/Alps/alps-uninstalled.pc.in CHiPPS-ALPS-1.5.12/Alps/alps-uninstalled.pc.in
+--- CHiPPS-ALPS-1.5.12-orig/Alps/alps-uninstalled.pc.in	2024-03-27 20:35:13.000000000 +0800
++++ CHiPPS-ALPS-1.5.12/Alps/alps-uninstalled.pc.in	2025-03-21 02:31:56.357221600 +0800
+@@ -6,6 +6,6 @@
+ Description: Abstract Library for Parallel Search
+ URL: https://projects.coin-or.org/CHiPPS
+ Version: @PACKAGE_VERSION@
+-Libs: ${libdir}/libAlps.la @ALPSLIB_PCLIBS@
++Libs: ${libdir}/libAlps.la @ALPSLIB_LFLAGS@
+ Cflags: -I@abs_source_dir@/src -I@ABSBUILDDIR@/src
+-Requires: @ALPSLIB_PCREQUIRES@
++Requires: @ALPSLIB_PCFILES@
+diff -urN CHiPPS-ALPS-1.5.12-orig/Alps/configure.ac CHiPPS-ALPS-1.5.12/Alps/configure.ac
+--- CHiPPS-ALPS-1.5.12-orig/Alps/configure.ac	2024-03-27 20:35:13.000000000 +0800
++++ CHiPPS-ALPS-1.5.12/Alps/configure.ac	2025-03-21 11:49:32.675860100 +0800
+@@ -69,19 +69,9 @@
+ #                         Standard build tool stuff                         #
+ #############################################################################
+ 
+-# Get the system type
+-AC_CANONICAL_BUILD
+-
+-# If this project depends on external projects, the Externals file in
+-# the source root directory contains definition of where to find those
+-# externals.  The following macro ensures that those externals are
+-# retrieved by svn if they are not there yet.
+-AC_COIN_PROJECTDIR_INIT(Alps,8:12:5)
+-
+-# Check if user wants to produce debugging code
+-AC_COIN_DEBUG_COMPILE(Alps)
+-
+-# Get the name of the C++ compiler and appropriate compiler options
++# Do some initialization work (version numbers, change prefix default, ...)
++AC_COIN_INITIALIZE
++# Get the name of the C++ compiler and appropriate compiler options.
+ AC_COIN_PROG_CXX
+ 
+ # We filter out the -pedantic-errors flag for C and C++ compiler in
+@@ -92,8 +82,8 @@
+   CXXFLAGS=`echo $CXXFLAGS | sed -e s/-pedantic-errors//g` 
+ fi
+ 
+-# Initialize automake and libtool
+-AC_COIN_INIT_AUTO_TOOLS
++# Initialize libtool
++AC_COIN_PROG_LIBTOOL
+ 
+ # Get the EXEXT variable for CYGWIN
+ AC_EXEEXT
+@@ -102,31 +92,30 @@
+ #                           COIN-OR components                              #
+ #############################################################################
+ 
+-AC_COIN_CHECK_PACKAGE(CoinUtils, [coinutils], [AlpsLib])
++AC_COIN_CHK_PKG(CoinUtils,[AlpsLib],[coinutils])
+ if test $coin_has_coinutils != yes ; then
+   AC_MSG_ERROR([Required package CoinUtils not available.])
+ fi
+ 
+ # These are only required for the unit test and the Abc example.
+ # We name it Clp, because the code checks for COIN_HAS_CLP
+-AC_COIN_CHECK_PACKAGE(Cgl, [cgl], [Abc])
+-AC_COIN_CHECK_PACKAGE(Clp, [osi-clp clp], [Abc])
+-AC_COIN_CHECK_PACKAGE(Osi, [osi], [Abc])
++AC_COIN_CHK_PKG(Cgl,[Abc],[cgl])
++AC_COIN_CHK_PKG(Clp,[Abc],[osi-clp clp])
++AC_COIN_CHK_PKG(Osi,[Abc],[osi])
+ 
+ #############################################################################
+ #                             Other dependencies                            #
+ #############################################################################
+ 
+-AC_COIN_CHECK_USER_LIBRARY([Mpi], [MPI], [mpi.h], [MPI_Irecv], [], [AlpsLib])
++AC_COIN_CHK_LIBHDR(MPI,[AlpsLib],[-limpi],[],[],[MPI_Irecv],[#include "mpi.h"])
+ # ToDo: Automatically choose MPI compiler
+ 
+ #############################################################################
+-#                  System header                                            #
++#                   Math headers                                            #
+ #############################################################################
+ 
+-AC_COIN_CHECK_CXX_CHEADER(math)
+-AC_COIN_CHECK_CXX_CHEADER(float)
+-AC_COIN_CHECK_CXX_CHEADER(ieeefp)
++# Check for cmath/math.h, cfloat/float.h, cieeefp/ieeefp.h
++AC_COIN_CHECK_MATH_HDRS
+ 
+ ##############################################################################
+ #                   VPATH links for example input files                      #
+@@ -134,7 +123,7 @@
+ 
+ # In this case, the source code is taken from the Alps examples directory
+ 
+-AC_CONFIG_LINKS(test/AbcBranchActual.cpp:examples/Abc/AbcBranchActual.cpp
++AC_COIN_VPATH_LINK(test/AbcBranchActual.cpp:examples/Abc/AbcBranchActual.cpp
+                 test/AbcBranchActual.h:examples/Abc/AbcBranchActual.h
+                 test/AbcBranchBase.cpp:examples/Abc/AbcBranchBase.cpp
+                 test/AbcBranchBase.h:examples/Abc/AbcBranchBase.h
+@@ -155,27 +144,11 @@
+                 test/AbcTreeNode.cpp:examples/Abc/AbcTreeNode.cpp
+                 test/AbcTreeNode.h:examples/Abc/AbcTreeNode.h)
+ 
+-AC_COIN_LINK_INPUT_CMD
+-
+-mkdir -p test
+-EXAMPLE_FILES="flugpl.mps"
+-for file in $EXAMPLE_FILES; do
+-  rm -f $file
+-  $coin_link_input_cmd `cd $srcdir/examples/Abc/data; pwd`/$file test/$file
+-done
+-
+-# In case this is a VPATH configuration we need to make sure that the
+-# input files for the examples are available in the VPATH directory.
+-
+-# ToDo
+-#AC_COIN_VPATH_LINK(examples/Abc/abc.par)
+-#AC_COIN_VPATH_LINK(examples/input.130)
+-
+ #############################################################################
+ #                  Check for doxygen                                        #
+ #############################################################################
+ 
+-AC_COIN_DOXYGEN(CoinUtils)
++AC_COIN_DOXYGEN([CoinUtils])
+ 
+ ##############################################################################
+ #                   Finishing up by writing all the output                   #
+@@ -196,7 +169,10 @@
+ AC_CONFIG_FILES([doxydoc/doxygen.conf])
+ 
+ # Here put the location and name of the configuration header file
+-AC_CONFIG_HEADER([src/config.h src/config_alps.h])
++AC_CONFIG_HEADERS([src/config.h src/config_alps.h])
++
++# Finalize libs and cflags.
++AC_COIN_FINALIZE_FLAGS([Mpi AlpsLib Abc])
+ 
+ # Finally, we let configure write all the output...
+ AC_COIN_FINALIZE
+diff -urN CHiPPS-ALPS-1.5.12-orig/Alps/Makefile.am CHiPPS-ALPS-1.5.12/Alps/Makefile.am
+--- CHiPPS-ALPS-1.5.12-orig/Alps/Makefile.am	2024-03-27 20:35:13.000000000 +0800
++++ CHiPPS-ALPS-1.5.12/Alps/Makefile.am	2025-03-21 02:31:56.357221600 +0800
+@@ -113,7 +113,6 @@
+ #                  Installation of the addlibs file                    #
+ ########################################################################
+ 
+-pkgconfiglibdir = $(libdir)/pkgconfig
+ pkgconfiglib_DATA = alps.pc
+ 
+ addlibsdir = $(DESTDIR)$(datadir)/coin/doc/Alps
+@@ -124,12 +123,8 @@
+ 	PKG_CONFIG_PATH=@COIN_PKG_CONFIG_PATH@:$(DESTDIR)$(pkgconfiglibdir) \
+ 	$(PKG_CONFIG) --libs alps > $(addlibsdir)/alps_addlibs.txt
+ else
+-if COIN_CXX_IS_CL
+-	echo "-libpath:`$(CYGPATH_W) @abs_lib_dir@` libAlps.lib @ALPSLIB_LIBS_INSTALLED@" > $(addlibsdir)/alps_addlibs.txt
+-else
+ 	echo -L@abs_lib_dir@ -lAlps @ALPSLIB_LIBS_INSTALLED@ > $(addlibsdir)/alps_addlibs.txt
+ endif
+-endif
+ 
+ uninstall-hook:
+ 	rm -f $(addlibsdir)/alps_addlibs.txt
+diff -urN CHiPPS-ALPS-1.5.12-orig/Alps/src/Makefile.am CHiPPS-ALPS-1.5.12/Alps/src/Makefile.am
+--- CHiPPS-ALPS-1.5.12-orig/Alps/src/Makefile.am	2024-03-27 20:35:13.000000000 +0800
++++ CHiPPS-ALPS-1.5.12/Alps/src/Makefile.am	2025-03-21 02:31:56.372846200 +0800
+@@ -75,9 +75,7 @@
+ endif
+ 
+ # List all additionally required libraries
+-if DEPENDENCY_LINKING
+-libAlps_la_LIBADD = $(ALPSLIB_LIBS)
+-endif
++libAlps_la_LIBADD = $(ALPSLIB_LFLAGS)
+ 
+ # This is for libtool
+ libAlps_la_LDFLAGS = $(LT_LDFLAGS)
+@@ -88,24 +86,20 @@
+ 
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows.
+-AM_CPPFLAGS = $(ALPSLIB_CFLAGS) 
++AM_CPPFLAGS = $(ALPSLIB_CFLAGS) -I. -I`$(CYGPATH_W) $(srcdir)`
+ 
+ # Include MPI header directory if MPI is used
+ if COIN_HAS_MPI
+-AM_CPPFLAGS +=  -I`$(CYGPATH_W) $(MPIINCDIR)`
++AM_CPPFLAGS += $(MPI_CFLAGS)
+ endif
+ 
+-# This line is necessary to allow VPATH compilation with MS compilers
+-# on Cygwin
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` 
+-
+ ########################################################################
+ #                Headers that need to be installed                     #
+ ########################################################################
+ 
+ # Here list all the header files that are required by a user of the library,
+-# and that therefore should be installed in 'include/coin'
+-includecoindir = $(includedir)/coin
++# and that therefore should be installed in 'include/coin-or'
++includecoindir = $(includedir)/coin-or
+ includecoin_HEADERS = \
+ 	Alps.h \
+ 	AlpsSearchStrategy.h \
+diff -urN CHiPPS-ALPS-1.5.12-orig/Alps/test/Makefile.am CHiPPS-ALPS-1.5.12/Alps/test/Makefile.am
+--- CHiPPS-ALPS-1.5.12-orig/Alps/test/Makefile.am	2024-03-27 20:35:13.000000000 +0800
++++ CHiPPS-ALPS-1.5.12/Alps/test/Makefile.am	2025-03-21 02:31:56.372846200 +0800
+@@ -54,12 +54,10 @@
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Cygwin
+ AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/../src` \
++        -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src \
+         $(ABC_CFLAGS) \
+         $(ALPSLIB_CFLAGS) -DCOIN_HAS_CLP
+ 
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src
+-
+ test: unitTest$(EXEEXT)
+ 	./unitTest$(EXEEXT) -param ../examples/Abc/abc.par
+ 

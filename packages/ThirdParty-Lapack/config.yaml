@@ -5,5 +5,6 @@ sha256: 5a8df30bea5e41b2b9926e448b339c833bddbf0ed61bd443f30571b923df01d3
 steps:
   a:
     dependencies:
+      - BuildTools
       - ThirdParty-Blas
     run: build.sh

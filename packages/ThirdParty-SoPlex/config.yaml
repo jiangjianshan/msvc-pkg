@@ -1,0 +1,11 @@
+name: ThirdParty-SoPlex
+version: 1.7.2
+url: https://github.com/coin-or-tools/ThirdParty-SoPlex/archive/refs/tags/releases/1.7.2.tar.gz
+sha256: 75f8b7dd6b682e5d3e2ffbdf2841662bc7fa4199d95c033d8e25aab2df593e66
+steps:
+  a:
+    dependencies:
+      - BuildTools
+      - gmp:b
+      - zlib
+    run: build.sh

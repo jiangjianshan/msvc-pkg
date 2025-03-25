@@ -1,0 +1,42 @@
+diff -urN CHiPPS-BLIS-0.94.13-orig/Blis/examples/VRP/VrpMain.cpp CHiPPS-BLIS-0.94.13/Blis/examples/VRP/VrpMain.cpp
+--- CHiPPS-BLIS-0.94.13-orig/Blis/examples/VRP/VrpMain.cpp	2024-03-27 21:53:39.000000000 +0800
++++ CHiPPS-BLIS-0.94.13/Blis/examples/VRP/VrpMain.cpp	2025-03-18 20:34:15.879139300 +0800
+@@ -24,7 +24,7 @@
+ 
+ #include "VrpModel.h"
+ 
+-#if  COIN_HAS_MPI
++#if  BLIS_HAS_MPI
+ #include "AlpsKnowledgeBrokerMPI.h"
+ #else
+ #include "AlpsKnowledgeBrokerSerial.h"
+@@ -44,7 +44,7 @@
+ 	VrpModel model;
+ 	model.setSolver(&lpSolver);
+ 	
+-#ifdef  COIN_HAS_MPI
++#ifdef  BLIS_HAS_MPI
+ 	AlpsKnowledgeBrokerMPI broker(argc, argv, model);
+ #else
+ 	AlpsKnowledgeBrokerSerial broker(argc, argv, model); 
+diff -urN CHiPPS-BLIS-0.94.13-orig/Blis/src/BlisMain.cpp CHiPPS-BLIS-0.94.13/Blis/src/BlisMain.cpp
+--- CHiPPS-BLIS-0.94.13-orig/Blis/src/BlisMain.cpp	2024-03-27 21:53:39.000000000 +0800
++++ CHiPPS-BLIS-0.94.13/Blis/src/BlisMain.cpp	2025-03-18 20:34:49.596037600 +0800
+@@ -40,7 +40,7 @@
+ #include "BlisConfig.h"
+ #include "BlisModel.h"
+ 
+-#if  COIN_HAS_MPI
++#if  BLIS_HAS_MPI
+ #include "AlpsKnowledgeBrokerMPI.h"
+ #else
+ #include "AlpsKnowledgeBrokerSerial.h"
+@@ -63,7 +63,7 @@
+ 		BlisModel model;
+ 		model.setSolver(&lpSolver);
+ 	
+-#ifdef  COIN_HAS_MPI
++#ifdef  BLIS_HAS_MPI
+ 		AlpsKnowledgeBrokerMPI broker(argc, argv, model);
+ #else
+ 		AlpsKnowledgeBrokerSerial broker(argc, argv, model); 

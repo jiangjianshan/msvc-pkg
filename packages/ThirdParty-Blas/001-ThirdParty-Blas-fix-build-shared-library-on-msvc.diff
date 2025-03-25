@@ -1,0 +1,52 @@
+diff -urN ThirdParty-Blas-1.4.9-orig/configure.ac ThirdParty-Blas-1.4.9/configure.ac
+--- ThirdParty-Blas-1.4.9-orig/configure.ac	2022-01-11 12:34:17.000000000 +0800
++++ ThirdParty-Blas-1.4.9/configure.ac	2025-03-11 20:19:46.014301700 +0800
+@@ -24,14 +24,14 @@
+ # whether the package is actually there
+ AC_CONFIG_SRCDIR(dgemm.f)
+ 
++AC_COIN_INITIALIZE
++
+ # Where should everything be installed by default?  Here, we want it
+ # to be installed directly in 'bin', 'lib', 'include' subdirectories
+ # of the directory where configure is run.  The default would be
+ # /usr/local.
+ AC_PREFIX_DEFAULT([`pwd`])
+ 
+-AC_COIN_PROJECTDIR_INIT(Blas,5:9:4)
+-
+ #############################################################################
+ #                         Standard build tool stuff                         #
+ #############################################################################
+@@ -43,9 +43,6 @@
+ #and we couldn't fix them anyway
+ coin_skip_warn_fflags=yes
+ 
+-# Check if user wants to produce debugging code
+-AC_COIN_DEBUG_COMPILE(Blas)
+-
+ # Get the name of the Fortran compiler and appropriate compiler options
+ AC_COIN_PROG_F77
+ 
+@@ -59,8 +56,8 @@
+ # Check if pkg-config is available (to setup addlibs file)
+ AC_COIN_HAS_PKGCONFIG
+ 
+-# Initialize automake
+-AC_COIN_INIT_AUTO_TOOLS
++# Initialize libtool
++AC_COIN_PROG_LIBTOOL
+ 
+ AC_CONFIG_FILES([Makefile coinblas.pc coinblas-uninstalled.pc])
+ 
+diff -urN ThirdParty-Blas-1.4.9-orig/Makefile.am ThirdParty-Blas-1.4.9/Makefile.am
+--- ThirdParty-Blas-1.4.9-orig/Makefile.am	2022-01-11 12:34:17.000000000 +0800
++++ ThirdParty-Blas-1.4.9/Makefile.am	2025-03-11 20:20:10.509960000 +0800
+@@ -73,7 +73,6 @@
+ 
+ libcoinblas_la_LDFLAGS = $(LT_LDFLAGS)
+ 
+-pkgconfiglibdir = $(libdir)/pkgconfig
+ pkgconfiglib_DATA = coinblas.pc
+ 
+ test:

@@ -43,8 +43,8 @@ PREFIX=$(cygpath -u "$PREFIX")
 RELS_DIR=$ROOT_DIR/releases
 SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
-C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics'
-C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX -DDLL_EXPORT'
+C_OPTS='-nologo -MD -wd4819 -wd4996 -fp:precise -Qopenmp -Qopenmp-simd -Xclang -O2 -fms-extensions -fms-compatibility -fms-compatibility-version=19.42'
+C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX'
 F_OPTS='-nologo -MD -Qdiag-disable:10448 -fp:precise -Qopenmp -Qopenmp-simd -fpp'
 
 clean_build()
@@ -60,14 +60,16 @@ configure_stage()
   mkdir -p "$BUILD_DIR" && cd "$BUILD_DIR" || exit 1
   if [[ "$ARCH" == "x86" ]]; then
     HOST_TRIPLET=i686-w64-mingw32
-    YASM_OBJ_FMT=win32
   elif [[ "$ARCH" == "x64" ]]; then
     HOST_TRIPLET=x86_64-w64-mingw32
-    YASM_OBJ_FMT=win64
   fi
-  export OMP_CANCELLATION=TRUE
-  export OMP_PROC_BIND=TRUE
-  export OMP_NESTED=TRUE
+  # Issue: 'Warning: linker path does not have real file for library -lz'.
+  # The reason should be in the function of func_win32_libid in ltmain.sh. It use OBJDUMP
+  # which is missing from MSVC. That will cause the value of win32_libid_type is unknown.
+  # There are at least two way to solve this issue:
+  # 1. set OBJDUMP=llvm-objdump
+  # 2. set lt_cv_deplibs_check_method as below
+  export lt_cv_deplibs_check_method=${lt_cv_deplibs_check_method='pass_all'}
   # NOTE:
   # 1. Don't use CPP="$ROOT_DIR/wrappers/compile cl -nologo -EP" here,
   #    it will cause checking absolute name of standard files is empty.
@@ -78,54 +80,53 @@ configure_stage()
   #    '*cl | cl.exe'
   # 3. Don't set '--enable-relocatable', otherwise the key 'prefix' in .pc will be
   #    'prefix=${pcfiledir}/../..'
-  # TODO: if remove '--with-precision="single"', will fail to build
-  AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                                                 \
-  AS="yasm -Xvc -f $YASM_OBJ_FMT -rraw -pgas"                                                                \
-  CC="cl"                                                                                                    \
-  CFLAGS="$C_OPTS"                                                                                           \
-  ADD_CFLAGS="$C_OPTS"                                                                                       \
-  CPP="cl -E"                                                                                                \
-  CPPFLAGS="$C_DEFS"                                                                                         \
-  CXX="cl"                                                                                                   \
-  CXXFLAGS="-EHsc $C_OPTS"                                                                                   \
-  ADD_CXXFLAGS="-EHsc $C_OPTS"                                                                               \
-  CXXCPP="cl -E"                                                                                             \
-  DLLTOOL="link -verbose -dll"                                                                               \
-  F77="ifort"                                                                                                \
-  FFLAGS="-f77rtl $F_OPTS"                                                                                   \
-  ADD_FFLAGS="-f77rtl $F_OPTS"                                                                               \
-  LD="link -nologo"                                                                                          \
-  NM="dumpbin -nologo -symbols"                                                                              \
-  PKG_CONFIG="/usr/bin/pkg-config"                                                                           \
-  RANLIB=":"                                                                                                 \
-  RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                                              \
-  STRIP=":"                                                                                                  \
-  WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                                         \
-  ../configure --host="$HOST_TRIPLET"                                                                        \
-    --prefix="$PREFIX"                                                                                       \
-    --bindir="$PREFIX/bin"                                                                                   \
-    --includedir="$PREFIX/include"                                                                           \
-    --libdir="$PREFIX/lib"                                                                                   \
-    --datarootdir="$PREFIX/share"                                                                            \
-    --disable-java                                                                                           \
-    --enable-msvc                                                                                            \
-    --enable-shared                                                                                          \
-    --with-dot                                                                                               \
-    --with-precision="single"                                                                                \
-    --with-asl-cflags="-I$(cygpath -u "${THIRDPARTY_ASL_PREFIX:-$PREFIX}/include/coin/asl")"                 \
-    --with-asl-lflags="-L$(cygpath -u "${THIRDPARTY_ASL_PREFIX:-$PREFIX}")/lib -lcoinasl"                    \
-    --with-hsl-cflags="-I$(cygpath -u "${THIRDPARTY_HSL_PREFIX:-$PREFIX}/include/coin/hsl")"                 \
-    --with-hsl-lflags="-L$(cygpath -u "${THIRDPARTY_HSL_PREFIX:-$PREFIX}")/lib -lcoinhsl"                    \
-    --with-lapack-lflags="-lmkl_intel_lp64_dll -lmkl_sequential_dll -lmkl_core_dll"                          \
-    --with-mumps-cflags="-I$(cygpath -u "${THIRDPARTY_MUMPS_PREFIX:-$PREFIX}/include/coin/mumps")"           \
-    --with-mumps-lflags="-L$(cygpath -u "${THIRDPARTY_MUMPS_PREFIX:-$PREFIX}")/lib -lcoinmumps"              \
-    --with-spral-cflags="-I$(cygpath -u "${THIRDPARTY_SPRAL_PREFIX:-$PREFIX}/include")"                      \
-    --with-spral-lflags="-lspral"                                                                            \
-    ac_cv_prog_cc_c11="-std:c11"                                                                             \
-    ac_cv_prog_cxx_cxx11="-std:c++17"                                                                        \
-    ac_cv_prog_f77_v="-verbose"                                                                              \
-    ac_cv_prog_fc_v="-verbose"                                                                               \
+  # TODO: If use cl instead of icx-cl, there are at least two issues occur:
+  # 1. Many warning LNK4197 'specified multiple times; using first specification'
+  # 2. [Makefile:527: libipoptamplinterface.la] Error 127
+  AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                             \
+  CC="icx-cl"                                                                            \
+  CFLAGS="$C_OPTS"                                                                       \
+  CPP="icx-cl -E"                                                                        \
+  CPPFLAGS="$C_DEFS"                                                                     \
+  CXX="icx-cl"                                                                           \
+  CXXFLAGS="-EHsc $C_OPTS"                                                               \
+  CXXCPP="icx-cl -E"                                                                     \
+  DLLTOOL="link -verbose -dll"                                                           \
+  F77="ifx"                                                                              \
+  FFLAGS="-f77rtl $F_OPTS"                                                               \
+  LD="lld-link"                                                                          \
+  LDFLAGS="-fuse-ld=lld"                                                                 \
+  NM="dumpbin -nologo -symbols"                                                          \
+  PKG_CONFIG="/usr/bin/pkg-config"                                                       \
+  RANLIB=":"                                                                             \
+  RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                          \
+  STRIP=":"                                                                              \
+  WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                     \
+  ../configure --build="$(sh ../config.guess)"                                           \
+    --host="$HOST_TRIPLET"                                                               \
+    --prefix="$PREFIX"                                                                   \
+    --enable-msvc                                                                        \
+    --enable-shared                                                                      \
+    --with-lapack-lflags="-lmkl_intel_lp64_dll -lmkl_sequential_dll -lmkl_core_dll"      \
+    --with-spral-cflags="-I$(cygpath -u "${SPRAL_PREFIX:-$PREFIX}")/include"             \
+    --with-spral-lflags="-lspral"                                                        \
+    ac_cv_prog_f77_v="-verbose"                                                          \
+    ac_cv_prog_fc_v="-verbose"                                                           \
     gt_cv_locale_zh_CN=none || exit 1
+}
+
+patch_stage()
+{
+  echo "Patching $PKG_NAME $PKG_VER after configure"
+  cd "$BUILD_DIR" || exit 1
+  # FIXME:
+  # To solve following issue
+  # libtool: warning: undefined symbols not allowed in x86_64-w64-mingw32 shared libraries; building static only
+  echo "Patching libtool in top level"
+  sed                                                                                    \
+    -e "s/\(allow_undefined=\)yes/\1no/"                                                 \
+    -i libtool
+  chmod +x libtool
 }
 
 build_stage()
@@ -145,5 +146,6 @@ install_package()
 }
 
 configure_stage
+patch_stage
 build_stage
 install_package

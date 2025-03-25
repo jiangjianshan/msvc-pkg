@@ -1,0 +1,60 @@
+diff -urN spral-2025.03.06-orig/m4/spral_gtg.m4 spral-2025.03.06/m4/spral_gtg.m4
+--- spral-2025.03.06-orig/m4/spral_gtg.m4	2025-03-06 16:53:00.000000000 +0800
++++ spral-2025.03.06/m4/spral_gtg.m4	2025-03-14 12:48:50.345867800 +0800
+@@ -19,7 +19,7 @@
+ # Check supplied location
+ if test $spral_gtg_lib_ok = no; then
+ if test "x$GTG_LIBS" != x; then
+-   save_LIBS="$LIBS"; LIBS="$GTG_LIBS $LIBS -lm"
++   save_LIBS="$LIBS"; LIBS="$GTG_LIBS $LIBS"
+    GTG_INCLUDE="$with_gtg"
+    AC_MSG_CHECKING([for initTrace in $GTG_LIBS])
+    AC_TRY_LINK_FUNC([initTrace], [spral_gtg_lib_ok=yes], [GTG_LIBS="";GTG_INCLUDE=""])
+@@ -33,7 +33,7 @@
+ if test "x$with_gtg" != x; then
+    GTG_LIBS="-L$with_gtg/src/.libs -lgtg"
+    GTG_INCLUDE="-I$with_gtg/inc"
+-   save_LIBS="$LIBS"; LIBS="$GTG_LIBS $LIBS -lm"
++   save_LIBS="$LIBS"; LIBS="$GTG_LIBS $LIBS"
+    AC_MSG_CHECKING([for initTrace in $GTG_LIBS])
+    AC_TRY_LINK_FUNC([initTrace], [spral_gtg_lib_ok=yes], [GTG_LIBS="";GTG_INCLUDE=""])
+    AC_MSG_RESULT($spral_gtg_lib_ok)
+@@ -43,7 +43,7 @@
+ 
+ # Try just -lgtg
+ if test $spral_gtg_lib_ok = no; then
+-   AC_CHECK_LIB(gtg, initTrace, [spral_gtg_lib_ok=yes; GTG_LIBS="-lgtg";GTG_INCLUDE=""], [], [-lm])
++   AC_CHECK_LIB(gtg, initTrace, [spral_gtg_lib_ok=yes; GTG_LIBS="-lgtg";GTG_INCLUDE=""], [], [])
+ fi
+ 
+ save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $GTG_INCLUDE"
+diff -urN spral-2025.03.06-orig/m4/spral_metis.m4 spral-2025.03.06/m4/spral_metis.m4
+--- spral-2025.03.06-orig/m4/spral_metis.m4	2025-03-06 16:53:00.000000000 +0800
++++ spral-2025.03.06/m4/spral_metis.m4	2025-03-14 12:48:25.066938600 +0800
+@@ -21,7 +21,7 @@
+ # Check supplied location
+ if test $spral_metis_ok = no; then
+ if test "x$METIS_LIBS" != x; then
+-   save_LIBS="$LIBS"; LIBS="$METIS_LIBS $LIBS -lm"
++   save_LIBS="$LIBS"; LIBS="$METIS_LIBS $LIBS"
+    AC_MSG_CHECKING([for $metis_nodend in $METIS_LIBS])
+    AC_TRY_LINK_FUNC($metis_nodend, [spral_metis_ok=yes], [METIS_LIBS=""])
+    AC_MSG_RESULT($spral_metis_ok)
+@@ -33,7 +33,7 @@
+ 
+ # Try just -lmetis
+ if test $spral_metis_ok = no; then
+-   AC_CHECK_LIB(metis, $metis_nodend, [spral_metis_ok=yes; METIS_LIBS="-lmetis"], [], [-lm])
++   AC_CHECK_LIB(metis, $metis_nodend, [spral_metis_ok=yes; METIS_LIBS="-lmetis"], [], [])
+ fi
+ 
+ # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
+@@ -46,7 +46,7 @@
+ fi
+ 
+ # Determine which metis interface to compile
+-save_LIBS="$LIBS"; LIBS="$METIS_LIBS $LIBS -lm"
++save_LIBS="$LIBS"; LIBS="$METIS_LIBS $LIBS"
+ AC_MSG_CHECKING([version of METIS])
+ AC_TRY_LINK_FUNC([METIS_Free],
+                  [

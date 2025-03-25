@@ -42,7 +42,7 @@ call "%ROOT_DIR%\compiler.bat" %ARCH%
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%
-set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics
+set C_OPTS=-nologo -MD -wd4819 -wd4996 -fp:precise -Qopenmp -Qopenmp-simd -Xclang -O2 -fms-extensions -fms-compatibility -fms-compatibility-version=19.42
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
 
 call :configure_stage
@@ -56,11 +56,50 @@ rem ============================================================================
 :configure_stage
 rem  call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
-rem TODO: If the build folder is not same as source folder, following issue will
-rem       occur:
-rem       executable host ruby is required. use --with-baseruby option.
 cd "%BUILD_DIR%"
-win32\configure.bat --prefix="%PREFIX%" --without-baseruby || exit 1
+rem TODO:
+rem 1. If the build folder is not same as source folder, following issue will occur:
+rem    executable host ruby is required. use --with-baseruby option.
+rem 2. If Visual C++ compiler version is euqal or higher than 17.13, following issue
+rem    will occur and fail to build:
+rem  linking miniruby.exe
+rem     Creating library miniruby.lib and object miniruby.exp
+rem  [BUG] heap_idx_for_size: allocation size too large (size=145u, heap_idx=146u)
+rem  ruby 3.4.2 (2025-02-15 revision d2930f8e7a) [x64-mswin64_140]
+rem
+rem  -- Control frame information -----------------------------------------------
+rem  c:0001 p:---- s:0003 e:000002 DUMMY  [FINISH]
+rem
+rem  -- Threading information ---------------------------------------------------
+rem  Total ractor count: 0
+rem  Ruby thread count for this ractor: 0
+rem
+rem  -- C level backtrace information -------------------------------------------
+rem  C:\Windows\SYSTEM32\ntdll.dll(ZwWaitForSingleObject+0x14) [0x00007FFE8826D574]
+rem  C:\Windows\System32\KERNELBASE.dll(WaitForSingleObjectEx+0x8e) [0x00007FFE85C0920E]
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\miniruby.exe(rb_print_backtrace+0x3e) [0x00007FF76458648A]
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\vm_dump.c:847
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\miniruby.exe(rb_vm_bugreport+0x1ba) [0x00007FF76458664A]
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\vm_dump.c:1158
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\miniruby.exe(rb_bug_without_die_internal+0x72) [0x00007FF764451C72]
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\error.c:1097
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\miniruby.exe(rb_bug+0x20) [0x00007FF764451B60] E:\Githubs\msvc-pkg\releases\ruby-3.4.2\error.c:1117
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\miniruby.exe(newobj_of+0x1d0) [0x00007FF764467E34] E:\Githubs\msvc-pkg\releases\ruby-3.4.2\gc.c:1024
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\miniruby.exe(rb_wb_protected_newobj_of+0x35) [0x00007FF76446F589]
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\gc.c:1063
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\miniruby.exe(rb_str_buf_new+0x4d) [0x00007FF764529759]
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\string.c:1646
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\miniruby.exe(rb_enc_vsprintf+0x27) [0x00007FF76451A35B]
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\sprintf.c:1184
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\miniruby.exe(rb_raise+0x26) [0x00007FF764452A5A] E:\Githubs\msvc-pkg\releases\ruby-3.4.2\error.c:3768
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\miniruby.exe(rb_st_init_existing_table_with_size+0x102) [0x00007FF76451E69A]
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\st.c:531
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\miniruby.exe(rb_st_init_table_with_size+0x30) [0x00007FF76451E724]
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\st.c:587
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\miniruby.exe(rb_vm_encoded_insn_data_table_init+0x1f) [0x00007FF764496E83]
+rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\iseq.c:3745
+rem
+win32\configure.bat --prefix="%PREFIX%" --srcdir="%SRC_DIR%" || exit 1
 exit /b 0
 
 rem ==============================================================================

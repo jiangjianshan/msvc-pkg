@@ -41,7 +41,7 @@ ROOT_DIR=$(cygpath -u "$ROOT_DIR")
 . $ROOT_DIR/compiler.sh
 PREFIX=$(cygpath -u "$PREFIX")
 RELS_DIR=$ROOT_DIR/releases
-SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
+SRC_DIR=$RELS_DIR/$PKG_NAME
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
 C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics'
 C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX'
@@ -63,13 +63,6 @@ configure_stage()
   elif [[ "$ARCH" == "x64" ]]; then
     HOST_TRIPLET=x86_64-w64-mingw32
   fi
-  # Issue: 'Warning: linker path does not have real file for library -ldl'.
-  # The reason should be in the function of func_win32_libid in ltmain.sh. It use OBJDUMP
-  # which is missing from MSVC. That will cause the value of win32_libid_type is unknown.
-  # There are at least two way to solve this issue:
-  # 1. set OBJDUMP=llvm-objdump
-  # 2. set lt_cv_deplibs_check_method as below
-  export lt_cv_deplibs_check_method=${lt_cv_deplibs_check_method='pass_all'}
   # NOTE:
   # 1. Don't use CPP="$ROOT_DIR/wrappers/compile cl -nologo -EP" here,
   #    it will cause checking absolute name of standard files is empty.
@@ -79,18 +72,15 @@ configure_stage()
   #    on some libraries will detect whether is msvc compiler according to
   #    '*cl | cl.exe'
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
-  CC=cl                                                                        \
+  CC="cl"                                                                      \
   CFLAGS="$C_OPTS"                                                             \
   CPP="cl -E"                                                                  \
   CPPFLAGS="$C_DEFS"                                                           \
-  CXX=cl                                                                       \
+  CXX="cl"                                                                     \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
   CXXCPP="cl -E"                                                               \
   DLLTOOL="link -verbose -dll"                                                 \
-  F77="ifort"                                                                  \
-  FFLAGS="-f77rtl $F_OPTS"                                                     \
   LD="link -nologo"                                                            \
-  MPICC="$ROOT_DIR/wrappers/mpicl"                                             \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
   RANLIB=":"                                                                   \
@@ -103,28 +93,9 @@ configure_stage()
     --bindir="$PREFIX/bin"                                                     \
     --includedir="$PREFIX/include"                                             \
     --libdir="$PREFIX/lib"                                                     \
-    --disable-mysql                                                            \
-    --disable-odbc                                                             \
-    --enable-msvc="MD"                                                         \
+    --enable-msvc                                                              \
     --enable-shared                                                            \
-    ac_cv_prog_cc_c11="-std:c11"                                               \
-    ac_cv_prog_f77_v="-verbose"                                                \
-    lt_cv_nm_interface="MS dumpbin"                                            \
     gt_cv_locale_zh_CN=none || exit 1
-}
-
-patch_stage()
-{
-  echo "Patching $PKG_NAME $PKG_VER after configure"
-  cd "$BUILD_DIR"
-  # FIXME:
-  # To solve following issue
-  # libtool: warning: undefined symbols not allowed in x86_64-w64-mingw32 shared libraries
-  echo "Patching libtool in top level"
-  sed                                                                          \
-    -e "s/\(allow_undefined=\)yes/\1no/"                                       \
-    -i libtool
-  chmod +x libtool
 }
 
 build_stage()
@@ -144,6 +115,5 @@ install_package()
 }
 
 configure_stage
-patch_stage
 build_stage
 install_package

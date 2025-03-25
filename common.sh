@@ -152,6 +152,9 @@ git_sync()
     git reset --hard "origin/$branch"
     popd || exit 1
   fi
+  if [[ $(type -t patch_package) == function ]]; then
+    patch_package
+  fi
 }
 
 git_rescure()
@@ -202,5 +205,8 @@ git_rescure()
         fi
       fi
     fi
+  fi
+  if [[ $(type -t patch_package) == function ]]; then
+    patch_package
   fi
 }

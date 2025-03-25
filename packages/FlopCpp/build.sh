@@ -42,7 +42,7 @@ ROOT_DIR=$(cygpath -u "$ROOT_DIR")
 PREFIX=$(cygpath -u "$PREFIX")
 RELS_DIR=$ROOT_DIR/releases
 SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
-BUILD_DIR=$SRC_DIR/build${ARCH//x/}
+BUILD_DIR=$SRC_DIR/FlopCpp/build${ARCH//x/}
 C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics'
 C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX'
 F_OPTS='-nologo -MD -Qdiag-disable:10448 -fp:precise -Qopenmp -Qopenmp-simd -fpp'
@@ -81,39 +81,30 @@ configure_stage()
   # 3. Taken care of the logic of func_resolve_sysroot() and func_replace_sysroot()
   #    in ltmain.sh, otherwise may have '-L=*' in the filed of 'dependency_libs' in
   #    *.la. So don't set --with-sysroot if --libdir has been set
-  AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                             \
-  CC="cl"                                                                                \
-  CFLAGS="$C_OPTS"                                                                       \
-  CDEFS="$C_DEFS"                                                                        \
-  CPP="cl -E"                                                                            \
-  CPPFLAGS="$C_DEFS"                                                                     \
-  CXX="cl"                                                                               \
-  CXXCPP="cl -E"                                                                         \
-  CXXFLAGS="-EHsc $C_OPTS"                                                               \
-  CXXDEFS="$C_DEFS"                                                                      \
-  DLLTOOL="link -verbose -dll"                                                           \
-  F77="ifort"                                                                            \
-  FFLAGS="-f77rtl $F_OPTS"                                                               \
-  LD="link -nologo"                                                                      \
-  MPICC="$ROOT_DIR/wrappers/mpicl"                                                       \
-  MPICXX="$ROOT_DIR/wrappers/mpicl"                                                      \
-  MPIF77="$ROOT_DIR/wrappers/mpif77"                                                     \
-  NM="dumpbin -nologo -symbols"                                                          \
-  PKG_CONFIG="/usr/bin/pkg-config"                                                       \
-  RANLIB=":"                                                                             \
-  RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                          \
-  STRIP=":"                                                                              \
-  WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                     \
-  ../configure --build="$(sh ../config.guess)"                                           \
-    --host="$HOST_TRIPLET"                                                               \
-    --prefix="$PREFIX"                                                                   \
-    --bindir="$PREFIX/bin"                                                               \
-    --includedir="$PREFIX/include"                                                       \
-    --libdir="$PREFIX/lib"                                                               \
-    --enable-msvc                                                                        \
-    ac_cv_prog_f77_v="-verbose"                                                          \
-    enable_dependency_linking=yes                                                        \
-    lt_cv_nm_interface="MS dumpbin"                                                      \
+  AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
+  CC="cl"                                                                      \
+  CFLAGS="$C_OPTS"                                                             \
+  CPP="cl -E"                                                                  \
+  CPPFLAGS="$C_DEFS"                                                           \
+  CXX="cl"                                                                     \
+  CXXFLAGS="-EHsc $C_OPTS"                                                     \
+  CXXCPP="cl -E"                                                               \
+  DLLTOOL="link -verbose -dll"                                                 \
+  LD="link -nologo"                                                            \
+  NM="dumpbin -nologo -symbols"                                                \
+  PKG_CONFIG="/usr/bin/pkg-config"                                             \
+  RANLIB=":"                                                                   \
+  RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                \
+  STRIP=":"                                                                    \
+  WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                           \
+  ../configure --build="$(sh ../config.guess)"                                 \
+    --host="$HOST_TRIPLET"                                                     \
+    --prefix="$PREFIX"                                                         \
+    --bindir="$PREFIX/bin"                                                     \
+    --includedir="$PREFIX/include"                                             \
+    --libdir="$PREFIX/lib"                                                     \
+    --enable-msvc                                                              \
+    --enable-shared                                                            \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

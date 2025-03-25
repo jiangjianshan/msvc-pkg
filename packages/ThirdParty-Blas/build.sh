@@ -102,11 +102,8 @@ configure_stage()
     --includedir="$PREFIX/include"                                             \
     --libdir="$PREFIX/lib"                                                     \
     --enable-msvc                                                              \
-    --enable-static                                                            \
     --enable-shared                                                            \
-    ac_cv_prog_cc_c11="-std:c11"                                               \
     ac_cv_prog_f77_v="-verbose"                                                \
-    lt_cv_nm_interface="MS dumpbin"                                            \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

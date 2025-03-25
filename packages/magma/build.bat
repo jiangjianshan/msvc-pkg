@@ -69,6 +69,7 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_Fortran_FLAGS="%F_OPTS%"                                             ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
   -DCMAKE_CUDA_FLAGS="%C_OPTS% %C_DEFS% -Wno-deprecated-gpu-targets"           ^
+  -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON                                        ^
   -DBLA_VENDOR="OpenBLAS"                                                      ^
   -DMAGMA_ENABLE_CUDA=ON                                                       ^
   -DUSE_FORTRAN=ON                                                             ^

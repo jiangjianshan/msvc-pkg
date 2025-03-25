@@ -1,0 +1,197 @@
+diff -urN FlopCpp-1.2.5-orig/FlopCpp/configure.ac FlopCpp-1.2.5/FlopCpp/configure.ac
+--- FlopCpp-1.2.5-orig/FlopCpp/configure.ac	2019-02-24 01:58:14.000000000 +0800
++++ FlopCpp-1.2.5/FlopCpp/configure.ac	2025-03-20 13:57:52.504330000 +0800
+@@ -20,10 +20,6 @@
+ This file is part of the open source package FlopC++ which is distributed
+ under the Common Public License.])
+ 
+-# List one file in the package so that the configure script can test
+-# whether the package is actually there
+-AC_CONFIG_SRCDIR(src/flopc.hpp)
+-
+ # Where should everything be installed by default?  Here, we want it
+ # to be installed directly in 'bin', 'lib', 'include' subdirectories
+ # of the directory where configure is run.  The default would be
+@@ -34,34 +30,25 @@
+ #                         Standard build tool stuff                         #
+ #############################################################################
+ 
+-# Get the system type
+-AC_CANONICAL_BUILD
+-
+-# If this project depends on external projects, the Externals file in
+-# the source root directory contains definition of where to find those
+-# externals.  The following macro ensures that those externals are
+-# retrieved by svn if they are not there yet.
+-AC_COIN_PROJECTDIR_INIT(FlopCpp)
+-
+-# Check if user wants to produce debugging code
+-AC_COIN_DEBUG_COMPILE(FlopCpp)
++AC_COIN_INITIALIZE
+ 
+ # Get the name of the C++ compiler and appropriate compiler options
+ AC_COIN_PROG_CXX
+ 
+ # Initialize automake and libtool
+-AC_COIN_INIT_AUTO_TOOLS
++AC_COIN_PROG_LIBTOOL
+ 
+ #############################################################################
+ #                              COIN components                              #
+ #############################################################################
+ 
+-AC_COIN_CHECK_PACKAGE(Osi, [osi], [FlopCpp])
++AC_COIN_CHK_PKG(Osi,[FlopCpp],[osi])
+ if test $coin_has_osi != yes ; then
+   AC_MSG_ERROR([Required package Osi not available.])
+ fi
+-AC_COIN_CHECK_PACKAGE(Cbc, [osi-cbc])
+-AC_COIN_CHECK_PACKAGE(Clp, [osi-clp])
++AC_COIN_CHK_PKG(Cbc,[FlopCpp],[osi-cbc])
++AC_COIN_CHK_PKG(Clp,[FlopCpp],[osi-clp])
++AC_COIN_FINALIZE_FLAGS([FlopCpp])
+ 
+ ##############################################################################
+ #                   VPATH links for example input files                      #
+@@ -117,7 +104,7 @@
+ 		 doxydoc/doxygen.conf])
+ 
+ # Here put the location and name of the configuration header file
+-AC_CONFIG_HEADER([src/config.h src/config_flopcpp.h])
++AC_CONFIG_HEADERS([src/config.h src/config_flopcpp.h])
+ 
+ # Finally, we let configure write all the output...
+ AC_COIN_FINALIZE
+diff -urN FlopCpp-1.2.5-orig/FlopCpp/flopcpp.pc.in FlopCpp-1.2.5/FlopCpp/flopcpp.pc.in
+--- FlopCpp-1.2.5-orig/FlopCpp/flopcpp.pc.in	2019-02-24 01:58:14.000000000 +0800
++++ FlopCpp-1.2.5/FlopCpp/flopcpp.pc.in	2025-03-20 21:21:30.515161900 +0800
+@@ -1,7 +1,7 @@
+ prefix=@prefix@
+ exec_prefix=@exec_prefix@
+ libdir=@libdir@
+-includedir=@includedir@/coin
++includedir=@includedir@/coin-or
+ 
+ Name: FlopC++
+ Description: An Algebraic Modeling Language in C++
+@@ -9,4 +9,4 @@
+ Version: @PACKAGE_VERSION@
+ Libs: -L${libdir} -lFlopCpp @FLOPCPP_PCLIBS@
+ Cflags: -I${includedir}
+-Requires: @FLOPCPP_PCREQUIRES@
++Requires: @FLOPCPP_PCFILES@
+diff -urN FlopCpp-1.2.5-orig/FlopCpp/flopcpp-uninstalled.pc.in FlopCpp-1.2.5/FlopCpp/flopcpp-uninstalled.pc.in
+--- FlopCpp-1.2.5-orig/FlopCpp/flopcpp-uninstalled.pc.in	2019-02-24 01:58:14.000000000 +0800
++++ FlopCpp-1.2.5/FlopCpp/flopcpp-uninstalled.pc.in	2025-03-20 13:57:52.511375800 +0800
+@@ -6,6 +6,6 @@
+ Description: An Algebraic Modeling Language in C++
+ URL: https://projects.coin-or.org/FlopC++
+ Version: @PACKAGE_VERSION@
+-Libs: ${libdir}/libFlopCpp.la @FLOPCPP_PCLIBS@
++Libs: ${libdir}/libFlopCpp.la @FLOPCPP_LFLAGS@
+ Cflags: -I${includedir}
+-Requires: @FLOPCPP_PCREQUIRES@
++Requires: @FLOPCPP_PCFILES@
+diff -urN FlopCpp-1.2.5-orig/FlopCpp/Makefile.am FlopCpp-1.2.5/FlopCpp/Makefile.am
+--- FlopCpp-1.2.5-orig/FlopCpp/Makefile.am	2019-02-24 01:58:14.000000000 +0800
++++ FlopCpp-1.2.5/FlopCpp/Makefile.am	2025-03-20 13:57:52.514376200 +0800
+@@ -66,7 +66,6 @@
+ #                  Installation of the addlibs file                    #
+ ########################################################################
+ 
+-pkgconfiglibdir = $(libdir)/pkgconfig
+ pkgconfiglib_DATA = flopcpp.pc
+ 
+ addlibsdir = $(DESTDIR)$(datadir)/coin/doc/FlopCpp
+@@ -77,12 +76,8 @@
+ 	PKG_CONFIG_PATH=@COIN_PKG_CONFIG_PATH@:$(DESTDIR)$(pkgconfiglibdir) \
+ 	$(PKG_CONFIG) --libs flopcpp > $(addlibsdir)/flopcpp_addlibs.txt
+ else
+-if COIN_CXX_IS_CL
+-	echo "-libpath:`$(CYGPATH_W) @abs_lib_dir@` libFlopCpp.lib @FLOPCPP_LIBS_INSTALLED@" > $(addlibsdir)/flopcpp_addlibs.txt
+-else
+ 	echo -L@abs_lib_dir@ -lFlopCpp @FLOPCPP_LIBS_INSTALLED@ > $(addlibsdir)/flopcpp_addlibs.txt
+ endif
+-endif
+ 
+ uninstall-hook:
+ 	rm -f $(addlibsdir)/flopcpp_addlibs.txt
+diff -urN FlopCpp-1.2.5-orig/FlopCpp/src/Makefile.am FlopCpp-1.2.5/FlopCpp/src/Makefile.am
+--- FlopCpp-1.2.5-orig/FlopCpp/src/Makefile.am	2019-02-24 01:58:14.000000000 +0800
++++ FlopCpp-1.2.5/FlopCpp/src/Makefile.am	2025-03-20 21:21:44.580226500 +0800
+@@ -33,9 +33,7 @@
+ 	MP_variable.cpp MP_variable.hpp 
+ 
+ # List all additionally required libraries
+-if DEPENDENCY_LINKING
+-libFlopCpp_la_LIBADD = $(FLOPCPP_LIBS)
+-endif
++libFlopCpp_la_LIBADD = $(FLOPCPP_LFLAGS)
+ 
+ # This is for libtool
+ libFlopCpp_la_LDFLAGS = $(LT_LDFLAGS)
+@@ -48,18 +46,15 @@
+ # "cygpath" stuff is necessary to compile with native compilers on Windows.
+ # "top_srcdir" refers to the basic directory for the main package that is
+ # being compiled.
+-AM_CPPFLAGS = $(FLOPCPP_CFLAGS)
+-
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` 
++AM_CPPFLAGS = $(FLOPCPP_CFLAGS) -I. -I`$(CYGPATH_W) $(srcdir)`
+ 
+ ########################################################################
+ #                Headers that need to be installed                     #
+ ########################################################################
+ 
+ # Here list all the header files that are required by a user of the library,
+-# and that therefore should be installed in 'include/coin'
+-includecoindir = $(includedir)/coin
++# and that therefore should be installed in 'include/coin-or'
++includecoindir = $(includedir)/coin-or
+ 
+ includecoin_HEADERS = \
+ 	flopc.hpp \
+diff -urN FlopCpp-1.2.5-orig/FlopCpp/test/Makefile.am FlopCpp-1.2.5/FlopCpp/test/Makefile.am
+--- FlopCpp-1.2.5-orig/FlopCpp/test/Makefile.am	2019-02-24 01:58:14.000000000 +0800
++++ FlopCpp-1.2.5/FlopCpp/test/Makefile.am	2025-03-20 13:57:52.522581400 +0800
+@@ -24,7 +24,7 @@
+ 
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows
+-AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/../src` $(FLOPCPP_CFLAGS) $(CBC_CFLAGS)
++AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/../src` $(FLOPCPP_CFLAGS) $(CBC_CFLAGS) -I. -I`$(CYGPATH_W) $(srcdir)`
+ 
+ test: unitTest$(EXEEXT)
+ 	./unitTest$(EXEEXT)
+@@ -37,9 +37,6 @@
+ 
+ .PHONY: test
+ 
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` 
+-
+ ########################################################################
+ #                          Cleaning stuff                              #
+ ########################################################################
+diff -urN FlopCpp-1.2.5-orig/FlopCpp/unittest/Makefile.am FlopCpp-1.2.5/FlopCpp/unittest/Makefile.am
+--- FlopCpp-1.2.5-orig/FlopCpp/unittest/Makefile.am	2019-02-24 01:58:14.000000000 +0800
++++ FlopCpp-1.2.5/FlopCpp/unittest/Makefile.am	2025-03-20 13:57:52.525574700 +0800
+@@ -22,16 +22,13 @@
+ 
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows
+-AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/../src` $(FLOPCPP_CFLAGS)
++AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/../src` $(FLOPCPP_CFLAGS) -I. -I`$(CYGPATH_W) $(srcdir)`
+ 
+ test: unitTest$(EXEEXT)
+ 	./unitTest$(EXEEXT)
+ 
+ .PHONY: test
+ 
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` 
+-
+ ########################################################################
+ #                          Cleaning stuff                              #
+ ########################################################################

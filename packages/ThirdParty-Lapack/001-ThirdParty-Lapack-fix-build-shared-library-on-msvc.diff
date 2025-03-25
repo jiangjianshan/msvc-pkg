@@ -1,0 +1,79 @@
+diff -urN ThirdParty-Lapack-1.6.3-orig/configure.ac ThirdParty-Lapack-1.6.3/configure.ac
+--- ThirdParty-Lapack-1.6.3-orig/configure.ac	2022-12-12 15:48:23.000000000 +0800
++++ ThirdParty-Lapack-1.6.3/configure.ac	2025-03-16 11:31:12.469671100 +0800
+@@ -24,14 +24,14 @@
+ # whether the package is actually there
+ AC_CONFIG_SRCDIR(LAPACK/SRC/dlarf.f)
+ 
++AC_COIN_INITIALIZE
++
+ # Where should everything be installed by default?  Here, we want it
+ # to be installed directly in 'bin', 'lib', 'include' subdirectories
+ # of the directory where configure is run.  The default would be
+ # /usr/local.
+ AC_PREFIX_DEFAULT([`pwd`])
+ 
+-AC_COIN_PROJECTDIR_INIT(Lapack,7:3:6)
+-
+ #############################################################################
+ #                         Standard build tool stuff                         #
+ #############################################################################
+@@ -43,9 +43,6 @@
+ #and we couldn't fix them anyway
+ coin_skip_warn_fflags=yes
+ 
+-# Check if user wants to produce debugging code
+-AC_COIN_DEBUG_COMPILE(Lapack)
+-
+ # Get the name of the Fortran compiler and appropriate compiler options
+ AC_COIN_PROG_F77
+ 
+@@ -53,13 +50,14 @@
+ AC_COIN_F77_WRAPPERS
+ 
+ # Check for Blas
+-AC_COIN_CHECK_PACKAGE_BLAS(LapackLib)
++AC_COIN_CHK_PKG(Blas,[LapackLib],[coinblas])
+ if test $coin_has_blas != yes; then
+   AC_MSG_ERROR([Required package BLAS not found.])
+ fi
+ 
+ # FLIBS will be needed to link against this library, so add them to LAPACKLIB_PCLIBS
+ LAPACKLIB_PCLIBS="$LAPACKLIB_PCLIBS $FLIBS"
++AC_COIN_FINALIZE_FLAGS([LapackLib])
+ 
+ # Take care that optimization is disbled for DLAMCH.F
+ AC_ARG_VAR(DLAMCH_FFLAGS,[Fortran compiler options for DLAMCH.F])
+@@ -93,8 +91,8 @@
+ fi
+ AC_SUBST(DLAMCH_FFLAGS)
+ 
+-# Initialize autotools
+-AC_COIN_INIT_AUTO_TOOLS
++# Initialize libtool
++AC_COIN_PROG_LIBTOOL
+ 
+ #############################################################################
+ #               Create links to the required source files                   #
+diff -urN ThirdParty-Lapack-1.6.3-orig/Makefile.am ThirdParty-Lapack-1.6.3/Makefile.am
+--- ThirdParty-Lapack-1.6.3-orig/Makefile.am	2022-12-12 15:48:23.000000000 +0800
++++ ThirdParty-Lapack-1.6.3/Makefile.am	2025-03-11 20:32:09.292686300 +0800
+@@ -175,9 +175,7 @@
+ 
+ libcoinlapack_la_SOURCES = $(LAPACK_FILES)
+ 
+-if DEPENDENCY_LINKING
+-libcoinlapack_la_LIBADD = $(LAPACKLIB_LIBS)
+-endif
++libcoinlapack_la_LIBADD = $(LAPACKLIB_LFLAGS)
+ 
+ libcoinlapack_la_LDFLAGS = $(LT_LDFLAGS)
+ 
+@@ -199,7 +197,6 @@
+ slamch.lo: slamch.f
+ 	$(LIBTOOL) --tag=F77 --mode=compile $(F77) $(AM_FFLAGS) $(DLAMCH_FFLAGS) -c -o $@ $<
+ 
+-pkgconfiglibdir = $(libdir)/pkgconfig
+ pkgconfiglib_DATA = coinlapack.pc
+ 
+ test:

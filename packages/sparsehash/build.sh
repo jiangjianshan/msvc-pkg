@@ -89,7 +89,8 @@ configure_stage()
   RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                \
   STRIP=":"                                                                    \
   WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                           \
-  ../configure --host="$HOST_TRIPLET"                                          \
+  ../configure --build="$(sh ../config.guess)"                                 \
+    --host="$HOST_TRIPLET"                                                     \
     --prefix="$PREFIX"                                                         \
     --bindir="$PREFIX/bin"                                                     \
     --includedir="$PREFIX/include"                                             \

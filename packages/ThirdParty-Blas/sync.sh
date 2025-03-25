@@ -45,27 +45,38 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR" || exit 1
-  # NOTE: The archive from 'www.netlib.org/blas/blas.tgz' can't be compile successfully, but
-  #       the one from 'coin-or-tools.github.io/ThirdParty-Blas' can.
-  ./get.Blas
+  if [ ! -f "scopy.f" ]; then
+    # NOTE: The archive from 'www.netlib.org/blas/blas.tgz' can't be compile successfully, but
+    #       the one from 'coin-or-tools.github.io/ThirdParty-Blas' can.
+    ./get.Blas
+  fi
+  patch -Np1 -i "$PKG_DIR/001-ThirdParty-Blas-fix-build-shared-library-on-msvc.diff"
+  patch -Np1 -i "$PKG_DIR/002-ThirdParty-Blas-Add-missed-files-to-compile.diff"
 
-  patch -Np1 -i "$PKG_DIR/001-ThirdParty-Blas-fix-dumpbin-export-symbols-failed.diff"
-  # TODO: In order to build shared lirary, a lots of patch have to be done in the file configure.
-  #       A good way is to do autoreconf but BuildTools project seems not work on this library.
+  cd $RELS_DIR/BuildTools
+  export COIN_AUTOTOOLS_DIR=/usr
+  WANT_AUTOCONF='2.72' WANT_AUTOMAKE='1.17' ./run_autotools $SRC_DIR
+
+  cd "$SRC_DIR" || exit 1
+  rm -rfv autom4te.cache
+  find . -name "*~" -type f -print -exec rm -rfv {} \;
 
   # XXX: libtool don't have options can set the naming style of static and
   #      shared library. Here is only a workaround.
 
   echo "Patching ltmain.sh in top level"
-  sed                                                                                                \
-    -e 's|old_library="$libname\.$libext"|old_library="lib$libname.$libext"|g'                       \
-    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
+  sed                                                                                                          \
+    -e 's|old_library="$libname\.$libext"|old_library="lib$libname.$libext"|g'                                 \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                               \
     -i ltmain.sh
 
   echo "Patching configure in top level"
-  sed                                                                                                \
-    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
-    -e 's|\.dll\.lib|.lib|g'                                                                         \
+  sed                                                                                                          \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                                    \
+    -e 's|\.dll\.lib|.lib|g'                                                                                   \
+    -e 's/\*,cl\* | \*,icl\*)/*,cl* | *,icl* | *,ifort* | *,icx* | *,ifx*)/g'                                  \
+    -e 's/cl\* | icl\*)/cl* | icl* | ifort* | icx* | ifx*)/g'                                                  \
+    -e 's/,icl\* | no,icl\*)/,icl* | no,icl* | ,ifort* | no,ifort* | ,icx* | no,icx* | ,ifx* | no,ifx*)/g'     \
     -i configure
   chmod +x configure
 }

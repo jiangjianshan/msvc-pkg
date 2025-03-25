@@ -102,13 +102,24 @@ configure_stage()
     --includedir="$PREFIX/include"                                                                 \
     --libdir="$PREFIX/lib"                                                                         \
     --enable-msvc                                                                                  \
-    --enable-static                                                                                \
     --enable-shared                                                                                \
-    --with-blas-lib="-L$(cygpath -u "${THIRDPARTY_BLAS_PREFIX:-$PREFIX}/lib") -lcoinblas"          \
-    ac_cv_prog_cc_c11="-std:c11"                                                                   \
+    --with-blas-lflags="-L$(cygpath -u "${THIRDPARTY_BLAS_PREFIX:-$PREFIX}")/lib -lcoinblas"       \
     ac_cv_prog_f77_v="-verbose"                                                                    \
-    lt_cv_nm_interface="MS dumpbin"                                                                \
     gt_cv_locale_zh_CN=none || exit 1
+}
+
+patch_stage()
+{
+  echo "Patching $PKG_NAME $PKG_VER after configure"
+  cd "$BUILD_DIR"
+  # FIXME:
+  # To solve following issue
+  # libtool: warning: undefined symbols not allowed in x86_64-w64-mingw32 shared libraries; building static only
+  echo "Patching libtool in top level"
+  sed                                                                                              \
+    -e "s/\(allow_undefined=\)yes/\1no/"                                                           \
+    -i libtool
+  chmod +x libtool
 }
 
 build_stage()
@@ -128,5 +139,6 @@ install_package()
 }
 
 configure_stage
+patch_stage
 build_stage
 install_package

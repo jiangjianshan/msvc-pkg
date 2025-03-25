@@ -46,7 +46,6 @@ BUILD_DIR=$SRC_DIR/build${ARCH//x/}
 C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics'
 C_DEFS='-DWIN32 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX -DADOLC_DLL'
 
-
 clean_build()
 {
   echo Cleaning $PKG_NAME $PKG_VER
@@ -105,12 +104,13 @@ configure_stage()
     --includedir="$PREFIX/include"                                             \
     --libdir="$PREFIX/lib"                                                     \
     --datarootdir="$PREFIX/share"                                              \
+    --enable-lateinit                                                          \
     --enable-static                                                            \
     --enable-shared                                                            \
     --enable-sparse                                                            \
+    --enable-tserrno                                                           \
     --with-boost="$(cygpath -u "${BOOST_PREFIX:-$PREFIX}")"                    \
-    ac_cv_prog_cc_c99="-std:c11"                                               \
-    gt_cv_locale_zh_CN=none
+    gt_cv_locale_zh_CN=none || exit 1
 }
 
 build_stage()

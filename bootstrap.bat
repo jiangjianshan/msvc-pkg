@@ -274,6 +274,8 @@ if "%errorlevel%" neq "0" (
   start /wait python-!PYTHON_VERSION!!host_suffix!.exe InstallAllUsers=1 TargetDir=C:\Python312 PrependPath=1 Include_test=0 || goto :end
   del /Q python-!PYTHON_VERSION!!host_suffix!.exe
 )
+pip list | findstr setuptools >nul 2>&1
+if "%errorlevel%" neq "0" goto :install_pylibs
 pip list | findstr meson >nul 2>&1
 if "%errorlevel%" neq "0" goto :install_pylibs
 pip list | findstr Pygments >nul 2>&1
@@ -432,12 +434,11 @@ if "%errorlevel%" neq "0" (
   echo Installing yq
   if not exist "yq.exe" (
     if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
-      wget --no-check-certificate https://github.com/mikefarah/yq/releases/download/v!YQ_VERSION!/yq_windows_amd64.exe -O yq.exe || goto :end
+      wget --no-check-certificate https://github.com/mikefarah/yq/releases/download/v!YQ_VERSION!/yq_windows_amd64.exe -O %~dp0%ARCH%\bin\yq.exe || goto :end
     ) else (
-      wget --no-check-certificate https://github.com/mikefarah/yq/releases/download/v!YQ_VERSION!/yq_windows_386.exe -O yq.exe || goto :end
+      wget --no-check-certificate https://github.com/mikefarah/yq/releases/download/v!YQ_VERSION!/yq_windows_386.exe -O %~dp0%ARCH%\bin\yq.exe || goto :end
     )
   )
-  copy /Y /V yq.exe %~dp0%ARCH%\bin\yq.exe
 )
 exit /b 0
 

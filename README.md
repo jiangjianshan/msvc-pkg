@@ -83,11 +83,11 @@ mpt gmp gettext ncurses readline
 
 ## How to add a new package
 
-Many examples are available on ***packages*** folder, only following files are need in the libraries that you want to add:
+Many examples are available on ***packages*** folder, only following files are need for the libraries that you want to add:
 - ***sync.sh*** work with ***common.sh***, it is used to get the source of libraries and make patched if necessary before build.
 - ***build.bat*** or ***build.sh*** is the build script on Win32 or Bash environment which depend on the libraries.
-- ***config.yaml*** is the configuration file for libraries, some essential information have been defined and will be used on ***mpt.py***, ***sync.sh*** and ***build.bat*** or ***build.sh***. Please notice that the name section in this file must be same as the folder name that contain ***config.yaml***.
-- The ***.diff*** files are depend on the libraries. If no patch needed before build, they will be not needed.
+- ***config.yaml*** is the configuration file for libraries, some essential information have been defined there and will be used on ***mpt.py***, ***sync.sh*** and ***build.bat*** or ***build.sh***. Please notice that the name section in this file must be same as the folder name that contain ***config.yaml***.
+- The ***.diff*** files are depend on the libraries. If no patch needed before build, they will be no needed.
 
 ## Contributors
 

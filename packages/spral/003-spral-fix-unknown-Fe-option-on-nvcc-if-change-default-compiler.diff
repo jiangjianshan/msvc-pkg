@@ -1,0 +1,14 @@
+diff -urN spral-2025.03.06-orig/m4/spral_prog_nvcc.m4 spral-2025.03.06/m4/spral_prog_nvcc.m4
+--- spral-2025.03.06-orig/m4/spral_prog_nvcc.m4	2025-03-06 16:53:00.000000000 +0800
++++ spral-2025.03.06/m4/spral_prog_nvcc.m4	2025-03-15 13:52:42.794892800 +0800
+@@ -18,8 +18,8 @@
+ AC_ARG_VAR(NVCCFLAGS,[CUDA compiler flags])
+ 
+ test "x$NVCC" = x && AC_CHECK_PROGS(NVCC,nvcc)
+-$NVCC -DNDEBUG nvcc_arch_sm.c -o nvcc_arch_sm -lcuda
++$NVCC -ccbin='cl' -DNDEBUG nvcc_arch_sm.c -o nvcc_arch_sm -lcuda
+ test "x$NVCC_ARCH_SM" = x && NVCC_ARCH_SM=`./nvcc_arch_sm`
+-test "x$NVCCFLAGS" = x && NVCCFLAGS="-std=c++11 -g $NVCC_ARCH_SM"
++test "x$NVCCFLAGS" = x && NVCCFLAGS="-DNDEBUG $NVCC_ARCH_SM"
+ 
+ ])dnl SPRAL_PROG_NVCC

@@ -83,7 +83,6 @@ configure_stage()
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                                                 \
   CC="cl"                                                                                                    \
   CFLAGS="$C_OPTS"                                                                                           \
-  ADD_CFLAGS="$C_OPTS"                                                                                       \
   CPP="cl -E"                                                                                                \
   CPPFLAGS="$C_DEFS"                                                                                         \
   CXX="cl"                                                                                                   \
@@ -94,7 +93,6 @@ configure_stage()
   FFLAGS="-f77rtl $F_OPTS"                                                                                   \
   FC="$SRC_DIR/compile ifort"                                                                                \
   FCFLAGS="$F_OPTS"                                                                                          \
-  ADD_FCFLAGS="$F_OPTS"                                                                                      \
   LD="link -nologo"                                                                                          \
   NM="dumpbin -nologo -symbols"                                                                              \
   PKG_CONFIG="/usr/bin/pkg-config"                                                                           \
@@ -112,9 +110,8 @@ configure_stage()
     --enable-msvc                                                                                            \
     --with-precision="all"                                                                                   \
     --with-lapack-lflags="-lmkl_intel_lp64_dll -lmkl_sequential_dll -lmkl_core_dll"                          \
-    --with-metis-cflags="-I$(cygpath -u "${THIRDPARTY_METIS_PREFIX:-$PREFIX}/include/coin/metis")"           \
-    --with-metis-lflags="-lcoinmetis"                                                                        \
-    ac_cv_prog_cc_c11="-std:c11"                                                                             \
+    --with-metis-cflags="-I$(cygpath -u "${THIRDPARTY_METIS_PREFIX:-$PREFIX}/include/coin-or/metis")"        \
+    --with-metis-lflags="-L$(cygpath -u "${THIRDPARTY_METIS_PREFIX:-$PREFIX}") -lcoinmetis"                  \
     ac_cv_prog_fc_v="-verbose"                                                                               \
     gt_cv_locale_zh_CN=none || exit 1
 }

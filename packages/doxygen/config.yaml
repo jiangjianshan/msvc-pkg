@@ -6,7 +6,6 @@ steps:
   a:
     dependencies:
       - pkg-config
-      - llvm-project
       - fmt
       - sqlite
       - spdlog

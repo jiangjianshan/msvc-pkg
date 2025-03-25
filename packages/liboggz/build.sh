@@ -92,10 +92,6 @@ configure_stage()
   ../configure --build="$(sh ../config.guess)"                                 \
     --host="$HOST_TRIPLET"                                                     \
     --prefix="$PREFIX"                                                         \
-    --bindir="$PREFIX/bin"                                                     \
-    --includedir="$PREFIX/include"                                             \
-    --libdir="$PREFIX/lib"                                                     \
-    --datarootdir="$PREFIX/share"                                              \
     --disable-oggtest                                                          \
     --with-ogg="$(cygpath -u "${OGG_PREFIX:-$PREFIX}")"                        \
     ac_cv_lib_getopt_getopt=yes                                                \

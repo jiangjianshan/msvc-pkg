@@ -1,0 +1,107 @@
+diff -urN ThirdParty-SoPlex-1.7.2-orig/coinsoplex.pc.in ThirdParty-SoPlex-1.7.2/coinsoplex.pc.in
+--- ThirdParty-SoPlex-1.7.2-orig/coinsoplex.pc.in	2020-01-31 18:34:52.000000000 +0800
++++ ThirdParty-SoPlex-1.7.2/coinsoplex.pc.in	2025-03-16 08:29:55.240737300 +0800
+@@ -1,7 +1,7 @@
+ prefix=@prefix@
+ exec_prefix=@exec_prefix@
+ libdir=@libdir@
+-includedir=@includedir@/coin/ThirdParty
++includedir=@includedir@/coin-or/soplex
+ 
+ Name: SoPlex
+ Description: Sequential object-oriented Simplex
+diff -urN ThirdParty-SoPlex-1.7.2-orig/configure.ac ThirdParty-SoPlex-1.7.2/configure.ac
+--- ThirdParty-SoPlex-1.7.2-orig/configure.ac	2020-01-31 18:34:52.000000000 +0800
++++ ThirdParty-SoPlex-1.7.2/configure.ac	2025-03-16 08:29:55.243700500 +0800
+@@ -28,7 +28,7 @@
+ # /usr/local.
+ AC_PREFIX_DEFAULT([`pwd`])
+ 
+-AC_COIN_PROJECTDIR_INIT(SoPlex,8:2:7)
++AC_COIN_INITIALIZE
+ 
+ PACKAGE_VERSION_PC=${coin_majorver}.${coin_minorver}.${coin_releasever}
+ AC_SUBST(PACKAGE_VERSION_PC)
+@@ -37,11 +37,6 @@
+ #                         Standard build tool stuff                         #
+ #############################################################################
+ 
+-# Get the system type
+-AC_CANONICAL_BUILD
+-
+-# Check if user wants to produce debugging code
+-AC_COIN_DEBUG_COMPILE(SoPlex)
+ 
+ # Get the name of the C compiler and appropriate compiler options
+ AC_COIN_PROG_CC
+@@ -52,20 +47,20 @@
+ # Check if pkg-config is available (to setup addlibs file)
+ AC_COIN_HAS_PKGCONFIG
+ 
+-# Initialize automake
+-AC_COIN_INIT_AUTO_TOOLS
++# Initialize libtool
++AC_COIN_PROG_LIBTOOL
+ 
+ ###########################################################################
+ #                       external libraries checks                         #
+ ###########################################################################
+ 
+-AC_COIN_CHECK_GNU_ZLIB(SOPLEX)
++AC_COIN_CHK_ZLIB(SOPLEX)
+ if test $coin_has_zlib = "yes"; then
+   CXXFLAGS="$CXXFLAGS -DSOPLEX_WITH_ZLIB"
+   SOPLEX_LIBS="-lz $SOPLEX_LIBS"
+ fi
+ 
+-AC_COIN_CHECK_GMP
++AC_COIN_CHK_GMP
+ if test $coin_has_gmp = yes; then
+   CXXFLAGS="$CXXFLAGS -DSOPLEX_WITH_GMP"
+   SOPLEX_LIBS="-lgmp $SOPLEX_LIBS"
+@@ -85,7 +80,7 @@
+ AC_CONFIG_FILES([Makefile coinsoplex.pc coinsoplex-uninstalled.pc])
+ 
+ # dummy header file to avoid many extra compiler flags
+-AC_CONFIG_HEADER([config_soplex.h])
++AC_CONFIG_HEADERS([config_soplex.h])
+ 
+ AC_SUBST(SOPLEX_PCLIBS)
+  
+diff -urN ThirdParty-SoPlex-1.7.2-orig/Makefile.am ThirdParty-SoPlex-1.7.2/Makefile.am
+--- ThirdParty-SoPlex-1.7.2-orig/Makefile.am	2020-01-31 18:34:52.000000000 +0800
++++ ThirdParty-SoPlex-1.7.2/Makefile.am	2025-03-16 08:38:54.716872000 +0800
+@@ -72,22 +72,18 @@
+   soplex/src/soplex/usertimer.cpp \
+   soplex/src/soplex/wallclocktimer.cpp
+ 
+-AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/soplex/src`
+-
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)`
++AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/soplex/src` -I. -I`$(CYGPATH_W) $(srcdir)`
+ 
+ libcoinsoplex_la_LDFLAGS = $(LT_LDFLAGS)
+ 
+ # List all additionally required libraries
+-if DEPENDENCY_LINKING
+ libcoinsoplex_la_LIBADD = $(SOPLEX_LIBS)
+-endif
+ 
+-thirdpartyincludedir = $(includedir)/coin/ThirdParty
++thirdpartyincludedir = $(includedir)/coin-or
+ thirdpartyinclude_HEADERS = \
+   soplex/src/soplex.h
+ 
+-thirdpartyspxincludedir = $(includedir)/coin/ThirdParty/soplex
++thirdpartyspxincludedir = $(includedir)/coin-or/soplex
+ thirdpartyspxinclude_HEADERS = \
+   soplex/src/soplex/array.h \
+   soplex/src/soplex/basevectors.h \
+@@ -187,7 +183,6 @@
+   thirdpartyspxinclude_HEADERS += soplex/src/soplex/stablesum.h
+ endif
+ 
+-pkgconfiglibdir = $(libdir)/pkgconfig
+ pkgconfiglib_DATA = coinsoplex.pc
+ 
+ test:

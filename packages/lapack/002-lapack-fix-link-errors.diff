@@ -1,0 +1,24 @@
+diff -urN lapack-3.12.1-orig/SRC/clarf1f.f lapack-3.12.1/SRC/clarf1f.f
+--- lapack-3.12.1-orig/SRC/clarf1f.f	2024-12-03 19:39:11.000000000 +0800
++++ lapack-3.12.1/SRC/clarf1f.f	2025-03-13 15:05:21.060537300 +0800
+@@ -151,7 +151,7 @@
+       INTEGER            I, LASTV, LASTC
+ *     ..
+ *     .. External Subroutines ..
+-      EXTERNAL           CGEMV, CGER, CSCAL
++      EXTERNAL           CGEMV, CGERC, CSCAL
+ *     ..
+ *     .. Intrinsic Functions ..
+       INTRINSIC          CONJG
+diff -urN lapack-3.12.1-orig/SRC/zupmtr.f lapack-3.12.1/SRC/zupmtr.f
+--- lapack-3.12.1-orig/SRC/zupmtr.f	2024-12-03 19:39:11.000000000 +0800
++++ lapack-3.12.1/SRC/zupmtr.f	2025-03-13 15:06:00.026156600 +0800
+@@ -177,7 +177,7 @@
+       EXTERNAL           LSAME
+ *     ..
+ *     .. External Subroutines ..
+-      EXTERNAL           XERBLA, ZLARF1, ZLARF1F
++      EXTERNAL           XERBLA, ZLARF1L, ZLARF1F
+ *     ..
+ *     .. Intrinsic Functions ..
+       INTRINSIC          DCONJG, MAX

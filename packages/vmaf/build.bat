@@ -45,10 +45,6 @@ set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
 set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -Wno-implicit-function-declaration -Wno-implicit-int -Wno-incompatible-pointer-types -Wno-pointer-sign -Wno-unknown-argument -Wno-unused-variable -Xclang -O2 -fms-extensions -fms-compatibility -fms-compatibility-version=19.42
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
 
-rem Use clang-cl from llvm-project but not from Intel OneAPI
-if not defined LLVM_PROJECT_PREFIX set LLVM_PROJECT_PREFIX=%PREFIX%
-set PATH=!LLVM_PROJECT_PREFIX!\bin;%PATH%
-
 call :configure_stage
 call :build_stage
 call :install_package

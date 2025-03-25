@@ -43,7 +43,7 @@ set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
 set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics
-set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
+set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX -DLAPACK_COMPLEX_STRUCTURE
 set F_OPTS=-nologo -MD -Qdiag-disable:10448 -fp:precise -Qopenmp -Qopenmp-simd -fpp
 
 call :configure_stage
@@ -63,16 +63,16 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_BUILD_TYPE=Release                                                   ^
   -DCMAKE_C_COMPILER=cl                                                        ^
   -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS%"                                          ^
-  -DCMAKE_CXX_COMPILER=cl                                                      ^
-  -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
   -DCMAKE_Fortran_COMPILER=ifort                                               ^
   -DCMAKE_Fortran_FLAGS="%F_OPTS%"                                             ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
-  -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld"                                   ^
   -DCBLAS=ON                                                                   ^
   -DLAPACKE=ON                                                                 ^
+  -DBUILD_INDEX64=ON                                                           ^
+  -DBUILD_INDEX64_EXT_API=OFF                                                  ^
   -DBUILD_COMPLEX=ON                                                           ^
   -DBUILD_COMPLEX16=ON                                                         ^
+  -DBUILD_DEPRECATED=ON                                                        ^
   -DBUILD_DOUBLE=ON                                                            ^
   -DLAPACKE_WITH_TMG=ON                                                        ^
   -DUSE_OPTIMIZED_BLAS=OFF                                                     ^
@@ -94,6 +94,21 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
+rem blas64.lib -> blas.lib
+if exist "%PREFIX%\lib\blas.lib" del /q "%PREFIX%\lib\blas.lib"
+mklink "%PREFIX%\lib\blas.lib" "%PREFIX%\lib\blas64.lib"
+rem cblas64.lib -> blas.lib
+if exist "%PREFIX%\lib\cblas.lib" del /q "%PREFIX%\lib\cblas.lib"
+mklink "%PREFIX%\lib\cblas.lib" "%PREFIX%\lib\cblas64.lib"
+rem lapack64.lib -> lapack.lib
+if exist "%PREFIX%\lib\lapack.lib" del /q "%PREFIX%\lib\lapack.lib"
+mklink "%PREFIX%\lib\lapack.lib" "%PREFIX%\lib\lapack64.lib"
+rem lapacke64.lib -> lapacke.lib
+if exist "%PREFIX%\lib\lapacke.lib" del /q "%PREFIX%\lib\lapacke.lib"
+mklink "%PREFIX%\lib\lapacke.lib" "%PREFIX%\lib\lapacke64.lib"
+rem tmglib64.lib -> tmglib.lib
+if exist "%PREFIX%\lib\tmglib.lib" del /q "%PREFIX%\lib\tmglib.lib"
+mklink "%PREFIX%\lib\tmglib.lib" "%PREFIX%\lib\tmglib64.lib"
 call :clean_build
 exit /b 0
 

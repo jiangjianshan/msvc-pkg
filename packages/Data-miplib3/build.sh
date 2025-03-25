@@ -80,8 +80,8 @@ configure_stage()
   CPP="cl -E"                                                                  \
   CPPFLAGS="$C_DEFS"                                                           \
   CXX="cl"                                                                     \
-  CXXCPP="cl -E"                                                               \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
+  CXXCPP="cl -E"                                                               \
   DLLTOOL="link -verbose -dll"                                                 \
   LD="$ROOT_DIR/wrappers/compile cl"                                           \
   NM="dumpbin -nologo -symbols"                                                \

@@ -1,0 +1,16 @@
+name: CHiPPS-BLIS
+version: 0.94.13
+url: https://github.com/coin-or/CHiPPS-BLIS/archive/refs/tags/releases/0.94.13.tar.gz
+sha256: 98d9df344a3a63a685af66e30702550ef6f98bd95229186bf6d2e4873e43ccaa
+steps:
+  a:
+    dependencies:
+      - BuildTools
+      - CoinUtils
+      - Osi
+      - Clp
+      - Cgl
+      - CHiPPS-ALPS
+      - CHiPPS-BiCePS
+      - Data-Sample
+    run: build.sh

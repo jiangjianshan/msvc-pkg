@@ -1,0 +1,18 @@
+name: SYMPHONY
+version: master
+url: https://github.com/coin-or/SYMPHONY.git
+sha256:
+steps:
+  a:
+    dependencies:
+      - CoinUtils
+      - ThirdParty-Glpk
+      - Data-Sample
+      - Data-Netlib
+      - Data-miplib3
+      - Osi
+      - Clp
+      - Cgl
+      - DyLP
+      - Vol
+    run: build.sh

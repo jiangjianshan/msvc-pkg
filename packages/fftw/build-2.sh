@@ -135,7 +135,6 @@ configure_stage()
     --with-windows-f77-mangling                                                \
     ac_cv_prog_f77_v="-verbose"                                                \
     gt_cv_locale_zh_CN=none || exit 1
-
 }
 
 patch_stage()

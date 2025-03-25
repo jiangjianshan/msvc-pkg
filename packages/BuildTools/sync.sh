@@ -38,5 +38,17 @@ PKG_DIR=$ROOT_DIR/packages/$PKG_NAME
 RELS_DIR=$ROOT_DIR/releases
 SRC_DIR=$RELS_DIR/$PKG_NAME
 
+patch_package()
+{
+  echo "Patching package $PKG_NAME $PKG_VER"
+  cd "$SRC_DIR" || exit 1
+
+  echo "Patching run_autotools in top level"
+  sed                                                                          \
+    -e '/patch -p1 < BuildTools\/libtool-icl.patch/d'                          \
+    -e 's/automake || exit 1/automake --add-missing || exit 1/g'               \
+    -i run_autotools
+}
+
 . $ROOT_DIR/common.sh
 git_sync $PKG_URL $SRC_DIR $PKG_NAME $PKG_VER

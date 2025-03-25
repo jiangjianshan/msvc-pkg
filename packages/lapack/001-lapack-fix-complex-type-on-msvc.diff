@@ -1,0 +1,46 @@
+diff -urN lapack-3.12.1-orig/LAPACKE/include/lapack.h lapack-3.12.1/LAPACKE/include/lapack.h
+--- lapack-3.12.1-orig/LAPACKE/include/lapack.h	2024-12-03 19:39:11.000000000 +0800
++++ lapack-3.12.1/LAPACKE/include/lapack.h	2025-03-13 14:30:30.706264500 +0800
+@@ -47,8 +47,12 @@
+ #else
+ #include <complex>
+ #endif
++#ifdef _MSC_VER
++#define lapack_complex_float    _Fcomplex
++#else
+ #define lapack_complex_float    float _Complex
+ #endif
++#endif
+ 
+ #ifndef lapack_complex_float_real
+ #define lapack_complex_float_real(z)       (creal(z))
+@@ -65,8 +69,12 @@
+ #else
+ #include <complex>
+ #endif
++#ifdef _MSC_VER
++#define lapack_complex_double   _Dcomplex
++#else
+ #define lapack_complex_double   double _Complex
+ #endif
++#endif
+ 
+ #ifndef lapack_complex_double_real
+ #define lapack_complex_double_real(z)      (creal(z))
+diff -urN lapack-3.12.1-orig/LAPACKE/include/lapacke_config.h lapack-3.12.1/LAPACKE/include/lapacke_config.h
+--- lapack-3.12.1-orig/LAPACKE/include/lapacke_config.h	2024-12-03 19:39:11.000000000 +0800
++++ lapack-3.12.1/LAPACKE/include/lapacke_config.h	2025-03-13 14:31:41.367652400 +0800
+@@ -102,8 +102,13 @@
+ #else
+ 
+ #include <complex.h>
++#ifdef _MSC_VER
++#define lapack_complex_float    _Fcomplex
++#define lapack_complex_double   _Dcomplex
++#else
+ #define lapack_complex_float    float _Complex
+ #define lapack_complex_double   double _Complex
++#endif
+ #define lapack_complex_float_real(z)       (creal(z))
+ #define lapack_complex_float_imag(z)       (cimag(z))
+ #define lapack_complex_double_real(z)       (creal(z))

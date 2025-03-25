@@ -1,0 +1,228 @@
+diff -urN Ipopt-3.14.17-orig/src/Apps/AmplSolver/AmplTNLP.cpp Ipopt-3.14.17/src/Apps/AmplSolver/AmplTNLP.cpp
+--- Ipopt-3.14.17-orig/src/Apps/AmplSolver/AmplTNLP.cpp	2024-12-14 21:40:06.000000000 +0800
++++ Ipopt-3.14.17/src/Apps/AmplSolver/AmplTNLP.cpp	2025-03-16 15:57:52.432316900 +0800
+@@ -1191,118 +1191,115 @@
+    return true;
+ }
+ 
+-extern "C"
++static char* get_num_opt(
++   Option_Info* oi,
++   keyword*     kw,
++   char*        value
++)
+ {
+-   static char* get_num_opt(
+-      Option_Info* oi,
+-      keyword*     kw,
+-      char*        value
+-   )
+-   {
+-      AmplOptionsList::PrivatInfo* pinfo = (AmplOptionsList::PrivatInfo*) kw->info;
+-
+-      real real_val;
+-      // cppcheck-suppress autoVariables
+-      // cppcheck-suppress unmatchedSuppression
+-      kw->info = &real_val;
+-      char* retval = D_val(oi, kw, value);
+-      kw->info = (void*) pinfo;
+-
+-      if( !pinfo->Options()->SetNumericValue(pinfo->IpoptName().c_str(), real_val) )
+-      {
+-         pinfo->Jnlst()->Printf(J_ERROR, J_MAIN, "\nInvalid value \"%s\" for option %s.\n", value, kw->name);
+-         THROW_EXCEPTION(OPTION_INVALID, "Invalid numeric option");
+-      }
+-
+-      return retval;
+-   }
+-
+-   static char* get_int_opt(
+-      Option_Info* oi,
+-      keyword*     kw,
+-      char*        value
+-   )
+-   {
+-      AmplOptionsList::PrivatInfo* pinfo = (AmplOptionsList::PrivatInfo*) kw->info;
+-
+-      int int_val;
+-      // cppcheck-suppress autoVariables
+-      // cppcheck-suppress unmatchedSuppression
+-      kw->info = &int_val;
+-      char* retval = I_val(oi, kw, value);
+-      kw->info = (void*) pinfo;
+-
+-      if( !pinfo->Options()->SetIntegerValue(pinfo->IpoptName().c_str(), int_val) )
+-      {
+-         pinfo->Jnlst()->Printf(J_ERROR, J_MAIN, "\nInvalid value \"%s\" for option %s.\n", value, kw->name);
+-         THROW_EXCEPTION(OPTION_INVALID, "Invalid integer option");
+-      }
+-
+-      return retval;
+-   }
+-
+-   static char* get_str_opt(
+-      Option_Info* oi,
+-      keyword*     kw,
+-      char*        value
+-   )
+-   {
+-      AmplOptionsList::PrivatInfo* pinfo = (AmplOptionsList::PrivatInfo*) kw->info;
+-
+-      char* str_val;
+-      // cppcheck-suppress autoVariables
+-      // cppcheck-suppress unmatchedSuppression
+-      kw->info = &str_val;
+-      char* retval = C_val(oi, kw, value);
+-      kw->info = (void*) pinfo;
+-
+-      if( !pinfo->Options()->SetStringValue(pinfo->IpoptName().c_str(), str_val) )
+-      {
+-         pinfo->Jnlst()->Printf(J_ERROR, J_MAIN, "\nInvalid value \"%s\" for option %s.\n", value, kw->name);
+-         THROW_EXCEPTION(OPTION_INVALID, "Invalid string option");
+-      }
+-
+-      return retval;
+-   }
+-
+-   static char* get_haltonerror_opt(
+-      Option_Info* oi,
+-      keyword*     kw,
+-      char*        value
+-   )
+-   {
+-      AmplOptionsList::PrivatInfo* pinfo = (AmplOptionsList::PrivatInfo*) kw->info;
+-
+-      char* str_val;
+-      // cppcheck-suppress autoVariables
+-      // cppcheck-suppress unmatchedSuppression
+-      kw->info = &str_val;
+-      char* retval = C_val(oi, kw, value);
+-      kw->info = (void*) pinfo;
+-
+-      fint** nerror = (fint**) pinfo->NError();
+-
+-      // cppcheck-suppress uninitvar
+-      if( strcmp(str_val, "yes") == 0 )
+-      {
+-         delete *nerror;
+-         *nerror = NULL;
+-      }
+-      // cppcheck-suppress uninitvar
+-      else if( strcmp(str_val, "no") == 0 )
+-      {
+-         delete *nerror;
+-         *nerror = new fint;
+-         ** nerror = 0;
+-      }
+-      else
+-      {
+-         pinfo->Jnlst()->Printf(J_ERROR, J_MAIN, "\nInvalid value \"%s\" for option %s.\n", value, kw->name);
+-         THROW_EXCEPTION(OPTION_INVALID, "Invalid option");
+-      }
++   AmplOptionsList::PrivatInfo* pinfo = (AmplOptionsList::PrivatInfo*) kw->info;
+ 
+-      return retval;
++   real real_val;
++   // cppcheck-suppress autoVariables
++   // cppcheck-suppress unmatchedSuppression
++   kw->info = &real_val;
++   char* retval = D_val(oi, kw, value);
++   kw->info = (void*) pinfo;
++
++   if( !pinfo->Options()->SetNumericValue(pinfo->IpoptName().c_str(), real_val) )
++   {
++      pinfo->Jnlst()->Printf(J_ERROR, J_MAIN, "\nInvalid value \"%s\" for option %s.\n", value, kw->name);
++      THROW_EXCEPTION(OPTION_INVALID, "Invalid numeric option");
++   }
++
++   return retval;
++}
++
++static char* get_int_opt(
++   Option_Info* oi,
++   keyword*     kw,
++   char*        value
++)
++{
++   AmplOptionsList::PrivatInfo* pinfo = (AmplOptionsList::PrivatInfo*) kw->info;
++
++   int int_val;
++   // cppcheck-suppress autoVariables
++   // cppcheck-suppress unmatchedSuppression
++   kw->info = &int_val;
++   char* retval = I_val(oi, kw, value);
++   kw->info = (void*) pinfo;
++
++   if( !pinfo->Options()->SetIntegerValue(pinfo->IpoptName().c_str(), int_val) )
++   {
++      pinfo->Jnlst()->Printf(J_ERROR, J_MAIN, "\nInvalid value \"%s\" for option %s.\n", value, kw->name);
++      THROW_EXCEPTION(OPTION_INVALID, "Invalid integer option");
++   }
++
++   return retval;
++}
++
++static char* get_str_opt(
++   Option_Info* oi,
++   keyword*     kw,
++   char*        value
++)
++{
++   AmplOptionsList::PrivatInfo* pinfo = (AmplOptionsList::PrivatInfo*) kw->info;
++
++   char* str_val;
++   // cppcheck-suppress autoVariables
++   // cppcheck-suppress unmatchedSuppression
++   kw->info = &str_val;
++   char* retval = C_val(oi, kw, value);
++   kw->info = (void*) pinfo;
++
++   if( !pinfo->Options()->SetStringValue(pinfo->IpoptName().c_str(), str_val) )
++   {
++      pinfo->Jnlst()->Printf(J_ERROR, J_MAIN, "\nInvalid value \"%s\" for option %s.\n", value, kw->name);
++      THROW_EXCEPTION(OPTION_INVALID, "Invalid string option");
++   }
++
++   return retval;
++}
++
++static char* get_haltonerror_opt(
++   Option_Info* oi,
++   keyword*     kw,
++   char*        value
++)
++{
++   AmplOptionsList::PrivatInfo* pinfo = (AmplOptionsList::PrivatInfo*) kw->info;
++
++   char* str_val;
++   // cppcheck-suppress autoVariables
++   // cppcheck-suppress unmatchedSuppression
++   kw->info = &str_val;
++   char* retval = C_val(oi, kw, value);
++   kw->info = (void*) pinfo;
++
++   fint** nerror = (fint**) pinfo->NError();
++
++   // cppcheck-suppress uninitvar
++   if( strcmp(str_val, "yes") == 0 )
++   {
++      delete *nerror;
++      *nerror = NULL;
++   }
++   // cppcheck-suppress uninitvar
++   else if( strcmp(str_val, "no") == 0 )
++   {
++      delete *nerror;
++      *nerror = new fint;
++      ** nerror = 0;
++   }
++   else
++   {
++      pinfo->Jnlst()->Printf(J_ERROR, J_MAIN, "\nInvalid value \"%s\" for option %s.\n", value, kw->name);
++      THROW_EXCEPTION(OPTION_INVALID, "Invalid option");
+    }
++
++   return retval;
+ }
+ 
+ AmplOptionsList::AmplOption::AmplOption(

@@ -1,0 +1,15 @@
+name: CHiPPS-BiCePS
+version: 0.94.9
+url: https://github.com/coin-or/CHiPPS-BiCePS/archive/refs/tags/releases/0.94.9.tar.gz
+sha256: 443dedad02bf982eb17f884d4dc38945673cd44da37d8497441a00a39320193d
+steps:
+  a:
+    dependencies:
+      - BuildTools
+      - CoinUtils
+      - Osi
+      - Clp
+      - Cgl
+      - CHiPPS-ALPS
+      - Data-Sample
+    run: build.sh

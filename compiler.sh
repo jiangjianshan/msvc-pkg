@@ -333,18 +333,20 @@ config_misc()
   #   readarray -t d';' array <<<"$PREFIX_PATH"
   #   for p in "${array[@]}"; do
   for p in ${PREFIX_PATH//;/ }; do
-    _p=$(cygpath -u "${p}")
-    if [[ -d "${_p}/include" ]]; then
-      INCLUDE=$(prepend_path "${p}"'\include' "${INCLUDE:-}" ";")
-    fi
-    if [[ -d "${_p}/lib" ]]; then
-      LIB=$(prepend_path "${p}"'\lib' "${LIB:-}" ";")
-    fi
-    if [[ -d "${_p}/lib/cmake" ]]; then
-      CMAKE_PREFIX_PATH=$(prepend_path "${p}"'\lib\cmake' "${CMAKE_PREFIX_PATH:-}" ";")
-    fi
-    if [[ -d "${_p}/lib/pkgconfig" ]]; then
-      PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${_p}/lib/pkgconfig")" "${PKG_CONFIG_PATH:-}" ":")
+    if [[ -d "${p}" ]]; then
+      _p=$(cygpath -u "${p}")
+      if [[ -d "${_p}/include" ]]; then
+        INCLUDE=$(prepend_path "${p}"'\include' "${INCLUDE:-}" ";")
+      fi
+      if [[ -d "${_p}/lib" ]]; then
+        LIB=$(prepend_path "${p}"'\lib' "${LIB:-}" ";")
+      fi
+      if [[ -d "${_p}/lib/cmake" ]]; then
+        CMAKE_PREFIX_PATH=$(prepend_path "${p}"'\lib\cmake' "${CMAKE_PREFIX_PATH:-}" ";")
+      fi
+      if [[ -d "${_p}/lib/pkgconfig" ]]; then
+        PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${_p}/lib/pkgconfig")" "${PKG_CONFIG_PATH:-}" ":")
+      fi
     fi
   done
   export INCLUDE
