@@ -45,7 +45,6 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
-  patch -Np1 -i "$PKG_DIR/001-ruby-fix-unresolved-external-symbol.diff"
 
   # NOTE: grpc will install ssl.lib and crypt.lib into the same destination with
   #       openssl. But the real shared library of openssl are libssl.lib and

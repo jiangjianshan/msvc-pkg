@@ -90,6 +90,7 @@ if not exist "%PREFIX%\lib\gav1.lib" (
 if not exist "%PREFIX%\lib\libgav1.lib" (
   mklink "%PREFIX%\lib\libgav1.lib" "%PREFIX%\lib\libgav1_static.lib"
 )
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/libgav1.pc"
 call :clean_build
 exit /b 0
 

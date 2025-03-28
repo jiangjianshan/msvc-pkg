@@ -90,6 +90,8 @@ if exist "%PREFIX%\lib\libpng.lib" del /q "%PREFIX%\lib\libpng.lib"
 mklink "%PREFIX%\lib\libpng.lib" "%PREFIX%\lib\libpng!PNG_MAJOR_MINOR!_static.lib"
 if exist "%PREFIX%\include\libpng" del /q "%PREFIX%\include\libpng"
 mklink /D "%PREFIX%\include\libpng" "%PREFIX%\incldue\libpng!PNG_MAJOR_MINOR!"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/libpng.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/libpng16.pc"
 call :clean_build
 exit /b 0
 

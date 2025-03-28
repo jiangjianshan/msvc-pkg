@@ -83,6 +83,7 @@ rem ============================================================================
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
 if %errorlevel% neq 0 exit 1
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%\lib\pkgconfig\openjph.pc"
 call :clean_build
 exit /b 0
 

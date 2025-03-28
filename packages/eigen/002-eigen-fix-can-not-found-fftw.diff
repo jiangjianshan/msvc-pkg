@@ -1,0 +1,59 @@
+diff -urN eigen-3.4.0-orig/cmake/FindFFTW.cmake eigen-3.4.0/cmake/FindFFTW.cmake
+--- eigen-3.4.0-orig/cmake/FindFFTW.cmake	2021-08-19 04:41:58.000000000 +0800
++++ eigen-3.4.0/cmake/FindFFTW.cmake	2025-03-27 14:09:11.332974600 +0800
+@@ -44,25 +44,25 @@
+   #find libs
+   find_library(
+     FFTW_LIB
+-    NAMES "fftw3"
++    NAMES "fftw3-3"
+     PATHS ${FFTW_ROOT}
+-    PATH_SUFFIXES "lib" "lib64"
++    PATH_SUFFIXES "bin" "lib" "lib64"
+     NO_DEFAULT_PATH
+   )
+ 
+   find_library(
+     FFTWF_LIB
+-    NAMES "fftw3f"
++    NAMES "fftw3f-3"
+     PATHS ${FFTW_ROOT}
+-    PATH_SUFFIXES "lib" "lib64"
++    PATH_SUFFIXES "bin" "lib" "lib64"
+     NO_DEFAULT_PATH
+   )
+ 
+   find_library(
+     FFTWL_LIB
+-    NAMES "fftw3l"
++    NAMES "fftw3l-3"
+     PATHS ${FFTW_ROOT}
+-    PATH_SUFFIXES "lib" "lib64"
++    PATH_SUFFIXES "bin" "lib" "lib64"
+     NO_DEFAULT_PATH
+   )
+ 
+@@ -79,20 +79,20 @@
+ 
+   find_library(
+     FFTW_LIB
+-    NAMES "fftw3"
++    NAMES "fftw3-3"
+     PATHS ${PKG_FFTW_LIBRARY_DIRS} ${LIB_INSTALL_DIR}
+   )
+ 
+   find_library(
+     FFTWF_LIB
+-    NAMES "fftw3f"
++    NAMES "fftw3f-3"
+     PATHS ${PKG_FFTW_LIBRARY_DIRS} ${LIB_INSTALL_DIR}
+   )
+ 
+ 
+   find_library(
+     FFTWL_LIB
+-    NAMES "fftw3l"
++    NAMES "fftw3l-3"
+     PATHS ${PKG_FFTW_LIBRARY_DIRS} ${LIB_INSTALL_DIR}
+   )
+ 

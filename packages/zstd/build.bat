@@ -87,6 +87,7 @@ cd "%BUILD_DIR%" && ninja install || exit 1
 if not exist "%PREFIX%\lib\libzstd.lib" (
   mklink "%PREFIX%\lib\libzstd.lib" "%PREFIX%\lib\zstd_static.lib"
 )
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%\lib\pkgconfig\libzstd.pc"
 call :clean_build
 exit /b 0
 

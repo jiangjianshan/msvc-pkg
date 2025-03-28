@@ -42,6 +42,18 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR" || exit 1
+
+  echo "Patching configure in glpk_config_files"
+  # NOTE: This patch must be before ./get.Glpk
+  pushd glpk_config_files || exit 1
+  echo "Patching configure in top level"
+  sed                                                                                                \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
+    -e 's|\.dll\.lib|.lib|g'                                                                         \
+    -i configure
+  chmod +x configure
+  popd || exit 1
+
   if [ ! -d "glpk" ]; then
     ./get.Glpk
   fi

@@ -83,6 +83,7 @@ cd "%BUILD_DIR%" && ninja install || exit 1
 if not exist "%PREFIX%\\lib\\liblz4.lib" (
   mklink "%PREFIX%\\lib\\liblz4.lib" "%PREFIX%\\lib\\lz4.lib"
 )
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/liblz4.pc"
 call :clean_build
 exit /b 0
 

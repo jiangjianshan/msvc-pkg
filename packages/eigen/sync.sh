@@ -46,6 +46,7 @@ patch_package()
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
   patch -Np1 -i "$PKG_DIR/001-eigen-fix-cxx-standard-check-and-set-on-msvc.diff"
+  patch -Np1 -i "$PKG_DIR/002-eigen-fix-can-not-found-fftw.diff"
 }
 
 . $ROOT_DIR/common.sh

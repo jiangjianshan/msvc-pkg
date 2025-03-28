@@ -129,6 +129,7 @@ install_package()
   if ! make install; then
     exit 1
   fi
+  sed 's#$[A-Za-z]$:/#/\L\1/#gI' -i "${PREFIX}/lib/pkgconfig/fishsound.pc"
   clean_build
 }
 

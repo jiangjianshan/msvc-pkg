@@ -107,11 +107,21 @@ cd "%BUILD_DIR%" && (
 echo "Generating bzip2.pc to %PREFIX%\lib\pkgconfig"
 set PC_FILE=%PREFIX%\lib\pkgconfig\bzip2.pc
 if not exist "%PREFIX%\lib\pkgconfig" mkdir "%PREFIX%\lib\pkgconfig"
-echo prefix=%PREFIX:\=/%> %PC_FILE%
-echo exec_prefix=%PREFIX:\=/%>> %PC_FILE%
-echo libdir=%PREFIX:\=/%/lib>> %PC_FILE%
-echo sharedlibdir=%PREFIX:\=/%/lib>> %PC_FILE%
-echo includedir=%PREFIX:\=/%/include>> %PC_FILE%
+where cygpath >nul 2>&1
+if "%errorlevel%" neq "0" (
+	echo prefix=%PREFIX:\=/%> %PC_FILE%
+	echo exec_prefix=%PREFIX:\=/%>> %PC_FILE%
+	echo libdir=%PREFIX:\=/%/lib>> %PC_FILE%
+	echo sharedlibdir=%PREFIX:\=/%/lib>> %PC_FILE%
+	echo includedir=%PREFIX:\=/%/include>> %PC_FILE%
+) else (
+  for /f "delims=" %%i in ('cygpath -u "%PREFIX%"') do set PREFIX_UNIX=%%i
+	echo prefix=!PREFIX_UNIX!> %PC_FILE%
+	echo exec_prefix=!PREFIX_UNIX!>> %PC_FILE%
+	echo libdir=!PREFIX_UNIX!/lib>> %PC_FILE%
+	echo sharedlibdir=!PREFIX_UNIX!/lib>> %PC_FILE%
+	echo includedir=!PREFIX_UNIX!/include>> %PC_FILE%
+)
 echo:>> %PC_FILE%
 echo Name: bzip2>> %PC_FILE%
 echo Description: bzip2 compression library>> %PC_FILE%

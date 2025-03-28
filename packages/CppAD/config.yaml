@@ -6,5 +6,7 @@ steps:
   a:
     dependencies:
       - pkg-config
+      - eigen
       - boost
+      - Ipopt
     run: build.bat

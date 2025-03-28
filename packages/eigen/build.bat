@@ -58,6 +58,7 @@ rem ============================================================================
 call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
+if not defined FFTW_PREFIX set FFTW_PREFIX=%PREFIX%
 cmake -G "Ninja"                                                               ^
   -DBUILD_SHARED_LIBS=ON                                                       ^
   -DCMAKE_BUILD_TYPE=Release                                                   ^
@@ -69,10 +70,12 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_Fortran_FLAGS="%F_OPTS%"                                             ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
   -DCMAKE_INCLUDE_CURRENT_DIR=ON                                               ^
+  -DCMAKE_POLICY_DEFAULT_CMP0074=OLD                                           ^
   -DCMAKE_POLICY_DEFAULT_CMP0146=OLD                                           ^
   -DCMAKE_POLICY_DEFAULT_CMP0153=OLD                                           ^
   -DCMAKE_POLICY_DEFAULT_CMP0167=OLD                                           ^
   -DEIGEN_BUILD_BTL=ON                                                         ^
+  -DEIGEN_BUILD_SHARED_LIBS=ON                                                 ^
   -DEIGEN_TEST_SSE2=ON                                                         ^
   -DEIGEN_TEST_SSE3=ON                                                         ^
   -DEIGEN_TEST_SSSE3=ON                                                        ^
@@ -89,6 +92,8 @@ cmake -G "Ninja"                                                               ^
   -DEIGEN_TEST_NEON=ON                                                         ^
   -DEIGEN_TEST_NEON64=ON                                                       ^
   -DEIGEN_TEST_OPENMP=ON                                                       ^
+  -DEIGEN_TEST_CXX11=ON                                                        ^
+  -DFFTW_ROOT="!FFTW_PREFIX:\=/!"                                              ^
   .. || exit 1
 exit /b 0
 
@@ -106,6 +111,7 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/eigen3.pc"
 call :clean_build
 exit /b 0
 

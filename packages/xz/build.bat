@@ -84,6 +84,7 @@ cd "%BUILD_DIR%" && ninja install || exit 1
 if not exist "%PREFIX%\lib\lzma.lib" (
   mklink "%PREFIX%\lib\lzma.lib" "%PREFIX%\lib\liblzma.lib"
 )
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/liblzma.pc"
 call :clean_build
 exit /b 0
 

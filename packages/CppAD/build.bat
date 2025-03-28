@@ -63,9 +63,12 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_C_COMPILER=cl                                                        ^
   -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS%"                                          ^
   -DCMAKE_CXX_COMPILER=cl                                                      ^
-  -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
+  -DCMAKE_CXX_FLAGS="-std:c++17 -EHsc %C_OPTS% %C_DEFS%"                       ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
   -DCMAKE_POLICY_DEFAULT_CMP0167=OLD                                           ^
+  -Dcppad_prefix="%PREFIX%"                                                    ^
+  -Dcppad_postfix=""                                                           ^
+  -Dcppad_cxx_flags="-std:c++17 -EHsc %C_OPTS% %C_DEFS%"                       ^
   .. || exit 1
 exit /b 0
 
@@ -83,6 +86,8 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/share/pkgconfig/cppad.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/cppad.pc"
 call :clean_build
 exit /b 0
 

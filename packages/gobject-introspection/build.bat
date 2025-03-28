@@ -59,7 +59,7 @@ echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%"
 cd "%SRC_DIR%"
 python -m pip install --upgrade setuptools Mako Markdown
-if exist "%HOME%\.cache\g-ir-scanner" rmdir /s /q "%HOME%\.cache\g-ir-scanner"
+if exist "%USERPROFILE%\.cache\g-ir-scanner" rmdir /s /q "%USERPROFILE%\.cache\g-ir-scanner"
 for /f "delims=" %%i in ('where python.exe') do set PYTHON_EXE=%%i
 meson setup "%BUILD_DIR%"                                                      ^
   --buildtype=release                                                          ^
@@ -90,6 +90,9 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
+for %%f in ("%PREFIX%\lib\pkgconfig\gobject-introspection*.pc") do (
+  sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%%~f"
+)
 call :clean_build
 exit /b 0
 

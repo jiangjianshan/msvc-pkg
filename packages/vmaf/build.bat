@@ -96,6 +96,7 @@ echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
 if exist "%PREFIX%\lib\libvmaf.lib" del /Q "%PREFIX%\lib\libvmaf.lib"
 rename "%PREFIX%\lib\libvmaf.a" libvmaf.lib
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%\lib\pkgconfig\libvmaf.pc"
 call :clean_build
 exit /b 0
 

@@ -65,6 +65,7 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_CXX_COMPILER=cl                                                      ^
   -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
+  -DCAPSTONE_BUILD_STATIC_RUNTIME=OFF                                          ^
   .. || exit 1
 exit /b 0
 
@@ -82,6 +83,7 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/capstone.pc"
 call :clean_build
 exit /b 0
 
