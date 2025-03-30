@@ -43,6 +43,13 @@ patch_package()
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR" || exit 1
 
+  echo "Patching osi-dylp.pc.in in src/OsiDylp"
+  pushd src/OsiDylp || exit 1
+  sed                                                                                                \
+    -e 's|@includedir@/coin$|@includedir@/coin-or|g'                                                 \
+    -i osi-dylp.pc.in
+  popd || exit 1
+
   # XXX: libtool don't have options can set the naming style of static and
   #      shared library. Here is only a workaround.
 

@@ -36,34 +36,45 @@ fi
 ROOT_DIR=$(cygpath -u "$ROOT_DIR")
 PKG_DIR=$ROOT_DIR/packages/$PKG_NAME
 RELS_DIR=$ROOT_DIR/releases
-SRC_DIR=$RELS_DIR/$PKG_NAME
+TAGS_DIR=$ROOT_DIR/tags
+SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
+ARCHIVE=$(basename -- "$PKG_URL")
+EXT=${ARCHIVE#$(echo "$ARCHIVE" | sed 's/\.[^[:digit:]].*$//g')}
 
 patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR" || exit 1
+  patch -Np1 -i "$PKG_DIR/001-MibS-fix-build-shared-library-on-msvc.diff"
+  patch -Np1 -i "$PKG_DIR/002-MibS-fix-symbol-definition-was-changed-using-BuildTools.diff"
 
-  echo "Patching osi-dylp.pc.in in top level"
-  sed                                                                                                \
-    -e 's|@includedir@/coin$|@includedir@/coin-or|g'                                                 \
-    -i osi-cbc.pc.in
+  cd $RELS_DIR/BuildTools
+  export COIN_AUTOTOOLS_DIR=/usr
+  WANT_AUTOCONF='2.72' WANT_AUTOMAKE='1.17' ./run_autotools $SRC_DIR
+
+  cd "$SRC_DIR" || exit 1
+  rm -rfv autom4te.cache
+  find . -name "*~" -type f -print -exec rm -rfv {} \;
 
   # XXX: libtool don't have options can set the naming style of static and
   #      shared library. Here is only a workaround.
 
   echo "Patching ltmain.sh in top level"
-  sed                                                                                                \
-    -e 's|old_library=$libname\.$libext|old_library=lib$libname.$libext|g'                           \
-    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
+  sed                                                                                                          \
+    -e 's|old_library="$libname\.$libext"|old_library="lib$libname.$libext"|g'                                 \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                               \
     -i ltmain.sh
 
   echo "Patching configure in top level"
-  sed                                                                                                \
-    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
-    -e 's|\.dll\.lib|.lib|g'                                                                         \
+  sed                                                                                                          \
+    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                                    \
+    -e 's|\.dll\.lib|.lib|g'                                                                                   \
+    -e 's/\*,cl\* | \*,icl\*)/*,cl* | *,icl* | *,ifort* | *,icx* | *,ifx*)/g'                                  \
+    -e 's/cl\* | icl\*)/cl* | icl* | ifort* | icx* | ifx*)/g'                                                  \
+    -e 's/,icl\* | no,icl\*)/,icl* | no,icl* | ,ifort* | no,ifort* | ,icx* | no,icx* | ,ifx* | no,ifx*)/g'     \
     -i configure
   chmod +x configure
 }
 
 . $ROOT_DIR/common.sh
-git_sync $PKG_URL $SRC_DIR $PKG_NAME $PKG_VER
+wget_sync $PKG_URL $SRC_DIR $PKG_NAME-$PKG_VER$EXT

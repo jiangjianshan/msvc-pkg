@@ -1,0 +1,14 @@
+name: Bcp
+version: 1.4.4
+url: https://github.com/coin-or/Bcp/archive/refs/tags/releases/1.4.4.tar.gz
+sha256: 408459d136b195dc49d0949a286c3de9b9ddb012e25f5b3753dc00a111bdaf56
+steps:
+  a:
+    dependencies:
+      - BuildTools
+      - CoinUtils
+      - Osi
+      - Vol
+      - Clp
+      - Cgl
+    run: build.sh

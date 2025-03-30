@@ -42,10 +42,10 @@ ROOT_DIR=$(cygpath -u "$ROOT_DIR")
 PREFIX=$(cygpath -u "$PREFIX")
 RELS_DIR=$ROOT_DIR/releases
 SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
-BUILD_DIR=$SRC_DIR/build${ARCH//x/}
-C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:contract -Qopenmp -Qopenmp-simd -Wno-implicit-function-declaration -Wno-pointer-sign -Xclang -O2 -fms-extensions -fms-compatibility -fms-compatibility-version=19.42'
+BUILD_DIR=$SRC_DIR/Bcp/build${ARCH//x/}
+C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics'
 C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX'
-F_OPTS='-nologo -MD -Qdiag-disable:10448 -fp:contract -Qopenmp -Qopenmp-simd -fpp'
+F_OPTS='-nologo -MD -Qdiag-disable:10448 -fp:precise -Qopenmp -Qopenmp-simd -fpp'
 
 clean_build()
 {
@@ -63,7 +63,7 @@ configure_stage()
   elif [[ "$ARCH" == "x64" ]]; then
     HOST_TRIPLET=x86_64-w64-mingw32
   fi
-  # Issue: 'Warning: linker path does not have real file for library -limpi'.
+  # Issue: 'Warning: linker path does not have real file for library -lz'.
   # The reason should be in the function of func_win32_libid in ltmain.sh. It use OBJDUMP
   # which is missing from MSVC. That will cause the value of win32_libid_type is unknown.
   # There are at least two way to solve this issue:
@@ -78,74 +78,43 @@ configure_stage()
   # 2. Don't use 'compile cl -nologo' but 'compile cl'. Because configure
   #    on some libraries will detect whether is msvc compiler according to
   #    '*cl | cl.exe'
-  # 3. If not set 'MPILIBS="-limpi"', after the following command:
-  #    /bin/sh ../libtool  --tag=CC   --mode=link /e/Githubs/msvc-pkg/wrappers/mpiicl
-  #    it will be not except one as here:
-  #    libtool: link: /e/Githubs/msvc-pkg/wrappers/mpiicl
-  #    but will be the one not related to mpi wrapper
-  #    libtool: link: /e/Githubs/msvc-pkg/wrappers/compile cl
-  # 4. option '--enable-generic-simd128' and '--enable-generic-simd256'
-  #    will be failed at msvc complie phase. msvc doesn't support
-  #    '__attribute__ ((vector_size(16)))' and '__m128' is not really
-  #    equivalent to it. But use clang-cl or icx-cl instead of cl can
-  #    solve this issue.
+  # 3. Taken care of the logic of func_resolve_sysroot() and func_replace_sysroot()
+  #    in ltmain.sh, otherwise may have '-L=*' in the filed of 'dependency_libs' in
+  #    *.la. So don't set --with-sysroot if --libdir has been set
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
-  CC="$ROOT_DIR/wrappers/compile icx-cl"                                       \
+  CC="cl"                                                                      \
   CFLAGS="$C_OPTS"                                                             \
-  CPP="$ROOT_DIR/wrappers/compile icx-cl -E"                                   \
+  CPP="cl -E"                                                                  \
   CPPFLAGS="$C_DEFS"                                                           \
-  CXX="$ROOT_DIR/wrappers/compile icx-cl"                                      \
+  CXX="cl"                                                                     \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
-  CXXCPP="$ROOT_DIR/wrappers/compile icx-cl -E"                                \
+  CXXCPP="cl -E"                                                               \
   DLLTOOL="link -verbose -dll"                                                 \
-  F77="ifx"                                                                    \
-  FFLAGS="-f77rtl $F_OPTS"                                                     \
-  FC="ifx"                                                                     \
-  FCFLAGS="$F_OPTS"                                                            \
-  LD="lld-link"                                                                \
-  LDFLAGS="-fuse-ld=lld"                                                       \
-  MPICC="$ROOT_DIR/wrappers/mpiicl"                                            \
-  MPICXX="$ROOT_DIR/wrappers/mpiicl"                                           \
-  MPIF77="$ROOT_DIR/wrappers/mpiifx"                                           \
-  MPILIBS="-limpi"                                                             \
+  LD="link -nologo"                                                            \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
   RANLIB=":"                                                                   \
   RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                \
   STRIP=":"                                                                    \
   WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                           \
-  ../configure --host="$HOST_TRIPLET"                                          \
+  ../configure --build="$(sh ../config.guess)"                                 \
+    --host="$HOST_TRIPLET"                                                     \
     --prefix="$PREFIX"                                                         \
+    --bindir="$PREFIX/bin"                                                     \
+    --includedir="$PREFIX/include"                                             \
+    --libdir="$PREFIX/lib"                                                     \
+    --enable-msvc                                                              \
     --enable-shared                                                            \
-    --enable-static                                                            \
-    --enable-single                                                            \
-    --enable-sse                                                               \
-    --enable-sse2                                                              \
-    --enable-avx                                                               \
-    --enable-avx2                                                              \
-    --enable-avx512                                                            \
-    --enable-avx-128-fma                                                       \
-    --enable-mips-zbus-timer                                                   \
-    --enable-generic-simd128                                                   \
-    --enable-generic-simd256                                                   \
-    --enable-fma                                                               \
-    --enable-mpi                                                               \
-    --enable-openmp                                                            \
-    --enable-threads                                                           \
-    --with-our-malloc                                                          \
-    --with-our-malloc16                                                        \
-    --with-windows-f77-mangling                                                \
-    ac_cv_prog_f77_v="-verbose"                                                \
     gt_cv_locale_zh_CN=none || exit 1
 }
 
 patch_stage()
 {
   echo "Patching $PKG_NAME $PKG_VER after configure"
-  cd "$BUILD_DIR" || exit 1
+  cd "$BUILD_DIR"
   # FIXME:
   # To solve following issue
-  # libtool: error: can't build x86_64-w64-mingw32 shared library unless -no-undefined is specified
+  # libtool: warning: undefined symbols not allowed in x86_64-w64-mingw32 shared libraries; building static only
   echo "Patching libtool in top level"
   sed                                                                          \
     -e "s/\(allow_undefined=\)yes/\1no/"                                       \

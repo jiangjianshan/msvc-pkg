@@ -36,34 +36,10 @@ fi
 ROOT_DIR=$(cygpath -u "$ROOT_DIR")
 PKG_DIR=$ROOT_DIR/packages/$PKG_NAME
 RELS_DIR=$ROOT_DIR/releases
-SRC_DIR=$RELS_DIR/$PKG_NAME
-
-patch_package()
-{
-  echo "Patching package $PKG_NAME $PKG_VER"
-  cd "$SRC_DIR" || exit 1
-
-  echo "Patching osi-dylp.pc.in in top level"
-  sed                                                                                                \
-    -e 's|@includedir@/coin$|@includedir@/coin-or|g'                                                 \
-    -i osi-cbc.pc.in
-
-  # XXX: libtool don't have options can set the naming style of static and
-  #      shared library. Here is only a workaround.
-
-  echo "Patching ltmain.sh in top level"
-  sed                                                                                                \
-    -e 's|old_library=$libname\.$libext|old_library=lib$libname.$libext|g'                           \
-    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname.$libext|g'                     \
-    -i ltmain.sh
-
-  echo "Patching configure in top level"
-  sed                                                                                                \
-    -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
-    -e 's|\.dll\.lib|.lib|g'                                                                         \
-    -i configure
-  chmod +x configure
-}
+TAGS_DIR=$ROOT_DIR/tags
+SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
+ARCHIVE=$(basename -- "$PKG_URL")
+EXT=${ARCHIVE#$(echo "$ARCHIVE" | sed 's/\.[^[:digit:]].*$//g')}
 
 . $ROOT_DIR/common.sh
-git_sync $PKG_URL $SRC_DIR $PKG_NAME $PKG_VER
+wget_sync $PKG_URL $SRC_DIR $PKG_NAME-$PKG_VER$EXT

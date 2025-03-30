@@ -1,94 +1,112 @@
-# msvc-pkg
+# 🚀 msvc-pkg: Unified Build System for MSVC/MSV-like Toolchain
 
-🚀 ***msvc-pkg*** offer you the scripts and following features to build all libraries from sources:
+**Native Windows Compilation | Colorized output | Dependency Automation**  
+A robust framework for building C/C++/Fortran open-source libraries using MSVC/MSVC-like toolchains
 
-- No need to install Cygwin or MSYS2, but let you still can compile autotools based libraries on Git for Windows.
-- Each build process of libraries have a rich colorful and meaningful terminal and save logging files separately.
-- No need to install IDE, but only those [Dependencies](#dependencies) which can be installed automatically when run ***mpt*** in windows terminal.
-- Use MSVC or MSVC-like toolsets for native build on Windows, i.e. without using MinGW.
-- Build all dependencies on neccessary when build a library.
-- Each dependencies for a library have a nice tree view on terminal
-- Set up independent build process for each libraries, which is more convenience for Win32 and Bash environment build.
-- and etc.
+[![Build Systems](https://img.shields.io/badge/Build-CMake%20|%20Meson%20|%20Autotools-blue)]()
+[![Compilers](https://img.shields.io/badge/Compiler-MSVC%20|%20Intel%20C++%20|%20Intel%20Fortran-green)]()
+[![Dependency](https://img.shields.io/badge/Dependency-Auto%20Resolution-orange)]()
 
-## Dependencies
+## ✨ Key Features
 
-- [Visual C++ Build Tools and Windows 10/11 SDK](https://visualstudio.microsoft.com/zh-hans/downloads/?q=build+tools)
-- [Intel oneAPI DPC++/C++ Compiler 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html)
-- [Intel Fortran Compiler Classic and Intel Fortran Compiler 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler-download.html)
-- [Intel MPI Library](https://www.intel.com/content/www/us/en/developer/tools/oneapi/mpi-library-download.html)
-- [Rust for Windows](https://www.rust-lang.org/tools/install)
-- [Git for Windows](https://git-scm.com/download/win)
-- [Python 3](https://www.python.org/downloads/)
-- [CMake](https://cmake.org/download/)
-- [wget](https://eternallybored.org/misc/wget/)
-- [ninja](https://ninja-build.org/)
-- [meson](https://mesonbuild.com/)
-- [yq](https://github.com/mikefarah/yq)
-- [Windows Terminal](https://learn.microsoft.com/en-us/windows/terminal/)
+- **Native Windows Experience**  
+  ✅ No Cygwin/MSYS2 required - Direct Autotools compilation in Git Bash with few tools required  
+  ✅ Pure MSVC/MSVC-like toolchain builds (No MinGW adaptation)  
+  ✅ Not generate .dll.lib or .dll.a but .lib if using libtool
 
-📝Note
+- **Smart Dependency Management**  
+  🌳 Automatic dependency tree resolution with nice tree view on terminal visualization  
+  📦 On-demand dependency builds with strategies
 
-- We need Intel compiler mostly because MSVC is missing Fortran compiler and some C/C++ language extension are not supported yet.
-- The final version of Intel compiler can support both 32 and 64bit are 2024.2.1, and this is also the last version to have ***ifort***.
+- **Enterprise-grade Build System**  
+  🎨 Colorized terminal output with per-library log archives  
+  🛠️ Parallel compilation (Nmake/GNU Make/CMake/Meson integration)  
+
+- **Developer-Friendly Design**  
+  📂 Isolated build environments per library  
+  🔄 Automatic patch application via `.diff` files  
+
+## 📦 System Requirements
+| Component | Purpose |
+|-----------|---------|
+| [Visual C++ Build Tools](https://visualstudio.microsoft.com/zh-hans/downloads/?q=build+tools) | Mostly use compiler in `msvc-pkg` |
+| [Intel oneAPI DPC++/C++ Compiler 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) | Some libraries need icx-cl/clang-cl to build due to cl can't sucessfully do |
+| [Intel Fortran Compiler Classic and Intel Fortran Compiler 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler-download.html) | MSVC is missing Fortran compiler |
+| [Intel MPI Library](https://www.intel.com/content/www/us/en/developer/tools/oneapi/mpi-library-download.html) | MPI build support |
+| [Rust for Windows](https://www.rust-lang.org/tools/install) | Few libraries need Rust compiler |
+| [Git for Windows](https://git-scm.com/download/win) | Minimal bash environment and git fetch and sychronize libraries |
+| [Python 3](https://www.python.org/downloads/) | `mpt` i.e. mpt.bat will exactly invoke mpt.py |
+| [CMake](https://cmake.org/download/) | The project contain CMakeLists.txt need it |
+| [wget](https://eternallybored.org/misc/wget/) | download archive file of libraries |
+| [ninja](https://ninja-build.org/) | CMake/Meson based project work with ninja |
+| [meson](https://mesonbuild.com/) | The project contain meson.build need it |
+| [yq](https://github.com/mikefarah/yq) | parse yaml files, e.g. config.yaml, installed.yaml and settings.yaml |
+| [Windows Terminal](https://learn.microsoft.com/en-us/windows/terminal/) | Recommend for best experience |
+
+> 💡 Pro Tip: Most dependencies can be auto-installed via run `mpt` in windows terminal
+
+## 🚀 Getting Started
+
+### Initial Setup
+1. Clone repository:
+   ```bash
+   git clone https://github.com/jiangjianshan/msvc-pkg.git
+   cd msvc-pkg
+   ```
+
+2. Create configuration file to define default installation location of some libraries (optional, but it is good to have):
+   ```yaml
+   prefix:
+     x64:
+       llvm-project: D:\LLVM
+       lua: D:\Lua
+       perl: D:\Perl
+       ruby: D:\Ruby
+       tcl: D:\Tcl
+       tk: D:\Tcl
+     x86:
+   ```
+
+  > 💡 Pro Tip: to make **msvc-pkg** easy to use, the feature of option '--prefix' is done via `settings.yaml`
+
+## 🚀 Basic Commands
+
+| Command                        | Description                                                                 | Example Usage               |
+|--------------------------------|-----------------------------------------------------------------------------|-----------------------------|
+| `mpt --list`                   | List all available packages                                                 | `mpt --list`                |
+| `mpt`                          | Build **all libraries** for default architecture (x64)                      | `mpt`                       |
+| `mpt <arch>`                   | Build all libraries for specified architecture (`x86`/`x64`)                | `mpt x86`                   |
+| `mpt <pkg1> <pkg2>...`         | Build specific packages with dependencies                                   | `mpt ncurses gettext`       |
 
 
-## Quick Start
+## 📦 New Package
 
-Before you start to use ***msvc-pkg***, it is recommand to create a file ***settings.yaml*** and put it in the root folder of ***msvc-pkg***. In case you want to install some libraries to your pre-defined location. Here is an example.
+1. Create package directory in `packages/`
+2. Add required files:
+   ```bash
+   ncurses/
+   ├── sync.sh                # Source fetching/patching
+   ├── build.bat/build.sh     # Windows build script
+   ├── config.yaml            # Metadata
+   └── *.diff                 # Patch files (optional)
+   ```
+> 💡 Pro Tip: There many examples exist inside `packages` folder
 
-```yaml
-# settings.yaml
-# The default location is msvc-pkg\x64 or msvc-pkg\x86
-prefix:
-  x64:
-    llvm-project: D:\LLVM
-    lua: D:\Lua
-    perl: D:\Perl
-    ruby: D:\Ruby
-    tcl: D:\Tcl
-    tk: D:\Tcl
-  x86:
-```
+## 🤝 Contributing
 
-## How to use
+We welcome contributions through:
+- 🐛 Bug reports
+- 💡 Feature proposals
+- 📦 New package additions
+- 📚 Documentation improvements
 
-Using ***msvc-pkg*** is quick and simple. ***mpt.bat*** is the entry point from command line. Open the Windows terminal and follow the command from the below examples.
+**Contribution Workflow:**
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/awesome-feature`)
+3. Commit changes (`git commit -am 'Add awesome feature'`)
+4. Push branch (`git push origin feature/awesome-feature`)
+5. Create Pull Request
 
-### Example:
+## 📜 Special Notes
 
-If you want to see the installation status of all available packages
-
-```bat
-mpt --list
-```
-
-If you want to build all available libraries on default host architecture
-
-```bat
-mpt
-```
-
-But if you want to build them on another architecture, e.g. x86
-
-```bat
-mpt x86
-```
-
-In case you don't want to build all but just some of them, e.g. gmp, gettext, ncurses, readline, on default host architecture
-
-```bat
-mpt gmp gettext ncurses readline
-```
-
-## How to add a new package
-
-Many examples are available on ***packages*** folder, only following files are need for the libraries that you want to add:
-- ***sync.sh*** work with ***common.sh***, it is used to get the source of libraries and make patched if necessary before build.
-- ***build.bat*** or ***build.sh*** is the build script on Win32 or Bash environment which depend on the libraries.
-- ***config.yaml*** is the configuration file for libraries, some essential information have been defined there and will be used on ***mpt.py***, ***sync.sh*** and ***build.bat*** or ***build.sh***. Please notice that the name section in this file must be same as the folder name that contain ***config.yaml***.
-- The ***.diff*** files are depend on the libraries. If no patch needed before build, they will be no needed.
-
-## Contributors
-
-This project follows the [all-contributors](https://allcontributors.org) specification. 🚈 The goal of ***msvc-pkg*** is to use MSVC and MSVC-like toolset to build as many C/C++/Fortran open source librareis as possible. It is a ✨huge✨ effort. Any volunteer for further contribution is welcome.
+- **Intel Compiler Support**: 2024.2.1 is the final version supporting `ifort`

@@ -1,0 +1,286 @@
+diff -urN Bcp-1.4.4-orig/Bcp/bcp.pc.in Bcp-1.4.4/Bcp/bcp.pc.in
+--- Bcp-1.4.4-orig/Bcp/bcp.pc.in	2019-02-23 07:23:33.000000000 +0800
++++ Bcp-1.4.4/Bcp/bcp.pc.in	2025-03-29 12:05:15.972154700 +0800
+@@ -1,12 +1,12 @@
+ prefix=@prefix@
+ exec_prefix=@exec_prefix@
+ libdir=@libdir@
+-includedir=@includedir@/coin
++includedir=@includedir@/coin-or
+ 
+ Name: BCP
+ Description: Branch, Cut, and Price Framework
+ URL: https://projects.coin-or.org/Bcp
+ Version: @PACKAGE_VERSION@
+-Libs: -L${libdir} -lBcp @BCPLIB_PCLIBS@
++Libs: -L${libdir} -lBcp @BCPLIB_LFLAGS@
+ Cflags: -I${includedir}
+-Requires: @BCPLIB_PCREQUIRES@
+\ No newline at end of file
++Requires: @BCPLIB_PCFILES@
+diff -urN Bcp-1.4.4-orig/Bcp/bcp-uninstalled.pc.in Bcp-1.4.4/Bcp/bcp-uninstalled.pc.in
+--- Bcp-1.4.4-orig/Bcp/bcp-uninstalled.pc.in	2019-02-23 07:23:33.000000000 +0800
++++ Bcp-1.4.4/Bcp/bcp-uninstalled.pc.in	2025-03-29 12:05:15.972154700 +0800
+@@ -6,6 +6,6 @@
+ Description: Branch, Cut, and Price Framework
+ URL: https://projects.coin-or.org/Bcp
+ Version: @PACKAGE_VERSION@
+-Libs: ${libdir}/libBcp.la @BCPLIB_PCLIBS@
++Libs: ${libdir}/libBcp.la @BCPLIB_LFLAGS@
+ Cflags: -I@abs_source_dir@/src -I@ABSBUILDDIR@/src
+-Requires: @BCPLIB_PCREQUIRES@
++Requires: @BCPLIB_PCFILES@
+diff -urN Bcp-1.4.4-orig/Bcp/configure.ac Bcp-1.4.4/Bcp/configure.ac
+--- Bcp-1.4.4-orig/Bcp/configure.ac	2019-02-23 07:23:33.000000000 +0800
++++ Bcp-1.4.4/Bcp/configure.ac	2025-03-29 12:05:15.972154700 +0800
+@@ -34,17 +34,7 @@
+ #                         Standard build tool stuff                         #
+ #############################################################################
+ 
+-# Get the system type
+-AC_CANONICAL_BUILD
+-
+-# If this project depends on external projects, the Externals file in
+-# the source root directory contains definition of where to find those
+-# externals.  The following macro ensures that those externals are
+-# retrieved by svn if they are not there yet.
+-AC_COIN_PROJECTDIR_INIT(Bcp,5:4:4)
+-
+-# Check if user wants to produce debugging code
+-AC_COIN_DEBUG_COMPILE(Bcp)
++AC_COIN_INITIALIZE
+ 
+ # Get the name of the C++ compiler and appropriate compiler options
+ AC_COIN_PROG_CXX
+@@ -58,45 +48,45 @@
+ fi
+ 
+ # Initialize automake and libtool
+-AC_COIN_INIT_AUTO_TOOLS
++AC_COIN_PROG_LIBTOOL
+ 
+ #############################################################################
+ #                              COIN components                              #
+ #############################################################################
+ 
+-AC_COIN_CHECK_PACKAGE(Clp, [osi-clp], [BcpLib])
+-AC_COIN_CHECK_PACKAGE(Cpx,  [osi-cplex],  [BcpLib])
++AC_COIN_CHK_PKG(Clp,[BcpLib],[osi-clp])
++AC_COIN_CHK_PKG(Cpx,[BcpLib],[osi-cplex])
+ if [test $coin_has_clp != yes && test $coin_has_cpx != yes]; then
+   AC_MSG_ERROR([No LP solver available. Bcp requires an LP solver])
+ fi
+-AC_COIN_CHECK_PACKAGE(Vol, [osi-vol], [BcpLib])
+-AC_COIN_CHECK_PACKAGE(Cgl, [cgl], [Bac])
+-
++AC_COIN_CHK_PKG(Vol,[BcpLib],[osi-vol])
++AC_COIN_CHK_PKG(Cgl,[Bac],[cgl])
+ #############################################################################
+ #                             Other dependencies                            #
+ #############################################################################
+ 
+-AC_COIN_CHECK_USER_LIBRARY([Mpi], [MPI], [mpi.h], [MPI_Irecv], [], [BcpLib])
++AC_COIN_CHK_LIBHDR(MPI,[BcpLib],[-limpi],[],[],[MPI_Irecv],[#include "mpi.h"])
+ # ToDo: Automatically choose MPI compiler
+ 
+-AC_COIN_CHECK_HEADER(sys/resource.h)
+-AC_COIN_CHECK_HEADER(sys/sysinfo.h)
+-AC_COIN_CHECK_HEADER(unistd.h)
+-AC_COIN_CHECK_HEADER(process.h)
++AC_CHECK_HEADER(sys/resource.h)
++AC_CHECK_HEADER(sys/sysinfo.h)
++AC_CHECK_HEADER(unistd.h)
++AC_CHECK_HEADER(process.h)
+ AC_CHECK_FUNCS(gethostname getpid mallinfo)
+ 
+ # Check if sysinfo is present and does what we expect it to do
+ if test x$ac_cv_header_sys_stat_h = xyes; then
+   AC_MSG_CHECKING([whether we have sysinfo that we can use])
+   AC_LANG_PUSH(C++)
+-  AC_COMPILE_IFELSE([
+-#include <sys/sysinfo.h>
+-long bla()
+-{
+-  struct sysinfo info;
+-  sysinfo(&info);
+-  return info.mem_unit*info.freeram;
+-}],
++  AC_COMPILE_IFELSE(
++    [AC_LANG_PROGRAM(
++      [#include <sys/sysinfo.h>],
++      [
++        struct sysinfo info;
++        sysinfo(&info);
++        return info.mem_unit * info.freeram;
++      ]
++    )],
+     [AC_MSG_RESULT([yes])
+      AC_DEFINE([HAVE_SYSINFO], [1], [Define to 1 if sysinfo function exists and runs with Bcp code])],
+     [AC_MSG_RESULT([no])])
+@@ -109,6 +99,38 @@
+ AC_PROG_LN_S
+ AC_COIN_CHECK_VPATH
+ 
++AC_DEFUN([AC_COIN_LINKCOPY_FROM_FILELIST],
++[cmd="$3"
++if test -r $srcdir/$2 ; then
++  my_target_dir="$1"
++  my_link_files=`cat $srcdir/$2`
++  my_dirname=`dirname $2`
++  for i in $my_link_files; do
++    if test -e $my_target_dir/$i; then : ; else
++      dirn2=`dirname $my_target_dir/$i`
++      if test -d $dirn2; then : ; else
++   	    mkdir -p $dirn2
++      fi
++      $cmd $srcdir/$my_dirname/$i $my_target_dir/$i
++    fi
++  done
++else
++  AC_MSG_WARN([File list file $2 missing!])
++fi
++])
++
++AC_DEFUN([AC_COIN_LINK_FROM_FILELIST],
++[
++echo Creating links in $1 ...
++AC_COIN_LINKCOPY_FROM_FILELIST($1, $2, $LN_S)
++])
++
++AC_DEFUN([AC_COIN_COPY_FROM_FILELIST],
++[
++echo Creating copies in $1 ...
++AC_COIN_LINKCOPY_FROM_FILELIST($1, $2, [cp])
++])
++
+ AC_COIN_LINK_FROM_FILELIST(test/BAC, examples/BAC/testfiles.txt)
+ AC_COIN_COPY_FROM_FILELIST(examples/BAC, examples/BAC/examplefiles.txt)
+ AC_COIN_COPY_FROM_FILELIST(examples/MaxCut, examples/MaxCut/examplefiles.txt)
+@@ -168,7 +190,9 @@
+ 		 doxydoc/doxygen.conf])
+ 
+ # Here put the location and name of the configuration header file
+-AC_CONFIG_HEADER([src/include/config.h src/include/config_bcp.h])
++AC_CONFIG_HEADERS([src/include/config.h src/include/config_bcp.h])
++
++AC_COIN_FINALIZE_FLAGS([BcpLib Bac])
+ 
+ # Finally, we let configure write all the output...
+ AC_COIN_FINALIZE
+diff -urN Bcp-1.4.4-orig/Bcp/Makefile.am Bcp-1.4.4/Bcp/Makefile.am
+--- Bcp-1.4.4-orig/Bcp/Makefile.am	2019-02-23 07:23:33.000000000 +0800
++++ Bcp-1.4.4/Bcp/Makefile.am	2025-03-29 12:05:15.972154700 +0800
+@@ -4,8 +4,6 @@
+ 
+ ## $Id$
+ 
+-AUTOMAKE_OPTIONS = foreign
+-
+ ########################################################################
+ #                          Subdirectories                              #
+ ########################################################################
+@@ -106,7 +104,6 @@
+ #                  Installation of the addlibs file                    #
+ ########################################################################
+ 
+-pkgconfiglibdir = $(libdir)/pkgconfig
+ pkgconfiglib_DATA = bcp.pc
+ 
+ addlibsdir = $(DESTDIR)$(datadir)/coin/doc/Bcp
+@@ -117,12 +114,8 @@
+ 	PKG_CONFIG_PATH=@COIN_PKG_CONFIG_PATH@:$(DESTDIR)$(pkgconfiglibdir) \
+ 	$(PKG_CONFIG) --libs bcp > $(addlibsdir)/bcp_addlibs.txt
+ else
+-if COIN_CXX_IS_CL
+-	echo "-libpath:`$(CYGPATH_W) @abs_lib_dir@` libBcp.lib @BCPLIB_LIBS_INSTALLED@" > $(addlibsdir)/bcp_addlibs.txt
+-else
+ 	echo -L@abs_lib_dir@ -lBcp @BCPLIB_LIBS_INSTALLED@ > $(addlibsdir)/bcp_addlibs.txt
+ endif
+-endif
+ 
+ uninstall-hook:
+ 	rm -f $(addlibsdir)/bcp_addlibs.txt
+diff -urN Bcp-1.4.4-orig/Bcp/src/Makefile.am Bcp-1.4.4/Bcp/src/Makefile.am
+--- Bcp-1.4.4-orig/Bcp/src/Makefile.am	2019-02-23 07:23:33.000000000 +0800
++++ Bcp-1.4.4/Bcp/src/Makefile.am	2025-03-29 13:54:37.214905300 +0800
+@@ -4,8 +4,6 @@
+ 
+ ## $Id$
+ 
+-AUTOMAKE_OPTIONS = foreign
+-
+ ########################################################################
+ #                               libBcp                                 #
+ ########################################################################
+@@ -155,9 +153,7 @@
+ 	include/BcpConfig.h
+ 
+ # List all additionally required libraries
+-if DEPENDENCY_LINKING
+-libBcp_la_LIBADD = $(BCPLIB_LIBS)
+-endif
++libBcp_la_LIBADD = $(BCPLIB_LFLAGS)
+ 
+ # This is for libtool
+ libBcp_la_LDFLAGS = $(LT_LDFLAGS)
+@@ -168,23 +164,20 @@
+ 
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows.
+-AM_CPPFLAGS = $(BCPLIB_CFLAGS)
++AM_CPPFLAGS = $(BCPLIB_CFLAGS) -I. -I`$(CYGPATH_W) $(srcdir)/include` -Iinclude
+ 
+ # Include MPI header directory if MPI is used
+ if COIN_HAS_MPI
+-AM_CPPFLAGS +=  -I`$(CYGPATH_W) $(MPIINCDIR)`
++AM_CPPFLAGS += $(MPI_CFLAGS)
+ endif
+ 
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)/include` -Iinclude
+-
+ ########################################################################
+ #                Headers that need to be installed                     #
+ ########################################################################
+ 
+ # Here list all the header files that are required by a user of the library,
+-# and that therefore should be installed in 'include/coin'
+-includecoindir = $(includedir)/coin
++# and that therefore should be installed in 'include/coin-or'
++includecoindir = $(includedir)/coin-or
+ includecoin_HEADERS = \
+ 	include/BCP_branch.hpp \
+ 	include/BCP_buffer.hpp \
+diff -urN Bcp-1.4.4-orig/Bcp/test/BAC/Makefile.am Bcp-1.4.4/Bcp/test/BAC/Makefile.am
+--- Bcp-1.4.4-orig/Bcp/test/BAC/Makefile.am	2019-02-23 07:23:33.000000000 +0800
++++ Bcp-1.4.4/Bcp/test/BAC/Makefile.am	2025-03-29 12:05:15.987292300 +0800
+@@ -4,8 +4,6 @@
+ 
+ ## $Id$
+ 
+-AUTOMAKE_OPTIONS = foreign
+-
+ ########################################################################
+ #                      unitTest for CoinUtils                          #
+ ########################################################################
+@@ -29,17 +27,15 @@
+ nodist_unitTest_SOURCES += include/BB_cut.hpp
+ 
+ # List libraries of COIN projects
+-unitTest_LDADD        = ../../src/libBcp.la $(BCPLIB_LIBS) $(BAC_LIBS)
++unitTest_LDADD        = ../../src/libBcp.la $(BCPLIB_LFLAGS) $(BAC_LFLAGS)
+ unitTest_DEPENDENCIES = ../../src/libBcp.la $(BCPLIB_DEPENDENCIES) $(BAC_DEPENDENCIES)
+ 
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Cygwin
+ AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/../../src/include` \
++        -I. -Iinclude -I`$(CYGPATH_W) $(top_builddir)/src/include` \
+ 	$(BCPLIB_CFLAGS) \
+-	$(BAC_CFLAGS) 
+-
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -Iinclude -I`$(CYGPATH_W) $(top_builddir)/src/include`
++	$(BAC_CFLAGS)
+ 
+ test: unitTest$(EXEEXT)
+ 	./unitTest$(EXEEXT) -param bb.par

@@ -1,0 +1,230 @@
+diff -urN MibS-1.2.2-orig/configure.ac MibS-1.2.2/configure.ac
+--- MibS-1.2.2-orig/configure.ac	2025-01-17 04:14:50.000000000 +0800
++++ MibS-1.2.2/configure.ac	2025-03-29 16:26:06.913342100 +0800
+@@ -16,13 +16,8 @@
+ #                       Names and other basic things                        #
+ #############################################################################
+ 
+-AC_PREREQ(2.59)
+-
+-m4_define([gitversion], m4_esyscmd([sh -c "git describe --always | cut -d '=' -f 2 | head --bytes -1"]))
+ AC_INIT([MibS],[1.2.2],[https://github.com/tkralphs/MibS/issues/new])
+ 
+-AC_DEFINE([MIBS_GIT_VERSION], [gitversion], [MibS git version])
+-
+ AC_COPYRIGHT([
+ #===========================================================================#
+ # This file is part of a Mixed Integer Bilevel Solver                       #
+@@ -54,17 +49,8 @@
+ #                         Standard build tool stuff                         #
+ #############################################################################
+ 
+-# Get the system type
+-AC_CANONICAL_BUILD
+-
+-# If this project depends on external projects, the Externals file in
+-# the source root directory contains definition of where to find those
+-# externals.  The following macro ensures that those externals are
+-# retrieved by svn if they are not there yet.
+-AC_COIN_PROJECTDIR_INIT(MibS,5:2:2)
+-
+-# Check if user wants to produce debugging code
+-AC_COIN_DEBUG_COMPILE(MibS)
++# Do some initialization work (version numbers, change prefix default, ...)
++AC_COIN_INITIALIZE
+ 
+ # Get the name of the C++ compiler and appropriate compiler options
+ AC_COIN_PROG_CXX
+@@ -78,42 +64,45 @@
+ fi
+ 
+ # Initialize automake and libtool
+-AC_COIN_INIT_AUTO_TOOLS
++AC_COIN_PROG_LIBTOOL
+ 
+ #############################################################################
+ #                              COIN components                              #
+ #############################################################################
+ 
+-AC_COIN_CHECK_PACKAGE(CoinDepend, [alps bcps blis coinutils osi cgl clp osi-clp], [MibSLib])
+-if test $coin_has_coindepend != yes ; then
+-  AC_MSG_ERROR([Required packages not available.])
+-fi
++AC_COIN_CHK_PKG(Alps,[MibSLib],[alps])
++AC_COIN_CHK_PKG(Bcps,[MibSLib],[bcps])
++AC_COIN_CHK_PKG(Blis,[MibSLib],[blis])
++AC_COIN_CHK_PKG(CoinUtils,[MibSLib],[coinutils])
++AC_COIN_CHK_PKG(Osi,[MibSLib],[osi osi-clp])
++AC_COIN_CHK_PKG(Cgl,[MibSLib],[cgl])
++AC_COIN_CHK_PKG(Clp,[MibSLib],[clp osi-clp])
+ 
+-AC_COIN_CHECK_PACKAGE(SYMPHONY, [symphony osi-sym], [MibSLib])
++AC_COIN_CHK_PKG(SYMPHONY,[MibSLib],[symphony osi-sym])
+ if test $coin_has_symphony != yes ; then
+   AC_MSG_ERROR([Required package SYMPHONY not available.])
+ fi
+ 
+-AC_COIN_CHECK_PACKAGE(Cbc, [cbc osi-cbc], [MibSLib])
++AC_COIN_CHK_PKG(Cbc,[MibSLib],[cbc osi-cbc])
+ 
+ #############################################################################
+ #                              check MPI libraries                          #
+ #############################################################################
+ 
+-AC_COIN_CHECK_USER_LIBRARY([Mpi], [MPI], [mpi.h], [MPI_Irecv], [], [AlpsLib])
++AC_COIN_CHK_LIBHDR(MPI,[MibSLib],[-limpi],[],[],[MPI_Irecv],[#include "mpi.h"])
+ 
+ #############################################################################
+ #                            Third party solvers                            #
+ #############################################################################
+ 
+ # Check which third party solvers are available
+-AC_COIN_CHECK_PACKAGE(Cplex,  [osi-cplex],  [MibSLib])
++AC_COIN_CHK_PKG(Cplex,[MibSLib],[osi-cplex])
+ 
+ #############################################################################
+ #                  Check for doxygen                                        #
+ #############################################################################
+ 
+-AC_COIN_DOXYGEN(CoinUtils Osi Clp Cgl Alps Bcps Blis OsiCplex)
++AC_COIN_DOXYGEN([CoinUtils Osi Clp Cgl Alps Bcps Blis OsiCplex])
+ 
+ ##############################################################################
+ #                   Finishing up by writing all the output                   #
+@@ -129,7 +118,10 @@
+ AC_CONFIG_FILES([doxydoc/doxygen.conf])
+ 
+ # Here put the location and name of the configuration header file
+-AC_CONFIG_HEADER([src/config.h src/config_mibs.h])
++AC_CONFIG_HEADERS([src/config.h src/config_mibs.h])
++
++# Finalize libs and cflags.
++AC_COIN_FINALIZE_FLAGS([Mpi MibSLib])
+ 
+ # Finally, we let configure write all the output...
+ AC_COIN_FINALIZE
+diff -urN MibS-1.2.2-orig/Makefile.am MibS-1.2.2/Makefile.am
+--- MibS-1.2.2-orig/Makefile.am	2025-01-17 04:14:50.000000000 +0800
++++ MibS-1.2.2/Makefile.am	2025-03-29 16:26:06.913342100 +0800
+@@ -12,8 +12,6 @@
+ # accompanying file for terms.                                              #
+ #===========================================================================#
+ 
+-AUTOMAKE_OPTIONS = foreign
+-
+ ########################################################################
+ #                          Subdirectories                              #
+ ########################################################################
+@@ -68,7 +66,6 @@
+ #                  Installation of the addlibs file                    #
+ ########################################################################
+ 
+-pkgconfiglibdir = $(libdir)/pkgconfig
+ pkgconfiglib_DATA = mibs.pc
+ 
+ addlibsdir = $(DESTDIR)$(datadir)/coin/doc/MibS
+@@ -79,12 +76,8 @@
+ 	PKG_CONFIG_PATH=@COIN_PKG_CONFIG_PATH@:$(DESTDIR)$(pkgconfiglibdir) \
+ 	$(PKG_CONFIG) --libs mibs > $(addlibsdir)/mibs_addlibs.txt
+ else
+-if COIN_CXX_IS_CL
+-	echo "-libpath:`$(CYGPATH_W) @abs_lib_dir@` libMibs.lib @MIBSLIB_LIBS_INSTALLED@" > $(addlibsdir)/mibs_addlibs.txt
+-else
+ 	echo -L@abs_lib_dir@ -lMibs @MIBSLIB_LIBS_INSTALLED@ > $(addlibsdir)/mibs_addlibs.txt
+ endif
+-endif
+ 
+ uninstall-hook:
+ 	rm -f $(addlibsdir)/mibs_addlibs.txt
+diff -urN MibS-1.2.2-orig/mibs.pc.in MibS-1.2.2/mibs.pc.in
+--- MibS-1.2.2-orig/mibs.pc.in	2025-01-17 04:14:50.000000000 +0800
++++ MibS-1.2.2/mibs.pc.in	2025-03-29 16:31:04.389617300 +0800
+@@ -1,12 +1,12 @@
+ prefix=@prefix@
+ exec_prefix=@exec_prefix@
+ libdir=@libdir@
+-includedir=@includedir@/coin
++includedir=@includedir@/coin-or
+ 
+ Name: MibS
+ Description: Mixed Integer Bilevel Solver
+ URL: https://github.com/tkralphs/MibS
+ Version: @PACKAGE_VERSION@
+-Libs: -L${libdir} -lMibs @MIBSLIB_PCLIBS@
++Libs: -L${libdir} -lMibs @MIBSLIB_LFLAGS@
+ Cflags: -I${includedir}
+-Requires: @MIBSLIB_PCREQUIRES@
++Requires: @MIBSLIB_PCFILES@
+diff -urN MibS-1.2.2-orig/src/Makefile.am MibS-1.2.2/src/Makefile.am
+--- MibS-1.2.2-orig/src/Makefile.am	2025-01-17 04:14:50.000000000 +0800
++++ MibS-1.2.2/src/Makefile.am	2025-03-29 16:26:06.913342100 +0800
+@@ -12,13 +12,11 @@
+ # accompanying file for terms.                                              #
+ #===========================================================================#
+ 
+-AUTOMAKE_OPTIONS = foreign
+-
+ ########################################################################
+ #                           Common Flags                               #
+ ########################################################################
+ 
+-LDADD = $(MIBSLIB_LIBS)
++LDADD = $(MIBSLIB_LFLAGS)
+ DEPENDENCIES = $(MIBSLIB_DEPENDENCIES)
+ AM_CPPFLAGS = $(MIBSLIB_CFLAGS)
+ 
+@@ -64,9 +62,7 @@
+ 	MibSHelp.hpp
+ 
+ # List all additionally required libraries
+-if DEPENDENCY_LINKING
+-libMibs_la_LIBADD = $(MIBSLIB_LIBS)
+-endif
++libMibs_la_LIBADD = $(MIBSLIB_LFLAGS)
+ 
+ # This is for libtool (on Windows)
+ libMibs_la_LDFLAGS = $(LT_LDFLAGS)
+@@ -77,7 +73,7 @@
+ 
+ bin_PROGRAMS = mibs
+ mibs_SOURCES = MibSMain.cpp
+-mibs_LDADD = libMibs.la $(MIBSLIB_LIBS)
++mibs_LDADD = libMibs.la $(MIBSLIB_LFLAGS)
+ mibs_DEPENDENCIES = libMibs.la $(MIBSLIB_DEPENDENCIES)
+ 
+ ########################################################################
+@@ -86,18 +82,15 @@
+ 
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows.
+-# AM_CPPFLAGS = $(MIBSLIB_CFLAGS)
+-
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)`
++# AM_CPPFLAGS = $(MIBSLIB_CFLAGS) -I. -I`$(CYGPATH_W) $(srcdir)`
+ 
+ ########################################################################
+ #                Headers that need to be installed                     #
+ ########################################################################
+ 
+ # Here list all the header files that are required by a user of the library,
+-# and that therefore should be installed in 'install/coin'
+-includecoindir = $(includedir)/coin
++# and that therefore should be installed in 'install/coin-or'
++includecoindir = $(includedir)/coin-or
+ includecoin_HEADERS = \
+ 	MibSBilevel.hpp \
+ 	MibSConfig.hpp \
+@@ -121,12 +114,10 @@
+ #                     Installing manifest (MSVC++)                     #
+ ########################################################################
+ 
+-if COIN_CXX_IS_CL
+ install-exec-hook:
+ 	test -s mibs.exe.manifest && \
+ 	mt -manifest mibs.exe.manifest -outputresource:mibs.exe;\
+ 	cp mibs.exe $(bindir)/mibs.exe
+-endif
+ 
+ #############################################################################
+ # Create the Config.h file that always defines HAVE_CONFIG_H and install it #

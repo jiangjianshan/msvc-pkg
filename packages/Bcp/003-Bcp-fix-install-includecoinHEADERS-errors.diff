@@ -1,0 +1,23 @@
+diff -urN Bcp-1.4.4-orig/Bcp/src/Makefile.am Bcp-1.4.4/Bcp/src/Makefile.am
+--- Bcp-1.4.4-orig/Bcp/src/Makefile.am	2025-03-29 14:34:13.740762500 +0800
++++ Bcp-1.4.4/Bcp/src/Makefile.am	2025-03-29 14:31:46.450358100 +0800
+@@ -228,19 +228,14 @@
+ 	include/BCP_USER.hpp \
+ 	include/BCP_var.hpp \
+ 	include/BCP_vector_bool.hpp \
+-	include/BCP_vector_bool.hpp \
+ 	include/BCP_vector_change.hpp \
+ 	include/BCP_vector_char.hpp \
+-	include/BCP_vector_char.hpp \
+-	include/BCP_vector_double.hpp \
+ 	include/BCP_vector_double.hpp \
+ 	include/BCP_vector_general.hpp \
+ 	include/BCP_vector.hpp \
+ 	include/BCP_vector_int.hpp \
+-	include/BCP_vector_int.hpp \
+ 	include/BCP_vector_sanity.hpp \
+ 	include/BCP_vector_short.hpp \
+-	include/BCP_vector_short.hpp \
+ 	include/BCP_vg.hpp \
+ 	include/BCP_vg_param.hpp \
+ 	include/BCP_vg_user.hpp \
