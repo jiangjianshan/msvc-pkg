@@ -9,6 +9,7 @@ rem  ARCH            - x64 or x86
 rem  ROOT_DIR        - root location of msvc-pkg
 rem  PREFIX          - install location of current library
 rem  PREFIX_PATH     - install location of third party libraries
+rem  _PREFIX         - default install location if not list in settings.yaml
 rem
 rem  Copyright (c) 2024 Jianshan Jiang
 rem
@@ -57,7 +58,7 @@ rem ============================================================================
 call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
-if not defined FREEGLUT_PREFIX set FREEGLUT_PREFIX=%PREFIX%
+if not defined FREEGLUT_PREFIX set FREEGLUT_PREFIX=%_PREFIX%
 rem NOTE:
 rem 1. Either .def file not __declspec(dllexport) is exist in the code, so that
 rem    don't set '-DBUILD_SHARED_LIBS=ON'

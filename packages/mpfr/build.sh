@@ -8,6 +8,7 @@
 #  ROOT_DIR        - root location of msvc-pkg
 #  PREFIX          - install location of current library
 #  PREFIX_PATH     - install location of third party libraries
+#  _PREFIX         - default install location if not list in settings.yaml
 #
 #  Copyright (c) 2024 Jianshan Jiang
 #
@@ -102,7 +103,7 @@ configure_stage()
     --enable-shared                                                            \
     --enable-thread-safe                                                       \
     --enable-formally-proven-code                                              \
-    --with-gmp="$(cygpath -u "${GMP_PREFIX:-$PREFIX}")"                        \
+    --with-gmp="$(cygpath -u "${GMP_PREFIX:-$_PREFIX}")"                       \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

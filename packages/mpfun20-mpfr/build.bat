@@ -9,6 +9,7 @@ rem  ARCH            - x64 or x86
 rem  ROOT_DIR        - root location of msvc-pkg
 rem  PREFIX          - install location of current library
 rem  PREFIX_PATH     - install location of third party libraries
+rem  _PREFIX         - default install location if not list in settings.yaml
 rem
 rem  Copyright (c) 2024 Jianshan Jiang
 rem
@@ -56,8 +57,8 @@ rem ============================================================================
 :build_stage
 echo "Cleaning %PKG_NAME% %PKG_VER%"
 call :clean_build
-if not defined GMP_PREFIX set GMP_PREFIX=%PREFIX%
-if not defined MPFR_PREFIX set MPFR_PREFIX=%PREFIX%
+if not defined GMP_PREFIX set GMP_PREFIX=%_PREFIX%
+if not defined MPFR_PREFIX set MPFR_PREFIX=%_PREFIX%
 echo "Building %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%\fortran-var1"
 set libs=%GMP_PREFIX%\lib\gmp.lib %MPFR_PREFIX%\lib\mpfr.lib

@@ -8,6 +8,7 @@
 #  ROOT_DIR        - root location of msvc-pkg
 #  PREFIX          - install location of current library
 #  PREFIX_PATH     - install location of third party libraries
+#  _PREFIX         - default install location if not list in settings.yaml
 #
 #  Copyright (c) 2024 Jianshan Jiang
 #
@@ -102,8 +103,8 @@ configure_stage()
     --disable-rpath                                                            \
     --disable-valgrind-tests                                                   \
     --with-included-libunistring                                               \
-    --with-libiconv-prefix="$(cygpath -u "${LIBICONV_PREFIX:-$PREFIX}")"       \
-    --with-libintl-prefix="$(cygpath -u "${GETTEXT_PREFIX:-$PREFIX}")"         \
+    --with-libiconv-prefix="$(cygpath -u "${LIBICONV_PREFIX:-$_PREFIX}")"      \
+    --with-libintl-prefix="$(cygpath -u "${GETTEXT_PREFIX:-$_PREFIX}")"        \
     gl_cv_ld_output_def=no                                                     \
     gl_cv_func_getopt_posix=yes                                                \
     ac_cv_func_getopt_long_only=yes                                            \

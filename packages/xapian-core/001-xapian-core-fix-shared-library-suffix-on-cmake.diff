@@ -1,0 +1,12 @@
+diff -urN xapian-core-1.4.25-orig/cmake/xapian-config.cmake.in xapian-core-1.4.25/cmake/xapian-config.cmake.in
+--- xapian-core-1.4.25-orig/cmake/xapian-config.cmake.in	2024-03-08 06:57:54.000000000 +0800
++++ xapian-core-1.4.25/cmake/xapian-config.cmake.in	2025-03-31 14:43:33.788880800 +0800
+@@ -1,7 +1,7 @@
+ SET(prefix "@prefix@")
+ SET(exec_prefix "@exec_prefix@")
+ SET(XAPIAN_SHARED @XAPIAN_CMAKE_SHARED@ CACHE BOOL "Use shared xapian library")
+-SET(XAPIAN_SHARED_LIBRARY "@libdir@/libxapian@LIBRARY_VERSION_SUFFIX@@SHLIBEXT@@LIBRARY_SHARED_IMP_EXT@" CACHE FILEPATH "Shared Xapian library")
++SET(XAPIAN_SHARED_LIBRARY "@libdir@/xapian@LIBRARY_VERSION_SUFFIX@@LIBRARY_SHARED_IMP_EXT@" CACHE FILEPATH "Shared Xapian library")
+ SET(XAPIAN_STATIC_LIBRARY "@libdir@/libxapian@LIBRARY_VERSION_SUFFIX@@LIBRARY_STATIC_EXT@" CACHE FILEPATH "Static Xapian library")
+ SET(XAPIAN_STATIC_DEP_LIBS "@XAPIAN_CMAKE_LIBS@" CACHE STRING "Dependencies of static xapian library")
+ IF(XAPIAN_SHARED)

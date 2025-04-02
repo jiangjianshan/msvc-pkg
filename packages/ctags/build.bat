@@ -9,6 +9,7 @@ rem  ARCH            - x64 or x86
 rem  ROOT_DIR        - root location of msvc-pkg
 rem  PREFIX          - install location of current library
 rem  PREFIX_PATH     - install location of third party libraries
+rem  _PREFIX         - default install location if not list in settings.yaml
 rem
 rem  Copyright (c) 2024 Jianshan Jiang
 rem
@@ -57,7 +58,7 @@ rem ============================================================================
 :build_stage
 echo "Building %PKG_NAME% %PKG_VER%"
 call :clean_build
-if not defined LIBICONV_PREFIX set LIBICONV_PREFIX=%PREFIX%
+if not defined LIBICONV_PREFIX set LIBICONV_PREFIX=%_PREFIX%
 cd "%BUILD_DIR%"
 nmake -f mk_mvc.mak WITH_ICONV=yes ICONV_DIR="%LIBICONV_PREFIX%" || exit 1
 exit /b 0

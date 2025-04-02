@@ -9,6 +9,7 @@ rem  ARCH            - x64 or x86
 rem  ROOT_DIR        - root location of msvc-pkg
 rem  PREFIX          - install location of current library
 rem  PREFIX_PATH     - install location of third party libraries
+rem  _PREFIX         - default install location if not list in settings.yaml
 rem
 rem  Copyright (c) 2024 Jianshan Jiang
 rem
@@ -59,7 +60,7 @@ echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
 rem NOTE: 'libvmaf.h' can't be found during build. This can be solved to patch CMake files or
 rem       add '-I' option here
-if not defined VMAF_PREFIX set VMAF_PREFIX=%PREFIX%
+if not defined VMAF_PREFIX set VMAF_PREFIX=%_PREFIX%
 cmake -G "Ninja"                                                                                     ^
   -DBUILD_SHARED_LIBS=ON                                                                             ^
   -DCMAKE_BUILD_TYPE=Release                                                                         ^

@@ -33,6 +33,8 @@ rem       packages, e.g. gobject-introspection. The ccompiler.py will get compil
 rem       depend on this environment variable. But in fact all build.bat are not in
 rem       msys2 environment.
 rem set MSYSTEM=MINGW64
+rem Don't want to generate .pyc files when run python scripts
+set PYTHONDONTWRITEBYTECODE=1
 
 goto begin
 

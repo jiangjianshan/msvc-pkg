@@ -9,6 +9,7 @@ rem  ARCH            - x64 or x86
 rem  ROOT_DIR        - root location of msvc-pkg
 rem  PREFIX          - install location of current library
 rem  PREFIX_PATH     - install location of third party libraries
+rem  _PREFIX         - default install location if not list in settings.yaml
 rem
 rem  Copyright (c) 2024 Jianshan Jiang
 rem
@@ -65,6 +66,8 @@ cmake -G "Ninja"                                                                
   -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                                      ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                                                ^
   -DCMAKE_INSTALL_UCRT_LIBRARIES=ON                                                                ^
+  -DCMAKE_POLICY_DEFAULT_CMP0074=OLD                                                               ^
+  -DCMAKE_POLICY_DEFAULT_CMP0116=OLD                                                               ^
   -DCLANG_DEFAULT_CXX_STDLIB=libc++                                                                ^
   -DCLANG_DEFAULT_LINKER=lld                                                                       ^
   -DCLANG_DEFAULT_OBJCOPY=llvm-objcopy                                                             ^
@@ -73,23 +76,26 @@ cmake -G "Ninja"                                                                
   -DCLANG_ENABLE_ARCMT=OFF                                                                         ^
   -DCLANG_ENABLE_OBJC_REWRITER=OFF                                                                 ^
   -DLIBCXX_USE_COMPILER_RT=ON                                                                      ^
+  -DLLVM_BUILD_DOCS=OFF                                                                            ^
+  -DLLVM_BUILD_EXAMPLES=OFF                                                                        ^
   -DLLVM_BUILD_LLVM_C_DYLIB=ON                                                                     ^
+  -DLLVM_BUILD_TESTS=OFF                                                                           ^
   -DLLVM_BUILD_TOOLS=ON                                                                            ^
   -DLLVM_BUILD_UTILS=ON                                                                            ^
   -DLLVM_ENABLE_EH=ON                                                                              ^
   -DLLVM_ENABLE_RTTI=ON                                                                            ^
-  -DLLVM_ENABLE_ZSTD=ON                                                                            ^
   -DLLVM_ENABLE_PROJECTS="bolt;clang;clang-tools-extra;lld;openmp;polly;pstl"                      ^
   -DLLVM_ENABLE_RUNTIMES="compiler-rt;libcxx"                                                      ^
   -DLLVM_INCLUDE_BENCHMARKS=ON                                                                     ^
+  -DLLVM_INCLUDE_EXAMPLES=OFF                                                                      ^
+  -DLLVM_INCLUDE_TESTS=OFF                                                                         ^
   -DLLVM_INCLUDE_TOOLS=ON                                                                          ^
   -DLLVM_INCLUDE_UTILS=ON                                                                          ^
   -DLLVM_INSTALL_UTILS=ON                                                                          ^
   -DLLVM_OPTIMIZED_TABLEGEN=ON                                                                     ^
   -DLLVM_TARGETS_TO_BUILD=X86                                                                      ^
   -DCLANG_ENABLE_BOOTSTRAP=ON                                                                      ^
-  -DCLANG_BOOTSTRAP_PASSTHROUGH="CMAKE_BUILD_TYPE;CMAKE_INSTALL_PREFIX;CMAKE_INSTALL_LIBDIR;CMAKE_INSTALL_UCRT_LIBRARIES;CLANG_DEFAULT_CXX_STDLIB;CLANG_DEFAULT_LINKER;CLANG_DEFAULT_OBJCOPY;CLANG_DEFAULT_OPENMP_RUNTIME;CLANG_DEFAULT_RTLIB;CLANG_ENABLE_ARCMT;CLANG_ENABLE_OBJC_REWRITER;LIBCXX_USE_COMPILER_RT;LLVM_BUILD_LLVM_C_DYLIB;LLVM_BUILD_TOOLS;LLVM_BUILD_UTILS;LLVM_ENABLE_EH;LLVM_ENABLE_RTTI;LLVM_ENABLE_ZSTD;LLVM_ENABLE_PROJECTS;LLVM_ENABLE_RUNTIMES;LLVM_INCLUDE_BENCHMARKS;LLVM_INCLUDE_TOOLS;LLVM_INCLUDE_UTILS;LLVM_INSTALL_UTILS;LLVM_OPTIMIZED_TABLEGEN;LLVM_TARGETS_TO_BUILD;FFI_INCLUDE_DIRS;FFI_LIBRARIES;FFI_STATIC_LIBRARIES;OCAML_STDLIB_PATH;Z3_INCLUDE_DIR;Z3_LIBRARIES;ZLIB_INCLUDE_DIR;ZLIB_LIBRARY;LLVM_ENABLE_ZSTD;zstd_INCLUDE_DIR;zstd_LIBRARY;zstd_STATIC_LIBRARY;LIBXML2_INCLUDE_DIR;LIBXML2_INCLUDE_DIRS;LIBXML2_LIBRARIES;LIBXML2_XMLLINT_EXECUTABLE;LIBXML2_DEFINITIONS;LIBXML2_LIBRARY;PERL_EXECUTABLE;Python3_EXECUTABLE;Python3_LIBRARIES;Python3_INCLUDE_DIRS;Python3_LIBRARY_DIRS;Python3_RUNTIME_LIBRARY_DIRS;Python3_ROOT_DIR_DIR;Python3_FIND_ABI;Python3_FIND_STRATEGY;Python3_FIND_REGISTRY;Python3_FIND_FRAMEWORK;Python3_FIND_UNVERSIONED_NAMES;SWIG_DIR;SWIG_EXECUTABLE"    ^
-  -DBOOTSTRAP_LLVM_ENABLE_LTO=Thin                                                                 ^
+  -DCLANG_BOOTSTRAP_PASSTHROUGH="CMAKE_BUILD_TYPE;CMAKE_INSTALL_PREFIX;CMAKE_INSTALL_LIBDIR;CMAKE_INSTALL_UCRT_LIBRARIES;CMAKE_POLICY_DEFAULT_CMP0074;CMAKE_POLICY_DEFAULT_CMP0116;CMAKE_FIND_PACKAGE_PREFER_CONFIG;CLANG_DEFAULT_CXX_STDLIB;CLANG_DEFAULT_LINKER;CLANG_DEFAULT_OBJCOPY;CLANG_DEFAULT_OPENMP_RUNTIME;CLANG_DEFAULT_RTLIB;CLANG_ENABLE_ARCMT;CLANG_ENABLE_OBJC_REWRITER;LIBCXX_USE_COMPILER_RT;LLVM_BUILD_DOCS;LLVM_BUILD_EXAMPLES;LLVM_BUILD_LLVM_C_DYLIB;LLVM_BUILD_TOOLS;LLVM_BUILD_TESTS;LLVM_BUILD_UTILS;LLVM_ENABLE_EH;LLVM_ENABLE_RTTI;LLVM_ENABLE_PROJECTS;LLVM_ENABLE_RUNTIMES;LLVM_INCLUDE_BENCHMARKS;LLVM_INCLUDE_EXAMPLES;LLVM_INCLUDE_TESTS;LLVM_INCLUDE_TOOLS;LLVM_INCLUDE_UTILS;LLVM_INSTALL_UTILS;LLVM_OPTIMIZED_TABLEGEN;LLVM_TARGETS_TO_BUILD;FFI_INCLUDE_DIRS;FFI_LIBRARIES;FFI_STATIC_LIBRARIES;OCAML_STDLIB_PATH;Z3_INCLUDE_DIR;Z3_LIBRARIES;ZLIB_INCLUDE_DIR;ZLIB_LIBRARY;zstd_INCLUDE_DIR;zstd_LIBRARY;zstd_STATIC_LIBRARY;LIBXML2_INCLUDE_DIR;LIBXML2_INCLUDE_DIRS;LIBXML2_LIBRARIES;LIBXML2_XMLLINT_EXECUTABLE;LIBXML2_DEFINITIONS;LIBXML2_LIBRARY;PERL_EXECUTABLE;Python3_EXECUTABLE;Python3_LIBRARIES;Python3_INCLUDE_DIRS;Python3_LIBRARY_DIRS;Python3_RUNTIME_LIBRARY_DIRS;Python3_ROOT_DIR_DIR;Python3_FIND_ABI;Python3_FIND_STRATEGY;Python3_FIND_REGISTRY;Python3_FIND_FRAMEWORK;Python3_FIND_UNVERSIONED_NAMES;SWIG_DIR;SWIG_EXECUTABLE"                                                                                                           ^
   -DBOOTSTRAP_LLVM_ENABLE_LLD=ON                                                                   ^
   ../llvm || exit 1
 exit /b 0

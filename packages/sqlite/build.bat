@@ -10,6 +10,7 @@ rem  ARCH            - x64 or x86
 rem  ROOT_DIR        - root location of msvc-pkg
 rem  PREFIX          - install location of current library
 rem  PREFIX_PATH     - install location of third party libraries
+rem  _PREFIX         - default install location if not list in settings.yaml
 rem
 rem  Copyright (c) 2024 Jianshan Jiang
 rem
@@ -57,9 +58,9 @@ rem ============================================================================
 :build_stage
 echo "Building %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%"
-if not defined ICU4C_PREFIX set ICU4C_PREFIX=%PREFIX%
-if not defined TCL_PREFIX set TCL_PREFIX=%PREFIX%
-if not defined ZLIB_PREFIX set ZLIB_PREFIX=%PREFIX%
+if not defined ICU4C_PREFIX set ICU4C_PREFIX=%_PREFIX%
+if not defined TCL_PREFIX set TCL_PREFIX=%_PREFIX%
+if not defined ZLIB_PREFIX set ZLIB_PREFIX=%_PREFIX%
 nmake /f Makefile.msc TCLDIR=!TCL_PREFIX!                                      ^
   CCOPTS="%C_OPTS% %C_DEFS%"                                                   ^
   BUILD_ZLIB=0                                                                 ^

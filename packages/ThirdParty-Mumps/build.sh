@@ -8,6 +8,7 @@
 #  ROOT_DIR        - root location of msvc-pkg
 #  PREFIX          - install location of current library
 #  PREFIX_PATH     - install location of third party libraries
+#  _PREFIX         - default install location if not list in settings.yaml
 #
 #  Copyright (c) 2024 Jianshan Jiang
 #
@@ -110,8 +111,8 @@ configure_stage()
     --enable-msvc                                                                                            \
     --with-precision="all"                                                                                   \
     --with-lapack-lflags="-lmkl_intel_lp64_dll -lmkl_sequential_dll -lmkl_core_dll"                          \
-    --with-metis-cflags="-I$(cygpath -u "${THIRDPARTY_METIS_PREFIX:-$PREFIX}/include/coin-or/metis")"        \
-    --with-metis-lflags="-L$(cygpath -u "${THIRDPARTY_METIS_PREFIX:-$PREFIX}") -lcoinmetis"                  \
+    --with-metis-cflags="-I$(cygpath -u "${THIRDPARTY_METIS_PREFIX:-$_PREFIX}/include/coin-or/metis")"       \
+    --with-metis-lflags="-L$(cygpath -u "${THIRDPARTY_METIS_PREFIX:-$_PREFIX}") -lcoinmetis"                 \
     ac_cv_prog_fc_v="-verbose"                                                                               \
     gt_cv_locale_zh_CN=none || exit 1
 }

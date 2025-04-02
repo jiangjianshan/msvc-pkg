@@ -8,6 +8,7 @@
 #  ROOT_DIR        - root location of msvc-pkg
 #  PREFIX          - install location of current library
 #  PREFIX_PATH     - install location of third party libraries
+#  _PREFIX         - default install location if not list in settings.yaml
 #
 #  Copyright (c) 2024 Jianshan Jiang
 #
@@ -84,7 +85,7 @@ configure_stage()
   CC="$ROOT_DIR/wrappers/compile cl"                                           \
   CFLAGS="$C_OPTS"                                                             \
   CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
-  CPPFLAGS="$C_DEFS -I${NCURSES_PREFIX:-$PREFIX}/include/ncurses"              \
+  CPPFLAGS="$C_DEFS -I${NCURSES_PREFIX:-$_PREFIX}/include/ncurses"             \
   DLLTOOL="link -verbose -dll"                                                 \
   LD="link -nologo"                                                            \
   LIBS="-lShell32 -lzdll -licuuc -licuin -llibsqlite3"                         \
@@ -104,8 +105,8 @@ configure_stage()
     --enable-static                                                            \
     --enable-shared                                                            \
     --with-included-ltdl                                                       \
-    --with-ncurses="$(cygpath -u "${NCURSES_PREFIX:-$PREFIX}")"                \
-    --with-sqlite3="$(cygpath -u "${SQLITE_PREFIX:-$PREFIX}")"                 \
+    --with-ncurses="$(cygpath -u "${NCURSES_PREFIX:-$_PREFIX}")"               \
+    --with-sqlite3="$(cygpath -u "${SQLITE_PREFIX:-$_PREFIX}")"                \
     --with-sco                                                                 \
     --with-universal-ctags=ctags                                               \
     ac_header_dirent=dirent.h                                                  \

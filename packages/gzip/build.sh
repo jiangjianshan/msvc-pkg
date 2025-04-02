@@ -8,6 +8,7 @@
 #  ROOT_DIR        - root location of msvc-pkg
 #  PREFIX          - install location of current library
 #  PREFIX_PATH     - install location of third party libraries
+#  _PREFIX         - default install location if not list in settings.yaml
 #
 #  Copyright (c) 2024 Jianshan Jiang
 #
@@ -74,7 +75,7 @@ configure_stage()
   CC="$ROOT_DIR/wrappers/compile cl"                                           \
   CFLAGS="$C_OPTS"                                                             \
   CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
-  CPPFLAGS="$C_DEFS -I${NCURSES_PREFIX:-$PREFIX}/include/ncurses"              \
+  CPPFLAGS="$C_DEFS -I${NCURSES_PREFIX:-$_PREFIX}/include/ncurses"             \
   CXX="$ROOT_DIR/wrappers/compile cl"                                          \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
   CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \

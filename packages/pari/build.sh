@@ -8,6 +8,7 @@
 #  ROOT_DIR        - root location of msvc-pkg
 #  PREFIX          - install location of current library
 #  PREFIX_PATH     - install location of third party libraries
+#  _PREFIX         - default install location if not list in settings.yaml
 #
 #  Copyright (c) 2024 Jianshan Jiang
 #
@@ -81,35 +82,35 @@ configure_stage()
   # 2. Don't use 'compile cl -nologo' but 'compile cl'. Because configure
   #    on some libraries will detect whether is msvc compiler according to
   #    '*cl | cl.exe'
-  AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
-  CC="$ROOT_DIR/wrappers/compile cl"                                           \
-  CFLAGS="$C_OPTS"                                                             \
-  CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
-  CPPFLAGS="$C_DEFS"                                                           \
-  CXX="$ROOT_DIR/wrappers/compile cl"                                          \
-  CXXFLAGS="-EHsc $C_OPTS"                                                     \
-  CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
-  DLLTOOL="link -verbose -dll"                                                 \
-  LD="$ROOT_DIR/wrappers/compile cl"                                           \
-  NM="dumpbin -nologo -symbols"                                                \
-  PKG_CONFIG="/usr/bin/pkg-config"                                             \
-  RANLIB=":"                                                                   \
-  RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                \
-  STRIP=":"                                                                    \
-  WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                           \
-  ./Configure --host="$HOST_TRIPLET"                                           \
-    --prefix="$PREFIX"                                                         \
-    --bindir="$PREFIX/bin"                                                     \
-    --includedir="$PREFIX/include"                                             \
-    --libdir="$PREFIX/lib"                                                     \
-    --builddir="$BUILD_DIR"                                                    \
-    --graphic=win32                                                            \
-    --time=ftime                                                               \
-    --with-runtime-perl="$(cygpath -u "${PERL_PREFIX:-$PREFIX}/bin/perl.exe")" \
-    --with-readline="$(cygpath -u "${READLINE_PREFIX:-$PREFIX}")"              \
-    --with-ncurses-lib="$(cygpath -u "${NCURSES_PREFIX:-$PREFIX}/lib")"        \
-    --with-gmp="$(cygpath -u "${GMP_PREFIX:-$PREFIX}")"                        \
-    --with-fltk="$(cygpath -u "${FLTK_PREFIX:-$PREFIX}")" || exit 1
+  AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                             \
+  CC="$ROOT_DIR/wrappers/compile cl"                                                     \
+  CFLAGS="$C_OPTS"                                                                       \
+  CPP="$ROOT_DIR/wrappers/compile cl -E"                                                 \
+  CPPFLAGS="$C_DEFS"                                                                     \
+  CXX="$ROOT_DIR/wrappers/compile cl"                                                    \
+  CXXFLAGS="-EHsc $C_OPTS"                                                               \
+  CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                              \
+  DLLTOOL="link -verbose -dll"                                                           \
+  LD="$ROOT_DIR/wrappers/compile cl"                                                     \
+  NM="dumpbin -nologo -symbols"                                                          \
+  PKG_CONFIG="/usr/bin/pkg-config"                                                       \
+  RANLIB=":"                                                                             \
+  RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                          \
+  STRIP=":"                                                                              \
+  WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                     \
+  ./Configure --host="$HOST_TRIPLET"                                                     \
+    --prefix="$PREFIX"                                                                   \
+    --bindir="$PREFIX/bin"                                                               \
+    --includedir="$PREFIX/include"                                                       \
+    --libdir="$PREFIX/lib"                                                               \
+    --builddir="$BUILD_DIR"                                                              \
+    --graphic=win32                                                                      \
+    --time=ftime                                                                         \
+    --with-runtime-perl="$(cygpath -u "${PERL_PREFIX:-$_PREFIX}/bin/perl.exe")"          \
+    --with-readline="$(cygpath -u "${READLINE_PREFIX:-$_PREFIX}")"                       \
+    --with-ncurses-lib="$(cygpath -u "${NCURSES_PREFIX:-$_PREFIX}/lib")"                 \
+    --with-gmp="$(cygpath -u "${GMP_PREFIX:-$_PREFIX}")"                                 \
+    --with-fltk="$(cygpath -u "${FLTK_PREFIX:-$_PREFIX}")" || exit 1
 }
 
 build_stage()

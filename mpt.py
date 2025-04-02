@@ -112,6 +112,8 @@ def configure_envars(proc_env, arch, pkg):
     proc_env['ARCH'] = arch
     proc_env['ROOT_DIR'] = root_dir
     prefix = os.path.join(root_dir, arch)
+    # default prefix
+    proc_env['_PREFIX'] = prefix
     prefix_path = os.path.join(root_dir, arch)
     # PREFIX_PATH
     if settings_conf:
@@ -119,6 +121,7 @@ def configure_envars(proc_env, arch, pkg):
             for p in settings_conf['prefix'][arch].keys():
                 pkg_prefix = settings_conf['prefix'][arch][p]
                 if p == pkg:
+                    # Update prefix if it has been defined in settings.yaml
                     prefix = pkg_prefix
                 prefix_env = p.replace('-','_').upper() + '_PREFIX'
                 proc_env[prefix_env] = pkg_prefix

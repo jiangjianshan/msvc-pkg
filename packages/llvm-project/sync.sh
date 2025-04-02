@@ -50,8 +50,7 @@ patch_package()
   pushd llvm/utils
   sed                                                                          \
     -e 's|re.match("|re.match(r"|g'                                            \
-    extract_symbols.py > extract_symbols.py-t
-  mv extract_symbols.py-t extract_symbols.py
+    -i extract_symbols.py
   popd
 }
 

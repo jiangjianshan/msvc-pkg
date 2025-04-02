@@ -8,6 +8,7 @@
 #  ROOT_DIR        - root location of msvc-pkg
 #  PREFIX          - install location of current library
 #  PREFIX_PATH     - install location of third party libraries
+#  _PREFIX         - default install location if not list in settings.yaml
 #
 #  Copyright (c) 2024 Jianshan Jiang
 #
@@ -93,7 +94,7 @@ configure_stage()
     --host="$HOST_TRIPLET"                                                     \
     --prefix="$PREFIX"                                                         \
     --disable-oggtest                                                          \
-    --with-ogg="$(cygpath -u "${OGG_PREFIX:-$PREFIX}")"                        \
+    --with-ogg="$(cygpath -u "${OGG_PREFIX:-$_PREFIX}")"                       \
     ac_cv_lib_getopt_getopt=yes                                                \
     ac_cv_func_getopt_long=yes                                                 \
     gt_cv_locale_zh_CN=none || exit 1

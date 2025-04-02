@@ -9,6 +9,7 @@ rem  ARCH            - x64 or x86
 rem  ROOT_DIR        - root location of msvc-pkg
 rem  PREFIX          - install location of current library
 rem  PREFIX_PATH     - install location of third party libraries
+rem  _PREFIX         - default install location if not list in settings.yaml
 rem
 rem  Copyright (c) 2024 Jianshan Jiang
 rem
@@ -46,7 +47,7 @@ set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -Wno-impl
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
 
 rem Use clang-cl from llvm-project but not from Intel OneAPI
-if not defined LLVM_PROJECT_PREFIX set LLVM_PROJECT_PREFIX=%PREFIX%
+if not defined LLVM_PROJECT_PREFIX set LLVM_PROJECT_PREFIX=%_PREFIX%
 set PATH=!LLVM_PROJECT_PREFIX!\bin;%PATH%
 
 for /f %%a in ('dir /b %LLVM_PROJECT_PREFIX%\lib\clang') do (

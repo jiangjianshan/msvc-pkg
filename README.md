@@ -1,7 +1,7 @@
-# 🚀 msvc-pkg: Unified Build System for MSVC/MSV-like Toolchain
+# 🚀 msvc-pkg: Build 260+ Libraries From Scratch using MSVC/MSVC-like Toolsets
 
 **Native Windows Compilation | Colorized output | Dependency Automation**  
-A robust framework for building C/C++/Fortran open-source libraries using MSVC/MSVC-like toolchains
+A robust framework for building C/C++/Fortran open-source libraries using MSVC/MSVC-like toolsets
 
 [![Build Systems](https://img.shields.io/badge/Build-CMake%20|%20Meson%20|%20Autotools-blue)]()
 [![Compilers](https://img.shields.io/badge/Compiler-MSVC%20|%20Intel%20C++%20|%20Intel%20Fortran-green)]()
@@ -18,12 +18,12 @@ A robust framework for building C/C++/Fortran open-source libraries using MSVC/M
   🌳 Automatic dependency tree resolution with nice tree view on terminal visualization  
   📦 On-demand dependency builds with strategies
 
-- **Enterprise-grade Build System**  
+- **Nice Output View **  
   🎨 Colorized terminal output with per-library log archives  
-  🛠️ Parallel compilation (Nmake/GNU Make/CMake/Meson integration)  
 
 - **Developer-Friendly Design**  
   📂 Isolated build environments per library  
+  🛠️ Parallel compilation (GNU Make/CMake/Meson/Ninja...)  
   🔄 Automatic patch application via `.diff` files  
 
 ## 📦 System Requirements
@@ -34,7 +34,7 @@ A robust framework for building C/C++/Fortran open-source libraries using MSVC/M
 | [Intel Fortran Compiler Classic and Intel Fortran Compiler 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler-download.html) | MSVC is missing Fortran compiler |
 | [Intel MPI Library](https://www.intel.com/content/www/us/en/developer/tools/oneapi/mpi-library-download.html) | MPI build support |
 | [Rust for Windows](https://www.rust-lang.org/tools/install) | Few libraries need Rust compiler |
-| [Git for Windows](https://git-scm.com/download/win) | Minimal bash environment and git fetch and sychronize libraries |
+| [Git for Windows](https://git-scm.com/download/win) | Minimal bash environment and git fetch libraries |
 | [Python 3](https://www.python.org/downloads/) | `mpt` i.e. mpt.bat will exactly invoke mpt.py |
 | [CMake](https://cmake.org/download/) | The project contain CMakeLists.txt need it |
 | [wget](https://eternallybored.org/misc/wget/) | download archive file of libraries |
@@ -54,7 +54,7 @@ A robust framework for building C/C++/Fortran open-source libraries using MSVC/M
    cd msvc-pkg
    ```
 
-2. Create configuration file to define default installation location of some libraries (optional, but it is good to have):
+2. Create `settings.yaml` to define default install prefix of some libraries (optional, but it is good to have):
    ```yaml
    prefix:
      x64:
@@ -67,7 +67,7 @@ A robust framework for building C/C++/Fortran open-source libraries using MSVC/M
      x86:
    ```
 
-  > 💡 Pro Tip: to make **msvc-pkg** easy to use, the feature of option '--prefix' is done via `settings.yaml`
+  > 💡 Pro Tip: to make **msvc-pkg** easy to use, the feature of option '--prefix' is done via `settings.yaml`. And `settings.yaml` must be on the root of `msvc-pkg` folder
 
 ## 🚀 Basic Commands
 
@@ -86,9 +86,9 @@ A robust framework for building C/C++/Fortran open-source libraries using MSVC/M
    ```bash
    ncurses/
    ├── sync.sh                # Source fetching/patching
-   ├── build.bat/build.sh     # Windows build script
-   ├── config.yaml            # Metadata
-   └── *.diff                 # Patch files (optional)
+   ├── build.bat/build.sh     # Windows/Bash environment build script
+   ├── config.yaml            # Package essential information, e.g. name, url, version, sha256, build steps and dependencies
+   └── *.diff                 # Patch files for this package (required if need)
    ```
 > 💡 Pro Tip: There many examples exist inside `packages` folder
 

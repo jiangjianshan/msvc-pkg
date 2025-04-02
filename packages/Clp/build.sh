@@ -8,6 +8,7 @@
 #  ROOT_DIR        - root location of msvc-pkg
 #  PREFIX          - install location of current library
 #  PREFIX_PATH     - install location of third party libraries
+#  _PREFIX         - default install location if not list in settings.yaml
 #
 #  Copyright (c) 2024 Jianshan Jiang
 #
@@ -105,10 +106,10 @@ configure_stage()
     --libdir="$PREFIX/lib"                                                                                   \
     --enable-msvc                                                                                            \
     --enable-shared                                                                                          \
-    --with-amd-cflags="-I$(cygpath -u "${SUITESPARSE_PREFIX:-$PREFIX}")/include/suitesparse"                 \
-    --with-amd-lflags="-L$(cygpath -u "${SUITESPARSE_PREFIX:-$PREFIX}")/lib -lamd"                           \
-    --with-cholmod-cflags="-I$(cygpath -u "${SUITESPARSE_PREFIX:-$PREFIX}")/include/suitesparse"             \
-    --with-cholmod-lflags="-L$(cygpath -u "${SUITESPARSE_PREFIX:-$PREFIX}")/lib -lcholmod"                   \
+    --with-amd-cflags="-I$(cygpath -u "${SUITESPARSE_PREFIX:-$_PREFIX}")/include/suitesparse"                \
+    --with-amd-lflags="-L$(cygpath -u "${SUITESPARSE_PREFIX:-$_PREFIX}")/lib -lamd"                          \
+    --with-cholmod-cflags="-I$(cygpath -u "${SUITESPARSE_PREFIX:-$_PREFIX}")/include/suitesparse"            \
+    --with-cholmod-lflags="-L$(cygpath -u "${SUITESPARSE_PREFIX:-$_PREFIX}")/lib -lcholmod"                  \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

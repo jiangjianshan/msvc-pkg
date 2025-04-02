@@ -9,6 +9,7 @@ rem  ARCH            - x64 or x86
 rem  ROOT_DIR        - root location of msvc-pkg
 rem  PREFIX          - install location of current library
 rem  PREFIX_PATH     - install location of third party libraries
+rem  _PREFIX         - default install location if not list in settings.yaml
 rem
 rem  Copyright (c) 2024 Jianshan Jiang
 rem
@@ -59,7 +60,7 @@ rem ============================================================================
 :configure_stage
 call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
-if not defined BOOST_PREFIX set BOOST_PREFIX=%PREFIX%
+if not defined BOOST_PREFIX set BOOST_PREFIX=%_PREFIX%
 cd %BOOST_PREFIX%\lib
 for /f "delims=" %%i in ('dir /B boost_serialization-vc*-mt-%ARCH%-*.lib') do set BOOST_LIB=%%i
 mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"

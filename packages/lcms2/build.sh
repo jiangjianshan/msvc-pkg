@@ -8,6 +8,7 @@
 #  ROOT_DIR        - root location of msvc-pkg
 #  PREFIX          - install location of current library
 #  PREFIX_PATH     - install location of third party libraries
+#  _PREFIX         - default install location if not list in settings.yaml
 #
 #  Copyright (c) 2024 Jianshan Jiang
 #
@@ -97,8 +98,8 @@ configure_stage()
     --datarootdir="$PREFIX/share"                                              \
     --enable-static                                                            \
     --enable-shared                                                            \
-    --with-jpeg="$(cygpath -u "${OPENJPEG_PREFIX:-$PREFIX}")"                  \
-    --with-tiff="$(cygpath -u "${TIFF_PREFIX:-$PREFIX}")"                      \
+    --with-jpeg="$(cygpath -u "${OPENJPEG_PREFIX:-$_PREFIX}")"                 \
+    --with-tiff="$(cygpath -u "${TIFF_PREFIX:-$_PREFIX}")"                     \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

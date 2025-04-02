@@ -8,6 +8,7 @@
 #  ROOT_DIR        - root location of msvc-pkg
 #  PREFIX          - install location of current library
 #  PREFIX_PATH     - install location of third party libraries
+#  _PREFIX         - default install location if not list in settings.yaml
 #
 #  Copyright (c) 2024 Jianshan Jiang
 #
@@ -106,7 +107,7 @@ configure_stage()
     --enable-shared                                                            \
     --enable-threads=windows                                                   \
     --disable-rpath                                                            \
-    --with-libiconv-prefix="$(cygpath -u "${LIBICONV_PREFIX:-$PREFIX}")"       \
+    --with-libiconv-prefix="$(cygpath -u "${LIBICONV_PREFIX:-$_PREFIX}")"      \
     ac_cv_func_opendir=yes                                                     \
     ac_cv_func_readdir=yes                                                     \
     ac_cv_func_closedir=yes                                                    \

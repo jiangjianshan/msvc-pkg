@@ -8,6 +8,7 @@
 #  ROOT_DIR        - root location of msvc-pkg
 #  PREFIX          - install location of current library
 #  PREFIX_PATH     - install location of third party libraries
+#  _PREFIX         - default install location if not list in settings.yaml
 #
 #  Copyright (c) 2024 Jianshan Jiang
 #
@@ -103,7 +104,7 @@ configure_stage()
     --libdir="$PREFIX/lib"                                                                         \
     --enable-msvc                                                                                  \
     --enable-shared                                                                                \
-    --with-blas-lflags="-L$(cygpath -u "${THIRDPARTY_BLAS_PREFIX:-$PREFIX}")/lib -lcoinblas"       \
+    --with-blas-lflags="-L$(cygpath -u "${THIRDPARTY_BLAS_PREFIX:-$_PREFIX}")/lib -lcoinblas"      \
     ac_cv_prog_f77_v="-verbose"                                                                    \
     gt_cv_locale_zh_CN=none || exit 1
 }

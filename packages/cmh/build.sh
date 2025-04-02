@@ -8,6 +8,7 @@
 #  ROOT_DIR        - root location of msvc-pkg
 #  PREFIX          - install location of current library
 #  PREFIX_PATH     - install location of third party libraries
+#  _PREFIX         - default install location if not list in settings.yaml
 #
 #  Copyright (c) 2024 Jianshan Jiang
 #
@@ -97,12 +98,12 @@ configure_stage()
     --datarootdir="$PREFIX/share"                                              \
     --enable-static                                                            \
     --enable-shared                                                            \
-    --with-gmp="$(cygpath -u "${GMP_PREFIX:-$PREFIX}")"                        \
-    --with-mpfr="$(cygpath -u "${MPFR_PREFIX:-$PREFIX}")"                      \
-    --with-mpc="$(cygpath -u "${MPC_PREFIX:-$PREFIX}")"                        \
-    --with-mpfrcx="$(cygpath -u "${MPFRCX_PREFIX:-$PREFIX}")"                  \
-    --with-fplll="$(cygpath -u "${FPLLL_PREFIX:-$PREFIX}")"                    \
-    --with-pari="$(cygpath -u "${PARI_PREFIX:-$PREFIX}")"                      \
+    --with-gmp="$(cygpath -u "${GMP_PREFIX:-$_PREFIX}")"                       \
+    --with-mpfr="$(cygpath -u "${MPFR_PREFIX:-$_PREFIX}")"                     \
+    --with-mpc="$(cygpath -u "${MPC_PREFIX:-$_PREFIX}")"                       \
+    --with-mpfrcx="$(cygpath -u "${MPFRCX_PREFIX:-$_PREFIX}")"                 \
+    --with-fplll="$(cygpath -u "${FPLLL_PREFIX:-$_PREFIX}")"                   \
+    --with-pari="$(cygpath -u "${PARI_PREFIX:-$_PREFIX}")"                     \
     gl_cv_func_free_preserves_errno=yes                                        \
     gt_cv_locale_zh_CN=none || exit 1
 }
