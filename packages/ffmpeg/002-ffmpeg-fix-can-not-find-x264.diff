@@ -1,0 +1,11 @@
+diff -urN ffmpeg-7.1.1-orig/configure ffmpeg-7.1.1/configure
+--- ffmpeg-7.1.1-orig/configure	2025-03-03 08:22:08.000000000 +0800
++++ ffmpeg-7.1.1/configure	2025-04-02 17:09:44.369762300 +0800
+@@ -4841,7 +4841,6 @@
+             -march=*)             ;;
+             -mfp16-format=*)      ;;
+             -lz)                  echo zlib.lib ;;
+-            -lx264)               echo libx264.lib ;;
+             -lstdc++)             ;;
+             -l*)                  echo ${flag#-l}.lib ;;
+             -LARGEADDRESSAWARE)   echo $flag ;;

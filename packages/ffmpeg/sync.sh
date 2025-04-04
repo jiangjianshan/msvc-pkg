@@ -45,18 +45,9 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
-
-  # Fix system_libs of llvm-config has wrongly link to zstd.dll.lib but not zstd.lib
-  pushd llvm/lib/Support || exit 1
-  patch -Np1 -i "$PKG_DIR/001-llvm-project-fix-link-to-wrong-import-library-of-zstd.diff"
-  popd || exit 1
-
-  # Fix SyntaxWarning invalid escape sequence if use python 3.12
-  pushd llvm/utils
-  sed                                                                          \
-    -e 's|re.match("|re.match(r"|g'                                            \
-    -i extract_symbols.py
-  popd
+  patch -Np1 -i "$PKG_DIR/001-ffmpeg-msvc-do-not-have-unistd-h.diff"
+  patch -Np1 -i "$PKG_DIR/002-ffmpeg-fix-can-not-find-x264.diff"
+  patch -Np1 -i "$PKG_DIR/003-ffmpeg-fix-localtime_r-gmtime_r-missing-on-msvc.diff"
 }
 
 . $ROOT_DIR/common.sh

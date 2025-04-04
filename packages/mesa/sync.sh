@@ -45,18 +45,7 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
-
-  # Fix system_libs of llvm-config has wrongly link to zstd.dll.lib but not zstd.lib
-  pushd llvm/lib/Support || exit 1
-  patch -Np1 -i "$PKG_DIR/001-llvm-project-fix-link-to-wrong-import-library-of-zstd.diff"
-  popd || exit 1
-
-  # Fix SyntaxWarning invalid escape sequence if use python 3.12
-  pushd llvm/utils
-  sed                                                                          \
-    -e 's|re.match("|re.match(r"|g'                                            \
-    -i extract_symbols.py
-  popd
+  patch -Np1 -i "$PKG_DIR/001-mesa-fix-library-suffix-on-msvc.diff"
 }
 
 . $ROOT_DIR/common.sh
