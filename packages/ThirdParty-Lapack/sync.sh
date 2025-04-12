@@ -41,13 +41,18 @@ SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 ARCHIVE=$(basename -- "$PKG_URL")
 EXT=${ARCHIVE#$(echo "$ARCHIVE" | sed 's/\.[^[:digit:]].*$//g')}
 
-patch_package()
+download_extras()
 {
-  echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR" || exit 1
   if [ ! -d "LAPACK" ]; then
     ./get.Lapack
   fi
+}
+
+patch_package()
+{
+  echo "Patching package $PKG_NAME $PKG_VER"
+  cd "$SRC_DIR" || exit 1
   patch -Np1 -i "$PKG_DIR/001-ThirdParty-Lapack-fix-build-shared-library-on-msvc.diff"
 
   cd $RELS_DIR/BuildTools

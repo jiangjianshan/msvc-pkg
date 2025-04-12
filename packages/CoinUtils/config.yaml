@@ -1,6 +1,6 @@
 name: CoinUtils
 version: master
-url: https://github.com/coin-or/Osi.git
+url: https://github.com/coin-or/CoinUtils.git
 sha256:
 steps:
   a:

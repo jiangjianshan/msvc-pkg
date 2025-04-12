@@ -45,8 +45,9 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
-  patch -Np1 -i "$PKG_DIR/001-vmaf-msvc-missing-some-posix-headers-and-definitions.diff"
-  patch -Np1 -i "$PKG_DIR/002-vmaf-fix-msvc-build-shared-library.diff"
+  patch -Np1 -i "$PKG_DIR/001-vmaf-fix-library-suffix-on-msvc.diff"
+  patch -Np1 -i "$PKG_DIR/002-vmaf-msvc-missing-some-posix-headers-and-definitions.diff"
+  patch -Np1 -i "$PKG_DIR/003-vmaf-fix-msvc-build-shared-library.diff"
 }
 
 . $ROOT_DIR/common.sh

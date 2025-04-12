@@ -1,0 +1,43 @@
+diff -urN vmaf-2.3.1-orig/libvmaf/src/meson.build vmaf-2.3.1/libvmaf/src/meson.build
+--- vmaf-2.3.1-orig/libvmaf/src/meson.build	2022-04-12 01:06:37.000000000 +0800
++++ vmaf-2.3.1/libvmaf/src/meson.build	2025-04-08 20:30:33.833455600 +0800
+@@ -170,6 +170,7 @@
+     'libvmaf_cpu',
+     libvmaf_cpu_sources,
+     include_directories : [libvmaf_include],
++    name_suffix: 'lib',
+ )
+ 
+ platform_specific_cpu_objects = []
+@@ -189,6 +190,7 @@
+           x86_avx2_sources,
+           include_directories : vmaf_base_include,
+           c_args : ['-mavx', '-mavx2'] + vmaf_cflags_common,
++          name_suffix : 'lib',
+       )
+ 
+       platform_specific_cpu_objects += x86_avx2_static_lib.extract_all_objects(recursive: true)
+@@ -203,6 +205,7 @@
+             'x86_avx512',
+             x86_avx512_sources,
+             include_directories : vmaf_base_include,
++            name_suffix : 'lib',
+             c_args : ['-mavx512f', '-mavx512dq', '-mavx512bw',
+                       '-mavx512vbmi', '-mavx512vbmi2', '-mavx512vl'] +
+                      vmaf_cflags_common,
+@@ -282,6 +285,7 @@
+     libvmaf_feature_sources,
+     include_directories : [libvmaf_include, vmaf_include],
+     dependencies: [stdatomic_dependency],
++    name_suffix: 'lib',
+ )
+ 
+ libvmaf_sources = [
+@@ -329,6 +333,7 @@
+     version : vmaf_soname_version,
+     soversion : vmaf_soversion,
+     install: true,
++    vs_module_defs : 'vmaf.def',
+ )
+ 
+ pkg_mod = import('pkgconfig')

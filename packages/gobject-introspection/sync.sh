@@ -45,7 +45,7 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
-  patch -Np1 -i "$PKG_DIR/001-gobject-introspection-fix-name-suffix-of-static-library.diff"
+  patch -Np1 -i "$PKG_DIR/001-gobject-introspection-fix-library-suffix-on-msvc.diff"
 }
 
 . $ROOT_DIR/common.sh

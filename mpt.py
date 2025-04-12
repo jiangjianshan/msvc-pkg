@@ -69,7 +69,7 @@ def get_dependencies(pkg_with_step, deps, rich_tree):
                     dep_step = 'a'
                 if dep_with_step not in deps[pkg_with_step]:
                     deps[pkg_with_step].append(dep_with_step)
-                    child_tree = rich_tree.add(dep_with_step, guide_style="bold bright_blue")
+                    child_tree = rich_tree.add('🌿' + dep_with_step, guide_style="bold bright_blue")
                     get_dependencies(dep_with_step, deps, child_tree)
 
 
@@ -299,7 +299,7 @@ def build_pkg(arch, deps, pkg_with_step, fail_times):
                     file_handler.setFormatter(formatter)
                     logger.addHandler(file_handler)
                     if run_script(proc_env, pkgs_dir, pkg, pkg_conf['steps'][pkg_step]['run']):
-                        logger.debug(f"Excute step '{pkg_step}' of '{pkg}' was success")
+                        logger.debug(f"Execute step '{pkg_step}' of '{pkg}' was success")
                         if arch not in installed_conf.keys():
                             installed_conf[arch] = {}
                         if pkg not in installed_conf[arch]:
@@ -371,7 +371,7 @@ def traverse_pkgs(arch, pkgs):
                 pkg_with_step = pkg_name
                 if step > 'a':
                     pkg_with_step += ':' + step
-                rich_tree = RichTree(pkg_with_step, guide_style="bold bright_blue")
+                rich_tree = RichTree('🌳' + pkg_with_step, guide_style="bold bright_blue", highlight=True)
                 get_dependencies(pkg_with_step, deps, rich_tree)
                 logger.debug(f"Dependencies tree of package '{pkg_name}' on step '{step}'")
                 console.print(rich_tree)
@@ -398,12 +398,11 @@ def list_pkgs(arch):
     if os.path.exists(installed_file):
         with open(installed_file, 'r', newline='', encoding="utf-8") as f:
             installed_conf = yaml.safe_load(f)
-    table = Table(title="Summary of avaiable packages")
-    table.add_column("No.", justify="left", style="cyan", no_wrap=True)
+    table = Table(title="📋Summary of avaiable packages")
+    table.add_column("No.", justify="center", style="cyan", no_wrap=True)
     table.add_column("Name", style="magenta")
     table.add_column("Version", style="green")
-    table.add_column("URL", style="magenta")
-    table.add_column("Installed", justify="left", style="green")
+    table.add_column("Installed", justify="center", style="green")
     for pkg in os.listdir(pkgs_dir):
         if pkg == 'gnulib' or pkg == 'BuildTools':
             continue
@@ -412,17 +411,16 @@ def list_pkgs(arch):
             pkg_conf = yaml.safe_load(f)
         pkg_name = pkg_conf['name']
         pkg_ver = str(pkg_conf['version'])
-        pkg_url = pkg_conf['url']
-        is_installed = '[bold red]No'
+        is_installed = '❌'
         if arch in installed_conf.keys():
           if pkg in installed_conf[arch].keys():
               installed_ver = str(installed_conf[arch][pkg]['version'])
               if pkg_ver == installed_ver:
-                  is_installed = 'Yes'
-        if is_installed != 'Yes':
-            table.add_row(str(i), '[bold red]'+pkg_name, '[bold red]'+pkg_ver, '[bold red]'+pkg_url, is_installed)
+                  is_installed = '✅'
+        if is_installed != '✅':
+            table.add_row(str(i), '[bold red]'+pkg_name, '[bold red]'+pkg_ver, is_installed)
         else:
-            table.add_row(str(i), pkg_name, pkg_ver, pkg_url, is_installed)
+            table.add_row(str(i), pkg_name, pkg_ver, is_installed)
         i += 1
     console.print(table)
 
@@ -433,7 +431,7 @@ SafeDumper.add_representer(
 )
 root_dir = os.getcwd()
 pkgs_dir = os.path.join(root_dir, 'packages')
-console = Console()
+console = Console(force_terminal=True, color_system="truecolor")
 logger = logging.getLogger('rich')
 logger.setLevel(logging.DEBUG)
 log_format = "%(message)s"

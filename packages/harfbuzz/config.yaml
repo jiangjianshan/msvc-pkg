@@ -19,4 +19,4 @@ steps:
       - freetype
       - icu4c
       - libpng
-    run: build.bat
+    run: build-2.bat

@@ -51,6 +51,7 @@ patch_package()
   #    libintl.lib error LNK2005: DllMain already defined in gdk
   patch -Np1 -i "$PKG_DIR/001-gdk-pixbuf-fix-dllmain-already-defined-issue.diff"
   patch -Np1 -i "$PKG_DIR/002-gdk-pixbuf-fix-static-deps.diff"
+  patch -Np1 -i "$PKG_DIR/003-gdk-pixbuf-fix-library-suffix-on-msvc.diff"
 }
 
 . $ROOT_DIR/common.sh

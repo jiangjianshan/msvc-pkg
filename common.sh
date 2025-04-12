@@ -121,6 +121,9 @@ wget_sync()
       fi
     fi
   fi
+  if [[ $(type -t download_extras) == function ]]; then
+    download_extras
+  fi
 }
 
 git_sync()

@@ -1,0 +1,49 @@
+diff -urN dav1d-1.5.0-orig/src/meson.build dav1d-1.5.0/src/meson.build
+--- dav1d-1.5.0-orig/src/meson.build	2024-10-18 07:02:57.000000000 +0800
++++ dav1d-1.5.0/src/meson.build	2025-04-08 17:30:10.178146300 +0800
+@@ -342,6 +342,7 @@
+         c_args : ['-DBITDEPTH=@0@'.format(bitdepth)] + libdav1d_flags,
+         install : false,
+         build_by_default : false,
++        name_suffix : 'lib',
+     ).extract_all_objects(recursive: true)
+ endforeach
+ 
+@@ -356,6 +357,7 @@
+             c_args : ['-DBITDEPTH=@0@'.format(bitdepth)] + libdav1d_flags + arch_flags.get(subarch, []),
+             install : false,
+             build_by_default : false,
++            name_suffix : 'lib',
+         ).extract_all_objects(recursive: true)
+     endforeach
+ endforeach
+diff -urN dav1d-1.5.0-orig/tests/meson.build dav1d-1.5.0/tests/meson.build
+--- dav1d-1.5.0-orig/tests/meson.build	2024-10-18 07:02:57.000000000 +0800
++++ dav1d-1.5.0/tests/meson.build	2025-04-08 17:30:19.771136700 +0800
+@@ -59,6 +59,7 @@
+             c_args: ['-DBITDEPTH=@0@'.format(bitdepth)],
+             install: false,
+             build_by_default: false,
++            name_suffix: 'lib',
+         )
+         checkasm_bitdepth_objs += checkasm_bitdepth_lib.extract_all_objects(recursive: true)
+     endforeach
+diff -urN dav1d-1.5.0-orig/tools/meson.build dav1d-1.5.0/tools/meson.build
+--- dav1d-1.5.0-orig/tools/meson.build	2024-10-18 07:02:57.000000000 +0800
++++ dav1d-1.5.0/tools/meson.build	2025-04-08 17:30:36.666901900 +0800
+@@ -57,6 +57,7 @@
+     include_directories : dav1d_inc_dirs,
+     install : false,
+     build_by_default : false,
++    name_suffix : 'lib',
+ )
+ 
+ dav1d_output_objs = static_library('dav1d_output',
+@@ -65,6 +66,7 @@
+     include_directories : dav1d_inc_dirs,
+     install : false,
+     build_by_default : false,
++    name_suffix : 'lib',
+ )
+ 
+ 

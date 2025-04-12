@@ -41,13 +41,21 @@ SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 ARCHIVE=$(basename -- "$PKG_URL")
 EXT=${ARCHIVE#$(echo "$ARCHIVE" | sed 's/\.[^[:digit:]].*$//g')}
 
+download_extras()
+{
+  cd "$SRC_DIR" || exit 1
+  # NOTE: If here can't download metis-4.0.3.tar.gz from wget, you can try to use web browser to download it.
+  #       And then following the uncompress and patch steps inside .get.Metis
+  if [[ ! -d "metis-4.0" ]]; then
+    echo "Downloading metis of $PKG_NAME $PKG_VER"
+    ./get.Metis || exit 1
+  fi
+}
+
 patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR" || exit 1
-  # NOTE: If here can't download metis-4.0.3.tar.gz from wget, you can try to use web browser to download it.
-  #       And then following the uncompress and patch steps inside .get.Metis
-  ./get.Metis
 
   # XXX: libtool don't have options can set the naming style of static and
   #      shared library. Here is only a workaround.

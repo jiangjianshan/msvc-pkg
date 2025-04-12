@@ -1,5 +1,5 @@
 # 🚀 msvc-pkg
-`msvc-pkg` consists solely of scripts, patches, and YAML configuration files. Leveraging MSVC/MSVC-like command-line toolchains, it enables users to compile each library from source within the `packages` directory of this repository
+`msvc-pkg` consists solely of 📜scripts, 🔧patches, and 📄YAML configuration files. Leveraging MSVC/MSVC-like command-line 🛠️toolchains, it enables users to compile each library from source within the `packages` directory of this repository
 
 **Native Windows Compilation | Compiler | Dependency Managment | Colorized Output**  
 [![Build Systems](https://img.shields.io/badge/Build-CMake%20|%20Meson%20|%20Autotools%20|%20Nmake%20|%20MSBuild-blue)]()
@@ -9,47 +9,55 @@
 
 ## ✨ Key Features
 
-- 🛠️ Compiling Autotools projects requires no additional Cygwin/MSYS2 installations. It leverages Git for Windows' built-in minimal MSYS2 environment and ~20-30MB of Autotools dependencies
-- 🤖 Automatically resolves build dependencies and detects circular dependencies based on each library's `config.yaml` configuration
-- 🔧 A MinGW-w64-independent compilation environment that fully relies on MSVC/MSVC-like toolchains to generate native Windows binaries
-- 🛠️ The import library suffix for dynamic link libraries (DLLs) will be .lib instead of .dll.lib if using libtool in that library
-- 🌳 Each library's dependency tree is visualized as a hierarchical diagram in the terminal prior to compilation
-- 🌈 Each library's build output is rendered in rich and vibrant colors in the terminal
+- 🛠️ Lightweight UNIX-like environment for autotools projects which no need to install additional Cygwin/MSYS2
+- 🤖 Library configuration-aware automatic interdependency resolution
+- 🔄 Auto-detected inter-library cyclic dependencies
+- 🔧 Fully relies on MSVC/MSVC-like toolchains to generate native Windows binaries
+- 🛠️ Patched libtool to make library suffix is .lib but not .dll.lib or .dll.a
+- 🌳 Nice view of dependency tree for each library on terminal
+- 🌈 Rich and vibrant colors in the terminal during display output
 - 🚧 Each library's build environment (UNIX-like or Windows) is isolated within the terminal
-- 🔌 Delivers improved Visual C++ wrappers for GCC interoperability and migrated Intel MPI compiler encapsulation utilities
+- 🔌 Enhanced compiler's wrappers for C/C++/Fortran/MPI and etc
+- 🛠️ Automatically or interactively install missing runtime dependencies
 
-## 📦 System Requirements
-### 🖥️ Core Dependencies
-| Component | Minimum Version | Notes |
-|-----------|-----------------|-------|
-| [Visual C++ Build Tools](https://visualstudio.microsoft.com/zh-hans/downloads/?q=build+tools) | 2019+ | MSVC toolchain base |
-| [Intel oneAPI Compilers](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) | 2024.2.1 | C++/Fortran optimization |
-| [Intel MPI Library](https://www.intel.com/content/www/us/en/developer/tools/oneapi/mpi-library.html) | 2021.13 | Parallel computing |
-| [Rust for Windows](https://www.rust-lang.org/tools/install) | 1.85+ | Rust bindings |
-| [Git for Windows](https://git-scm.com/download/win) | 2.40+ | Git and minimal MSYS2 environment |
-| [Python](https://www.python.org/downloads/) | 3.9+ | 📜`mpt.py` is written in Python |
-| [CMake](https://cmake.org/download/) | 3.11+ | CMake is a powerful and comprehensive solution for managing the software build process |
-| [wget](https://eternallybored.org/misc/wget/) | 1.21.4+ | download archive file of libraries |
-| [ninja](https://ninja-build.org/) | 1.12.1+ | Ninja is a small build system with a focus on speed |
-| [meson](https://mesonbuild.com/) | 1.6.0+ | Meson is a fast and user friendly build system that supports multiple platforms and languages |
-| [yq](https://github.com/mikefarah/yq) | 4.45.1+ | A lightweight and portable command-line YAML, JSON and XML processor |
-| [Windows 10/11 SDK](https://developer.microsoft.com/windows/downloads/) | 10.0.20348.0+ | Windows API support |
+## System Requirements
+- [Visual C++ Build Tools and Windows 10/11 SDK](https://visualstudio.microsoft.com/zh-hans/downloads/?q=build+tools)
+- [Intel oneAPI DPC++/C++ Compiler 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html)
+- [Intel Fortran Compiler Classic and Intel Fortran Compiler 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler-download.html)
+- [Intel MPI Library](https://www.intel.com/content/www/us/en/developer/tools/oneapi/mpi-library-download.html)
+- [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html) (optional)
+- [Rust for Windows](https://www.rust-lang.org/tools/install)
+- [Git for Windows](https://git-scm.com/download/win)
+- [Python 3](https://www.python.org/downloads/)
+- [CMake](https://cmake.org/download/)
+- [wget](https://eternallybored.org/misc/wget/)
+- [ninja](https://ninja-build.org/)
+- [meson](https://mesonbuild.com/)
+- [yq](https://github.com/mikefarah/yq)
+- [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit) (optional)
+- [Windows Terminal](https://learn.microsoft.com/en-us/windows/terminal/) (optional)
+ > 💡 Pro Tip: Most of requirements will be automatically installed via run `mpt` with or without parameters
 
-### 🔧 Optional Dependencies
-| Component | Purpose | Recommended Version |
-|-----------|---------|---------------------|
-| [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit) | GPU acceleration | 12.2+ |
-| [Windows Terminal](https://learn.microsoft.com/windows/terminal/) | Recommend for best experience | 1.18+ |
+## 📜 Special Notes
 
-> 💡 Pro Tip: Most dependencies can be auto-installed via run `mpt` in windows terminal
+- **Intel Compiler Support**: 2024.2.1 is the final version supporting `ifort`
+- **CUDA Toolkit**: it is around 5.78GB space need, you can skip it if the libraries you build don't need this dependency
+- **Intel MKL**: it is around 6.5GB space need, you can skip it if the libraries you build don't need this dependency
+- **Internet connection**: msvc-pkg automatically checks for missing runtime dependencies, so ensure a stable internet connection is maintained during runtime
+- **Saving your time**: with the poor documents or not so friendly on Win32 platform, many libraries aren't so easy to build with MSVC/MSVC-like toolset. But `msvc-pkg` help you a lot
 
 ## 🚀 Getting Started
 
-### Initial Setup
-1. Clone repository:
+### 🏗️ Initial Setup
+1. Synchronize the github repository:
    ```bash
+   # Initial cloning
    git clone https://github.com/jiangjianshan/msvc-pkg.git
+   
+   # Commands below are dedicated for future content synchronization
    cd msvc-pkg
+   git fetch origin main
+   git reset --hard origin/main
    ```
 
 2. Create `settings.yaml` to define default install prefix of some libraries (optional, but it is good to have):
@@ -67,17 +75,17 @@
 
   > 💡 Pro Tip: to reduce usage complexity, the --prefix option is replaced with a settings.yaml file to define installation paths for individual libraries. And `settings.yaml` must be on the root of `msvc-pkg` folder
 
-## 🚀 Basic Commands
+### 🖥️ Basic Commands
 
 | Command                        | Description                                                                 | Example Usage               |
 |--------------------------------|-----------------------------------------------------------------------------|-----------------------------|
 | `mpt --list`                   | List all available packages                                                 | `mpt --list`                |
-| `mpt`                          | Build **all libraries** for default architecture (x64)                      | `mpt`                       |
+| `mpt`                          | Build all libraries for default architecture (x64)                          | `mpt`                       |
 | `mpt <arch>`                   | Build all libraries for specified architecture (`x86`/`x64`)                | `mpt x86`                   |
+| `mpt <arch> <pkg1> <pkg2>...`  | Build specific packages with dependencies for specified architecture        | `mpt x86 ncurses gettext`   |
 | `mpt <pkg1> <pkg2>...`         | Build specific packages with dependencies                                   | `mpt ncurses gettext`       |
 
-
-## 📦 How To Add New Package
+## ➕ How To Add New Package
 
 1. Create package directory in `packages/`
 2. Add required files:
@@ -98,13 +106,5 @@ We welcome contributions through:
 - 📦 New package additions
 - 📚 Documentation improvements
 
-**Contribution Workflow:**
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/awesome-feature`)
-3. Commit changes (`git commit -am 'Add awesome feature'`)
-4. Push branch (`git push origin feature/awesome-feature`)
-5. Create Pull Request
-
-## 📜 Special Notes
-
-- **Intel Compiler Support**: 2024.2.1 is the final version supporting `ifort`
+### 🏆 Contributors
+[![Contributors](https://contrib.rocks/image?repo=jiangjianshan/msvc-pkg)](https://github.com/jiangjianshan/msvc-pkg/graphs/contributors)

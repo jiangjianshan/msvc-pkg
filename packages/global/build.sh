@@ -81,41 +81,41 @@ configure_stage()
   # 3. Taken care of the logic of func_resolve_sysroot() and func_replace_sysroot()
   #    in ltmain.sh, otherwise may have '-L=*' in the filed of 'dependency_libs' in
   #    *.la. So don't set --with-sysroot if --libdir has been set
-  AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
-  CC="$ROOT_DIR/wrappers/compile cl"                                           \
-  CFLAGS="$C_OPTS"                                                             \
-  CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
-  CPPFLAGS="$C_DEFS -I${NCURSES_PREFIX:-$_PREFIX}/include/ncurses"             \
-  DLLTOOL="link -verbose -dll"                                                 \
-  LD="link -nologo"                                                            \
-  LIBS="-lShell32 -lzdll -licuuc -licuin -llibsqlite3"                         \
-  LT_SYS_LIBRARY_PATH="$(cygpath -u "$PREFIX")"                                \
-  NM="dumpbin -nologo -symbols"                                                \
-  PKG_CONFIG="/usr/bin/pkg-config"                                             \
-  RANLIB=":"                                                                   \
-  RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                \
-  STRIP=":"                                                                    \
-  WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                           \
-  ../configure --host="$HOST_TRIPLET"                                          \
-    --prefix="$PREFIX"                                                         \
-    --bindir="$PREFIX/bin"                                                     \
-    --includedir="$PREFIX/include"                                             \
-    --libdir="$PREFIX/lib"                                                     \
-    --datarootdir="$PREFIX/share"                                              \
-    --enable-static                                                            \
-    --enable-shared                                                            \
-    --with-included-ltdl                                                       \
-    --with-ncurses="$(cygpath -u "${NCURSES_PREFIX:-$_PREFIX}")"               \
-    --with-sqlite3="$(cygpath -u "${SQLITE_PREFIX:-$_PREFIX}")"                \
-    --with-sco                                                                 \
-    --with-universal-ctags=ctags                                               \
-    ac_header_dirent=dirent.h                                                  \
-    ac_cv_header_dirent_h=yes                                                  \
-    ac_cv_func_opendir=yes                                                     \
-    ac_cv_func_readdir=yes                                                     \
-    ac_cv_func_closedir=yes                                                    \
-    ac_cv_func_rewinddir=yes                                                   \
-    ac_cv_func_snprintf=yes                                                    \
+  AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                             \
+  CC="$ROOT_DIR/wrappers/compile cl"                                                     \
+  CFLAGS="$C_OPTS"                                                                       \
+  CPP="$ROOT_DIR/wrappers/compile cl -E"                                                 \
+  CPPFLAGS="$C_DEFS -I$(cygpath -u "${NCURSES_PREFIX:-$_PREFIX}")/include/ncurses"       \
+  DLLTOOL="link -verbose -dll"                                                           \
+  LD="link -nologo"                                                                      \
+  LIBS="-lShell32 -lzdll -licuuc -licuin -llibsqlite3"                                   \
+  LT_SYS_LIBRARY_PATH="$(cygpath -u "$PREFIX")"                                          \
+  NM="dumpbin -nologo -symbols"                                                          \
+  PKG_CONFIG="/usr/bin/pkg-config"                                                       \
+  RANLIB=":"                                                                             \
+  RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                          \
+  STRIP=":"                                                                              \
+  WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                     \
+  ../configure --host="$HOST_TRIPLET"                                                    \
+    --prefix="$PREFIX"                                                                   \
+    --bindir="$PREFIX/bin"                                                               \
+    --includedir="$PREFIX/include"                                                       \
+    --libdir="$PREFIX/lib"                                                               \
+    --datarootdir="$PREFIX/share"                                                        \
+    --enable-static                                                                      \
+    --enable-shared                                                                      \
+    --with-included-ltdl                                                                 \
+    --with-ncurses="$(cygpath -u "${NCURSES_PREFIX:-$_PREFIX}")"                         \
+    --with-sqlite3="$(cygpath -u "${SQLITE_PREFIX:-$_PREFIX}")"                          \
+    --with-sco                                                                           \
+    --with-universal-ctags=ctags                                                         \
+    ac_header_dirent=dirent.h                                                            \
+    ac_cv_header_dirent_h=yes                                                            \
+    ac_cv_func_opendir=yes                                                               \
+    ac_cv_func_readdir=yes                                                               \
+    ac_cv_func_closedir=yes                                                              \
+    ac_cv_func_rewinddir=yes                                                             \
+    ac_cv_func_snprintf=yes                                                              \
     gt_cv_locale_zh_CN=none || exit 1
 }
 
@@ -157,10 +157,7 @@ patch_stage()
 build_stage()
 {
   echo "Building $PKG_NAME $PKG_VER"
-  cd "$BUILD_DIR" || exit 1
-  if ! make -j$(nproc); then
-    exit 1
-  fi
+  cd "$BUILD_DIR" && make -j$(nproc)
 }
 
 install_package()

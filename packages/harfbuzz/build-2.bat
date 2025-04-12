@@ -57,32 +57,20 @@ rem ============================================================================
 :configure_stage
 call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
-mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
-rem NOTE: 'libvmaf.h' can't be found during build. This can be solved to patch CMake files or
-rem       add '-I' option here
-if not defined VMAF_PREFIX set VMAF_PREFIX=%_PREFIX%
-cmake -G "Ninja"                                                                                     ^
-  -DBUILD_SHARED_LIBS=ON                                                                             ^
-  -DCMAKE_BUILD_TYPE=Release                                                                         ^
-  -DCMAKE_C_COMPILER=cl                                                                              ^
-  -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS% -I!VMAF_PREFIX!/include/libvmaf"                                ^
-  -DCMAKE_C_STANDARD_LIBRARIES="vmaf.lib pthread.lib"                                                ^
-  -DCMAKE_CXX_COMPILER=cl                                                                            ^
-  -DCMAKE_CXX_FLAGS="-std:c++20 -EHsc %C_OPTS% %C_DEFS% -I!VMAF_PREFIX!/include/libvmaf"             ^
-  -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                                                  ^
-  -DCMAKE_CXX_STANDARD_LIBRARIES="vmaf.lib pthread.lib"                                              ^
-  -DCMAKE_POLICY_DEFAULT_CMP0074=OLD                                                                 ^
-  -DENABLE_DOCS=OFF                                                                                  ^
-  -DENABLE_EXAMPLES=OFF                                                                              ^
-  -DENABLE_NASM=ON                                                                                   ^
-  -DENABLE_TESTS=OFF                                                                                 ^
-  -DCONFIG_TENSORFLOW_LITE=OFF                                                                       ^
-  -DCONFIG_TUNE_VMAF=1                                                                               ^
-  -DCONFIG_AV1_DECODER=1                                                                             ^
-  -DCONFIG_ML_PART_SPLIT=0                                                                           ^
-  -DCONFIG_ENTROPY_STATS=1                                                                           ^
-  -DCONFIG_MULTITHREAD=1                                                                             ^
-  .. || exit 1
+mkdir "%BUILD_DIR%"
+cd "%SRC_DIR%"
+meson setup "%BUILD_DIR%"                                                      ^
+  --buildtype=release                                                          ^
+  --prefix="%PREFIX%"                                                          ^
+  --mandir="%PREFIX%\share\man"                                                ^
+  -Dc_std=c17                                                                  ^
+  -Dc_args="%C_OPTS% %C_DEFS%"                                                 ^
+  -Dcpp_std=c++17                                                              ^
+  -Dcpp_args="%C_OPTS% %C_DEFS%"                                               ^
+  -Ddefault_library=shared                                                     ^
+  -Dc_winlibs="Ole32.lib,User32.lib"                                           ^
+  -Dcpp_winlibs="Ole32.lib,User32.lib"                                         ^
+  -Dtests=disabled || exit 1
 exit /b 0
 
 rem ==============================================================================
@@ -99,7 +87,9 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%\lib\pkgconfig\aom.pc"
+for %%f in ("%PREFIX%\lib\pkgconfig\harfbuzz*.pc") do (
+  sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%%~f"
+)
 call :clean_build
 exit /b 0
 

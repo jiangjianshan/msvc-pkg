@@ -1,0 +1,30 @@
+diff -urN gdk-pixbuf-2.42.12-orig/gdk-pixbuf/meson.build gdk-pixbuf-2.42.12/gdk-pixbuf/meson.build
+--- gdk-pixbuf-2.42.12-orig/gdk-pixbuf/meson.build	2024-05-15 10:15:41.000000000 +0800
++++ gdk-pixbuf-2.42.12/gdk-pixbuf/meson.build	2025-04-08 17:40:13.024833100 +0800
+@@ -161,6 +161,7 @@
+                          sources,
+                          gdkpixbuf_enum_h,
+                          dependencies: loaders_deps + gdk_pixbuf_deps,
++                         name_suffix: 'lib',
+                          include_directories: [ root_inc, gdk_pixbuf_inc ],
+                          c_args: common_cflags + gdk_pixbuf_cflags + cflags + cflag_for_included_loader)
+ 
+@@ -186,6 +187,7 @@
+                          win_loader_sources,
+                          gdkpixbuf_enum_h,
+                          dependencies: loaders_deps + gdk_pixbuf_deps,
++                         name_suffix: 'lib',
+                          include_directories: [ root_inc, gdk_pixbuf_inc ],
+                          c_args: common_cflags + gdk_pixbuf_cflags + cflag_for_included_loader)
+ 
+diff -urN gdk-pixbuf-2.42.12-orig/gdk-pixbuf/pixops/meson.build gdk-pixbuf-2.42.12/gdk-pixbuf/pixops/meson.build
+--- gdk-pixbuf-2.42.12-orig/gdk-pixbuf/pixops/meson.build	2024-05-15 10:15:41.000000000 +0800
++++ gdk-pixbuf-2.42.12/gdk-pixbuf/pixops/meson.build	2025-04-08 17:35:41.420622800 +0800
+@@ -3,6 +3,7 @@
+   pixops_sources,
+   include_directories: root_inc,
+   dependencies: gdk_pixbuf_deps,
++  name_suffix: 'lib',
+ )
+ 
+ pixops_dep = declare_dependency(

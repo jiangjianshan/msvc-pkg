@@ -1,0 +1,11 @@
+diff -urN libraqm-0.10.2-orig/src/meson.build libraqm-0.10.2/src/meson.build
+--- libraqm-0.10.2-orig/src/meson.build	2024-09-22 21:19:53.000000000 +0800
++++ libraqm-0.10.2/src/meson.build	2025-04-08 20:07:36.439144900 +0800
+@@ -47,6 +47,7 @@
+     'raqm.c',
+     'raqm.h',
+     dependencies: deps,
++    name_suffix: 'lib',
+     c_args: ['-DRAQM_TESTING', '-DHAVE_CONFIG_H'],
+     install: false,
+ )

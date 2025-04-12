@@ -75,7 +75,7 @@ configure_stage()
   CC="$ROOT_DIR/wrappers/compile cl"                                           \
   CFLAGS="$C_OPTS"                                                             \
   CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
-  CPPFLAGS="$C_DEFS -I${NCURSES_PREFIX:-$_PREFIX}/include/ncurses"             \
+  CPPFLAGS="$C_DEFS"                                                           \
   CXX="$ROOT_DIR/wrappers/compile cl"                                          \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
   CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \

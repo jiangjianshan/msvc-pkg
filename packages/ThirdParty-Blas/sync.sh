@@ -41,19 +41,24 @@ SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 ARCHIVE=$(basename -- "$PKG_URL")
 EXT=${ARCHIVE#$(echo "$ARCHIVE" | sed 's/\.[^[:digit:]].*$//g')}
 
-patch_package()
+download_extras()
 {
-  echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR" || exit 1
   if [ ! -f "scopy.f" ]; then
     # NOTE: The archive from 'www.netlib.org/blas/blas.tgz' can't be compile successfully, but
     #       the one from 'coin-or-tools.github.io/ThirdParty-Blas' can.
     ./get.Blas
   fi
+}
+
+patch_package()
+{
+  echo "Patching package $PKG_NAME $PKG_VER"
+  cd "$SRC_DIR" || exit 1
   patch -Np1 -i "$PKG_DIR/001-ThirdParty-Blas-fix-build-shared-library-on-msvc.diff"
   patch -Np1 -i "$PKG_DIR/002-ThirdParty-Blas-Add-missed-files-to-compile.diff"
 
-  cd $RELS_DIR/BuildTools
+  cd "$RELS_DIR/BuildTools" || exit 1
   export COIN_AUTOTOOLS_DIR=/usr
   WANT_AUTOCONF='2.72' WANT_AUTOMAKE='1.17' ./run_autotools $SRC_DIR
 
