@@ -1,0 +1,9 @@
+name: SPIRV-Tools
+version: main
+url: https://github.com/KhronosGroup/SPIRV-Tools.git
+sha256:
+steps:
+  a:
+    dependencies:
+      - winpthreads
+    run: build.bat

@@ -1,0 +1,38 @@
+diff -urN gst-plugins-base-1.26.0-orig/gst-libs/gst/audio/meson.build gst-plugins-base-1.26.0/gst-libs/gst/audio/meson.build
+--- gst-plugins-base-1.26.0-orig/gst-libs/gst/audio/meson.build	2025-03-12 04:14:44.000000000 +0800
++++ gst-plugins-base-1.26.0/gst-libs/gst/audio/meson.build	2025-04-08 19:37:15.941964200 +0800
+@@ -118,6 +118,7 @@
+     c_args : gst_plugins_base_args + [sse_args],
+     include_directories : [configinc, libsinc],
+     dependencies : [gst_base_dep],
++    name_suffix : 'lib',
+     pic : true,
+     install : false
+   )
+@@ -131,6 +132,7 @@
+     c_args : gst_plugins_base_args + [sse2_args],
+     include_directories : [configinc, libsinc],
+     dependencies : [gst_base_dep],
++    name_suffix : 'lib',
+     pic : true,
+     install : false
+   )
+@@ -145,6 +147,7 @@
+     c_args : gst_plugins_base_args + [sse41_args],
+     include_directories : [configinc, libsinc],
+     dependencies : [gst_base_dep],
++    name_suffix : 'lib',
+     pic : true,
+     install : false
+   )
+diff -urN gst-plugins-base-1.26.0-orig/tests/examples/gl/gtk/meson.build gst-plugins-base-1.26.0/tests/examples/gl/gtk/meson.build
+--- gst-plugins-base-1.26.0-orig/tests/examples/gl/gtk/meson.build	2025-03-12 04:14:44.000000000 +0800
++++ gst-plugins-base-1.26.0/tests/examples/gl/gtk/meson.build	2025-04-08 19:37:28.474809900 +0800
+@@ -14,6 +14,7 @@
+   c_args : gst_plugins_base_args + extra_c_args,
+   include_directories : [configinc, libsinc],
+   dependencies : [gst_base_dep, video_dep, gtk_dep, gstgl_dep],
++  name_suffix : 'lib', 
+   install : false)
+ 
+ gstgtkhelper_dep = declare_dependency(link_with: gstgtkhelper,

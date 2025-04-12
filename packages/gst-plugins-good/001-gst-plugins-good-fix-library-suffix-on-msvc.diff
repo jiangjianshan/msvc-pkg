@@ -1,0 +1,33 @@
+diff -urN gst-plugins-good-1.26.0-orig/ext/adaptivedemux2/meson.build gst-plugins-good-1.26.0/ext/adaptivedemux2/meson.build
+--- gst-plugins-good-1.26.0-orig/ext/adaptivedemux2/meson.build	2025-03-12 04:14:44.000000000 +0800
++++ gst-plugins-good-1.26.0/ext/adaptivedemux2/meson.build	2025-04-08 19:40:16.602948700 +0800
+@@ -161,6 +161,7 @@
+     adaptivedemux2_static = static_library('gstadaptivedemux2',
+       c_args: [adaptive_args, soup_linked_target_args],
+       dependencies: [adaptive_deps, soup_linked_target_deps],
++      name_suffix: 'lib',
+       kwargs: adaptive_kwargs)
+   endif
+   if default_library in ['shared', 'both']
+diff -urN gst-plugins-good-1.26.0-orig/ext/soup/meson.build gst-plugins-good-1.26.0/ext/soup/meson.build
+--- gst-plugins-good-1.26.0-orig/ext/soup/meson.build	2025-03-12 04:14:44.000000000 +0800
++++ gst-plugins-good-1.26.0/ext/soup/meson.build	2025-04-08 19:40:23.531849300 +0800
+@@ -65,6 +65,7 @@
+     gstsouphttpsrc_static = static_library('gstsoup',
+       c_args : soup_library_c_args + soup_linked_target_args,
+       dependencies : soup_library_deps + soup_linked_target_deps,
++      name_suffix: 'lib',
+       kwargs: soup_library_kwargs,
+     )
+   endif
+diff -urN gst-plugins-good-1.26.0-orig/tests/check/meson.build gst-plugins-good-1.26.0/tests/check/meson.build
+--- gst-plugins-good-1.26.0-orig/tests/check/meson.build	2025-03-12 04:14:44.000000000 +0800
++++ gst-plugins-good-1.26.0/tests/check/meson.build	2025-04-08 19:40:32.437111400 +0800
+@@ -8,6 +8,7 @@
+   c_args : gst_plugins_good_args + ['-DGST_USE_UNSTABLE_API'],
+   include_directories : [configinc],
+   dependencies : [gstcheck_dep],
++  name_suffix: 'lib',
+   install : false)
+ 
+ libparser_dep = declare_dependency(link_with : libparser,

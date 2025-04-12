@@ -1,0 +1,27 @@
+diff -urN libepoxy-1.5.10-orig/test/meson.build libepoxy-1.5.10/test/meson.build
+--- libepoxy-1.5.10-orig/test/meson.build	2022-02-17 20:56:12.000000000 +0800
++++ libepoxy-1.5.10/test/meson.build	2025-04-08 20:04:30.564684500 +0800
+@@ -45,6 +45,7 @@
+   egl_common_lib = static_library('egl_common',
+                                   sources: egl_common_sources,
+                                   dependencies: libepoxy_dep,
++                                  name_suffix: 'lib',
+                                   include_directories: libepoxy_inc,
+                                   c_args: common_cflags,
+                                   install: false)
+@@ -85,6 +86,7 @@
+   glx_common_lib = static_library('glx_common',
+                                   sources: glx_common_sources,
+                                   dependencies: libepoxy_dep,
++                                  name_suffix: 'lib',
+                                   include_directories: libepoxy_inc,
+                                   c_args: common_cflags,
+                                   install: false)
+@@ -133,6 +135,7 @@
+   wgl_common_lib = static_library('wgl_common',
+                                   sources: wgl_common_sources,
+                                   dependencies: libepoxy_dep,
++                                  name_suffix: 'lib',
+                                   include_directories: libepoxy_inc,
+                                   c_args: common_cflags,
+                                   install: false)
