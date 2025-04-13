@@ -1,0 +1,8 @@
+name: Vulkan-Headers
+version: main
+url: https://github.com/KhronosGroup/Vulkan-Headers.git
+sha256:
+steps:
+  a:
+    dependencies:
+    run: build.bat

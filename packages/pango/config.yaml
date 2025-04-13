@@ -12,7 +12,8 @@ steps:
       - fontconfig
       - freetype
       - fribidi
-      - harfbuzz:a
+      - harfbuzz:b
+      - help2man
       - libpng
       - libthai
     run: build.bat

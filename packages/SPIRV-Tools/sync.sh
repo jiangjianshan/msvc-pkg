@@ -43,6 +43,11 @@ patch_package()
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
   python utils/git-sync-deps
+
+  echo "Patching CMakeLists.txt on top level"
+  sed                                                                                                \
+    -e 's|set(${PATH} ${TARGET}/cmake)|set(${PATH} ${CMAKE_INSTALL_LIBDIR}/cmake/${TARGET})|g'       \
+    -i CMakeLists.txt
 }
 
 . $ROOT_DIR/common.sh

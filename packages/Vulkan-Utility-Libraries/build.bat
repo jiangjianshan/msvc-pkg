@@ -61,12 +61,9 @@ mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
 cmake -G "Ninja"                                                               ^
   -DBUILD_SHARED_LIBS=ON                                                       ^
   -DCMAKE_BUILD_TYPE=Release                                                   ^
-  -DCMAKE_C_COMPILER=cl                                                        ^
-  -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS%"                                          ^
   -DCMAKE_CXX_COMPILER=cl                                                      ^
   -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
-  -DSPIRV_SKIP_TESTS=ON                                                        ^
   .. || exit 1
 exit /b 0
 
@@ -84,9 +81,6 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
-for %%f in ("%PREFIX%\lib\pkgconfig\SPIRV-Tools*.pc") do (
-  sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%%~f"
-)
 call :clean_build
 exit /b 0
 

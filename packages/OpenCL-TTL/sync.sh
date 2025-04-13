@@ -36,18 +36,15 @@ fi
 ROOT_DIR=$(cygpath -u "$ROOT_DIR")
 PKG_DIR=$ROOT_DIR/packages/$PKG_NAME
 RELS_DIR=$ROOT_DIR/releases
-TAGS_DIR=$ROOT_DIR/tags
-SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
-ARCHIVE=$(basename -- "$PKG_URL")
-EXT=${ARCHIVE#$(echo "$ARCHIVE" | sed 's/\.[^[:digit:]].*$//g')}
+SRC_DIR=$RELS_DIR/$PKG_NAME
 
 patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
-  cd "$SRC_DIR"
-  patch -Np1 -i "$PKG_DIR/001-cairo-fix-library-suffix-on-msvc.diff"
-  patch -Np1 -i "$PKG_DIR/002-cairo-compiled-with-libatomic_ops-on-msvc.diff"
+  cd "$SRC_DIR" || exit 1
+  # NOTE: to avoid delete the whole include folder of $PREFIX
+  sed '/file (REMOVE_RECURSE ${install_directory})/d' -i CMakeLists.txt
 }
 
 . $ROOT_DIR/common.sh
-wget_sync $PKG_URL $SRC_DIR $PKG_NAME-$PKG_VER$EXT
+git_sync $PKG_URL $SRC_DIR $PKG_NAME $PKG_VER

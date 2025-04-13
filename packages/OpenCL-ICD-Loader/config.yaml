@@ -1,0 +1,8 @@
+name: OpenCL-ICD-Loader
+version: 2024.10.24
+url: https://github.com/KhronosGroup/OpenCL-ICD-Loader/archive/refs/tags/v2024.10.24.tar.gz
+sha256: 95f2f0cda375b13d2760290df044ebea9c6ff954a7d7faa0867422442c9174dc
+steps:
+  a:
+    dependencies:
+    run: build.bat

@@ -45,8 +45,7 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
-  patch -Np1 -i "$PKG_DIR/001-cairo-fix-library-suffix-on-msvc.diff"
-  patch -Np1 -i "$PKG_DIR/002-cairo-compiled-with-libatomic_ops-on-msvc.diff"
+  patch -Np1 -i "$PKG_DIR/001-OpenXR-SDK-fix-cmake-config-dir.diff"
 }
 
 . $ROOT_DIR/common.sh

@@ -60,7 +60,6 @@ echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%"
 cd "%SRC_DIR%"
 python -m pip install --upgrade setuptools Mako Markdown
-if exist "%USERPROFILE%\.cache\g-ir-scanner" rmdir /s /q "%USERPROFILE%\.cache\g-ir-scanner"
 for /f "delims=" %%i in ('where python.exe') do set PYTHON_EXE=%%i
 meson setup "%BUILD_DIR%"                                                      ^
   --buildtype=release                                                          ^

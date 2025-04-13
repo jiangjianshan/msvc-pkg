@@ -93,17 +93,6 @@ for %%f in ("%PREFIX%\lib\gstreamer-1.0\pkgconfig\gstcore*.pc") do (
 for %%f in ("%PREFIX%\lib\pkgconfig\gstreamer-*.pc") do (
   sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%%~f"
 )
-rem NOTE: meson build will generate .a files even using msvc compiler
-cd "%PREFIX%\lib\gstreamer-1.0"
-for %%f in (*.a) do (
-  if exist "%%~nf.lib" del /s /q "%%~nf.lib"
-  ren "%%f" "%%~nf.lib"
-)
-cd "%PREFIX%\lib"
-for %%f in (*.a) do (
-  if exist "%%~nf.lib" del /s /q "%%~nf.lib"
-  ren "%%f" "%%~nf.lib"
-)
 call :clean_build
 exit /b 0
 

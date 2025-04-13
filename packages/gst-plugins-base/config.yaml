@@ -11,4 +11,5 @@ steps:
       - glib:b
       - gobject-introspection:b
       - OpenCL-Headers
+      - gstreamer
     run: build.bat

@@ -5,8 +5,8 @@ sha256: 68350a823c33da8acfb1263715bb002a36c68346bd44c19ac4c3f0bd190fd2b1
 steps:
   a:
     dependencies:
-      - mm-common
       - pkg-config
       - glib:b
       - libsigc++
+      - mm-common
     run: build.bat

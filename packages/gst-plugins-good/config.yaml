@@ -10,4 +10,5 @@ steps:
       - gettext
       - glib:b
       - gobject-introspection:b
+      - gstreamer
     run: build.bat

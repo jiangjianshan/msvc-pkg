@@ -1,0 +1,16 @@
+diff -urN OpenXR-SDK-1.1.47-orig/src/loader/CMakeLists.txt OpenXR-SDK-1.1.47/src/loader/CMakeLists.txt
+--- OpenXR-SDK-1.1.47-orig/src/loader/CMakeLists.txt	2025-04-09 03:55:52.000000000 +0800
++++ OpenXR-SDK-1.1.47/src/loader/CMakeLists.txt	2025-04-13 21:03:30.384558900 +0800
+@@ -400,11 +400,7 @@
+ # Create alias so that it can be used the same whether vendored as source or found with CMake.
+ add_library(OpenXR::openxr_loader ALIAS openxr_loader)
+ 
+-if(WIN32 AND NOT INSTALL_TO_ARCHITECTURE_PREFIXES)
+-    set(TARGET_DESTINATION cmake)
+-else()
+-    set(TARGET_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/openxr/)
+-endif()
++set(TARGET_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/openxr/)
+ 
+ install(
+     EXPORT openxr_loader_export

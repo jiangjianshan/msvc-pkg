@@ -1,0 +1,8 @@
+name: SPIRV-Reflect
+version: 1.4.309.0
+url: https://github.com/KhronosGroup/SPIRV-Reflect/archive/refs/tags/vulkan-sdk-1.4.309.0.tar.gz
+sha256: ee57238d4a2c0abf7f0641fb5143bde211e8e31a94194458bab2b6b0a97cb282
+steps:
+  a:
+    dependencies:
+    run: build.bat

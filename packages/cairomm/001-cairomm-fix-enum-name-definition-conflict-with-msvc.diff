@@ -1,0 +1,38 @@
+diff -urN cairomm-1.18.0-orig/cairomm/context.h cairomm-1.18.0/cairomm/context.h
+--- cairomm-1.18.0-orig/cairomm/context.h	2023-09-27 15:24:37.000000000 +0800
++++ cairomm-1.18.0/cairomm/context.h	2025-04-13 16:03:18.657187200 +0800
+@@ -73,6 +73,10 @@
+    * <a href="http://cairographics.org/operators/">this</a>
+    *
+    **/
++  #ifdef _MSC_VER
++  #undef IN
++  #undef OUT
++  #endif
+   enum class Operator
+   {
+       /**
+@@ -159,6 +163,9 @@
+    *
+    * New entries may be added in future versions.
+    **/
++  #ifdef _MSC_VER
++  #undef WINDING
++  #endif
+   enum class FillRule
+   {
+       /**
+diff -urN cairomm-1.18.0-orig/cairomm/region.h cairomm-1.18.0/cairomm/region.h
+--- cairomm-1.18.0-orig/cairomm/region.h	2023-09-27 15:24:37.000000000 +0800
++++ cairomm-1.18.0/cairomm/region.h	2025-04-13 18:23:41.398366700 +0800
+@@ -38,6 +38,10 @@
+  *
+  * @since: 1.10
+  **/
++#ifdef _MSC_VER
++#undef IN
++#undef OUT
++#endif
+ class CAIROMM_API Region
+ {
+ private:

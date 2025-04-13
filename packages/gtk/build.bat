@@ -41,10 +41,10 @@ if "%ROOT_DIR%"=="" (
 )
 call "%ROOT_DIR%\compiler.bat" %ARCH%
 set RELS_DIR=%ROOT_DIR%\releases
-set SRC_DIR=%RELS_DIR%\%PKG_NAME%
+set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
 set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics
-set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
+set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_USE_MATH_DEFINES -DNOMINMAX
 
 call :configure_stage
 call :build_stage
@@ -57,17 +57,29 @@ rem ============================================================================
 :configure_stage
 call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
-mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
-cmake -G "Ninja"                                                               ^
-  -DBUILD_SHARED_LIBS=ON                                                       ^
-  -DCMAKE_BUILD_TYPE=Release                                                   ^
-  -DCMAKE_C_COMPILER=cl                                                        ^
-  -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS%"                                          ^
-  -DCMAKE_CXX_COMPILER=cl                                                      ^
-  -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
-  -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
-  -DSPIRV_SKIP_TESTS=ON                                                        ^
-  .. || exit 1
+mkdir "%BUILD_DIR%"
+cd "%SRC_DIR%"
+meson setup "%BUILD_DIR%"                                                      ^
+  --buildtype=release                                                          ^
+  --prefix="%PREFIX%"                                                          ^
+  --mandir="%PREFIX%\share\man"                                                ^
+  -Dc_std=c17                                                                  ^
+  -Dc_args="%C_OPTS% %C_DEFS%"                                                 ^
+  -Dcpp_std=c++17                                                              ^
+  -Dcpp_args="-EHsc %C_OPTS% %C_DEFS%"                                         ^
+  -Dc_winlibs="iconv.lib,User32.lib,Shell32.lib,Winspool.lib,comdlg32.lib"     ^
+  -Dcpp_winlibs="iconv.lib,User32.lib,Shell32.lib,Winspool.lib,comdlg32.lib"   ^
+  -Dmedia-gstreamer=disabled                                                   ^
+  -Dx11-backend=false                                                          ^
+  -Dwayland-backend=false                                                      ^
+  -Dmacos-backend=false                                                        ^
+  -Dandroid-backend=false                                                      ^
+  -Dwin32-backend=true                                                         ^
+  -Dvulkan=disabled                                                            ^
+  -Dbuild-demos=false                                                          ^
+  -Dbuild-testsuite=false                                                      ^
+  -Dbuild-examples=false                                                       ^
+  -Dbuild-tests=false || exit 1
 exit /b 0
 
 rem ==============================================================================
@@ -84,7 +96,7 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
-for %%f in ("%PREFIX%\lib\pkgconfig\SPIRV-Tools*.pc") do (
+for %%f in ("%PREFIX%\lib\pkgconfig\gtk4*.pc") do (
   sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%%~f"
 )
 call :clean_build
