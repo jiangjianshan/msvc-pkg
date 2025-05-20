@@ -48,17 +48,19 @@ cd /d %~dp0
 if not exist "%ARCH%\bin" mkdir "%ARCH%\bin"
 if not exist "%~dp0\tags" mkdir "%~dp0\tags"
 
+set restart_terminal=
 call :check_wget || goto :end
 call :check_vcbuildtools || goto :end
 call :check_cuda || goto :end
 call :check_oneapi || goto :end
-call :check_python || goto :end
 call :check_git || goto :end
-call :git_bash_add_tools || goto :end
 call :check_cmake || goto :end
 call :check_rust || goto :end
 call :check_ninja || goto :end
 call :check_yq || goto :end
+call :check_python || goto :end
+if not "!restart_terminal!"=="" goto :restart
+call :git_bash_add_tools || goto :end
 
 if not exist "%USERPROFILE%\.gitconfig" (
   rem Dealing with line endings
@@ -134,7 +136,7 @@ if "!nv_gpu!" == "" (
 ) else (
   if "%CUDA_PATH%" == "" (
     set with_cuda=
-    echo Do you want to install CUDA and CUDNN? [yes/y/no/n]
+    echo Do you want to install CUDA and CUDNN? It needs around 5.72GB disk space. [yes/y/no/n]
     echo If you do not want, just press Enter to cancel
     set /p with_cuda=
     if "!with_cuda!"=="yes" goto :install_cuda
@@ -172,6 +174,7 @@ xcopy /S /F /V include "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v!cud
 xcopy /S /F /V lib\x64 "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v!cuda_major_minor!\lib\x64"
 popd
 rmdir /S /Q cudnn-windows-x86_64-!CUDNN_VERSION!_cuda!cuda_major!-archive
+set restart_terminal=1
 cd "%~dp0"
 exit /b 0
 
@@ -187,6 +190,16 @@ for /f "usebackq tokens=*" %%i in (`wmic cpu get name ^| findstr "Intel"`) do (
 if "!intel_cpu!" == "" (
   echo You don't have Intel CPU on your PC, but use Intel OneAPI should be OK.
 )
+if not exist "!ONEAPI_ROOT!" (
+  set with_oneapi=
+  echo "Do you want to install OneAPI? It needs 2.61GB disk space for compiler. [yes/y/no/n]"
+  echo "If you do not want, just press Enter to cancel"
+  set /p with_oneapi=
+  if "!with_oneapi!"=="yes" call :install_oneapi || goto :end
+  if "!with_oneapi!"=="y" call :install_oneapi || goto :end
+)
+exit /b 0
+:install_oneapi
 set oneapi_version=2024.2.1
 set action=
 set component_lists=
@@ -227,7 +240,7 @@ if not exist "!ONEAPI_ROOT!\compiler" (
 )
 if not exist "!ONEAPI_ROOT!\mkl" (
   set with_mkl=
-  echo Do you want to install Intel oneAPI Math Kernel Library ^(oneMKL^)? [yes/y/no/n]
+  echo Do you want to install Intel oneAPI Math Kernel Library ^(oneMKL^)? It needs around 5.69GB disk space. [yes/y/no/n]
   echo If you do not want, just press Enter to cancel
   set /p with_mkl=
   if "!with_mkl!"=="yes" (
@@ -332,9 +345,11 @@ if "%errorlevel%" neq "0" (
   )
   start /wait python-!PYTHON_VERSION!!host_suffix!.exe InstallAllUsers=1 TargetDir=C:\Python312 PrependPath=1 Include_test=0 || goto :end
   del /Q python-!PYTHON_VERSION!!host_suffix!.exe
+  set restart_terminal=1
+) else (
+  ping -n 1 -w 1000 8.8.8.8 > nul
+  if "%errorlevel%" equ "0" python -m pip install --upgrade pip setuptools meson Pygments PyYAML rich
 )
-ping -n 1 -w 1000 8.8.8.8 > nul
-if "%errorlevel%" equ "0" python -m pip install --upgrade pip setuptools meson Pygments PyYAML rich
 exit /b 0
 
 rem ==============================================================================
@@ -377,6 +392,7 @@ if "%errorlevel%" neq "0" (
   )
   start /wait Git-!GIT_VERSION!-!host_suffix!-bit.exe || goto :end
   del /Q Git-!GIT_VERSION!-!host_suffix!-bit.exe
+  set restart_terminal=1
 )
 exit /b 0
 
@@ -523,28 +539,41 @@ rem ============================================================================
 :check_rust
 where rustc >nul 2>&1
 if "%errorlevel%" neq "0" (
-  echo Installing Rust
-  if not exist "rustup-init.exe" (
-    if "%ARCH%" == "x64" (
-      wget --no-check-certificate https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe || (
-        echo Failed to download rust
-        exit /b 1
-      )
-    ) else (
-      wget --no-check-certificate https://static.rust-lang.org/rustup/dist/i686-pc-windows-msvc/rustup-init.exe || (
-        echo Failed to download rust
-        exit /b 1
-      )
-    )
-  )
-  start /wait rustup-init.exe || (
-    echo Failed to install rust
-    exit /b 1
-  )
-  rustup default stable-msvc
-  del /Q rustup-init.exe
+  set with_rust=
+  echo "Do you want to install Rust? [yes/y/no/n]"
+  echo "If you do not want, just press Enter to cancel"
+  set /p with_rust=
+  if "!with_rust!"=="yes" call :install_rust || goto :end
+  if "!with_rust!"=="y" call :install_rust || goto :end
 )
 exit /b 0
+:install_rust
+echo Installing Rust
+if not exist "rustup-init.exe" (
+  if "%ARCH%" == "x64" (
+    wget --no-check-certificate https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe || (
+      echo Failed to download rust
+      exit /b 1
+    )
+  ) else (
+    wget --no-check-certificate https://static.rust-lang.org/rustup/dist/i686-pc-windows-msvc/rustup-init.exe || (
+      echo Failed to download rust
+      exit /b 1
+    )
+  )
+)
+start /wait rustup-init.exe || (
+  echo Failed to install rust
+  exit /b 1
+)
+rustup default stable-msvc
+del /Q rustup-init.exe
+exit /b 0
+
+:restart
+echo Press Enter to restart terminal to take effect of newer environment variables
+pause
+exit 0
 
 :end
 cd /d %~dp0

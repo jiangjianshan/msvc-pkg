@@ -147,161 +147,222 @@ tionFolder\s{4}REG_SZ\s{4}).*')
 
 config_oneapi()
 {
-  #
-  # Intel OneAPI environment initialized for $ARCH
-  #
-  ONEAPI_ROOT=$(cygpath -d 'C:\Program Files (x86)\Intel\oneAPI')
-  if [[ "$ARCH" == "x64" ]]; then
-    INTEL_TARGET_ARCH=intel64
-    IPPCP_TARGET_ARCH=intel64
-    IPP_TARGET_ARCH=intel64
-    TBB_ARCH_SUFFIX=
-    TBB_TARGET_ARCH=intel64
-    VS_TARGET_ARCH=amd64
-  else
-    INTEL_TARGET_ARCH=ia32
-    INTEL_TARGET_ARCH_IA32=ia32
-    IPPCP_TARGET_ARCH=ia32
-    IPP_TARGET_ARCH=ia32
-    TBB_ARCH_SUFFIX=32
-    TBB_TARGET_ARCH=ia32
-    VS_TARGET_ARCH=x86
+  ONEAPI_ROOT='C:\Program Files (x86)\Intel\oneAPI'
+  if [ -d "${ONEAPI_ROOT:-}" ]; then
+    #
+    # Intel OneAPI environment initialized for $ARCH
+    #
+    ONEAPI_ROOT=$(cygpath -d 'C:\Program Files (x86)\Intel\oneAPI')
+    CMPLR_ROOT="${ONEAPI_ROOT}"'\compiler\latest'
+    DEV_UTILITIES_ROOT="${ONEAPI_ROOT}"'\dev-utilities\latest'
+    DPL_ROOT="${ONEAPI_ROOT}"'\dpl\latest'
+    OCLOC_ROOT="${ONEAPI_ROOT}"'\ocloc\latest'
+    I_MPI_ROOT="${ONEAPI_ROOT}"'\mpi\latest'
+    INTELGTDEBUGGERROOT="${ONEAPI_ROOT}"'\debugger\latest'
+    TBBROOT="${ONEAPI_ROOT}"'\tbb\latest'
+    MKLROOT="${ONEAPI_ROOT}"'\mkl\latest'
+    IPPROOT="${ONEAPI_ROOT}"'\ipp\latest'
+    IPPCRYPTOROOT="${ONEAPI_ROOT}"'\ippcp\latest'
+    IFORT_COMPILER24="${ONEAPI_ROOT}"'\compiler\2024.2'
+    USE_INTEL_LLVM=1
+    TARGET_VS=vs2022
+    if [[ "$ARCH" == "x64" ]]; then
+      INTEL_TARGET_ARCH=intel64
+      if [ -d "${IPPCRYPTOROOT:-}" ]; then
+        IPPCP_TARGET_ARCH=intel64
+      fi
+      if [ -d "${IPPROOT:-}" ]; then
+        IPP_TARGET_ARCH=intel64
+      fi
+      if [ -d "${TBBROOT:-}" ]; then
+        TBB_ARCH_SUFFIX=
+        TBB_TARGET_ARCH=intel64
+      fi
+      VS_TARGET_ARCH=amd64
+    else
+      INTEL_TARGET_ARCH=ia32
+      INTEL_TARGET_ARCH_IA32=ia32
+      if [ -d "${IPPCRYPTOROOT:-}" ]; then
+        IPPCP_TARGET_ARCH=ia32
+      fi
+      if [ -d "${IPPROOT:-}" ]; then
+        IPP_TARGET_ARCH=ia32
+      fi
+      if [ -d "${TBBROOT:-}" ]; then
+        TBB_ARCH_SUFFIX=32
+        TBB_TARGET_ARCH=ia32
+      fi
+      VS_TARGET_ARCH=x86
+    fi
+    # Intel DPC/C++ compiler
+    if [ -d "${CMPLR_ROOT:-}" ]; then
+      CMAKE_PREFIX_PATH=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest' "${CMAKE_PREFIX_PATH:-}" ";")
+      CPATH=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\include' "${CPATH:-}" ";")
+      INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\include' "${INCLUDE:-}" ";")
+      LIB=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\lib\clang\19\lib\windows' "${LIB:-}" ";")
+      LIB=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\opt\compiler\lib' "${LIB:-}" ";")
+      LIB=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
+      OCL_ICD_FILENAMES=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\bin\intelocl64_emu.dll' "${OCL_ICD_FILENAMES:-}" ";")
+      OCL_ICD_FILENAMES=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\bin\intelocl64.dll' "${OCL_ICD_FILENAMES:-}" ";")
+      PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/compiler/latest/lib/ocloc" "${PATH:-}" ":")
+      PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/compiler/latest/bin${TBB_ARCH_SUFFIX:-}" "${PATH:-}" ":")
+      if [ $USE_INTEL_LLVM -eq 1 ]; then
+        PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/compiler/latest/bin/compiler" "${PATH:-}" ":")
+      fi
+      PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/compiler/latest/lib${TBB_ARCH_SUFFIX:-}/pkgconfig" "${PKG_CONFIG_PATH:-}" ":")
+    fi
+    # Intel dev utilities
+    if [ -d "${DEV_UTILITIES_ROOT:-}" ]; then
+      CPATH=$(prepend_path "${ONEAPI_ROOT}"'\dev-utilities\latest\include' "${CPATH:-}" ";")
+      INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\dev-utilities\latest\include' "${INCLUDE:-}" ";")
+      PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/dev-utilities/latest/bin" "${PATH:-}" ":")
+    fi
+    #  Intel OpenCL Offline Compiler
+    if [ -d "${OCLOC_ROOT:-}" ]; then
+      CPATH=$(prepend_path "${ONEAPI_ROOT}"'\ocloc\latest\include' "${CPATH:-}" ";")
+      INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\ocloc\latest\include' "${INCLUDE:-}" ";")
+      PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/ocloc/latest/bin" "${PATH:-}" ":")
+    fi
+    # Intel DPC Library
+    if [ -d "${DPL_ROOT:-}" ]; then
+      CMAKE_PREFIX_PATH=$(prepend_path "${ONEAPI_ROOT}"'\dpl\latest\lib\cmake\oneDPL' "${CMAKE_PREFIX_PATH:-}" ";")
+      CPATH=$(prepend_path "${ONEAPI_ROOT}"'\dpl\latest\include' "${CPATH:-}" ";")
+      PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/dpl/latest/lib/pkgconfig" "${PKG_CONFIG_PATH:-}" ":")
+    fi
+    # Intel MPI Library
+    if [ -d "${I_MPI_ROOT:-}" ]; then
+      I_MPI_OFI_LIBRARY_INTERNAL=1
+      INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\mpi\latest\include' "${INCLUDE:-}" ";")
+      LIB=$(prepend_path "${ONEAPI_ROOT}"'\mpi\latest\lib' "${LIB:-}" ";")
+      PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/mpi/latest/opt/mpi/libfabric/bin" "${PATH:-}" ":")
+      PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/mpi/latest/bin" "${PATH:-}" ":")
+      PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/mpi/latest/lib/pkgconfig" "${PKG_CONFIG_PATH:-}" ":")
+    fi
+    # Intel Debuger
+    if [ -d "${INTELGTDEBUGGERROOT:-}" ]; then
+      DIAGUTIL_PATH="${ONEAPI_ROOT}"'\debugger\latest\etc\debugger\sys_check'
+      PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/debugger/latest/opt/debugger/bin" "${PATH:-}" ":")
+    fi
+    # Intel TBB
+    if [ -d "${TBBROOT:-}" ]; then
+      CMAKE_PREFIX_PATH=$(prepend_path "${ONEAPI_ROOT}"'\tbb\latest' "${CMAKE_PREFIX_PATH:-}" ";")
+      CPATH=$(prepend_path "${ONEAPI_ROOT}"'\tbb\latest\include' "${CPATH:-}" ";")
+      INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\tbb\latest\include' "${INCLUDE:-}" ";")
+      LIB=$(prepend_path "${ONEAPI_ROOT}"'\tbb\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
+      PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/tbb/latest/bin${TBB_ARCH_SUFFIX:-}" "${PATH:-}" ":")
+      PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/tbb/latest/lib${TBB_ARCH_SUFFIX:-}/pkgconfig" "${PKG_CONFIG_PATH:-}" ":")
+      TBB_BIN_DIR="${ONEAPI_ROOT}"'\tbb\latest\bin'"${TBB_ARCH_SUFFIX:-}"
+      TBB_DLL_PATH="${ONEAPI_ROOT}"'\tbb\latest\bin'"${TBB_ARCH_SUFFIX:-}"
+      TBB_SCRIPT_DIR="${ONEAPI_ROOT}"'\tbb\latest'
+    fi
+    # Intel MKL
+    if [ -d "${MKLROOT:-}" ]; then
+      CPATH=$(prepend_path "${ONEAPI_ROOT}"'\mkl\latest\include' "${CPATH:-}" ";")
+      INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\mkl\latest\include' "${INCLUDE:-}" ";")
+      LIB=$(prepend_path "${ONEAPI_ROOT}"'\mkl\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
+      NLSPATH="${ONEAPI_ROOT}"'\mkl\latest\share\locale\1033'
+      PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/mkl/latest/bin${TBB_ARCH_SUFFIX:-}" "${PATH:-}" ":")
+      PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/mkl/latest/lib/pkgconfig" "${PKG_CONFIG_PATH:-}" ":")
+    fi
+    # Intel IPP
+    if [ -d "${IPPROOT:-}" ]; then
+      CMAKE_PREFIX_PATH=$(prepend_path "${ONEAPI_ROOT}"'\ipp\latest\lib\cmake\ipp' "${CMAKE_PREFIX_PATH:-}" ";")
+      INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\ipp\latest\include' "${INCLUDE:-}" ";")
+      LIB=$(prepend_path "${ONEAPI_ROOT}"'\ipp\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
+      CPATH=$(prepend_path "${ONEAPI_ROOT}"'\ipp\latest\include' "${CPATH:-}" ";")
+      LIBRARY_PATH=$(prepend_path "${ONEAPI_ROOT}"'\ipp\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
+      PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/ipp/latest/bin" "${PATH:-}" ":")
+    fi
+    # Intel IPPCP
+    if [ -d "${IPPCRYPTOROOT:-}" ]; then
+      IPPCP_TARGET_BIN_ARCH=bin
+      IPPCP_TARGET_LIB_ARCH=lib
+      CPATH=$(prepend_path "${ONEAPI_ROOT}"'\ippcp\latest\include' "${CPATH:-}" ";")
+      INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\ippcp\latest\include' "${INCLUDE:-}" ";")
+      LIB=$(prepend_path "${ONEAPI_ROOT}"'\ippcp\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
+      LIBRARY_PATH=$(prepend_path "${ONEAPI_ROOT}"'\ippcp\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
+      PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/ippcp/latest/bin${TBB_ARCH_SUFFIX:-}" "${PATH:-}" ":")
+      PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/ippcp/latest/lib/pkgconfig" "${PKG_CONFIG_PATH:-}" ":")
+    fi
+    echo "Intel OneAPI Install Directory                         : $(cygpath -w -l "${ONEAPI_ROOT}")"
+    echo ":: initializing oneAPI environment..."
+    echo "   Initializing Visual Studio command-line environment..."
+    echo "   Visual Studio version $VCToolsVersion environment configured."
+    echo "   \"$(cygpath -w -l "${VSINSTALLDIR}")\""
+    echo "   Visual Studio command-line environment initialized for: '${ARCH}'"
+    if [ -d "${CMPLR_ROOT:-}" ]; then
+      echo ":  compiler -- latest"
+      export CMPLR_ROOT
+      export IFORT_COMPILER24
+    fi
+    if [ -d "${INTELGTDEBUGGERROOT:-}" ]; then
+      echo ":  debugger -- latest"
+      export DIAGUTIL_PATH
+    fi
+    if [ -d "${DEV_UTILITIES_ROOT:-}" ]; then
+      echo ":  dev-utilities -- latest"
+      export INTELGTDEBUGGERROOT
+    fi
+    if [ -d "${DPL_ROOT:-}" ]; then
+      echo ":  dpl -- latest"
+      export DPL_ROOT
+    fi
+    if [ -d "${IPPROOT:-}" ]; then
+      echo ":  ipp -- latest"
+      export IPP_TARGET_ARCH
+      export IPPROOT
+    fi
+    if [ -d "${IPPCRYPTOROOT:-}" ]; then
+      echo ":  ippcp -- latest"
+      export IPPCP_TARGET_ARCH
+      export IPPCP_TARGET_BIN_ARCH
+      export IPPCP_TARGET_LIB_ARCH
+      export IPPCRYPTOROOT
+    fi
+    if [ -d "${MKLROOT:-}" ]; then
+      echo ":  mkl -- latest"
+      export MKLROOT
+      export NLSPATH
+    fi
+    if [ -d "${I_MPI_ROOT:-}" ]; then
+      echo ":  mpi -- latest"
+      export I_MPI_OFI_LIBRARY_INTERNAL
+      export I_MPI_ROOT
+    fi
+    if [ -d "${OCLOC_ROOT:-}" ]; then
+      echo ":  ocloc -- latest"
+      export OCLOC_ROOT
+      export OCL_ICD_FILENAMES
+    fi
+    if [ -d "${TBBROOT:-}" ]; then
+      echo ":  tbb -- latest"
+      export TBBROOT
+      export TBB_ARCH_SUFFIX
+      export TBB_BIN_DIR
+      export TBB_DLL_PATH
+      export TBB_SCRIPT_DIR
+      export TBB_TARGET_ARCH
+    fi
+    echo ":: oneAPI environment initialized ::"
+    export CMAKE_PREFIX_PATH
+    export CPATH
+    export INCLUDE
+    export INTEL_TARGET_ARCH
+    export INTEL_TARGET_ARCH_IA32
+    export LIB
+    export LIBRARY_PATH
+    export ONEAPI_ROOT
+    export PATH
+    export PKG_CONFIG_PATH
+    export TARGET_VS
+    export USE_INTEL_LLVM
+    export VS_TARGET_ARCH
   fi
-  # CMAKE_PREFIX_PATH
-  CMAKE_PREFIX_PATH=$(prepend_path "${ONEAPI_ROOT}"'\tbb\latest' "${CMAKE_PREFIX_PATH:-}" ";")
-  CMAKE_PREFIX_PATH=$(prepend_path "${ONEAPI_ROOT}"'\ipp\latest\lib\cmake\ipp' "${CMAKE_PREFIX_PATH:-}" ";")
-  CMAKE_PREFIX_PATH=$(prepend_path "${ONEAPI_ROOT}"'\dpl\latest\lib\cmake\oneDPL' "${CMAKE_PREFIX_PATH:-}" ";")
-  CMAKE_PREFIX_PATH=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest' "${CMAKE_PREFIX_PATH:-}" ";")
-  CMPLR_ROOT="${ONEAPI_ROOT}"'\compiler\latest'
-  # CPATH
-  CPATH=$(prepend_path "${ONEAPI_ROOT}"'\tbb\latest\include' "${CPATH:-}" ";")
-  CPATH=$(prepend_path "${ONEAPI_ROOT}"'\ocloc\latest\include' "${CPATH:-}" ";")
-  CPATH=$(prepend_path "${ONEAPI_ROOT}"'\mkl\latest\include' "${CPATH:-}" ";")
-  CPATH=$(prepend_path "${ONEAPI_ROOT}"'\ippcp\latest\include' "${CPATH:-}" ";")
-  CPATH=$(prepend_path "${ONEAPI_ROOT}"'\ipp\latest\include' "${CPATH:-}" ";")
-  CPATH=$(prepend_path "${ONEAPI_ROOT}"'\dpl\latest\include' "${CPATH:-}" ";")
-  CPATH=$(prepend_path "${ONEAPI_ROOT}"'\dev-utilities\latest\include' "${CPATH:-}" ";")
-  CPATH=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\include' "${CPATH:-}" ";")
-  DIAGUTIL_PATH="${ONEAPI_ROOT}"'\debugger\latest\etc\debugger\sys_check'
-  DPL_ROOT="${ONEAPI_ROOT}"'\dpl\latest'
-  IFORT_COMPILER24="${ONEAPI_ROOT}"'\compiler\2024.2'
-  # INCLUDE
-  INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\tbb\latest\include' "${INCLUDE:-}" ";")
-  INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\ocloc\latest\include' "${INCLUDE:-}" ";")
-  INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\mpi\latest\include' "${INCLUDE:-}" ";")
-  INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\mkl\latest\include' "${INCLUDE:-}" ";")
-  INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\ippcp\latest\include' "${INCLUDE:-}" ";")
-  INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\ipp\latest\include' "${INCLUDE:-}" ";")
-  INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\dev-utilities\latest\include' "${INCLUDE:-}" ";")
-  INCLUDE=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\include' "${INCLUDE:-}" ";")
-  INTELGTDEBUGGERROOT="${ONEAPI_ROOT}"'\debugger\latest'
-  I_MPI_OFI_LIBRARY_INTERNAL=1
-  I_MPI_ROOT="${ONEAPI_ROOT}"'\mpi\latest'
-  # LIB
-  LIB=$(prepend_path "${ONEAPI_ROOT}"'\tbb\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
-  LIB=$(prepend_path "${ONEAPI_ROOT}"'\mpi\latest\lib' "${LIB:-}" ";")
-  LIB=$(prepend_path "${ONEAPI_ROOT}"'\mkl\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
-  LIB=$(prepend_path "${ONEAPI_ROOT}"'\ippcp\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
-  LIB=$(prepend_path "${ONEAPI_ROOT}"'\ipp\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
-  LIB=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\lib\clang\19\lib\windows' "${LIB:-}" ";")
-  LIB=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\opt\compiler\lib' "${LIB:-}" ";")
-  LIB=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
-  LIBRARY_PATH=$(prepend_path "${ONEAPI_ROOT}"'\ippcp\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
-  LIBRARY_PATH=$(prepend_path "${ONEAPI_ROOT}"'\ipp\latest\lib'"${TBB_ARCH_SUFFIX:-}" "${LIB:-}" ";")
-  IPPCP_TARGET_BIN_ARCH=bin
-  IPPCP_TARGET_LIB_ARCH=lib
-  IPPCRYPTOROOT="${ONEAPI_ROOT}"'\ippcp\latest'
-  IPPROOT="${ONEAPI_ROOT}"'\ipp\latest'
-  MKLROOT="${ONEAPI_ROOT}"'\mkl\latest'
-  NLSPATH="${ONEAPI_ROOT}"'\mkl\latest\share\locale\1033'
-  OCLOC_ROOT="${ONEAPI_ROOT}"'\ocloc\latest'
-  OCL_ICD_FILENAMES=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\bin\intelocl64_emu.dll' "${OCL_ICD_FILENAMES:-}" ";")
-  OCL_ICD_FILENAMES=$(prepend_path "${ONEAPI_ROOT}"'\compiler\latest\bin\intelocl64.dll' "${OCL_ICD_FILENAMES:-}" ";")
-  USE_INTEL_LLVM=1
-  PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/tbb/latest/bin${TBB_ARCH_SUFFIX:-}" "${PATH:-}" ":")
-  PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/ocloc/latest/bin" "${PATH:-}" ":")
-  PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/mpi/latest/opt/mpi/libfabric/bin" "${PATH:-}" ":")
-  PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/mpi/latest/bin" "${PATH:-}" ":")
-  PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/mkl/latest/bin${TBB_ARCH_SUFFIX:-}" "${PATH:-}" ":")
-  PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/ippcp/latest/bin${TBB_ARCH_SUFFIX:-}" "${PATH:-}" ":")
-  PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/ipp/latest/bin" "${PATH:-}" ":")
-  PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/dev-utilities/latest/bin" "${PATH:-}" ":")
-  PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/debugger/latest/opt/debugger/bin" "${PATH:-}" ":")
-  PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/compiler/latest/lib/ocloc" "${PATH:-}" ":")
-  PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/compiler/latest/bin${TBB_ARCH_SUFFIX:-}" "${PATH:-}" ":")
-  if [ $USE_INTEL_LLVM -eq 1 ]; then
-    PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/compiler/latest/bin/compiler" "${PATH:-}" ":")
-  fi
-  # PKG_CONFIG_PATH
-  PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/tbb/latest/lib${TBB_ARCH_SUFFIX:-}/pkgconfig" "${PKG_CONFIG_PATH:-}" ":")
-  PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/mpi/latest/lib/pkgconfig" "${PKG_CONFIG_PATH:-}" ":")
-  PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/mkl/latest/lib/pkgconfig" "${PKG_CONFIG_PATH:-}" ":")
-  PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/ippcp/latest/lib/pkgconfig" "${PKG_CONFIG_PATH:-}" ":")
-  PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/dpl/latest/lib/pkgconfig" "${PKG_CONFIG_PATH:-}" ":")
-  PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${ONEAPI_ROOT}")/compiler/latest/lib${TBB_ARCH_SUFFIX:-}/pkgconfig" "${PKG_CONFIG_PATH:-}" ":")
-  TARGET_VS=vs2022
-  TBBROOT="${ONEAPI_ROOT}"'\tbb\latest'
-  TBB_BIN_DIR="${ONEAPI_ROOT}"'\tbb\latest\bin'"${TBB_ARCH_SUFFIX:-}"
-  TBB_DLL_PATH="${ONEAPI_ROOT}"'\tbb\latest\bin'"${TBB_ARCH_SUFFIX:-}"
-  TBB_SCRIPT_DIR="${ONEAPI_ROOT}"'\tbb\latest'
-  echo "Intel OneAPI Install Directory                         : $(cygpath -w -l "${ONEAPI_ROOT}")"
-  echo ":: initializing oneAPI environment..."
-  echo "   Initializing Visual Studio command-line environment..."
-  echo "   Visual Studio version $VCToolsVersion environment configured."
-  echo "   \"$(cygpath -w -l "${VSINSTALLDIR}")\""
-  echo "   Visual Studio command-line environment initialized for: '${ARCH}'"
-  echo ":  compiler -- latest"
-  echo ":  debugger -- latest"
-  echo ":  dev-utilities -- latest"
-  echo ":  dpl -- latest"
-  echo ":  ipp -- latest"
-  echo ":  ippcp -- latest"
-  echo ":  mkl -- latest"
-  echo ":  mpi -- latest"
-  echo ":  ocloc -- latest"
-  echo ":  tbb -- latest"
-  echo ":: oneAPI environment initialized ::"
-  export CMAKE_PREFIX_PATH
-  export CMPLR_ROOT
-  export CPATH
-  export DIAGUTIL_PATH
-  export DPL_ROOT
-  export IFORT_COMPILER24
-  export INCLUDE
-  export INTELGTDEBUGGERROOT
-  export INTEL_TARGET_ARCH
-  export INTEL_TARGET_ARCH_IA32
-  export IPPCP_TARGET_ARCH
-  export IPP_TARGET_ARCH
-  export IPPCP_TARGET_BIN_ARCH
-  export IPPCP_TARGET_LIB_ARCH
-  export IPPCRYPTOROOT
-  export IPPROOT
-  export I_MPI_OFI_LIBRARY_INTERNAL
-  export I_MPI_ROOT
-  export LIB
-  export LIBRARY_PATH
-  export MKLROOT
-  export NLSPATH
-  export OCLOC_ROOT
-  export OCL_ICD_FILENAMES
-  export ONEAPI_ROOT
-  export PATH
-  export PKG_CONFIG_PATH
-  export TARGET_VS
-  export TBBROOT
-  export TBB_ARCH_SUFFIX
-  export TBB_BIN_DIR
-  export TBB_DLL_PATH
-  export TBB_SCRIPT_DIR
-  export TBB_TARGET_ARCH
-  export USE_INTEL_LLVM
-  export VS_TARGET_ARCH
 }
 
 config_cuda()
 {
-  if [ -n "${CUDA_PATH:-}" ]; then
+  if [ -d "${CUDA_PATH:-}" ]; then
     CUDA_HOME=$(cygpath -d "${CUDA_PATH}")
     PATH=$(prepend_path "$(cygpath -u "${CUDA_HOME}")/bin" "${PATH:-}" ":")
     PATH=$(prepend_path "$(cygpath -u "${CUDA_HOME}")/extras/demo_suite" "${PATH:-}" ":")
@@ -333,18 +394,18 @@ config_misc()
   #   readarray -t d';' array <<<"$PREFIX_PATH"
   #   for p in "${array[@]}"; do
   for p in ${PREFIX_PATH//;/ }; do
-    if [[ -d "${p}" ]]; then
+    if [ -d "${p}" ]; then
       _p=$(cygpath -u "${p}")
-      if [[ -d "${_p}/include" ]]; then
+      if [ -d "${_p}/include" ]; then
         INCLUDE=$(prepend_path "${p}"'\include' "${INCLUDE:-}" ";")
       fi
-      if [[ -d "${_p}/lib" ]]; then
+      if [ -d "${_p}/lib" ]; then
         LIB=$(prepend_path "${p}"'\lib' "${LIB:-}" ";")
       fi
-      if [[ -d "${_p}/lib/cmake" ]]; then
+      if [ -d "${_p}/lib/cmake" ]; then
         CMAKE_PREFIX_PATH=$(prepend_path "${p}"'\lib\cmake' "${CMAKE_PREFIX_PATH:-}" ";")
       fi
-      if [[ -d "${_p}/lib/pkgconfig" ]]; then
+      if [ -d "${_p}/lib/pkgconfig" ]; then
         PKG_CONFIG_PATH=$(prepend_path "$(cygpath -u "${_p}/lib/pkgconfig")" "${PKG_CONFIG_PATH:-}" ":")
       fi
     fi

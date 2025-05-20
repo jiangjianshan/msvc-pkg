@@ -9,24 +9,21 @@
 
 ## ✨ Key Features
 
-- 🛠️ Lightweight UNIX-like environment for autotools projects which no need to install additional Cygwin/MSYS2
-- 🤖 Library configuration-aware automatic interdependency resolution
-- 🔄 Auto-detected inter-library cyclic dependencies
 - 🔧 Fully relies on MSVC/MSVC-like toolchains to generate native Windows binaries
-- 🛠️ Patched libtool to make library suffix is .lib but not .dll.lib or .dll.a
-- 🌳 Nice view of dependency tree for each library on terminal
+- 🛠️ Lightweight UNIX-like environment without requiring additional installations of Cygwin/MSYS2
+- 🤖 Automatically generate dependency tree and detect circular dependencies based on package configurations
+- 🌳 Nice view of dependency tree for each package on terminal
 - 🌈 Rich and vibrant colors in the terminal during display output
 - 🚧 Each library's build environment (UNIX-like or Windows) is isolated within the terminal
 - 🔌 Enhanced compiler's wrappers for C/C++/Fortran/MPI and etc
-- 🛠️ Automatically or interactively install missing runtime dependencies
 
 ## System Requirements
 - [Visual C++ Build Tools and Windows 10/11 SDK](https://visualstudio.microsoft.com/zh-hans/downloads/?q=build+tools)
-- [Intel oneAPI DPC++/C++ Compiler 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html)
-- [Intel Fortran Compiler Classic and Intel Fortran Compiler 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler-download.html)
-- [Intel MPI Library](https://www.intel.com/content/www/us/en/developer/tools/oneapi/mpi-library-download.html)
+- [Intel oneAPI DPC++/C++ Compiler 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) (optional)
+- [Intel Fortran Compiler Classic and Intel Fortran Compiler 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler-download.html) (optional)
+- [Intel MPI Library](https://www.intel.com/content/www/us/en/developer/tools/oneapi/mpi-library-download.html) (optional)
 - [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html) (optional)
-- [Rust for Windows](https://www.rust-lang.org/tools/install)
+- [Rust for Windows](https://www.rust-lang.org/tools/install) (optional)
 - [Git for Windows](https://git-scm.com/download/win)
 - [Python 3](https://www.python.org/downloads/)
 - [CMake](https://cmake.org/download/)
