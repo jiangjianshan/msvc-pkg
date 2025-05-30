@@ -9,6 +9,7 @@
 
 ## ✨ Key Features
 
+`msvc-pkg` is similar to [vcpkg](https://github.com/microsoft/vcpkg) and [MINGW-Packages](https://github.com/msys2/MINGW-packages), but its lightweight design and focus on the following features make it worth trying
 - 🔧 Fully relies on MSVC/MSVC-like toolchains to generate native Windows binaries
 - 🛠️ Lightweight UNIX-like environment without requiring additional installations of Cygwin/MSYS2
 - 🤖 Automatically generate dependency tree and detect circular dependencies based on package configurations
@@ -17,29 +18,10 @@
 - 🚧 Each library's build environment (UNIX-like or Windows) is isolated within the terminal
 - 🔌 Enhanced compiler's wrappers for C/C++/Fortran/MPI and etc
 
-## System Requirements
-- [Visual C++ Build Tools and Windows 10/11 SDK](https://visualstudio.microsoft.com/zh-hans/downloads/?q=build+tools)
-- [Intel oneAPI DPC++/C++ Compiler 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) (optional)
-- [Intel Fortran Compiler Classic and Intel Fortran Compiler 2024.2.1](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler-download.html) (optional)
-- [Intel MPI Library](https://www.intel.com/content/www/us/en/developer/tools/oneapi/mpi-library-download.html) (optional)
-- [Intel MKL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl-download.html) (optional)
-- [Rust for Windows](https://www.rust-lang.org/tools/install) (optional)
-- [Git for Windows](https://git-scm.com/download/win)
-- [Python 3](https://www.python.org/downloads/)
-- [CMake](https://cmake.org/download/)
-- [wget](https://eternallybored.org/misc/wget/)
-- [ninja](https://ninja-build.org/)
-- [meson](https://mesonbuild.com/)
-- [yq](https://github.com/mikefarah/yq)
-- [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit) (optional)
-- [Windows Terminal](https://learn.microsoft.com/en-us/windows/terminal/) (optional)
- > 💡 Pro Tip: Most of requirements will be automatically installed via run `mpt` with or without parameters
 
 ## 📜 Special Notes
 
 - **Intel Compiler Support**: 2024.2.1 is the final version supporting `ifort`
-- **CUDA Toolkit**: it is around 5.78GB space need, you can skip it if the libraries you build don't need this dependency
-- **Intel MKL**: it is around 6.5GB space need, you can skip it if the libraries you build don't need this dependency
 - **Internet connection**: msvc-pkg automatically checks for missing runtime dependencies, so ensure a stable internet connection is maintained during runtime
 - **Saving your time**: with the poor documents or not so friendly on Win32 platform, many libraries aren't so easy to build with MSVC/MSVC-like toolset. But `msvc-pkg` help you a lot
 
@@ -57,37 +39,45 @@
    git reset --hard origin/main
    ```
 
-2. Create `settings.yaml` to define default install prefix of some libraries (optional, but it is good to have):
+2. Create `settings.yaml` to decide whether to install some components and define default install prefix of some libraries (optional, but it is good to have):
    ```yaml
-   prefix:
-     x64:
-       llvm-project: D:\LLVM
-       lua: D:\Lua
-       perl: D:\Perl
-       ruby: D:\Ruby
-       tcl: D:\Tcl
-       tk: D:\Tcl
-     x86:
+    components:
+      cuda: no
+      cudnn: no
+      intel-dpcpp: yes
+      intel-ifort: yes
+      intel-mpi: yes
+      intel-mkl: no
+      rust: yes
+    prefix:
+      x64:
+        Vim: D:\Vim
+        llvm-project: D:\LLVM
+        lua: D:\Lua
+        perl: D:\Perl
+        ruby: D:\Ruby
+        tcl: D:\Tcl
+        tk: D:\Tcl
+      x86:
    ```
-
-  > 💡 Pro Tip: to reduce usage complexity, the --prefix option is replaced with a settings.yaml file to define installation paths for individual libraries. And `settings.yaml` must be on the root of `msvc-pkg` folder
+  > 💡 Pro Tip: The `settings.yaml` must be on the root of `msvc-pkg` folder. If you don't want to install some components, change its value from `yes` to `no`.
 
 ### 🖥️ Basic Commands
 
 | Command                        | Description                                                                 | Example Usage               |
 |--------------------------------|-----------------------------------------------------------------------------|-----------------------------|
 | `mpt --list`                   | List all available packages                                                 | `mpt --list`                |
-| `mpt`                          | Build all libraries for default architecture (x64)                          | `mpt`                       |
+| `mpt`                          | Build all libraries for default architecture (`x64`)                        | `mpt`                       |
 | `mpt <arch>`                   | Build all libraries for specified architecture (`x86`/`x64`)                | `mpt x86`                   |
-| `mpt <arch> <pkg1> <pkg2>...`  | Build specific packages with dependencies for specified architecture        | `mpt x86 ncurses gettext`   |
-| `mpt <pkg1> <pkg2>...`         | Build specific packages with dependencies                                   | `mpt ncurses gettext`       |
+| `mpt <arch> <pkg1> <pkg2>...`  | Build specific packages with dependencies for specified architecture        | `mpt x86 gmp ffmpeg`        |
+| `mpt <pkg1> <pkg2>...`         | Build specific packages with dependencies                                   | `mpt gmp ffmpeg`            |
 
 ## ➕ How To Add New Package
 
-1. Create package directory in `packages/`
+1. Create package directory in `packages/`, e.g. `gmp`
 2. Add required files:
    ```bash
-   ncurses/
+   gmp/
    ├── sync.sh                # Source fetching and patching if have
    ├── build.bat/build.sh     # Script for build configuration, compile and install
    ├── config.yaml            # define package essential information
@@ -97,7 +87,7 @@
 
 ## 🤝 Contributing
 
-We welcome contributions through:
+It is a huge job to create the scripts to build as many as libraries as possible. We welcome contributions through:
 - 🐛 Bug reports
 - 💡 Feature proposals
 - 📦 New package additions
