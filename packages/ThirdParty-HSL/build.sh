@@ -102,7 +102,6 @@ configure_stage()
     --datarootdir="$PREFIX/share"                                                                            \
     --enable-msvc                                                                                            \
     --enable-shared                                                                                          \
-    --with-lapack-lflags="-lmkl_intel_lp64_dll -lmkl_sequential_dll -lmkl_core_dll"                          \
     --with-metis-cflags="-I$(cygpath -u "${THIRDPARTY_METIS_PREFIX:-$_PREFIX}/include/coin-or/metis")"       \
     --with-metis-lflags="-L$(cygpath -u "${THIRDPARTY_METIS_PREFIX:-$_PREFIX}") -lcoinmetis"                 \
     ac_cv_prog_f77_v="-verbose"                                                                              \

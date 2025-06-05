@@ -109,7 +109,6 @@ configure_stage()
     --enable-shared                                                                                          \
     --enable-coinutils-mempool-maxpooled                                                                     \
     --enable-coinutils-mempool-override-new                                                                  \
-    --with-lapack-lflags="-lmkl_intel_lp64_dll -lmkl_sequential_dll -lmkl_core_dll"                          \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

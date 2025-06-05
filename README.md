@@ -21,7 +21,7 @@
 
 ## 📜 Special Notes
 
-- **Intel Compiler Support**: 2024.2.1 is the final version supporting `ifort`
+- **Intel Compiler Support**: `2024.2.1` is the final version supporting `ifort`
 - **Internet connection**: msvc-pkg automatically checks for missing runtime dependencies, so ensure a stable internet connection is maintained during runtime
 - **Saving your time**: with the poor documents or not so friendly on Win32 platform, many libraries aren't so easy to build with MSVC/MSVC-like toolset. But `msvc-pkg` help you a lot
 
@@ -44,10 +44,7 @@
     components:
       cuda: no
       cudnn: no
-      intel-dpcpp: yes
-      intel-ifort: yes
-      intel-mpi: yes
-      intel-mkl: no
+      oneapi: yes
       rust: yes
     prefix:
       x64:

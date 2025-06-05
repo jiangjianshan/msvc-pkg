@@ -93,16 +93,6 @@ tionFolder\s{4}REG_SZ\s{4}).*')
   INCLUDE=$(prepend_path "${WindowsSdkIncludeDir}um" "${INCLUDE:-}" ";")
   INCLUDE=$(prepend_path "${WindowsSdkIncludeDir}shared" "${INCLUDE:-}" ";")
   LIB=$(prepend_path "${WindowsSdkLibDir}${ARCH}" "${LIB:-}" ";")
-  # Windows WinRT library headers and libraries.
-  WindowsWinrtIncludeDir="${WindowsSdkDir}"'Include\'"${WindowsSDKVersion}"'\winrt'
-  WindowsWinrtLibDir="${WindowsSdkDir}"'Lib\'"${WindowsSDKVersion}"'\winrt\'
-  INCLUDE=$(prepend_path "${WindowsWinrtIncludeDir}" "${INCLUDE:-}" ";")
-  LIB=$(prepend_path "${WindowsWinrtLibDir}${ARCH}" "${LIB:-}" ";")
-  # Windows CppWinRT library headers and libraries.
-  WindowsCppWinrtIncludeDir="${WindowsSdkDir}"'Include\'"${WindowsSDKVersion}"'\cppwinrt'
-  WindowsCppWinrtLibDir="${WindowsSdkDir}"'Lib\'"${WindowsSDKVersion}"'\cppwinrt\'
-  INCLUDE=$(prepend_path "${WindowsCppWinrtIncludeDir}" "${INCLUDE:-}" ";")
-  LIB=$(prepend_path "${WindowsCppWinrtLibDir}${ARCH}" "${LIB:-}" ";")
   # Visual C++ tools, headers and libraries.
   VSWHERE=$(cygpath -u 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe')
   VSINSTALLDIR=$("$VSWHERE" -nologo -latest -products "*" -all -property installationPath | tr -d '\r')

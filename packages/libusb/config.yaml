@@ -1,7 +1,7 @@
 name: libusb
-version: 1.0.27
-url: https://github.com/libusb/libusb/archive/refs/tags/v1.0.27.tar.gz
-sha256: e8f18a7a36ecbb11fb820bd71540350d8f61bcd9db0d2e8c18a6fb80b214a3de
+version: 1.0.29
+url: https://github.com/libusb/libusb/releases/download/v1.0.29/libusb-1.0.29.tar.bz2
+sha256: 5977fc950f8d1395ccea9bd48c06b3f808fd3c2c961b44b0c2e6e29fc3a70a85
 steps:
   a:
     dependencies:

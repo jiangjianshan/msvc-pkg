@@ -64,6 +64,11 @@ configure_stage()
   elif [[ "$ARCH" == "x64" ]]; then
     HOST_TRIPLET=x86_64
   fi
+  if [[ -d "$CUDA_PATH" ]]; then
+    WITH_GPU=--enable-cuda-nvcc
+  else
+    WITH_GPU=
+  fi
   # NOTE:
   # 1. Don't use CPP="$ROOT_DIR/wrappers/compile cl -nologo -EP" here,
   #    it will cause checking absolute name of standard files is empty.
@@ -105,9 +110,8 @@ configure_stage()
     --enable-libxml2                                                           \
     --enable-libzmq                                                            \
     --enable-openssl                                                           \
-    --enable-cuda-nvcc                                                         \
     --enable-pic                                                               \
-    --enable-shared                                                            \
+    --enable-shared $WITH_GPU                                                  \
     --extra-cflags="$C_OPTS $C_DEFS"                                           \
     --extra-cxxflags="-EHsc $C_OPTS $C_DEFS"                                   \
     --extra-libs="pthread.lib"                                                 \

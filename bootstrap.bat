@@ -26,13 +26,15 @@ rem  SOFTWARE.
 
 setlocal enabledelayedexpansion
 
+echo Checking system requirements for mpt
 rem  Fix error C2226: syntax error: unexpected type 'llvmrem sysrem UnicodeCharRange'
 for /f "tokens=2*" %%a in ('powershell -command "Get-WinSystemLocale" ^| findstr en-US') do set SYSTEM_LOCALE=%%a
-if "%SYSTEM_LOCALE%" neq "en-US" powershell -command "Set-WinSystemLocale -SystemLocale en-US"
+if "!SYSTEM_LOCALE!" neq "en-US" powershell -command "Set-WinSystemLocale -SystemLocale en-US"
 
 rem  https://docs.python.org/3/using/windows.html#removing-the-max-path-limitation
-reg query HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled >nul 2>&1
-if "%errorlevel%" neq "0" reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /t reg_DWORD /d 1
+reg query HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled >nul 2>&1 || (
+  reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /t reg_DWORD /d 1
+)
 
 if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
   set ARCH=x64
@@ -75,13 +77,17 @@ if "%VSINSTALLDIR%" neq "" (
   if not exist "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" goto :install_vcbuildtools
   for /f "delims=" %%r in ('^""%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -nologo -latest -products "*" -all -property installationPath^"') do set vsinstall=%%r
 )
-if exist "%vsinstall%\VC\Auxiliary\Build\vcvarsall.bat" exit /b 0
+if exist "%vsinstall%\VC\Auxiliary\Build\vcvarsall.bat" (
+  echo visual c++ compiler             : installed
+  exit /b 0
+)
 :install_vcbuildtools
 if not exist "vs_buildTools.exe" curl -SL -o vs_buildTools.exe https://aka.ms/vs/17/release/vs_buildTools.exe
 rem https://learn.microsoft.com/en-us/visualstudio/releases/2022/release-history#fixed-version-bootstrappers
 rem https://learn.microsoft.com/en-us/visualstudio/install/use-command-line-parameters-to-install-visual-studio?view=vs-2022
 rem https://learn.microsoft.com/en-us/visualstudio/install/command-line-parameter-examples?view=vs-2022
 rem https://learn.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-build-tools?view=vs-2022
+echo Installing Visual C++ Build Tools
 vs_buildTools.exe                                                            ^
   --includeRecommended                                                       ^
   --wait                                                                     ^
@@ -105,16 +111,18 @@ rem Check CUDA and CUDNN whether has been installed
 rem ==============================================================================
 :check_cuda
 cd /d "%ROOT_DIR%\tags"
-for /f "usebackq tokens=*" %%i in (`wmic path win32_VideoController get name ^| findstr "NVIDIA"`) do (
-  set nv_gpu=%%i
-)
-if "!nv_gpu!" == "" (
-  echo You don't have NVIDIA GPU on your PC
-) else (
-  if "%CUDA_PATH%" == "" (
+if "%CUDA_PATH%" == "" (
+  for /f "usebackq tokens=*" %%i in (`wmic path win32_VideoController get name ^| findstr "NVIDIA"`) do (
+    set nv_gpu=%%i
+  )
+  if "!nv_gpu!" == "" (
+    echo You don't have NVIDIA GPU on your PC
+  ) else (
     for /f "delims=" %%i in ('yq -r ".components.cuda" %ROOT_DIR%\settings.yaml') do set with_cuda=%%i
     if "!with_cuda!"=="yes" goto :install_cuda
-  )
+  ) 
+) else (
+  echo CUDA                            : installed
 )
 exit /b 0
 :install_cuda
@@ -155,84 +163,32 @@ rem ============================================================================
 :check_oneapi
 cd /d "%ROOT_DIR%\tags"
 set ONEAPI_ROOT="C:\Program Files (x86)\Intel\oneAPI"
-for /f "usebackq tokens=*" %%i in (`wmic cpu get name ^| findstr "Intel"`) do (
-  set intel_cpu=%%i
-)
-if "!intel_cpu!" == "" (
-  echo You don't have Intel CPU on your PC, but use Intel OneAPI should be OK.
-)
 set oneapi_version=2024.2.1
-rem Intel OneAPI BaseKit for Windows
-set action=
-set component_lists=
 rem Components available for installation:
 rem https://oneapi-src.github.io/oneapi-ci/
-if not exist "!ONEAPI_ROOT!\compiler\latest\bin\icx-cl.exe" (
-  for /f "delims=" %%i in ('yq -r ".components.intel-dpcpp" %ROOT_DIR%\settings.yaml') do set with_dpcpp=%%i
-  if "!with_dpcpp!"=="yes" (
+if not exist "!ONEAPI_ROOT!" (
+  for /f "delims=" %%i in ('yq -r ".components.oneapi" %ROOT_DIR%\settings.yaml') do set with_oneapi=%%i
+  if "!with_oneapi!"=="yes" (
     rem https://www.intel.com/content/www/us/en/developer/articles/tool/compilers-redistributable-libraries-by-version.html
-    rem Intel oneAPI DPC++/C++ Compiler Runtime for Windows
-    where sycl*.dll >nul 2>&1
-    if "%errorlevel%" neq "0" (
+    where sycl*.dll >nul 2>&1 || (
       if not exist "w_dpcpp_cpp_runtime_p_!oneapi_version!.1084.exe" (
         wget --no-check-certificate https://registrationcenter-download.intel.com/akdlm/IRC_NAS/15a35578-2f9a-4f39-804b-3906e0a5f8fc/w_dpcpp_cpp_runtime_p_!oneapi_version!.1084.exe
       )
+      echo Installing Intel oneAPI DPC++/C++ Compiler Runtime for Windows
       start /wait w_dpcpp_cpp_runtime_p_!oneapi_version!.1084.exe
     )
-    set component_lists=intel.oneapi.win.cpp-dpcpp-common
-    set action=install
-  )
-)
-if not exist "!ONEAPI_ROOT!\mkl" (
-  for /f "delims=" %%i in ('yq -r ".components.intel-mkl" %ROOT_DIR%\settings.yaml') do set with_mkl=%%i
-  if "!with_mkl!"=="yes" (
-    if "!component_lists!"=="" set component_lists=intel.oneapi.win.cpp-dpcpp-common
-    set component_lists=!component_lists!:intel.oneapi.win.mkl.devel
-    rem If intel compiler has been installed last time, the value 'action' is empty
-    if "!action!"=="" set action=modify
-  )
-)
-if not "!component_lists!"=="" (
-  if not exist "w_BaseKit_p_!oneapi_version!.101_offline.exe" (
-    wget --no-check-certificate https://registrationcenter-download.intel.com/akdlm/IRC_NAS/d91caaa0-7306-46ea-a519-79a0423e1903/w_BaseKit_p_!oneapi_version!.101_offline.exe
-  )
-  if "!action!"=="" set action=install
-  rem https://www.intel.com/content/www/us/en/docs/oneapi/installation-guide-windows/2024-1/install-with-command-line.html
-  w_BaseKit_p_!oneapi_version!.101_offline.exe -a --silent --eula accept --action !action! --components !component_lists!
-)
-rem Intel OneAPI HPCKit
-set action=
-set component_lists=
-if not exist "!ONEAPI_ROOT!\compiler\latest\bin\ifort.exe" (
-  for /f "delims=" %%i in ('yq -r ".components.intel-ifort" %ROOT_DIR%\settings.yaml') do set with_ifort=%%i
-  if "!with_ifort!"=="yes" (
-    rem Intel Fortran Compiler Runtime for Windows* (IFX/IFORT)
-    where libifcoremd.dll >nul 2>&1
-    if "%errorlevel%" neq "0" (
+    where libifcoremd.dll >nul 2>&1 || (
       if not exist "w_ifort_runtime_p_!oneapi_version!.1084.exe" (
         wget --no-check-certificate https://registrationcenter-download.intel.com/akdlm/IRC_NAS/ea23d696-a77f-4a4a-8996-20d02cdbc48f/w_ifort_runtime_p_!oneapi_version!.1084.exe
       )
+      echo Installing Intel Fortran Compiler Runtime for Windows* ^(IFX/IFORT^)
       start /wait w_ifort_runtime_p_!oneapi_version!.1084.exe
     )
-    set component_lists=intel.oneapi.win.ifort-compiler
-    set action=install
+    echo Installing Intel C++/Fortran compiler with MPI library
+    w_HPCKit_p_!oneapi_version!.80_offline.exe -a --silent --eula accept --components intel.oneapi.win.cpp-dpcpp-common:intel.oneapi.win.ifort-compiler:intel.oneapi.win.mpi.devel
   )
-)
-if not exist "!ONEAPI_ROOT!\mpi" (
-  for /f "delims=" %%i in ('yq -r ".components.intel-mpi" %ROOT_DIR%\settings.yaml') do set with_mpi=%%i
-  if "!with_mpi!"=="yes" (
-    if "!component_lists!"=="" set component_lists=intel.oneapi.win.ifort-compiler
-    set component_lists=!component_lists!:intel.oneapi.win.mpi.devel
-    rem If intel fortran compiler has been installed last time, the value 'action' is empty
-    if "!action!"=="" set action=modify
-  )
-)
-if not "!component_lists!"=="" (
-  if not exist "w_HPCKit_p_!oneapi_version!.80_offline.exe" (
-    wget --no-check-certificate https://registrationcenter-download.intel.com/akdlm/IRC_NAS/745e923a-3f85-4e1e-b6dd-637c0e9ccba6/w_HPCKit_p_!oneapi_version!.80_offline.exe
-  )
-  if "!action!"=="" set action=install
-  w_HPCKit_p_!oneapi_version!.80_offline.exe -a --silent --eula accept --action !action! --components !component_lists!
+) else (
+  echo intel compilers and mpi library : installed
 )
 cd /d "%ROOT_DIR%"
 exit /b 0
@@ -245,6 +201,8 @@ set WGET_VERSION=1.21.4
 where wget >nul 2>&1
 if "%errorlevel%" neq "0" (
   curl -L https://eternallybored.org/misc/wget/!WGET_VERSION!/%ARCH:x=%/wget.exe -o %ROOT_DIR%\%ARCH%\bin\wget.exe
+) else (
+  echo wget                            : installed
 )
 exit /b 0
 
@@ -261,6 +219,8 @@ if "%errorlevel%" neq "0" (
   powershell Expand-Archive -Path ninja-win.zip -DestinationPath . > nul
   copy /Y /V ninja.exe %ROOT_DIR%\%ARCH%\bin\ninja.exe
   del /Q ninja-win.zip ninja.exe
+) else (
+  echo ninja                           : installed
 )
 exit /b 0
 
@@ -273,6 +233,7 @@ if "%errorlevel%" neq "0" (
   echo Python is missing, you can download it from https://www.python.org/downloads/
   set restart_terminal=1
 ) else (
+  echo python                          : installed
   if "%errorlevel%" equ "0" python -m pip install --upgrade --timeout 3 pip setuptools meson Pygments PyYAML rich
 )
 exit /b 0
@@ -285,6 +246,8 @@ where cmake >nul 2>&1
 if "%errorlevel%" neq "0" (
   echo CMake is missing, you can download it from https://cmake.org/download/
   set restart_terminal=1
+) else (
+  echo cmake                           : installed
 )
 exit /b 0
 
@@ -296,6 +259,8 @@ where git >nul 2>&1
 if "%errorlevel%" neq "0" (
   echo Git for windows is missing, you can download it from https://gitforwindows.org/
   set restart_terminal=1
+) else (
+  echo git                             : installed
 )
 exit /b 0
 
@@ -414,6 +379,8 @@ if "%errorlevel%" neq "0" (
   if not exist "yq.exe" (
     wget --no-check-certificate https://github.com/mikefarah/yq/releases/download/v!YQ_VERSION!/yq_windows!host_suffix!.exe -O %ROOT_DIR%\%ARCH%\bin\yq.exe
   )
+) else (
+  echo yq                              : installed
 )
 exit /b 0
 
@@ -425,6 +392,8 @@ where rustc >nul 2>&1
 if "%errorlevel%" neq "0" (
   for /f "delims=" %%i in ('yq -r ".components.rust" %ROOT_DIR%\settings.yaml') do set with_rust=%%i
   if "!with_rust!"=="yes" call :install_rust || goto :end
+) else (
+  echo rust                            : installed
 )
 exit /b 0
 :install_rust
@@ -452,3 +421,4 @@ set PATH=%OLDPATH%
 set vsinstall=
 set vswhere=
 set vcvarsall=
+echo Done

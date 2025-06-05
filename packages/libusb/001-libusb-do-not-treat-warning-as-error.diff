@@ -1,0 +1,19 @@
+diff -urN libusb-1.0.29-orig/msvc/Base.props libusb-1.0.29/msvc/Base.props
+--- libusb-1.0.29-orig/msvc/Base.props	2024-03-09 21:00:27.000000000 +0800
++++ libusb-1.0.29/msvc/Base.props	2025-06-04 16:27:47.703888400 +0800
+@@ -11,7 +11,7 @@
+       <AdditionalIncludeDirectories>.;..\libusb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <PreprocessorDefinitions>_WIN32_WINNT=_WIN32_WINNT_VISTA;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <WarningLevel>Level4</WarningLevel>
+-      <TreatWarningAsError>true</TreatWarningAsError>
++      <TreatWarningAsError>false</TreatWarningAsError>
+       <IntrinsicFunctions>true</IntrinsicFunctions>
+       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+       <!--Treat sources as utf-8-->
+@@ -57,4 +57,4 @@
+       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
+     </Lib>
+   </ItemDefinitionGroup>
+-</Project>
+\ No newline at end of file
++</Project>

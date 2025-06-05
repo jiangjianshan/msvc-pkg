@@ -63,7 +63,12 @@ configure_stage()
   echo "Configuring $PKG_NAME $PKG_VER"
   clean_build
   mkdir -p "$BUILD_DIR" && cd "$BUILD_DIR" || exit 1
-  cp -v "$SRC_DIR/nvcc_arch_sm.c" "$BUILD_DIR"
+  if [[ -d "$CUDA_PATH" ]]; then
+    cp -v "$SRC_DIR/nvcc_arch_sm.c" "$BUILD_DIR"
+    WITHOUT_GPU=
+  else
+    WITHOUT_GPU=--disable-gpu
+  fi
   export OMP_CANCELLATION=TRUE
   export OMP_PROC_BIND=TRUE
   if [[ "$ARCH" == "x86" ]]; then
@@ -96,6 +101,7 @@ configure_stage()
   CXX="$ROOT_DIR/wrappers/compile icx-cl"                                                                    \
   CXXFLAGS="$C_OPTS"                                                                                         \
   CXXCPP="$ROOT_DIR/wrappers/compile icx-cl -E"                                                              \
+  CXXLIB="-Qcxxlib"                                                                                          \
   DLLTOOL="link -verbose -dll"                                                                               \
   F77="$ROOT_DIR/wrappers/compile ifort"                                                                     \
   FFLAGS="-f77rtl $F_OPTS"                                                                                   \
@@ -112,9 +118,7 @@ configure_stage()
   ../configure --host="$HOST_TRIPLET"                                                                        \
     --prefix="$PREFIX"                                                                                       \
     --disable-static                                                                                         \
-    --enable-shared                                                                                          \
-    --with-blas="-lmkl_rt -lmkl_intel_lp64_dll -lmkl_sequential_dll -lmkl_core_dll"                          \
-    --with-lapack="-lmkl_rt -lmkl_intel_lp64_dll -lmkl_sequential_dll -lmkl_core_dll"                        \
+    --enable-shared $WITHOUT_GPU                                                                             \
     --with-metis="-lcoinmetis"                                                                               \
     --with-metis-inc-dir="$(cygpath -u "${THIRDPARTY_METIS_PREFIX:-$_PREFIX}")/include/coin-or/metis"        \
     ac_cv_prog_f77_v="-verbose"                                                                              \
