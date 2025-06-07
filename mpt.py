@@ -247,10 +247,22 @@ def build_decision(arch, deps, pkg_with_step, pkg_ver, pkg_url, installed_conf, 
                 logger.debug(f"There are newer files exist in source directory")
                 return True
         if pkg_with_step in deps and deps[pkg_with_step]:
-            for dep in deps[pkg_with_step]:
+            for dep_with_step in deps[pkg_with_step]:
+                if ':' in dep_with_step:
+                    dep = dep_with_step.split(':')[0]
+                    dep_step = dep_with_step.split(':')[1]
+                else:
+                    dep = dep_with_step
+                    dep_step = 'a'
                 if dep in installed_conf[arch].keys():
+                    # NOTE: build order: 'libtiff:a'->'libwebp'->'libtiff:b'
                     dep_built_time = installed_conf[arch][dep]['built']
-                    if dep_built_time > pkg_built_time:
+                    if 'step' in installed_conf[arch][dep]:
+                        dep_built_step = installed_conf[arch][dep]['step']
+                        if (dep_built_step == dep_step) and (dep_built_time > pkg_built_time):
+                            logger.debug(f"The built time {dep_built_time} of dependency '{dep}' is newer than package '{pkg}'")
+                            return True
+                    elif dep_built_time > pkg_built_time:
                         logger.debug(f"The built time {dep_built_time} of dependency '{dep}' is newer than package '{pkg}'")
                         return True
         # NOTE: Put step check as last one to avoid missing previous scenarios

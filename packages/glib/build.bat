@@ -70,6 +70,7 @@ meson setup "%BUILD_DIR%"                                                      ^
   -Dc_winlibs="Advapi32.lib,Ole32.lib,Shell32.lib,User32.lib,ffi.lib"          ^
   -Dcpp_winlibs="Advapi32.lib,Ole32.lib,Shell32.lib,User32.lib,ffi.lib"        ^
   -Ddefault_library=shared                                                     ^
+  -Dintrospection=disabled                                                     ^
   -Dtests=false || exit 1
 exit /b 0
 

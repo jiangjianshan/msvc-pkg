@@ -48,7 +48,7 @@ BUILD_DIR=$SRC_DIR/build${ARCH//x/}
 #       There are two solutions:
 #       1. Remove '-Qopenmp -Qopenmp-simd'
 #       2. Don't add '-EHsc' to CXXFLAGS
-C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -Qopenmp -Qopenmp-simd -Xclang -O2 -fms-extensions -fms-compatibility -fms-compatibility-version=19.42'
+C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -Qopenmp -Qopenmp-simd -Xclang -O2 -fms-extensions -fms-compatibility -fms-compatibility-version='${MSC_VER}
 C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX'
 F_OPTS='-nologo -MD -Qdiag-disable:10448 -Qdiag-disable:10441 -fp:precise -Qopenmp -Qopenmp-simd -fpp'
 

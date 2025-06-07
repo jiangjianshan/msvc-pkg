@@ -70,6 +70,7 @@ meson setup "%BUILD_DIR%"                                                      ^
   -Ddefault_library=shared                                                     ^
   -Dc_winlibs="Ole32.lib,User32.lib"                                           ^
   -Dcpp_winlibs="Ole32.lib,User32.lib"                                         ^
+  -Dintrospection=disabled                                                     ^
   -Dtests=disabled || exit 1
 exit /b 0
 

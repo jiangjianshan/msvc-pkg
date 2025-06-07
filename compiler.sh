@@ -117,7 +117,11 @@ tionFolder\s{4}REG_SZ\s{4}).*')
   fi
   # location of Microsoft.Cpp.Default.props
   PATH=$(prepend_path "$(cygpath -u "${VSINSTALLDIR}")/MSBuild/Microsoft/VC/v${VSINSTALLVERSION%%.*}0" "${PATH:-}" ":")
+  # Extract _MSC_VER
+  MSC_FULL_VER=$(cl 2>&1 | awk 'match($0, /Version ([0-9]+\.[0-9]+\.[0-9]+)/, a) {print a[1]; exit}')
+  MSC_VER=${MSC_FULL_VER%.*}
   echo "Initializing Visual Studio command-line environment..."
+  echo "Visual C++ Compiler Version                            : ${MSC_FULL_VER}"
   echo "Visual C++ Tools Version                               : ${VCToolsVersion}"
   echo "Visual C++ Install Directory                           : $(cygpath -w -l "${VCINSTALLDIR}")"
   echo "Windows SDK Install Directory                          : $(cygpath -w -l "${WindowsSdkDir}")"
@@ -133,6 +137,8 @@ tionFolder\s{4}REG_SZ\s{4}).*')
   export VCToolsVersion
   export VCINSTALLDIR
   export VCTOOLSINSTALLDIR
+  export MSC_FULL_VER
+  export MSC_VER
 }
 
 config_oneapi()

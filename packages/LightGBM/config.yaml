@@ -1,5 +1,5 @@
 name: LightGBM
-version: 4.4.0
+version: 4.6.0
 url: https://github.com/microsoft/LightGBM.git
 sha256:
 steps:

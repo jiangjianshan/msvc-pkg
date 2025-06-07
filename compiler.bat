@@ -39,6 +39,13 @@ if not exist "%vcvarsall%" (
 )
 echo Visual C++ Tools Version     : %vsversion%
 call "%vcvarsall%" %1
+for /f "tokens=7,8" %%a in ('cl 2^>^&1 ^| findstr /r "Version [0-9]"') do (
+  for /f "tokens=1,2,3 delims=." %%i in ("%%a") do (
+    set "MSC_FULL_VER=%%i.%%j.%%k"
+    set "MSC_VER=%%i.%%j"
+  )
+)
+echo Visual C++ Compiler Version  : %MSC_FULL_VER%
 
 rem Set Intel OneAPI environment
 set "ONEAPI_ROOT=%ProgramFiles(x86)%\Intel\oneAPI"

@@ -1,7 +1,7 @@
 name: llvm-project
-version: 20.1.1
-url: https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-20.1.1.tar.gz
-sha256: edde69aa3e48a3892a8f01332ff79cfb6179151b42503c4ba77d2cd408b013bf
+version: 20.1.6
+url: https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-20.1.6.tar.gz
+sha256: afa487c401613f5e4a35935b2abfb5d07e6ebfa20df32787e34a5c7e97c6ea4b
 steps:
   a:
     dependencies:
