@@ -39,7 +39,7 @@ if "%ROOT_DIR%"=="" (
     echo mpt !PKG_NAME!
     goto :end
 )
-call "%ROOT_DIR%\compiler.bat" %ARCH%
+call "%ROOT_DIR%\compiler.bat" %ARCH% oneapi
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%

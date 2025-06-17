@@ -7,4 +7,5 @@ steps:
     dependencies:
       - libogg
       - speexdsp
+      - llvm-project
     run: build.sh

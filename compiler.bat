@@ -23,6 +23,11 @@ rem  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN T
 rem  SOFTWARE.
 
 set vsinstall=
+set vc_target_arch=
+set with_oneapi=
+set "args_list=%*"
+call :parse_loop
+set args_list=
 set vswhere=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe
 if "%VSINSTALLDIR%" NEQ "" (
   set "vsinstall=%VSINSTALLDIR%"
@@ -38,7 +43,7 @@ if not exist "%vcvarsall%" (
   goto :end
 )
 echo Visual C++ Tools Version     : %vsversion%
-call "%vcvarsall%" %1
+call "%vcvarsall%" %vc_target_arch%
 for /f "tokens=7,8" %%a in ('cl 2^>^&1 ^| findstr /r "Version [0-9]"') do (
   for /f "tokens=1,2,3 delims=." %%i in ("%%a") do (
     set "MSC_FULL_VER=%%i.%%j.%%k"
@@ -48,10 +53,20 @@ for /f "tokens=7,8" %%a in ('cl 2^>^&1 ^| findstr /r "Version [0-9]"') do (
 echo Visual C++ Compiler Version  : %MSC_FULL_VER%
 
 rem Set Intel OneAPI environment
+rem FIXME: Use %with_oneapi% to control whether use compilers and library from oneapi will solved the
+rem        following issue:
+rem
+rem ImportError: DLL load failed while importing _giscanner: The specified module could not be found.
+rem
+rem This may be caused by runtime or library version of oneapi 2024.2.1 is not really compatible for
+rem newest Visual C++ compiler, e.g 19.44. The version 2024.2.1 is the latest version that support
+rem ifort, that why have to keep this version and not upgrade to newest version of oneapi
 set "ONEAPI_ROOT=%ProgramFiles(x86)%\Intel\oneAPI"
-if exist "%ONEAPI_ROOT%" (
-  if "%1" == "x64" call "%ONEAPI_ROOT%\setvars.bat" intel64 vs2022 --include-intel-llvm
-  if "%1" == "x86" call "%ONEAPI_ROOT%\setvars.bat" ia32 vs2022 --include-intel-llvm
+if "%with_oneapi%" equ "1" (
+  if exist "%ONEAPI_ROOT%" (
+    if "%vc_target_arch%" == "x64" call "%ONEAPI_ROOT%\setvars.bat" intel64 vs2022 --include-intel-llvm
+    if "%vc_target_arch%" == "x86" call "%ONEAPI_ROOT%\setvars.bat" ia32 vs2022 --include-intel-llvm
+  )
 )
 
 rem Set CUDA environment
@@ -82,8 +97,51 @@ rem The unix tools may be need for some libraries
 for /f "delims=" %%i in ('where git.exe') do set GIT_ROOT=%%i
 set "BASH_ROOT=!GIT_ROOT:~0,-12!\usr\bin"
 set "PATH=%PATH%;!BASH_ROOT!"
+goto :end
+
+:parse_loop
+for /F "tokens=1,* delims= " %%a in ("%args_list%") do (
+    call :parse_argument %%a
+    set "args_list=%%b"
+    goto :parse_loop
+)
+exit /b 0
+
+:parse_argument
+
+@rem called by :parse_loop and expects the arguments to either be:
+@rem 1. a single argument in %1
+@rem 2. an argument pair from the command line specified as '%1=%2'
+@rem Architecture
+if /I "%1"=="x86" (
+    set vc_target_arch=x86
+)
+if /I "%1"=="x86_amd64" (
+    set vc_target_arch=x64
+)
+if /I "%1"=="x86_x64" (
+    set vc_target_arch=x64
+)
+if /I "%1"=="amd64" (
+    set vc_target_arch=x64
+)
+if /I "%1"=="x64" (
+    set vc_target_arch=x64
+)
+if /I "%1"=="amd64_x86" (
+    set vc_target_arch=x86
+)
+if /I "%1"=="x64_x86" (
+    set vc_target_arch=x86
+)
+if /I "%1"=="oneapi" (
+    set with_oneapi=1
+)
+exit /B 0
 
 :end
 set vsinstall=
 set vswhere=
 set vsversion=
+set vc_target_arch=
+set with_oneapi=

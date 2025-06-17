@@ -39,7 +39,7 @@ if "%ROOT_DIR%"=="" (
     echo mpt !PKG_NAME!
     goto :end
 )
-call "%ROOT_DIR%\compiler.bat" %ARCH%
+call "%ROOT_DIR%\compiler.bat" %ARCH% oneapi
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\fortran
@@ -62,11 +62,11 @@ cd "%BUILD_DIR%"
 set base_source=ddfuna.f90 ddfune.f90 ddmodule.f90 second.f90
 set base_objs=%base_source:.f90=.obj%
 @echo on
-ifort %F_OPTS% -c %base_source% || exit 1
-ifort %F_OPTS% -exe:testddfun.exe testddfun.f90 !base_objs! || exit 1
-ifort %F_OPTS% -exe:tpslqm1dd.exe tpslqm1dd.f90 !base_objs! || exit 1
-ifort %F_OPTS% -exe:tquaddd.exe tquaddd.f90 !base_objs! || exit 1
-ifort %F_OPTS% -exe:tpphixdd.exe tpphixdd.f90 !base_objs! || exit 1
+ifx %F_OPTS% -c %base_source% || exit 1
+ifx %F_OPTS% -exe:testddfun.exe testddfun.f90 !base_objs! || exit 1
+ifx %F_OPTS% -exe:tpslqm1dd.exe tpslqm1dd.f90 !base_objs! || exit 1
+ifx %F_OPTS% -exe:tquaddd.exe tquaddd.f90 !base_objs! || exit 1
+ifx %F_OPTS% -exe:tpphixdd.exe tpphixdd.f90 !base_objs! || exit 1
 @echo off
 exit /b 0
 

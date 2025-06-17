@@ -39,7 +39,7 @@ if [ -z "$ROOT_DIR" ]; then
     exit 0
 fi
 ROOT_DIR=$(cygpath -u "$ROOT_DIR")
-. $ROOT_DIR/compiler.sh
+. $ROOT_DIR/compiler.sh $ARCH
 PREFIX=$(cygpath -u "$PREFIX")
 RELS_DIR=$ROOT_DIR/releases
 SRC_DIR=$RELS_DIR/$PKG_NAME

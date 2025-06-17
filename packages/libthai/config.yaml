@@ -8,4 +8,5 @@ steps:
       - dlfcn-win32
       - getopt
       - libdatrie
+      - llvm-project
     run: build.sh

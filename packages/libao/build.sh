@@ -39,12 +39,12 @@ if [ -z "$ROOT_DIR" ]; then
     exit 0
 fi
 ROOT_DIR=$(cygpath -u "$ROOT_DIR")
-. $ROOT_DIR/compiler.sh
+. $ROOT_DIR/compiler.sh $ARCH
 PREFIX=$(cygpath -u "$PREFIX")
 RELS_DIR=$ROOT_DIR/releases
 SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
-C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -mavx2 -Wno-pointer-sign -Xclang -O2 -fms-extensions -fms-compatibility -fms-compatibility-version='${MSC_VER}
+C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -Wno-implicit-function-declaration -Wno-pointer-sign -Xclang -O2 -fms-extensions -fms-compatibility -fms-compatibility-version='${MSC_VER}
 C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX'
 
 clean_build()
@@ -79,16 +79,15 @@ configure_stage()
   #    on some libraries will detect whether is msvc compiler according to
   #    '*cl | cl.exe'
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
-  CC="$ROOT_DIR/wrappers/compile icx-cl"                                       \
+  CC="$ROOT_DIR/wrappers/compile clang-cl"                                     \
   CFLAGS="$C_OPTS"                                                             \
-  CPP="$ROOT_DIR/wrappers/compile icx-cl -E"                                   \
+  CPP="$ROOT_DIR/wrappers/compile clang-cl -E"                                 \
   CPPFLAGS="$C_DEFS"                                                           \
-  CXX="$ROOT_DIR/wrappers/compile icx-cl"                                      \
+  CXX="$ROOT_DIR/wrappers/compile clang-cl"                                    \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
-  CXXCPP="$ROOT_DIR/wrappers/compile icx-cl -E"                                \
+  CXXCPP="$ROOT_DIR/wrappers/compile clang-cl -E"                              \
   DLLTOOL="link -verbose -dll"                                                 \
-  LD="lld-link"                                                                \
-  LDFLAGS="-fuse-ld=lld"                                                       \
+  LD="link -nologo"                                                            \
   NM="dumpbin -nologo -symbols"                                                \
   PKG_CONFIG="/usr/bin/pkg-config"                                             \
   RANLIB=":"                                                                   \

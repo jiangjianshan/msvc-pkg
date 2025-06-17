@@ -250,6 +250,14 @@ func_cl_wrapper ()
 				-static)
 					shared=false
 					;;
+				-W)
+					if test -z "$msvc_like"; then
+						set x "$@" "-W0"
+					else
+						set x "$@" "$1"
+					fi
+					shift
+					;;
 				-Wl,*)
 					implib_option=
 					def_option=
@@ -310,6 +318,12 @@ func_cl_wrapper ()
 					done
 					IFS="$save_ifs"
 					;;
+				-W*)
+					if test -n "$msvc_like"; then
+						set x "$@" "$1"
+					  shift
+					fi
+					;;
 				-Xlinker)
 					eat=1
 					linker_opts="$linker_opts $2"
@@ -344,6 +358,7 @@ func_cl_wrapper ()
 }
 
 eat=
+msvc_like=
 
 case $1 in
 	'')
@@ -367,19 +382,22 @@ General help using GNU software: <https://www.gnu.org/gethelp/>.
 EOF
 exit $?
 ;;
--v | --v*)
-	echo "compile (GNU Automake) $scriptversion"
-	exit $?
-	;;
-	cl | *[/\\]cl | cl.exe | *[/\\]cl.exe | \
-		clang-cl | *[/\\]clang-cl | clang-cl.exe | *[/\\]clang-cl.exe | \
-		icl | *[/\\]icl | icl.exe | *[/\\]icl.exe | \
-		icx | *[/\\]icx | icx.exe | *[/\\]icx.exe | \
-		icx-cl | *[/\\]icx-cl | icx-cl.exe | *[/\\]icx-cl.exe | \
-		ifx | *[/\\]ifx | ifx.exe | *[/\\]ifx.exe | \
-		ifort | *[/\\]ifort | ifort.exe | *[/\\]ifort.exe )
-			func_cl_wrapper "$@"      # Doesn't return...
-			;;
+	-v | --v*)
+		echo "compile (GNU Automake) $scriptversion"
+		exit $?
+		;;
+	cl | *[/\\]cl | cl.exe | *[/\\]cl.exe)
+		func_cl_wrapper "$@"      # Doesn't return...
+		;;
+	clang-cl | *[/\\]clang-cl | clang-cl.exe | *[/\\]clang-cl.exe | \
+	icl | *[/\\]icl | icl.exe | *[/\\]icl.exe | \
+	icx | *[/\\]icx | icx.exe | *[/\\]icx.exe | \
+	icx-cl | *[/\\]icx-cl | icx-cl.exe | *[/\\]icx-cl.exe | \
+	ifx | *[/\\]ifx | ifx.exe | *[/\\]ifx.exe | \
+	ifort | *[/\\]ifort | ifort.exe | *[/\\]ifort.exe )
+	  msvc_like=1
+		func_cl_wrapper "$@"      # Doesn't return...
+		;;
 	esac
 
 	ofile=

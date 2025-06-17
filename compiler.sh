@@ -25,12 +25,8 @@
 LANG=en_US
 export LANG
 
-if [ "$ARCH" != "x86" ] && [ "$ARCH" != "x64" ]; then
-  echo "Error: The environment variable 'ARCH' must be x86 or x64"
-  exit 1
-fi
-
-prepend_path() (
+prepend_path()
+{
   path_to_add="$1"
   path_is_now="$2"
   path_seperator="$3"
@@ -39,7 +35,7 @@ prepend_path() (
   else
     printf "%s" "${path_to_add}${path_seperator}${path_is_now}"
   fi
-)
+}
 
 check_arch()
 {
@@ -56,9 +52,6 @@ check_arch()
       # leave HOST_ARCH as-is
       ;;
   esac
-  if [ -z "$ARCH" ]; then
-    ARCH=x64
-  fi
   export HOST_ARCH
 }
 
@@ -81,18 +74,18 @@ tionFolder\s{4}REG_SZ\s{4}).*')
   # Set environment variables for using MSVC 14,
   # for creating native 32-bit or 64-bit Windows executables.
   # Windows tools
-  PATH=$(prepend_path "$(cygpath -u "${WindowsSdkDir}")bin/${WindowsSDKVersion}/${ARCH}" "${PATH:-}" ":")
+  PATH=$(prepend_path "$(cygpath -u "${WindowsSdkDir}")bin/${WindowsSDKVersion}/${TARGET_ARCH}" "${PATH:-}" ":")
   # Windows C library headers and libraries.
   WindowsCrtIncludeDir="${WindowsSdkDir}"'Include\'"${WindowsSDKVersion}"'\ucrt'
   WindowsCrtLibDir="${WindowsSdkDir}"'Lib\'"${WindowsSDKVersion}"'\ucrt\'
   INCLUDE=$(prepend_path "${WindowsCrtIncludeDir}" "${INCLUDE:-}" ";")
-  LIB=$(prepend_path "${WindowsCrtLibDir}${ARCH}" "${LIB:-}" ";")
+  LIB=$(prepend_path "${WindowsCrtLibDir}${TARGET_ARCH}" "${LIB:-}" ";")
   # Windows API headers and libraries.
   WindowsSdkIncludeDir="${WindowsSdkDir}"'Include\'"${WindowsSDKVersion}"'\'
   WindowsSdkLibDir="${WindowsSdkDir}"'Lib\'"${WindowsSDKVersion}"'\um\'
   INCLUDE=$(prepend_path "${WindowsSdkIncludeDir}um" "${INCLUDE:-}" ";")
   INCLUDE=$(prepend_path "${WindowsSdkIncludeDir}shared" "${INCLUDE:-}" ";")
-  LIB=$(prepend_path "${WindowsSdkLibDir}${ARCH}" "${LIB:-}" ";")
+  LIB=$(prepend_path "${WindowsSdkLibDir}${TARGET_ARCH}" "${LIB:-}" ";")
   # Visual C++ tools, headers and libraries.
   VSWHERE=$(cygpath -u 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe')
   VSINSTALLDIR=$("$VSWHERE" -nologo -latest -products "*" -all -property installationPath | tr -d '\r')
@@ -102,13 +95,13 @@ tionFolder\s{4}REG_SZ\s{4}).*')
   VCINSTALLDIR="${VSINSTALLDIR}"'\VC\Tools\MSVC\'"${VCToolsVersion}"
   # build some project need VCTOOLSINSTALLDIR, e.g. perl
   VCTOOLSINSTALLDIR=${VCINSTALLDIR}
-  PATH=$(prepend_path "$(cygpath -u "${VCINSTALLDIR}")/bin/Host${HOST_ARCH}/${ARCH}" "${PATH:-}" ":")
+  PATH=$(prepend_path "$(cygpath -u "${VCINSTALLDIR}")/bin/Host${HOST_ARCH}/${TARGET_ARCH}" "${PATH:-}" ":")
   INCLUDE=$(prepend_path "${VCINSTALLDIR}"'\include' "${INCLUDE:-}" ";")
   INCLUDE=$(prepend_path "${VCINSTALLDIR}"'\atlmfc\include' "${INCLUDE:-}" ";")
-  LIB=$(prepend_path "${VCINSTALLDIR}"'\lib\'"${ARCH}" "${LIB:-}" ";")
-  LIB=$(prepend_path "${VCINSTALLDIR}"'\atlmfc\lib\'"${ARCH}" "${LIB:-}" ";")
+  LIB=$(prepend_path "${VCINSTALLDIR}"'\lib\'"${TARGET_ARCH}" "${LIB:-}" ";")
+  LIB=$(prepend_path "${VCINSTALLDIR}"'\atlmfc\lib\'"${TARGET_ARCH}" "${LIB:-}" ";")
   # Universal CRT
-  PATH=$(prepend_path "$(cygpath -u "${WindowsSdkDir}")Redist/ucrt/DLLs/${ARCH}" "${PATH:-}" ":")
+  PATH=$(prepend_path "$(cygpath -u "${WindowsSdkDir}")Redist/ucrt/DLLs/${TARGET_ARCH}" "${PATH:-}" ":")
   # MSBuild
   if [ "$HOST_ARCH" == "x86" ]; then
     PATH=$(prepend_path "$(cygpath -u "${VSINSTALLDIR}")/MSBuild/Current/Bin" "${PATH:-}" ":")
@@ -126,7 +119,7 @@ tionFolder\s{4}REG_SZ\s{4}).*')
   echo "Visual C++ Install Directory                           : $(cygpath -w -l "${VCINSTALLDIR}")"
   echo "Windows SDK Install Directory                          : $(cygpath -w -l "${WindowsSdkDir}")"
   echo "Windows SDK version                                    : ${WindowsSDKVersion}"
-  echo "Visual Studio command-line environment initialized for : ${ARCH}"
+  echo "Visual Studio command-line environment initialized for : ${TARGET_ARCH}"
   export WindowsSdkDir
   export WindowsSDKVersion
   export PATH
@@ -162,7 +155,7 @@ config_oneapi()
     IFORT_COMPILER24="${ONEAPI_ROOT}"'\compiler\2024.2'
     USE_INTEL_LLVM=1
     TARGET_VS=vs2022
-    if [[ "$ARCH" == "x64" ]]; then
+    if [[ "${TARGET_ARCH}" == "x64" ]]; then
       INTEL_TARGET_ARCH=intel64
       if [ -d "${IPPCRYPTOROOT:-}" ]; then
         IPPCP_TARGET_ARCH=intel64
@@ -285,7 +278,7 @@ config_oneapi()
     echo "   Initializing Visual Studio command-line environment..."
     echo "   Visual Studio version $VCToolsVersion environment configured."
     echo "   \"$(cygpath -w -l "${VSINSTALLDIR}")\""
-    echo "   Visual Studio command-line environment initialized for: '${ARCH}'"
+    echo "   Visual Studio command-line environment initialized for: '${TARGET_ARCH}'"
     if [ -d "${CMPLR_ROOT:-}" ]; then
       echo ":  compiler -- latest"
       export CMPLR_ROOT
@@ -368,7 +361,7 @@ config_cuda()
     echo "Initializing CUDA command-line environment..."
     echo "CUDA Install Directory                                 : $(cygpath -w -l "${CUDA_HOME}")"
     echo "CUDA Capability Major/Minor version number             : ${NV_COMPUTE}"
-    echo "CUDA command-line environment initialized for          : ${ARCH}"
+    echo "CUDA command-line environment initialized for          : ${TARGET_ARCH}"
     export CUDA_HOME
     export PATH
     export LIB
@@ -412,8 +405,36 @@ config_misc()
   export PKG_CONFIG_PATH
 }
 
+HOST_ARCH=
+TARGET_ARCH=
+WITH_ONEAPI=
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    x86 | amd64_x86 | x64_x86)
+      TARGET_ARCH=x86
+      shift 1
+      ;;
+    x86_amd64 | x86_x64 | amd64 | x64)
+      TARGET_ARCH=x64
+      shift 1
+      ;;
+    oneapi)
+      WITH_ONEAPI=1
+      shift 1
+      ;;
+    *)
+      ;;
+  esac
+done
+
+if [ "${TARGET_ARCH}" != "x86" ] && [ "${TARGET_ARCH}" != "x64" ]; then
+  echo "Error: The environment variable 'ARCH' must be x86 or x64"
+  exit 1
+fi
 check_arch
 config_msvc
-config_oneapi
+if [[ -n "${WITH_ONEAPI}" ]]; then
+  config_oneapi
+fi
 config_cuda
 config_misc

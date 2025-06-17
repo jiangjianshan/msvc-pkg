@@ -184,7 +184,15 @@ if not exist "!ONEAPI_ROOT!" (
       echo Installing Intel Fortran Compiler Runtime for Windows* ^(IFX/IFORT^)
       start /wait w_ifort_runtime_p_!oneapi_version!.1084.exe
     )
-    echo Installing Intel C++/Fortran compiler with MPI library
+    if not exist "w_BaseKit_p_!oneapi_version!.101_offline.exe" (
+      wget --no-check-certificate https://registrationcenter-download.intel.com/akdlm/IRC_NAS/d91caaa0-7306-46ea-a519-79a0423e1903/w_BaseKit_p_!oneapi_version!.101_offline.exe
+    )
+    echo Installing Intel oneAPI BaseKit
+    w_BaseKit_p_!oneapi_version!.101_offline.exe -a --silent --eula accept --components intel.oneapi.win.cpp-dpcpp-common
+    if not exist "w_HPCKit_p_!oneapi_version!.80_offline.exe" (
+      wget --no-check-certificate https://registrationcenter-download.intel.com/akdlm/IRC_NAS/745e923a-3f85-4e1e-b6dd-637c0e9ccba6/w_HPCKit_p_!oneapi_version!.80_offline.exe
+    )
+    echo Installing Intel oneAPI HPCKit
     w_HPCKit_p_!oneapi_version!.80_offline.exe -a --silent --eula accept --components intel.oneapi.win.cpp-dpcpp-common:intel.oneapi.win.ifort-compiler:intel.oneapi.win.mpi.devel
   )
 ) else (
