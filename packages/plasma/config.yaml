@@ -1,7 +1,7 @@
 name: plasma
-version: 24.8.7
-url: https://github.com/icl-utk-edu/plasma/archive/refs/tags/24.8.7.tar.gz
-sha256: 418bf30dd5f3e19617b2b766556f236fb37a2e8cf1dac17fe78d7d8759779469
+version: 25.5.27
+url: https://github.com/icl-utk-edu/plasma/archive/refs/tags/25.5.27.tar.gz
+sha256: 3e4fff29f55bd28fee27d54346c425bbec91d64a726a84fd96a13d4234b6df34
 steps:
   a:
     dependencies:

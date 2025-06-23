@@ -119,8 +119,10 @@ configure_stage()
     --prefix="$PREFIX"                                                                                       \
     --disable-static                                                                                         \
     --enable-shared $WITHOUT_GPU                                                                             \
-    --with-metis="-lcoinmetis"                                                                               \
-    --with-metis-inc-dir="$(cygpath -u "${THIRDPARTY_METIS_PREFIX:-$_PREFIX}")/include/coin-or/metis"        \
+    --with-blas="-lblas"                                                                                     \
+    --with-lapack="-llapack"                                                                                 \
+    --with-metis="-lmetis"                                                                                   \
+    --with-metis-inc-dir="$(cygpath -u "${METIS_PREFIX:-$_PREFIX}")/include"                                 \
     ac_cv_prog_f77_v="-verbose"                                                                              \
     ac_cv_prog_fc_v="-verbose"                                                                               \
     gt_cv_locale_zh_CN=none || exit 1

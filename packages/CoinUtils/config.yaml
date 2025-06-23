@@ -9,6 +9,7 @@ steps:
       - dlfcn-win32
       - Data-Sample
       - Data-Netlib
+      - lapack
       - ThirdParty-ASL
       - ThirdParty-Glpk
       - zlib

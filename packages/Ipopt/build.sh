@@ -108,6 +108,7 @@ configure_stage()
     --prefix="$PREFIX"                                                                   \
     --enable-msvc                                                                        \
     --enable-shared                                                                      \
+    --with-lapack-lflags="-lblas -llapack"                                               \
     --with-spral-cflags="-I$(cygpath -u "${SPRAL_PREFIX:-$_PREFIX}")/include"            \
     --with-spral-lflags="-lspral"                                                        \
     ac_cv_prog_f77_v="-verbose"                                                          \

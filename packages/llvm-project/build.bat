@@ -87,6 +87,7 @@ cmake -G "Ninja"                                                                
   -DLLVM_ENABLE_PROJECTS="bolt;clang;clang-tools-extra;lld;openmp;polly;pstl"                      ^
   -DLLVM_ENABLE_RUNTIMES="compiler-rt;libcxx"                                                      ^
   -DLLVM_INCLUDE_BENCHMARKS=ON                                                                     ^
+  -DLLVM_INCLUDE_DOCS=OFF                                                                          ^
   -DLLVM_INCLUDE_EXAMPLES=OFF                                                                      ^
   -DLLVM_INCLUDE_TESTS=OFF                                                                         ^
   -DLLVM_INCLUDE_TOOLS=ON                                                                          ^

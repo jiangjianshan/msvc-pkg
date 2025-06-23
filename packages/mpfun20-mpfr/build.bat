@@ -43,9 +43,9 @@ call "%ROOT_DIR%\compiler.bat" %ARCH% oneapi
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%
-set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:strict -Qopenmp -Qopenmp-simd -Wno-implicit-function-declaration -Wno-pointer-sign -Xclang -O2 -fms-extensions -fms-compatibility -fms-compatibility-version=%MSC_VER%
+set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:strict -openmp:llvm -Zc:__cplusplus -experimental:c11atomics
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
-set F_OPTS=-nologo -MD -Qdiag-disable:10448 -fast -fp:strict -Qopenmp -Qopenmp-simd -names:lowercase -assume:nounderscore -fpp
+set F_OPTS=-nologo -MD -Qdiag-disable:10448 -fast -fp:strict -names:lowercase -assume:nounderscore -Qopenmp -Qopenmp-simd -fpp
 
 call :build_stage
 call :install_package
@@ -65,11 +65,9 @@ set libs=%GMP_PREFIX%\lib\gmp.lib %MPFR_PREFIX%\lib\mpfr.lib
 set base_source=mpfuna.f90 mpfund.f90 mpfune.f90 mpfunf.f90 mpfung1.f90        ^
   mpfunh1.f90 mpmodule.f90 second.f90
 set base_objs=%base_source:.f90=.obj%
-rem NOTE: Don't use ifort with icx-cl. You must use ifx with icx-cl. Otherwise
-rem       ipo warnings will be occur: no IR in object file
 @echo on
 ifx %F_OPTS% -c %base_source% || exit 1
-icx-cl %C_OPTS% -c mpinterface.c || exit 1
+cl %C_OPTS% -c mpinterface.c || exit 1
 ifx %F_OPTS% -heap-arrays -exe:testmpfun.exe testmpfun.f90 !base_objs!         ^
   mpinterface.obj !libs! || exit 1
 ifx %F_OPTS% -heap-arrays -exe:tpolysolve.exe tpolysolve.f90 !base_objs!       ^
@@ -89,7 +87,7 @@ set base_source=mpfuna.f90 mpfund.f90 mpfune.f90 mpfunf.f90 mpfung2.f90        ^
 set base_objs=%base_source:.f90=.obj%
 @echo on
 ifx %F_OPTS% -c %base_source% || exit 1
-icx-cl %C_OPTS% -c mpinterface.c || exit 1
+cl %C_OPTS% -c mpinterface.c || exit 1
 ifx %F_OPTS% -heap-arrays -exe:testmpfun.exe testmpfun.f90 !base_objs!         ^
   mpinterface.obj !libs! || exit 1
 ifx %F_OPTS% -heap-arrays -exe:tpolysolve.exe tpolysolve.f90 !base_objs!       ^

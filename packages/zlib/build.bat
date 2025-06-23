@@ -90,8 +90,6 @@ if not exist "%PREFIX%\lib\z.lib" (
 if not exist "%PREFIX%\lib\libz.lib" (
   mklink "%PREFIX%\lib\libz.lib" "%PREFIX%\lib\zlibstatic.lib"
 )
-rem Change Windows path to UNIX path on .pc file
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/zlib.pc"
 call :clean_build
 exit /b 0
 

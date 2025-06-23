@@ -110,8 +110,9 @@ configure_stage()
     --enable-shared                                                                                          \
     --enable-msvc                                                                                            \
     --with-precision="all"                                                                                   \
+    --with-lapack-lflags="-lblas -llapack"                                                                   \
     --with-metis-cflags="-I$(cygpath -u "${THIRDPARTY_METIS_PREFIX:-$_PREFIX}/include/coin-or/metis")"       \
-    --with-metis-lflags="-L$(cygpath -u "${THIRDPARTY_METIS_PREFIX:-$_PREFIX}") -lcoinmetis"                 \
+    --with-metis-lflags="-lcoinmetis"                                                                        \
     ac_cv_prog_fc_v="-verbose"                                                                               \
     gt_cv_locale_zh_CN=none || exit 1
 }

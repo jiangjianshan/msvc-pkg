@@ -75,6 +75,7 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_POLICY_DEFAULT_CMP0146=OLD                                           ^
   -DCMAKE_POLICY_DEFAULT_CMP0153=OLD                                           ^
   -DCMAKE_POLICY_DEFAULT_CMP0167=OLD                                           ^
+  -DCMAKE_POLICY_VERSION_MINIMUM=3.5                                           ^
   -DEIGEN_BUILD_BTL=ON                                                         ^
   -DEIGEN_BUILD_SHARED_LIBS=ON                                                 ^
   -DEIGEN_TEST_SSE2=ON                                                         ^
@@ -112,7 +113,6 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/eigen3.pc"
 call :clean_build
 exit /b 0
 

@@ -5,6 +5,7 @@ sha256: 17ab8e9a6059ab11172c184e5947e7a7dda9fed0764764779c27e5b8e46f3d75
 steps:
   a:
     dependencies:
+      - lapack
       - ThirdParty-ASL
       - ThirdParty-HSL
       - ThirdParty-Mumps

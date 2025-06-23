@@ -59,10 +59,7 @@ call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
 mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
 rem NOTE:
-rem 1. The option '-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON' is not so good, because
-rem    it will also export __local_stdio_printf_options, printf something like that.
-rem    That is why to use the .def files in patch to solved it.
-rem 2. Use icx-cl or clang-cl instead of cl, because the OpenMP version of MSVC is
+rem 1. Use icx-cl or clang-cl instead of cl, because the OpenMP version of MSVC is
 rem    too low
 cmake -G "Ninja"                                                               ^
   -DBUILD_SHARED_LIBS=ON                                                       ^
@@ -71,6 +68,7 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS%"                                          ^
   -DCMAKE_C_STANDARD_LIBRARIES="openblas.lib pthread.lib"                      ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
+  -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON                                        ^
   .. || exit 1
 exit /b 0
 
@@ -88,7 +86,6 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%\lib\pkgconfig\plasma.pc"
 call :clean_build
 exit /b 0
 

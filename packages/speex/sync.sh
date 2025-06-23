@@ -60,8 +60,6 @@ patch_package()
   sed                                                                                                \
     -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
     -e 's|\.dll\.lib|.lib|g'                                                                         \
-    -e 's/ \*,cl\*)/ *,cl* | *,icx-cl*)/g'                                                           \
-    -e 's/ cl\*)/ cl* | icx-cl*)/g'                                                                  \
     -e 's|+cat|cat|g'                                                                                \
     -e 's|-lgnugetopt|-lgetopt|g'                                                                    \
     -i configure

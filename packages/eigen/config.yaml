@@ -12,7 +12,6 @@ steps:
       - sparsehash
       - gmp
       - gsl
-      - lapack
       - mpfr
       - mpreal
       - OpenBLAS

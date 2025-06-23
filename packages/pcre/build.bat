@@ -98,11 +98,6 @@ cd "%BUILD_DIR%" && ninja install || exit 1
 if not exist "%PREFIX%\include\regex.h" (
   mklink "%PREFIX%\include\regex.h" "%PREFIX%\include\pcreposix.h"
 )
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/libpcre.pc"
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/libpcre16.pc"
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/libpcre32.pc"
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/libpcrecpp.pc"
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/libpcreposix.pc"
 call :clean_build
 exit /b 0
 

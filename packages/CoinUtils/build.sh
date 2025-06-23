@@ -109,6 +109,7 @@ configure_stage()
     --enable-shared                                                                                          \
     --enable-coinutils-mempool-maxpooled                                                                     \
     --enable-coinutils-mempool-override-new                                                                  \
+    --with-lapack-lflags="-lblas -llapack"                                                                   \
     gt_cv_locale_zh_CN=none || exit 1
 }
 

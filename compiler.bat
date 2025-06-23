@@ -42,7 +42,7 @@ if not exist "%vcvarsall%" (
   echo Can't find any installation of Visual Studio
   goto :end
 )
-echo Visual C++ Tools Version     : %vsversion%
+echo Visual C++ Tools Version                                 : %vsversion%
 call "%vcvarsall%" %vc_target_arch%
 for /f "tokens=7,8" %%a in ('cl 2^>^&1 ^| findstr /r "Version [0-9]"') do (
   for /f "tokens=1,2,3 delims=." %%i in ("%%a") do (
@@ -50,7 +50,7 @@ for /f "tokens=7,8" %%a in ('cl 2^>^&1 ^| findstr /r "Version [0-9]"') do (
     set "MSC_VER=%%i.%%j"
   )
 )
-echo Visual C++ Compiler Version  : %MSC_FULL_VER%
+echo Visual C++ Compiler Version                              : %MSC_FULL_VER%
 
 rem Set Intel OneAPI environment
 rem FIXME: Use %with_oneapi% to control whether use compilers and library from oneapi will solved the
@@ -74,6 +74,17 @@ if exist "%CUDA_PATH%" (
   set "PATH=%PATH%;%CUDA_PATH%\extras\demo_suite"
   set "INCLUDE=%CUDA_PATH%\include;!INCLUDE!"
   set "LIB=%CUDA_PATH%\lib\x64;%CUDA_PATH%\lib\win32;!LIB!"
+  set "NV_COMPUTE="
+  for /f "tokens=2 delims=:" %%a in ('deviceQuery ^| findstr /i "CUDA Capability Major"') do (
+    if not defined NV_COMPUTE (
+      set "NV_COMPUTE=%%a"
+      set "NV_COMPUTE=!NV_COMPUTE: =!"
+    )
+  )
+  echo Initializing CUDA command-line environment...
+  echo CUDA Install Directory                                   : %CUDA_PATH%
+  echo CUDA Capability Major/Minor version number               : !NV_COMPUTE!
+  echo CUDA command-line environment initialized for            : %vc_target_arch%
 )
 
 rem NOTE:

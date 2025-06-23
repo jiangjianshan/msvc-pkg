@@ -66,10 +66,10 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS%"                                          ^
   -DCMAKE_CXX_COMPILER=cl                                                      ^
   -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
+  -DCMAKE_CUDA_ARCHITECTURES=%NV_COMPUTE:.=%                                   ^
   -DCMAKE_Fortran_COMPILER=ifort                                               ^
   -DCMAKE_Fortran_FLAGS="%F_OPTS%"                                             ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
-  -DCMAKE_CUDA_FLAGS="%C_OPTS% %C_DEFS% -Wno-deprecated-gpu-targets"           ^
   -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON                                        ^
   -DBLA_VENDOR="OpenBLAS"                                                      ^
   -DMAGMA_ENABLE_CUDA=ON                                                       ^
@@ -92,7 +92,6 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/magma.pc"
 call :clean_build
 exit /b 0
 

@@ -66,6 +66,7 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_Fortran_COMPILER=ifort                                               ^
   -DCMAKE_Fortran_FLAGS="%F_OPTS%"                                             ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
+  -DCMAKE_POLICY_VERSION_MINIMUM=3.5                                           ^
   -DSCALAPACK_BUILD_TESTS=OFF                                                  ^
   .. || exit 1
 exit /b 0
@@ -84,7 +85,6 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%\lib\pkgconfig\scalapack.pc"
 call :clean_build
 exit /b 0
 

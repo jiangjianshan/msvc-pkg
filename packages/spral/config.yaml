@@ -7,6 +7,6 @@ steps:
     dependencies:
       - hwloc
       - lapack
-      - ThirdParty-Metis
+      - METIS
       - winpthreads
     run: build.sh

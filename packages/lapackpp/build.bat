@@ -64,9 +64,9 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_CXX_COMPILER=cl                                                      ^
   -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
-  -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld"                                   ^
   -DBLAS_LIBRARIES="openblas.lib"                                              ^
   -DLAPACK_LIBRARIES="openblas.lib"                                            ^
+  -DLAPACKE_LIBRARIES="openblas.lib"                                           ^
   -Dbuild_tests=OFF                                                            ^
   .. || exit 1
 exit /b 0

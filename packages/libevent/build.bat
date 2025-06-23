@@ -83,9 +83,6 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
-for %%f in ("%PREFIX%\lib\pkgconfig\libevent*.pc") do (
-  sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%%~f"
-)
 call :clean_build
 exit /b 0
 

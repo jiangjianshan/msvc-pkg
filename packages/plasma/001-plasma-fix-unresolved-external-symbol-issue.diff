@@ -1,6 +1,6 @@
-diff -urN plasma-24.8.7-orig/core_blas/core_clag2z.c plasma-24.8.7/core_blas/core_clag2z.c
---- plasma-24.8.7-orig/core_blas/core_clag2z.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_clag2z.c	2025-01-02 13:39:21.453822600 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_clag2z.c plasma-25.5.27/core_blas/core_clag2z.c
+--- plasma-25.5.27-orig/core_blas/core_clag2z.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_clag2z.c	2025-06-22 10:08:31.841131500 +0800
 @@ -45,7 +45,9 @@
   *          lda >= max(1,m).
   *
@@ -11,9 +11,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_clag2z.c plasma-24.8.7/core_blas/cor
  void plasma_core_clag2z(int m, int n,
                   plasma_complex32_t *As, int ldas,
                   plasma_complex64_t *A,  int lda)
-diff -urN plasma-24.8.7-orig/core_blas/core_zgeadd.c plasma-24.8.7/core_blas/core_zgeadd.c
---- plasma-24.8.7-orig/core_blas/core_zgeadd.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zgeadd.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zgeadd.c plasma-25.5.27/core_blas/core_zgeadd.c
+--- plasma-25.5.27-orig/core_blas/core_zgeadd.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zgeadd.c	2025-06-22 10:08:31.841131500 +0800
 @@ -71,7 +71,9 @@
   *          ldb >= max(1,m)
   *
@@ -24,9 +24,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zgeadd.c plasma-24.8.7/core_blas/cor
  int plasma_core_zgeadd(plasma_enum_t transa,
                  int m, int n,
                  plasma_complex64_t alpha, const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_zgelqt.c plasma-24.8.7/core_blas/core_zgelqt.c
---- plasma-24.8.7-orig/core_blas/core_zgelqt.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zgelqt.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zgelqt.c plasma-25.5.27/core_blas/core_zgelqt.c
+--- plasma-25.5.27-orig/core_blas/core_zgelqt.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zgelqt.c	2025-06-22 10:08:32.107167500 +0800
 @@ -85,7 +85,9 @@
   * @retval < 0 if -i, the i-th argument had an illegal value
   *
@@ -37,9 +37,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zgelqt.c plasma-24.8.7/core_blas/cor
  int plasma_core_zgelqt(int m, int n, int ib,
                  plasma_complex64_t *A, int lda,
                  plasma_complex64_t *T, int ldt,
-diff -urN plasma-24.8.7-orig/core_blas/core_zgemm.c plasma-24.8.7/core_blas/core_zgemm.c
---- plasma-24.8.7-orig/core_blas/core_zgemm.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zgemm.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zgemm.c plasma-25.5.27/core_blas/core_zgemm.c
+--- plasma-25.5.27-orig/core_blas/core_zgemm.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zgemm.c	2025-06-22 10:08:31.841131500 +0800
 @@ -86,7 +86,9 @@
   *          The leading dimension of the array C. ldc >= max(1,m).
   *
@@ -50,9 +50,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zgemm.c plasma-24.8.7/core_blas/core
  void plasma_core_zgemm(plasma_enum_t transa, plasma_enum_t transb,
                  int m, int n, int k,
                  plasma_complex64_t alpha, const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_zgeqrt.c plasma-24.8.7/core_blas/core_zgeqrt.c
---- plasma-24.8.7-orig/core_blas/core_zgeqrt.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zgeqrt.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zgeqrt.c plasma-25.5.27/core_blas/core_zgeqrt.c
+--- plasma-25.5.27-orig/core_blas/core_zgeqrt.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zgeqrt.c	2025-06-22 10:08:32.107167500 +0800
 @@ -85,7 +85,9 @@
   * @retval < 0 if -i, the i-th argument had an illegal value
   *
@@ -63,9 +63,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zgeqrt.c plasma-24.8.7/core_blas/cor
  int plasma_core_zgeqrt(int m, int n, int ib,
                  plasma_complex64_t *A, int lda,
                  plasma_complex64_t *T, int ldt,
-diff -urN plasma-24.8.7-orig/core_blas/core_zgessq.c plasma-24.8.7/core_blas/core_zgessq.c
---- plasma-24.8.7-orig/core_blas/core_zgessq.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zgessq.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zgessq.c plasma-25.5.27/core_blas/core_zgessq.c
+--- plasma-25.5.27-orig/core_blas/core_zgessq.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zgessq.c	2025-06-22 10:08:32.107167500 +0800
 @@ -17,7 +17,9 @@
  #include "core_lapack.h"
  
@@ -76,9 +76,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zgessq.c plasma-24.8.7/core_blas/cor
  void plasma_core_zgessq(int m, int n,
                   const plasma_complex64_t *A, int lda,
                   double *scale, double *sumsq)
-diff -urN plasma-24.8.7-orig/core_blas/core_zgeswp.c plasma-24.8.7/core_blas/core_zgeswp.c
---- plasma-24.8.7-orig/core_blas/core_zgeswp.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zgeswp.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zgeswp.c plasma-25.5.27/core_blas/core_zgeswp.c
+--- plasma-25.5.27-orig/core_blas/core_zgeswp.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zgeswp.c	2025-06-22 10:08:32.107167500 +0800
 @@ -18,7 +18,9 @@
  #define A(m, n) (plasma_complex64_t*)plasma_tile_addr(A, m, n)
  
@@ -89,9 +89,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zgeswp.c plasma-24.8.7/core_blas/cor
  void plasma_core_zgeswp(plasma_enum_t colrow,
                   plasma_desc_t A, int k1, int k2, const int *ipiv, int incx)
  {
-diff -urN plasma-24.8.7-orig/core_blas/core_zgetrf.c plasma-24.8.7/core_blas/core_zgetrf.c
---- plasma-24.8.7-orig/core_blas/core_zgetrf.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zgetrf.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zgetrf.c plasma-25.5.27/core_blas/core_zgetrf.c
+--- plasma-25.5.27-orig/core_blas/core_zgetrf.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zgetrf.c	2025-06-22 10:08:32.107167500 +0800
 @@ -24,7 +24,9 @@
  #define A(m, n) (plasma_complex64_t*)plasma_tile_addr(A, m, n)
  
@@ -102,9 +102,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zgetrf.c plasma-24.8.7/core_blas/cor
  void plasma_core_zgetrf(plasma_desc_t A, int *ipiv, int ib, int rank, int size,
                   volatile int *max_idx, volatile plasma_complex64_t *max_val,
                   volatile int *info, plasma_barrier_t *barrier)
-diff -urN plasma-24.8.7-orig/core_blas/core_zhegst.c plasma-24.8.7/core_blas/core_zhegst.c
---- plasma-24.8.7-orig/core_blas/core_zhegst.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zhegst.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zhegst.c plasma-25.5.27/core_blas/core_zhegst.c
+--- plasma-25.5.27-orig/core_blas/core_zhegst.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zhegst.c	2025-06-22 10:08:32.107167500 +0800
 @@ -65,7 +65,9 @@
   *          The leading dimension of the array B.  LDB >= max(1,N).
   *
@@ -115,9 +115,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zhegst.c plasma-24.8.7/core_blas/cor
  int plasma_core_zhegst(int itype, plasma_enum_t uplo,
                  int n,
                  plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_zhemm.c plasma-24.8.7/core_blas/core_zhemm.c
---- plasma-24.8.7-orig/core_blas/core_zhemm.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zhemm.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zhemm.c plasma-25.5.27/core_blas/core_zhemm.c
+--- plasma-25.5.27-orig/core_blas/core_zhemm.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zhemm.c	2025-06-22 10:08:32.107167500 +0800
 @@ -77,7 +77,9 @@
   *          The leading dimension of the array C. ldc >= max(1,m).
   *
@@ -128,9 +128,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zhemm.c plasma-24.8.7/core_blas/core
  void plasma_core_zhemm(plasma_enum_t side, plasma_enum_t uplo,
                  int m, int n,
                  plasma_complex64_t alpha, const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_zher2k.c plasma-24.8.7/core_blas/core_zher2k.c
---- plasma-24.8.7-orig/core_blas/core_zher2k.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zher2k.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zher2k.c plasma-25.5.27/core_blas/core_zher2k.c
+--- plasma-25.5.27-orig/core_blas/core_zher2k.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zher2k.c	2025-06-22 10:08:32.107167500 +0800
 @@ -86,7 +86,9 @@
   *          The leading dimension of the array C. ldc >= max(1, n).
   *
@@ -141,9 +141,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zher2k.c plasma-24.8.7/core_blas/cor
  void plasma_core_zher2k(plasma_enum_t uplo, plasma_enum_t trans,
                   int n, int k,
                   plasma_complex64_t alpha, const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_zherk.c plasma-24.8.7/core_blas/core_zherk.c
---- plasma-24.8.7-orig/core_blas/core_zherk.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zherk.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zherk.c plasma-25.5.27/core_blas/core_zherk.c
+--- plasma-25.5.27-orig/core_blas/core_zherk.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zherk.c	2025-06-22 10:08:32.107167500 +0800
 @@ -70,7 +70,9 @@
   *          The leading dimension of the array C. ldc >= max(1, n).
   *
@@ -154,9 +154,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zherk.c plasma-24.8.7/core_blas/core
  void plasma_core_zherk(plasma_enum_t uplo, plasma_enum_t trans,
                  int n, int k,
                  double alpha, const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_zhessq.c plasma-24.8.7/core_blas/core_zhessq.c
---- plasma-24.8.7-orig/core_blas/core_zhessq.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zhessq.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zhessq.c plasma-25.5.27/core_blas/core_zhessq.c
+--- plasma-25.5.27-orig/core_blas/core_zhessq.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zhessq.c	2025-06-22 10:08:32.107167500 +0800
 @@ -17,7 +17,9 @@
  #include <math.h>
  
@@ -167,9 +167,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zhessq.c plasma-24.8.7/core_blas/cor
  void plasma_core_zhessq(plasma_enum_t uplo,
                   int n,
                   const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_zheswp.c plasma-24.8.7/core_blas/core_zheswp.c
---- plasma-24.8.7-orig/core_blas/core_zheswp.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zheswp.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zheswp.c plasma-25.5.27/core_blas/core_zheswp.c
+--- plasma-25.5.27-orig/core_blas/core_zheswp.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zheswp.c	2025-06-22 10:08:32.107167500 +0800
 @@ -53,7 +53,9 @@
   *          is negative, the pivots are applied in reverse order.
   *
@@ -180,9 +180,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zheswp.c plasma-24.8.7/core_blas/cor
  void plasma_core_zheswp(int rank, int num_threads,
                   int uplo, plasma_desc_t A, int k1, int k2, const int *ipiv,
                   int incx, plasma_barrier_t *barrier)
-diff -urN plasma-24.8.7-orig/core_blas/core_zlacpy.c plasma-24.8.7/core_blas/core_zlacpy.c
---- plasma-24.8.7-orig/core_blas/core_zlacpy.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zlacpy.c	2025-01-02 13:39:21.459807100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zlacpy.c plasma-25.5.27/core_blas/core_zlacpy.c
+--- plasma-25.5.27-orig/core_blas/core_zlacpy.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zlacpy.c	2025-06-22 10:08:32.107167500 +0800
 @@ -57,7 +57,9 @@
   *          ldb >= max(1,m).
   *
@@ -193,9 +193,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zlacpy.c plasma-24.8.7/core_blas/cor
  void plasma_core_zlacpy(plasma_enum_t uplo, plasma_enum_t transa,
                   int m, int n,
                   const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_zlacpy_band.c plasma-24.8.7/core_blas/core_zlacpy_band.c
---- plasma-24.8.7-orig/core_blas/core_zlacpy_band.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zlacpy_band.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zlacpy_band.c plasma-25.5.27/core_blas/core_zlacpy_band.c
+--- plasma-25.5.27-orig/core_blas/core_zlacpy_band.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zlacpy_band.c	2025-06-22 10:08:32.107167500 +0800
 @@ -50,7 +50,9 @@
   *          The leading dimension of the array B. ldb >= max(1,M).
   *
@@ -216,9 +216,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zlacpy_band.c plasma-24.8.7/core_bla
  void plasma_core_zlacpy_tile2lapack_band(plasma_enum_t uplo,
                                    int it, int jt,
                                    int m, int n, int nb, int kl, int ku,
-diff -urN plasma-24.8.7-orig/core_blas/core_zlag2c.c plasma-24.8.7/core_blas/core_zlag2c.c
---- plasma-24.8.7-orig/core_blas/core_zlag2c.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zlag2c.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zlag2c.c plasma-25.5.27/core_blas/core_zlag2c.c
+--- plasma-25.5.27-orig/core_blas/core_zlag2c.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zlag2c.c	2025-06-22 10:08:32.107167500 +0800
 @@ -45,7 +45,9 @@
   *          ldas >= max(1,m).
   *
@@ -229,9 +229,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zlag2c.c plasma-24.8.7/core_blas/cor
  int plasma_core_zlag2c(int m, int n,
                   plasma_complex64_t *A,  int lda,
                   plasma_complex32_t *As, int ldas)
-diff -urN plasma-24.8.7-orig/core_blas/core_zlange.c plasma-24.8.7/core_blas/core_zlange.c
---- plasma-24.8.7-orig/core_blas/core_zlange.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zlange.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zlange.c plasma-25.5.27/core_blas/core_zlange.c
+--- plasma-25.5.27-orig/core_blas/core_zlange.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zlange.c	2025-06-22 10:08:32.107167500 +0800
 @@ -51,7 +51,9 @@
   *          The specified norm of the given matrix A
   *
@@ -242,9 +242,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zlange.c plasma-24.8.7/core_blas/cor
  void plasma_core_zlange(plasma_enum_t norm, int m, int n,
                   const plasma_complex64_t *A, int lda,
                   double *work, double *value)
-diff -urN plasma-24.8.7-orig/core_blas/core_zlanhe.c plasma-24.8.7/core_blas/core_zlanhe.c
---- plasma-24.8.7-orig/core_blas/core_zlanhe.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zlanhe.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zlanhe.c plasma-25.5.27/core_blas/core_zlanhe.c
+--- plasma-25.5.27-orig/core_blas/core_zlanhe.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zlanhe.c	2025-06-22 10:08:32.107167500 +0800
 @@ -17,7 +17,9 @@
  #include <math.h>
  
@@ -255,9 +255,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zlanhe.c plasma-24.8.7/core_blas/cor
  void plasma_core_zlanhe(plasma_enum_t norm, plasma_enum_t uplo,
                   int n,
                   const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_zlansy.c plasma-24.8.7/core_blas/core_zlansy.c
---- plasma-24.8.7-orig/core_blas/core_zlansy.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zlansy.c	2025-01-02 13:39:21.458842900 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zlansy.c plasma-25.5.27/core_blas/core_zlansy.c
+--- plasma-25.5.27-orig/core_blas/core_zlansy.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zlansy.c	2025-06-22 10:08:32.107167500 +0800
 @@ -17,7 +17,9 @@
  #include <math.h>
  
@@ -268,9 +268,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zlansy.c plasma-24.8.7/core_blas/cor
  void plasma_core_zlansy(plasma_enum_t norm, plasma_enum_t uplo,
                   int n,
                   const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_zlantr.c plasma-24.8.7/core_blas/core_zlantr.c
---- plasma-24.8.7-orig/core_blas/core_zlantr.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zlantr.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zlantr.c plasma-25.5.27/core_blas/core_zlantr.c
+--- plasma-25.5.27-orig/core_blas/core_zlantr.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zlantr.c	2025-06-22 10:08:32.107167500 +0800
 @@ -18,7 +18,9 @@
  #include <math.h>
  
@@ -281,9 +281,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zlantr.c plasma-24.8.7/core_blas/cor
  void plasma_core_zlantr(plasma_enum_t norm, plasma_enum_t uplo, plasma_enum_t diag,
                   int m, int n,
                   const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_zlascl.c plasma-24.8.7/core_blas/core_zlascl.c
---- plasma-24.8.7-orig/core_blas/core_zlascl.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zlascl.c	2025-01-02 13:39:21.459807100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zlascl.c plasma-25.5.27/core_blas/core_zlascl.c
+--- plasma-25.5.27-orig/core_blas/core_zlascl.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zlascl.c	2025-06-22 10:08:32.107167500 +0800
 @@ -15,7 +15,9 @@
  #include "core_lapack.h"
  
@@ -294,9 +294,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zlascl.c plasma-24.8.7/core_blas/cor
  void plasma_core_zlascl(plasma_enum_t uplo,
                   double cfrom, double cto,
                   int m, int n,
-diff -urN plasma-24.8.7-orig/core_blas/core_zlaset.c plasma-24.8.7/core_blas/core_zlaset.c
---- plasma-24.8.7-orig/core_blas/core_zlaset.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zlaset.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zlaset.c plasma-25.5.27/core_blas/core_zlaset.c
+--- plasma-25.5.27-orig/core_blas/core_zlaset.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zlaset.c	2025-06-22 10:08:32.107167500 +0800
 @@ -53,7 +53,9 @@
   *         The leading dimension of the array A.  lda >= max(1,m).
   *
@@ -307,9 +307,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zlaset.c plasma-24.8.7/core_blas/cor
  void plasma_core_zlaset(plasma_enum_t uplo, int m, int n,
                   plasma_complex64_t alpha, plasma_complex64_t beta,
                   plasma_complex64_t *A, int lda)
-diff -urN plasma-24.8.7-orig/core_blas/core_zlauum.c plasma-24.8.7/core_blas/core_zlauum.c
---- plasma-24.8.7-orig/core_blas/core_zlauum.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zlauum.c	2025-01-02 13:39:21.592495200 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zlauum.c plasma-25.5.27/core_blas/core_zlauum.c
+--- plasma-25.5.27-orig/core_blas/core_zlauum.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zlauum.c	2025-06-22 10:08:32.107167500 +0800
 @@ -54,7 +54,9 @@
   *          - < 0 if -i, the i-th argument had an illegal value
   *
@@ -320,9 +320,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zlauum.c plasma-24.8.7/core_blas/cor
  int plasma_core_zlauum(plasma_enum_t uplo,
                  int n,
                  plasma_complex64_t *A, int lda)
-diff -urN plasma-24.8.7-orig/core_blas/core_zpamm.c plasma-24.8.7/core_blas/core_zpamm.c
---- plasma-24.8.7-orig/core_blas/core_zpamm.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zpamm.c	2025-01-02 13:39:21.592495200 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zpamm.c plasma-25.5.27/core_blas/core_zpamm.c
+--- plasma-25.5.27-orig/core_blas/core_zpamm.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zpamm.c	2025-06-22 10:08:32.107167500 +0800
 @@ -169,7 +169,9 @@
   * @retval < 0 if -i, the i-th argument had an illegal value
   *
@@ -333,9 +333,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zpamm.c plasma-24.8.7/core_blas/core
  int plasma_core_zpamm(plasma_enum_t op, plasma_enum_t side, plasma_enum_t storev,
                 int m, int n, int k, int l,
                 const plasma_complex64_t *A1, int lda1,
-diff -urN plasma-24.8.7-orig/core_blas/core_zparfb.c plasma-24.8.7/core_blas/core_zparfb.c
---- plasma-24.8.7-orig/core_blas/core_zparfb.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zparfb.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zparfb.c plasma-25.5.27/core_blas/core_zparfb.c
+--- plasma-25.5.27-orig/core_blas/core_zparfb.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zparfb.c	2025-06-22 10:08:32.107167500 +0800
 @@ -125,7 +125,9 @@
   * @retval < 0 if -i, the i-th argument had an illegal value
   *
@@ -346,9 +346,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zparfb.c plasma-24.8.7/core_blas/cor
  int plasma_core_zparfb(plasma_enum_t side, plasma_enum_t trans,
                  plasma_enum_t direct, plasma_enum_t storev,
                  int m1, int n1, int m2, int n2, int k, int l,
-diff -urN plasma-24.8.7-orig/core_blas/core_zpemv.c plasma-24.8.7/core_blas/core_zpemv.c
---- plasma-24.8.7-orig/core_blas/core_zpemv.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zpemv.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zpemv.c plasma-25.5.27/core_blas/core_zpemv.c
+--- plasma-25.5.27-orig/core_blas/core_zpemv.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zpemv.c	2025-06-22 10:08:32.107167500 +0800
 @@ -108,7 +108,9 @@
   * @retval < 0 if -i, the i-th argument had an illegal value
   *
@@ -359,9 +359,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zpemv.c plasma-24.8.7/core_blas/core
  int plasma_core_zpemv(plasma_enum_t trans, int storev,
                 int m, int n, int l,
                 plasma_complex64_t alpha,
-diff -urN plasma-24.8.7-orig/core_blas/core_zpotrf.c plasma-24.8.7/core_blas/core_zpotrf.c
---- plasma-24.8.7-orig/core_blas/core_zpotrf.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zpotrf.c	2025-01-02 13:39:21.592495200 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zpotrf.c plasma-25.5.27/core_blas/core_zpotrf.c
+--- plasma-25.5.27-orig/core_blas/core_zpotrf.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zpotrf.c	2025-06-22 10:08:32.107167500 +0800
 @@ -51,7 +51,9 @@
   *          The leading dimension of the array A. lda >= max(1,n).
   *
@@ -372,9 +372,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zpotrf.c plasma-24.8.7/core_blas/cor
  int plasma_core_zpotrf(plasma_enum_t uplo,
                   int n,
                   plasma_complex64_t *A, int lda)
-diff -urN plasma-24.8.7-orig/core_blas/core_zsymm.c plasma-24.8.7/core_blas/core_zsymm.c
---- plasma-24.8.7-orig/core_blas/core_zsymm.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zsymm.c	2025-01-02 13:39:21.592495200 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zsymm.c plasma-25.5.27/core_blas/core_zsymm.c
+--- plasma-25.5.27-orig/core_blas/core_zsymm.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zsymm.c	2025-06-22 10:08:32.107167500 +0800
 @@ -77,7 +77,9 @@
   *          The leading dimension of the array C. ldc >= max(1,m).
   *
@@ -385,9 +385,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zsymm.c plasma-24.8.7/core_blas/core
  void plasma_core_zsymm(plasma_enum_t side, plasma_enum_t uplo,
                  int m, int n,
                  plasma_complex64_t alpha, const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_zsyr2k.c plasma-24.8.7/core_blas/core_zsyr2k.c
---- plasma-24.8.7-orig/core_blas/core_zsyr2k.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zsyr2k.c	2025-01-02 13:39:21.592495200 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zsyr2k.c plasma-25.5.27/core_blas/core_zsyr2k.c
+--- plasma-25.5.27-orig/core_blas/core_zsyr2k.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zsyr2k.c	2025-06-22 10:08:32.107167500 +0800
 @@ -82,7 +82,9 @@
   *          The leading dimension of the array C. ldc >= max(1, n).
   *
@@ -398,9 +398,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zsyr2k.c plasma-24.8.7/core_blas/cor
  void plasma_core_zsyr2k(plasma_enum_t uplo, plasma_enum_t trans,
                   int n, int k,
                   plasma_complex64_t alpha, const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_zsyrk.c plasma-24.8.7/core_blas/core_zsyrk.c
---- plasma-24.8.7-orig/core_blas/core_zsyrk.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zsyrk.c	2025-01-02 13:39:21.592495200 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zsyrk.c plasma-25.5.27/core_blas/core_zsyrk.c
+--- plasma-25.5.27-orig/core_blas/core_zsyrk.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zsyrk.c	2025-06-22 10:08:32.107167500 +0800
 @@ -70,7 +70,9 @@
   *          The leading dimension of the array C. ldc >= max(1, n).
   *
@@ -411,9 +411,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zsyrk.c plasma-24.8.7/core_blas/core
  void plasma_core_zsyrk(plasma_enum_t uplo, plasma_enum_t trans,
                  int n, int k,
                  plasma_complex64_t alpha, const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_zsyssq.c plasma-24.8.7/core_blas/core_zsyssq.c
---- plasma-24.8.7-orig/core_blas/core_zsyssq.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zsyssq.c	2025-01-02 13:39:21.592495200 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zsyssq.c plasma-25.5.27/core_blas/core_zsyssq.c
+--- plasma-25.5.27-orig/core_blas/core_zsyssq.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zsyssq.c	2025-06-22 10:08:32.107167500 +0800
 @@ -17,7 +17,9 @@
  #include <math.h>
  
@@ -424,9 +424,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zsyssq.c plasma-24.8.7/core_blas/cor
  void plasma_core_zsyssq(plasma_enum_t uplo,
                   int n,
                   const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_ztradd.c plasma-24.8.7/core_blas/core_ztradd.c
---- plasma-24.8.7-orig/core_blas/core_ztradd.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_ztradd.c	2025-01-02 13:39:21.592495200 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_ztradd.c plasma-25.5.27/core_blas/core_ztradd.c
+--- plasma-25.5.27-orig/core_blas/core_ztradd.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_ztradd.c	2025-06-22 10:08:32.107167500 +0800
 @@ -77,7 +77,9 @@
   *          ldb >= max(1,m).
   *
@@ -437,9 +437,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_ztradd.c plasma-24.8.7/core_blas/cor
  int plasma_core_ztradd(plasma_enum_t uplo, plasma_enum_t transa,
                  int m, int n,
                  plasma_complex64_t alpha, const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_ztrmm.c plasma-24.8.7/core_blas/core_ztrmm.c
---- plasma-24.8.7-orig/core_blas/core_ztrmm.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_ztrmm.c	2025-01-02 13:39:21.592495200 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_ztrmm.c plasma-25.5.27/core_blas/core_ztrmm.c
+--- plasma-25.5.27-orig/core_blas/core_ztrmm.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_ztrmm.c	2025-06-22 10:08:32.107167500 +0800
 @@ -92,7 +92,9 @@
   *          The leading dimension of the array B. ldb >= max(1,m).
   *
@@ -450,9 +450,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_ztrmm.c plasma-24.8.7/core_blas/core
  void plasma_core_ztrmm(
      plasma_enum_t side, plasma_enum_t uplo,
      plasma_enum_t transa, plasma_enum_t diag,
-diff -urN plasma-24.8.7-orig/core_blas/core_ztrsm.c plasma-24.8.7/core_blas/core_ztrsm.c
---- plasma-24.8.7-orig/core_blas/core_ztrsm.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_ztrsm.c	2025-01-02 13:39:21.592495200 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_ztrsm.c plasma-25.5.27/core_blas/core_ztrsm.c
+--- plasma-25.5.27-orig/core_blas/core_ztrsm.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_ztrsm.c	2025-06-22 10:08:32.107167500 +0800
 @@ -84,7 +84,9 @@
   *          The leading dimension of the array B. ldb >= max(1,m).
   *
@@ -463,9 +463,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_ztrsm.c plasma-24.8.7/core_blas/core
  void plasma_core_ztrsm(plasma_enum_t side, plasma_enum_t uplo,
                  plasma_enum_t transa, plasma_enum_t diag,
                  int m, int n,
-diff -urN plasma-24.8.7-orig/core_blas/core_ztrssq.c plasma-24.8.7/core_blas/core_ztrssq.c
---- plasma-24.8.7-orig/core_blas/core_ztrssq.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_ztrssq.c	2025-01-02 13:39:21.592495200 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_ztrssq.c plasma-25.5.27/core_blas/core_ztrssq.c
+--- plasma-25.5.27-orig/core_blas/core_ztrssq.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_ztrssq.c	2025-06-22 10:08:32.107167500 +0800
 @@ -35,7 +35,9 @@
  }
  
@@ -476,9 +476,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_ztrssq.c plasma-24.8.7/core_blas/cor
  void plasma_core_ztrssq(plasma_enum_t uplo, plasma_enum_t diag,
                   int m, int n,
                   const plasma_complex64_t *A, int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_ztrtri.c plasma-24.8.7/core_blas/core_ztrtri.c
---- plasma-24.8.7-orig/core_blas/core_ztrtri.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_ztrtri.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_ztrtri.c plasma-25.5.27/core_blas/core_ztrtri.c
+--- plasma-25.5.27-orig/core_blas/core_ztrtri.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_ztrtri.c	2025-06-22 10:08:32.107167500 +0800
 @@ -55,7 +55,9 @@
   *          matrix is singular and its inverse can not be computed.
   *
@@ -489,9 +489,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_ztrtri.c plasma-24.8.7/core_blas/cor
  int plasma_core_ztrtri(plasma_enum_t uplo, plasma_enum_t diag,
                   int n,
                   plasma_complex64_t *A, int lda)
-diff -urN plasma-24.8.7-orig/core_blas/core_ztslqt.c plasma-24.8.7/core_blas/core_ztslqt.c
---- plasma-24.8.7-orig/core_blas/core_ztslqt.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_ztslqt.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_ztslqt.c plasma-25.5.27/core_blas/core_ztslqt.c
+--- plasma-25.5.27-orig/core_blas/core_ztslqt.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_ztslqt.c	2025-06-22 10:08:32.107167500 +0800
 @@ -92,7 +92,9 @@
   * @retval < 0 if -i, the i-th argument had an illegal value
   *
@@ -502,9 +502,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_ztslqt.c plasma-24.8.7/core_blas/cor
  int plasma_core_ztslqt(int m, int n, int ib,
                  plasma_complex64_t *A1, int lda1,
                  plasma_complex64_t *A2, int lda2,
-diff -urN plasma-24.8.7-orig/core_blas/core_ztsmlq.c plasma-24.8.7/core_blas/core_ztsmlq.c
---- plasma-24.8.7-orig/core_blas/core_ztsmlq.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_ztsmlq.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_ztsmlq.c plasma-25.5.27/core_blas/core_ztsmlq.c
+--- plasma-25.5.27-orig/core_blas/core_ztsmlq.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_ztsmlq.c	2025-06-22 10:08:32.107167500 +0800
 @@ -115,7 +115,9 @@
   * @retval < 0 if -i, the i-th argument had an illegal value
   *
@@ -515,9 +515,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_ztsmlq.c plasma-24.8.7/core_blas/cor
  int plasma_core_ztsmlq(plasma_enum_t side, plasma_enum_t trans,
                  int m1, int n1, int m2, int n2, int k, int ib,
                        plasma_complex64_t *A1,   int lda1,
-diff -urN plasma-24.8.7-orig/core_blas/core_ztsmqr.c plasma-24.8.7/core_blas/core_ztsmqr.c
---- plasma-24.8.7-orig/core_blas/core_ztsmqr.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_ztsmqr.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_ztsmqr.c plasma-25.5.27/core_blas/core_ztsmqr.c
+--- plasma-25.5.27-orig/core_blas/core_ztsmqr.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_ztsmqr.c	2025-06-22 10:08:32.107167500 +0800
 @@ -115,7 +115,9 @@
   * @retval < 0 if -i, the i-th argument had an illegal value
   *
@@ -528,9 +528,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_ztsmqr.c plasma-24.8.7/core_blas/cor
  int plasma_core_ztsmqr(plasma_enum_t side, plasma_enum_t trans,
                  int m1, int n1, int m2, int n2, int k, int ib,
                        plasma_complex64_t *A1,   int lda1,
-diff -urN plasma-24.8.7-orig/core_blas/core_ztsqrt.c plasma-24.8.7/core_blas/core_ztsqrt.c
---- plasma-24.8.7-orig/core_blas/core_ztsqrt.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_ztsqrt.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_ztsqrt.c plasma-25.5.27/core_blas/core_ztsqrt.c
+--- plasma-25.5.27-orig/core_blas/core_ztsqrt.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_ztsqrt.c	2025-06-22 10:08:32.107167500 +0800
 @@ -82,7 +82,9 @@
   * @retval < 0 if -i, the i-th argument had an illegal value
   *
@@ -541,9 +541,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_ztsqrt.c plasma-24.8.7/core_blas/cor
  int plasma_core_ztsqrt(int m, int n, int ib,
                  plasma_complex64_t *A1, int lda1,
                  plasma_complex64_t *A2, int lda2,
-diff -urN plasma-24.8.7-orig/core_blas/core_zttlqt.c plasma-24.8.7/core_blas/core_zttlqt.c
---- plasma-24.8.7-orig/core_blas/core_zttlqt.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zttlqt.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zttlqt.c plasma-25.5.27/core_blas/core_zttlqt.c
+--- plasma-25.5.27-orig/core_blas/core_zttlqt.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zttlqt.c	2025-06-22 10:08:32.107167500 +0800
 @@ -82,7 +82,9 @@
   * @retval < 0 if -i, the i-th argument had an illegal value
   *
@@ -554,9 +554,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zttlqt.c plasma-24.8.7/core_blas/cor
  int plasma_core_zttlqt(int m, int n, int ib,
                  plasma_complex64_t *A1, int lda1,
                  plasma_complex64_t *A2, int lda2,
-diff -urN plasma-24.8.7-orig/core_blas/core_zttmlq.c plasma-24.8.7/core_blas/core_zttmlq.c
---- plasma-24.8.7-orig/core_blas/core_zttmlq.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zttmlq.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zttmlq.c plasma-25.5.27/core_blas/core_zttmlq.c
+--- plasma-25.5.27-orig/core_blas/core_zttmlq.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zttmlq.c	2025-06-22 10:08:32.107167500 +0800
 @@ -113,7 +113,9 @@
   * @retval < 0 if -i, the i-th argument had an illegal value
   *
@@ -567,9 +567,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zttmlq.c plasma-24.8.7/core_blas/cor
  int plasma_core_zttmlq(plasma_enum_t side, plasma_enum_t trans,
                  int m1, int n1, int m2, int n2, int k, int ib,
                        plasma_complex64_t *A1,   int lda1,
-diff -urN plasma-24.8.7-orig/core_blas/core_zttmqr.c plasma-24.8.7/core_blas/core_zttmqr.c
---- plasma-24.8.7-orig/core_blas/core_zttmqr.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zttmqr.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zttmqr.c plasma-25.5.27/core_blas/core_zttmqr.c
+--- plasma-25.5.27-orig/core_blas/core_zttmqr.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zttmqr.c	2025-06-22 10:08:32.107167500 +0800
 @@ -115,7 +115,9 @@
   * @retval < 0 if -i, the i-th argument had an illegal value
   *
@@ -580,9 +580,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zttmqr.c plasma-24.8.7/core_blas/cor
  int plasma_core_zttmqr(plasma_enum_t side, plasma_enum_t trans,
                  int m1, int n1, int m2, int n2, int k, int ib,
                        plasma_complex64_t *A1,   int lda1,
-diff -urN plasma-24.8.7-orig/core_blas/core_zttqrt.c plasma-24.8.7/core_blas/core_zttqrt.c
---- plasma-24.8.7-orig/core_blas/core_zttqrt.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zttqrt.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zttqrt.c plasma-25.5.27/core_blas/core_zttqrt.c
+--- plasma-25.5.27-orig/core_blas/core_zttqrt.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zttqrt.c	2025-06-22 10:08:32.107167500 +0800
 @@ -82,7 +82,9 @@
   * @retval < 0 if -i, the i-th argument had an illegal value
   *
@@ -593,9 +593,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zttqrt.c plasma-24.8.7/core_blas/cor
  int plasma_core_zttqrt(int m, int n, int ib,
                  plasma_complex64_t *A1, int lda1,
                  plasma_complex64_t *A2, int lda2,
-diff -urN plasma-24.8.7-orig/core_blas/core_zunmlq.c plasma-24.8.7/core_blas/core_zunmlq.c
---- plasma-24.8.7-orig/core_blas/core_zunmlq.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zunmlq.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zunmlq.c plasma-25.5.27/core_blas/core_zunmlq.c
+--- plasma-25.5.27-orig/core_blas/core_zunmlq.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zunmlq.c	2025-06-22 10:08:32.107167500 +0800
 @@ -101,7 +101,9 @@
   * @retval < 0 if -i, the i-th argument had an illegal value
   *
@@ -606,9 +606,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zunmlq.c plasma-24.8.7/core_blas/cor
  int plasma_core_zunmlq(plasma_enum_t side, plasma_enum_t trans,
                  int m, int n, int k, int ib,
                  const plasma_complex64_t *A,    int lda,
-diff -urN plasma-24.8.7-orig/core_blas/core_zunmqr.c plasma-24.8.7/core_blas/core_zunmqr.c
---- plasma-24.8.7-orig/core_blas/core_zunmqr.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/core_blas/core_zunmqr.c	2025-01-02 13:39:21.594487100 +0800
+diff -urN plasma-25.5.27-orig/core_blas/core_zunmqr.c plasma-25.5.27/core_blas/core_zunmqr.c
+--- plasma-25.5.27-orig/core_blas/core_zunmqr.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/core_blas/core_zunmqr.c	2025-06-22 10:08:31.837545500 +0800
 @@ -103,7 +103,9 @@
   * @retval < 0 if -i, the i-th argument had an illegal value
   *
@@ -619,9 +619,9 @@ diff -urN plasma-24.8.7-orig/core_blas/core_zunmqr.c plasma-24.8.7/core_blas/cor
  int plasma_core_zunmqr(plasma_enum_t side, plasma_enum_t trans,
                  int m, int n, int k, int ib,
                  const plasma_complex64_t *A,    int lda,
-diff -urN plasma-24.8.7-orig/tools/trace.c plasma-24.8.7/tools/trace.c
---- plasma-24.8.7-orig/tools/trace.c	2024-08-08 04:58:08.000000000 +0800
-+++ plasma-24.8.7/tools/trace.c	2025-01-02 13:40:30.789552600 +0800
+diff -urN plasma-25.5.27-orig/tools/trace.c plasma-25.5.27/tools/trace.c
+--- plasma-25.5.27-orig/tools/trace.c	2025-05-28 02:33:06.000000000 +0800
++++ plasma-25.5.27/tools/trace.c	2025-06-22 10:07:50.731265100 +0800
 @@ -297,7 +297,9 @@
  }
  

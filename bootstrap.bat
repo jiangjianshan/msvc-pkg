@@ -126,7 +126,7 @@ if "%CUDA_PATH%" == "" (
 )
 exit /b 0
 :install_cuda
-set CUDA_FULL_VERSION=12.8.1_572.61
+set CUDA_FULL_VERSION=12.9.1_576.57
 for /f "tokens=1-4 delims=." %%a in ("!CUDA_FULL_VERSION!") do set cuda_major=%%a
 for /f "tokens=1-4 delims=." %%a in ("!CUDA_FULL_VERSION!") do set cuda_major_minor=%%a.%%b
 for /f "delims=_" %%a in ("!CUDA_FULL_VERSION!") do set CUDA_VERSION=%%a
@@ -134,12 +134,42 @@ rem https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index
 if not exist "cuda_!CUDA_FULL_VERSION!_windows.exe" (
   wget --no-check-certificate https://developer.download.nvidia.com/compute/cuda/!CUDA_VERSION!/local_installers/cuda_!CUDA_FULL_VERSION!_windows.exe
 )
-cuda_!CUDA_FULL_VERSION!_windows.exe -s cuda_profiler_api_!cuda_major_minor! cudart_!cuda_major_minor! cuobjdump_!cuda_major_minor! cupti_!cuda_major_minor! cuxxfilt_!cuda_major_minor! demo_suite_!cuda_major_minor! nvcc_!cuda_major_minor! nvdisasm_!cuda_major_minor! nvfatbin_!cuda_major_minor! nvjitlink_!cuda_major_minor! nvml_dev_!cuda_major_minor! nvprof_!cuda_major_minor! nvprune_!cuda_major_minor! nvrtc_!cuda_major_minor! nvrtc_dev_!cuda_major_minor! opencl_!cuda_major_minor! visual_profiler_!cuda_major_minor! sanitizer_!cuda_major_minor! thrust_!cuda_major_minor! cublas_!cuda_major_minor! cublas_dev_!cuda_major_minor! cufft_!cuda_major_minor! cufft_dev_!cuda_major_minor! curand_!cuda_major_minor! curand_dev_!cuda_major_minor! cusolver_!cuda_major_minor! cusolver_dev_!cuda_major_minor! cusparse_!cuda_major_minor! cusparse_dev_!cuda_major_minor! npp_!cuda_major_minor! npp_dev_!cuda_major_minor! nvjpeg_!cuda_major_minor! nvjpeg_dev_!cuda_major_minor! occupancy_calculator_!cuda_major_minor!
+echo Installing CUDA Toolkit !CUDA_FULL_VERSION!
+cuda_!CUDA_FULL_VERSION!_windows.exe -s                                                              ^
+  cublas_!cuda_major_minor! cublas_dev_!cuda_major_minor!                                            ^
+  cuda_profiler_api_!cuda_major_minor!                                                               ^
+  cudart_!cuda_major_minor!                                                                          ^
+  cufft_!cuda_major_minor! cufft_dev_!cuda_major_minor!                                              ^
+  cuobjdump_!cuda_major_minor!                                                                       ^
+  cupti_!cuda_major_minor!                                                                           ^
+  curand_!cuda_major_minor! curand_dev_!cuda_major_minor!                                            ^
+  cusolver_!cuda_major_minor! cusolver_dev_!cuda_major_minor!                                        ^
+  cusparse_!cuda_major_minor! cusparse_dev_!cuda_major_minor!                                        ^
+  cuxxfilt_!cuda_major_minor!                                                                        ^
+  demo_suite_!cuda_major_minor!                                                                      ^
+  nsight_compute_!cuda_major_minor! nsight_systems_!cuda_major_minor! nsight_vse_!cuda_major_minor!  ^
+  npp_!cuda_major_minor! npp_dev_!cuda_major_minor!                                                  ^
+  nvcc_!cuda_major_minor!                                                                            ^
+  nvdisasm_!cuda_major_minor!                                                                        ^
+  nvfatbin_!cuda_major_minor!                                                                        ^
+  nvjitlink_!cuda_major_minor!                                                                       ^
+  nvjpeg_!cuda_major_minor! nvjpeg_dev_!cuda_major_minor!                                            ^
+  nvml_dev_!cuda_major_minor!                                                                        ^
+  nvprof_!cuda_major_minor!                                                                          ^
+  nvprune_!cuda_major_minor!                                                                         ^
+  nvrtc_!cuda_major_minor! nvrtc_dev_!cuda_major_minor!                                              ^
+  nvtx_!cuda_major_minor!                                                                            ^
+  occupancy_calculator_!cuda_major_minor!                                                            ^
+  opencl_!cuda_major_minor!                                                                          ^
+  sanitizer_!cuda_major_minor!                                                                       ^
+  thrust_!cuda_major_minor!                                                                          ^
+  visual_profiler_!cuda_major_minor!                                                                 ^
+  visual_studio_integration_!cuda_major_minor!
 for /f "delims=" %%i in ('yq -r ".components.cudnn" %ROOT_DIR%\settings.yaml') do set with_cudnn=%%i
 if "!with_cudnn!"=="yes" goto :install_cudnn
 exit /b 0
 :install_cudnn
-set CUDNN_VERSION=9.8.0.87
+set CUDNN_VERSION=9.10.2.21
 rem https://docs.nvidia.com/deeplearning/cudnn/latest/reference/support-matrix.html#support-matrix
 rem https://docs.nvidia.com/deeplearning/cudnn/latest/installation/windows.html
 if not exist "cudnn-windows-x86_64-!CUDNN_VERSION!_cuda!cuda_major!-archive.zip" (

@@ -61,16 +61,10 @@ patch_package()
     -i ltmain.sh
   popd || exit 1
 
-  # NOTE: Changed '*,cl*)' to '*,cl| *,icx-cl*)' and 'cl*)' to 'cl* | icx-cl*)'
-  #       can solved following issues:
-  #       1) The library_names_spec is not correct because it contains .dll name. This will also cause
-  #       the shared library will be converted to symbolic link as .dll file.
   echo "Patching configure in top level"
   sed                                                                                                \
     -e "s|libname_spec='lib\$name'|libname_spec='\$name'|g"                                          \
     -e 's|\.dll\.lib|.lib|g'                                                                         \
-    -e 's/ cl\* | icl\*)/ cl* | icl* | icx-cl*)/g'                                                   \
-    -e 's/ \*,cl\* | \*,icl\*)/ *,cl* | *,icl* | *,icx-cl*)/g'                                       \
     -i configure
   chmod +x configure
 }

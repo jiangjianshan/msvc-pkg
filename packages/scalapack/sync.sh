@@ -41,5 +41,19 @@ SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 ARCHIVE=$(basename -- "$PKG_URL")
 EXT=${ARCHIVE#$(echo "$ARCHIVE" | sed 's/\.[^[:digit:]].*$//g')}
 
+patch_package()
+{
+  echo "Patching package $PKG_NAME $PKG_VER"
+  cd "$SRC_DIR" || exit 1
+
+  echo "Patching CMakeLists.txt in BLACS/INSTALL folder"
+  pushd BLACS/INSTALL || exit 1
+  sed                                                                          \
+    -e 's|VERSION 2.8|VERSION 3.9|g'                                           \
+    -i CMakeLists.txt
+  popd || exit 1
+}
+
+
 . $ROOT_DIR/common.sh
 wget_sync $PKG_URL $SRC_DIR $PKG_NAME-$PKG_VER$EXT
