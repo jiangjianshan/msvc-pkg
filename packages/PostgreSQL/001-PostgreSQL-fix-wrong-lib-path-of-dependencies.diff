@@ -1,0 +1,52 @@
+diff -urN PostgreSQL-16.9-orig/src/tools/msvc/Solution.pm PostgreSQL-16.9/src/tools/msvc/Solution.pm
+--- PostgreSQL-16.9-orig/src/tools/msvc/Solution.pm	2025-05-06 04:30:08.000000000 +0800
++++ PostgreSQL-16.9/src/tools/msvc/Solution.pm	2025-06-28 15:52:10.301029600 +0800
+@@ -1039,20 +1039,20 @@
+ 		if ($self->{platform} eq 'Win32')
+ 		{
+ 			$proj->AddLibrary(
+-				$self->{options}->{gss} . '\lib\i386\krb5_32.lib');
++				$self->{options}->{gss} . '\lib\krb5_32.lib');
+ 			$proj->AddLibrary(
+-				$self->{options}->{gss} . '\lib\i386\comerr32.lib');
++				$self->{options}->{gss} . '\lib\comerr32.lib');
+ 			$proj->AddLibrary(
+-				$self->{options}->{gss} . '\lib\i386\gssapi32.lib');
++				$self->{options}->{gss} . '\lib\gssapi32.lib');
+ 		}
+ 		else
+ 		{
+ 			$proj->AddLibrary(
+-				$self->{options}->{gss} . '\lib\amd64\krb5_64.lib');
++				$self->{options}->{gss} . '\lib\krb5_64.lib');
+ 			$proj->AddLibrary(
+-				$self->{options}->{gss} . '\lib\amd64\comerr64.lib');
++				$self->{options}->{gss} . '\lib\comerr64.lib');
+ 			$proj->AddLibrary(
+-				$self->{options}->{gss} . '\lib\amd64\gssapi64.lib');
++				$self->{options}->{gss} . '\lib\gssapi64.lib');
+ 		}
+ 	}
+ 	if ($self->{options}->{iconv})
+@@ -1063,18 +1063,9 @@
+ 	if ($self->{options}->{icu})
+ 	{
+ 		$proj->AddIncludeDir($self->{options}->{icu} . '\include');
+-		if ($self->{platform} eq 'Win32')
+-		{
+-			$proj->AddLibrary($self->{options}->{icu} . '\lib\icuin.lib');
+-			$proj->AddLibrary($self->{options}->{icu} . '\lib\icuuc.lib');
+-			$proj->AddLibrary($self->{options}->{icu} . '\lib\icudt.lib');
+-		}
+-		else
+-		{
+-			$proj->AddLibrary($self->{options}->{icu} . '\lib64\icuin.lib');
+-			$proj->AddLibrary($self->{options}->{icu} . '\lib64\icuuc.lib');
+-			$proj->AddLibrary($self->{options}->{icu} . '\lib64\icudt.lib');
+-		}
++		$proj->AddLibrary($self->{options}->{icu} . '\lib\icuin.lib');
++		$proj->AddLibrary($self->{options}->{icu} . '\lib\icuuc.lib');
++		$proj->AddLibrary($self->{options}->{icu} . '\lib\icudt.lib');
+ 	}
+ 	if ($self->{options}->{xml})
+ 	{

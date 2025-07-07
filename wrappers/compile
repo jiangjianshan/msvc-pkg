@@ -194,6 +194,11 @@ func_cl_wrapper ()
 							;;
 					esac
 					;;
+				/F[0-9]*)
+					stack_size=${1#/F}
+					set x "$@" -F"$stack_size"
+					shift
+					;;
 				-I)
 					eat=1
 					func_file_conv "$2" mingw
@@ -293,6 +298,10 @@ func_cl_wrapper ()
 								;;
 							-DLL)
 								dll_option=1
+								;;
+							/F[0-9]*)
+								stack_size=${flag#/F}
+								set x "$@" -F"$stack_size"
 								;;
 							-IMPLIB:*)
 								if test -n "$dll_option"; then

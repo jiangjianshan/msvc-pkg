@@ -1,0 +1,20 @@
+diff -urN dirent-1.25-orig/CMakeLists.txt dirent-1.25/CMakeLists.txt
+--- dirent-1.25-orig/CMakeLists.txt	2025-04-07 00:13:04.000000000 +0800
++++ dirent-1.25/CMakeLists.txt	2025-06-29 10:32:24.783483800 +0800
+@@ -65,14 +65,14 @@
+ # Install files to the installation directory specified with
+ # CMAKE_INSTALL_PREFIX variable.
+ include(CMakePackageConfigHelpers)
+-set(ConfigPackageLocation lib/cmake/Dirent-${DIRENT_VERSION})
++set(ConfigPackageLocation lib/cmake/Dirent)
+ write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/Dirent/DirentConfigVersion.cmake" VERSION ${DIRENT_VERSION} COMPATIBILITY AnyNewerVersion)
+ configure_file(DirentConfig.cmake "${CMAKE_CURRENT_BINARY_DIR}/Dirent/DirentConfig.cmake")
+ install(
+   FILES
+     include/dirent.h
+   DESTINATION
+-    include/dirent-${DIRENT_VERSION}
++    include
+   COMPONENT
+     dev
+ )

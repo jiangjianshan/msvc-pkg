@@ -23,6 +23,7 @@ rem  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN T
 rem  SOFTWARE.
 
 setlocal enabledelayedexpansion
+chcp 65001 >nul
 
 set LOGONSERVER=\\LOCALHOST
 set MSYS=winsymlinks:nativestrict

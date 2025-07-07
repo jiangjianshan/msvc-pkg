@@ -1,0 +1,25 @@
+name: PostgreSQL
+version: 16.9
+url: https://ftp.postgresql.org/pub/source/v16.9/postgresql-16.9.tar.bz2
+sha256: 07c00fb824df0a0c295f249f44691b86e3266753b380c96f633c3311e10bd005
+steps:
+  a:
+    dependencies:
+      - pkg-config
+      - bzip2
+      - gettext
+      - icu4c
+      - krb5
+      - libxml2
+      - libxslt
+      - llvm-project
+      - lz4
+      - openssl
+      - perl
+      - readline
+      - tcl
+      - tk
+      - xz
+      - zlib
+      - zstd
+    run: build.bat

@@ -1,0 +1,13 @@
+diff -urN gettext-0.24.1-orig/gettext-tools/src/Makefile.in gettext-0.24.1/gettext-tools/src/Makefile.in
+--- gettext-0.24.1-orig/gettext-tools/src/Makefile.in	2025-05-02 23:34:24.000000000 +0800
++++ gettext-0.24.1/gettext-tools/src/Makefile.in	2025-07-01 09:44:48.564613400 +0800
+@@ -4471,8 +4471,8 @@
+ AM_CPPFLAGS = \
+   -I$(top_srcdir) \
+   -I$(top_srcdir)/tree-sitter-$(TREE_SITTER_VERSION)/lib/include \
+-  -I../libgrep -I$(top_srcdir)/libgrep \
+   -I../gnulib-lib -I$(top_srcdir)/gnulib-lib \
++  -I../libgrep -I$(top_srcdir)/libgrep \
+   -I../../gettext-runtime/intl -I$(top_srcdir)/../gettext-runtime/intl
+ 
+ 

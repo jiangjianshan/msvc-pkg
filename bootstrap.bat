@@ -27,10 +27,6 @@ rem  SOFTWARE.
 setlocal enabledelayedexpansion
 
 echo Checking system requirements for mpt
-rem  Fix error C2226: syntax error: unexpected type 'llvmrem sysrem UnicodeCharRange'
-for /f "tokens=2*" %%a in ('powershell -command "Get-WinSystemLocale" ^| findstr en-US') do set SYSTEM_LOCALE=%%a
-if "!SYSTEM_LOCALE!" neq "en-US" powershell -command "Set-WinSystemLocale -SystemLocale en-US"
-
 rem  https://docs.python.org/3/using/windows.html#removing-the-max-path-limitation
 reg query HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled >nul 2>&1 || (
   reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /t reg_DWORD /d 1
@@ -52,19 +48,19 @@ if not exist "%ROOT_DIR%\%ARCH%\bin" mkdir "%ROOT_DIR%\%ARCH%\bin"
 if not exist "%ROOT_DIR%\tags" mkdir "%ROOT_DIR%\tags"
 
 set restart_terminal=
-call :check_wget || goto :end
-call :check_yq || goto :end
-call :check_vcbuildtools || goto :end
-call :check_cuda || goto :end
-call :check_oneapi || goto :end
-call :check_git || goto :end
-call :check_cmake || goto :end
-call :check_rust || goto :end
-call :check_ninja || goto :end
-call :check_python || goto :end
-if not "!restart_terminal!"=="" goto :restart
-call :git_bash_add_tools || goto :end
-goto :end
+call :check_wget || goto end
+call :check_yq || goto end
+call :check_vcbuildtools || goto end
+call :check_cuda || goto end
+call :check_oneapi || goto end
+call :check_git || goto end
+call :check_cmake || goto end
+call :check_rust || goto end
+call :check_ninja || goto end
+call :check_python || goto end
+if not "!restart_terminal!"=="" goto restart
+call :git_bash_add_tools || goto end
+goto end
 
 rem ==============================================================================
 rem Check Visual C++ Build Tools whether has been installed
@@ -74,7 +70,7 @@ set vsinstall=
 if "%VSINSTALLDIR%" neq "" (
   set "vsinstall=%VSINSTALLDIR%"
 ) else (
-  if not exist "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" goto :install_vcbuildtools
+  if not exist "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" goto install_vcbuildtools
   for /f "delims=" %%r in ('^""%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -nologo -latest -products "*" -all -property installationPath^"') do set vsinstall=%%r
 )
 if exist "%vsinstall%\VC\Auxiliary\Build\vcvarsall.bat" (
@@ -119,7 +115,7 @@ if "%CUDA_PATH%" == "" (
     echo You don't have NVIDIA GPU on your PC
   ) else (
     for /f "delims=" %%i in ('yq -r ".components.cuda" %ROOT_DIR%\settings.yaml') do set with_cuda=%%i
-    if "!with_cuda!"=="yes" goto :install_cuda
+    if "!with_cuda!"=="yes" goto install_cuda
   ) 
 ) else (
   echo CUDA                            : installed
@@ -166,7 +162,7 @@ cuda_!CUDA_FULL_VERSION!_windows.exe -s                                         
   visual_profiler_!cuda_major_minor!                                                                 ^
   visual_studio_integration_!cuda_major_minor!
 for /f "delims=" %%i in ('yq -r ".components.cudnn" %ROOT_DIR%\settings.yaml') do set with_cudnn=%%i
-if "!with_cudnn!"=="yes" goto :install_cudnn
+if "!with_cudnn!"=="yes" goto install_cudnn
 exit /b 0
 :install_cudnn
 set CUDNN_VERSION=9.10.2.21
@@ -263,7 +259,7 @@ if "%errorlevel%" neq "0" (
 exit /b 0
 
 rem ==============================================================================
-rem  Check python whether has been installed, If not, install it automatically
+rem  Check python whether has been installed
 rem ==============================================================================
 :check_python
 where python >nul 2>&1

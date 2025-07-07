@@ -2553,7 +2553,7 @@ diff -urN pangomm-2.56.1-orig/build64/meson-logs/meson-log.txt pangomm-2.56.1/bu
 @@ -0,0 +1,1177 @@
 +Build started at 2025-04-12T22:16:44.427091
 +Main binary: C:\Python312\python.exe
-+Build Options: -Dc_std=c17 '-Dc_args=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX' -Dcpp_std=c++17 '-Dcpp_args=-EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX' -Dc_winlibs=Ole32.lib,User32.lib -Dcpp_winlibs=Ole32.lib,User32.lib -Dbuild-documentation=false '-Dprefix=E:\Githubs\msvc-pkg\x64' '-Dmandir=E:\Githubs\msvc-pkg\x64\share\man' -Dbuildtype=release
++Build Options: -Dc_std=c17 '-Dc_args=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX' -Dcpp_std=c++17 '-Dcpp_args=-EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX' -Dc_winlibs=Ole32.lib,User32.lib -Dcpp_winlibs=Ole32.lib,User32.lib -Dbuild-documentation=false '-Dprefix=E:\Githubs\msvc-pkg\x64' '-Dmandir=E:\Githubs\msvc-pkg\x64\share\man' -Dbuildtype=release
 +Python system: Windows
 +The Meson build system
 +Version: 1.7.2
@@ -2819,7 +2819,7 @@ diff -urN pangomm-2.56.1-orig/build64/meson-logs/meson-log.txt pangomm-2.56.1/bu
 +-----------
 +Sanity testing C++ compiler: cl
 +Is cross compiler: False.
-+Sanity check compiler command line: cl sanitycheckcpp.cc /Fesanitycheckcpp.exe /MD -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX /nologo /showIncludes /utf-8 /Zc:__cplusplus /link
++Sanity check compiler command line: cl sanitycheckcpp.cc /Fesanitycheckcpp.exe /MD -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX /nologo /showIncludes /utf-8 /Zc:__cplusplus /link
 +Sanity check compile stdout:
 +sanitycheckcpp.cc
 +
@@ -3247,7 +3247,7 @@ diff -urN pangomm-2.56.1-orig/build64/meson-logs/meson-log.txt pangomm-2.56.1/bu
 +            return 0;
 +        }
 +-----------
-+Command line: `cl E:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp3b99yvqs\testfile.cpp /FeE:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp3b99yvqs\output.exe /nologo /showIncludes /utf-8 /Zc:__cplusplus /MD -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX /nologo /showIncludes /utf-8 /Zc:__cplusplus /Od /Oi-` -> 0
++Command line: `cl E:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp3b99yvqs\testfile.cpp /FeE:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp3b99yvqs\output.exe /nologo /showIncludes /utf-8 /Zc:__cplusplus /MD -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX /nologo /showIncludes /utf-8 /Zc:__cplusplus /Od /Oi-` -> 0
 +stdout:
 +testfile.cpp
 +Note: including file: C:\Program Files (x86)\Windows Kits\10\include\10.0.22621.0\ucrt\stddef.h
@@ -3414,7 +3414,7 @@ diff -urN pangomm-2.56.1-orig/build64/meson-logs/meson-log.txt pangomm-2.56.1/bu
 +int i;
 +
 +-----------
-+Command line: `cl E:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmpakiwiifu\testfile.cpp /FoE:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmpakiwiifu\output.obj /nologo /showIncludes /utf-8 /Zc:__cplusplus /c -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX /nologo /showIncludes /utf-8 /Zc:__cplusplus /c /Od /Oi- /FImsvc_recommended_pragmas.h` -> 2
++Command line: `cl E:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmpakiwiifu\testfile.cpp /FoE:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmpakiwiifu\output.obj /nologo /showIncludes /utf-8 /Zc:__cplusplus /c -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX /nologo /showIncludes /utf-8 /Zc:__cplusplus /c /Od /Oi- /FImsvc_recommended_pragmas.h` -> 2
 +stdout:
 +testfile.cpp
 +E:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmpakiwiifu\testfile.cpp: fatal error C1083: Cannot open include file: 'msvc_recommended_pragmas.h': No such file or directory
@@ -3427,7 +3427,7 @@ diff -urN pangomm-2.56.1-orig/build64/meson-logs/meson-log.txt pangomm-2.56.1/bu
 +int i;
 +
 +-----------
-+Command line: `cl E:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmpgqbi1a8c\testfile.cpp /FoE:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmpgqbi1a8c\output.obj /nologo /showIncludes /utf-8 /Zc:__cplusplus /c -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX /nologo /showIncludes /utf-8 /Zc:__cplusplus /c /Od /Oi- /EHsc` -> 0
++Command line: `cl E:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmpgqbi1a8c\testfile.cpp /FoE:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmpgqbi1a8c\output.obj /nologo /showIncludes /utf-8 /Zc:__cplusplus /c -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX /nologo /showIncludes /utf-8 /Zc:__cplusplus /c /Od /Oi- /EHsc` -> 0
 +stdout:
 +testfile.cpp
 +-----------
@@ -3439,7 +3439,7 @@ diff -urN pangomm-2.56.1-orig/build64/meson-logs/meson-log.txt pangomm-2.56.1/bu
 +int i;
 +
 +-----------
-+Command line: `cl E:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp44l7z67e\testfile.cpp /FoE:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp44l7z67e\output.obj /nologo /showIncludes /utf-8 /Zc:__cplusplus /c -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX /nologo /showIncludes /utf-8 /Zc:__cplusplus /c /Od /Oi- /utf-8` -> 0
++Command line: `cl E:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp44l7z67e\testfile.cpp /FoE:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp44l7z67e\output.obj /nologo /showIncludes /utf-8 /Zc:__cplusplus /c -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX /nologo /showIncludes /utf-8 /Zc:__cplusplus /c /Od /Oi- /utf-8` -> 0
 +stdout:
 +testfile.cpp
 +-----------
@@ -3451,7 +3451,7 @@ diff -urN pangomm-2.56.1-orig/build64/meson-logs/meson-log.txt pangomm-2.56.1/bu
 +int i;
 +
 +-----------
-+Command line: `cl E:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp_qkjvdo1\testfile.cpp /FoE:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp_qkjvdo1\output.obj /nologo /showIncludes /utf-8 /Zc:__cplusplus /c -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX /nologo /showIncludes /utf-8 /Zc:__cplusplus /c /Od /Oi- /wd4267` -> 0
++Command line: `cl E:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp_qkjvdo1\testfile.cpp /FoE:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp_qkjvdo1\output.obj /nologo /showIncludes /utf-8 /Zc:__cplusplus /c -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX /nologo /showIncludes /utf-8 /Zc:__cplusplus /c /Od /Oi- /wd4267` -> 0
 +stdout:
 +testfile.cpp
 +-----------
@@ -3462,7 +3462,7 @@ diff -urN pangomm-2.56.1-orig/build64/meson-logs/meson-log.txt pangomm-2.56.1/bu
 +int main(void) { return 0; }
 +
 +-----------
-+Command line: `cl E:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp_2p4__qq\testfile.cpp /FeE:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp_2p4__qq\output.exe /nologo /showIncludes /utf-8 /Zc:__cplusplus /MD -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX /nologo /showIncludes /utf-8 /Zc:__cplusplus /Od /Oi- glibmm_generate_extra_defs-vc143-2.68.lib /link /release /nologo` -> 0
++Command line: `cl E:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp_2p4__qq\testfile.cpp /FeE:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\meson-private\tmp_2p4__qq\output.exe /nologo /showIncludes /utf-8 /Zc:__cplusplus /MD -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX /nologo /showIncludes /utf-8 /Zc:__cplusplus /Od /Oi- glibmm_generate_extra_defs-vc143-2.68.lib /link /release /nologo` -> 0
 +stdout:
 +testfile.cpp
 +-----------
@@ -3470,7 +3470,8 @@ diff -urN pangomm-2.56.1-orig/build64/meson-logs/meson-log.txt pangomm-2.56.1/bu
 +Configuring pangommconfig.h using configuration
 +Configuring pangomm.rc using configuration
 +Configuring pangommconfig.h using configuration
-+Windows resource compiler: Microsoft (R) Windows (R) Resource Compiler Version 10.0.10011.16384
++Windows resource compiler: Microsoft (R) Windows (R) Resource Compiler Version 10.0.10011.16384
+
 +Running command: C:\Python312\python.exe E:/Githubs/msvc-pkg/releases/pangomm-2.56.1/untracked/build_scripts/generate-binding.py copy_built_files E:\Githubs\msvc-pkg\releases\pangomm-2.56.1\build64\pango/pangomm E:/Githubs/msvc-pkg/releases/pangomm-2.56.1/untracked/pango/pangomm attributes attriter attrlist cairofontmap color context coverage font fontdescription fontface fontfamily fontmap fontmetrics fontset glyph glyphitem glyphstring item language layout layoutiter layoutline rectangle renderer tabarray
 +--- stdout ---
 +
@@ -3706,10 +3707,10 @@ diff -urN pangomm-2.56.1-orig/build64/meson-logs/meson-log.txt pangomm-2.56.1/bu
 +
 +  User defined options
 +    build-documentation: false
-+    buildtype          : release
++    buildtype          : release-openmp:llvm -utf-8 -Zc:__cplusplus
 +    c_args             : -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
 +    c_std              : c17
-+    c_winlibs          : Ole32.lib,User32.lib
++    c_winlibs          : Ole32.lib,User32.lib-openmp:llvm -utf-8 -Zc:__cplusplus
 +    cpp_args           : -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
 +    cpp_std            : c++17
 +    cpp_winlibs        : Ole32.lib,User32.lib
@@ -3735,9 +3736,9 @@ diff -urN pangomm-2.56.1-orig/build64/meson-private/cmd_line.txt pangomm-2.56.1/
 +++ pangomm-2.56.1/build64/meson-private/cmd_line.txt	2025-04-12 22:16:46.864019700 +0800
 @@ -0,0 +1,14 @@
 +[options]
-+c_std = c17
++c_std = c17-openmp:llvm -utf-8 -Zc:__cplusplus
 +c_args = -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
-+cpp_std = c++17
++cpp_std = c++17-openmp:llvm -utf-8 -Zc:__cplusplus
 +cpp_args = -EHsc -nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics -DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
 +c_winlibs = Ole32.lib,User32.lib
 +cpp_winlibs = Ole32.lib,User32.lib
@@ -3761,13 +3762,13 @@ diff -urN pangomm-2.56.1-orig/build64/meson-private/meson_benchmark_setup.dat pa
 --- pangomm-2.56.1-orig/build64/meson-private/meson_benchmark_setup.dat	1970-01-01 08:00:00.000000000 +0800
 +++ pangomm-2.56.1/build64/meson-private/meson_benchmark_setup.dat	2025-04-12 22:16:46.739078600 +0800
 @@ -0,0 +1 @@
-+€]”.
++ï¿½]ï¿½.
 \ No newline at end of file
 diff -urN pangomm-2.56.1-orig/build64/meson-private/meson_test_setup.dat pangomm-2.56.1/build64/meson-private/meson_test_setup.dat
 --- pangomm-2.56.1-orig/build64/meson-private/meson_test_setup.dat	1970-01-01 08:00:00.000000000 +0800
 +++ pangomm-2.56.1/build64/meson-private/meson_test_setup.dat	2025-04-12 22:16:46.739078600 +0800
 @@ -0,0 +1 @@
-+€]”.
++ï¿½]ï¿½.
 \ No newline at end of file
 diff -urN pangomm-2.56.1-orig/build64/meson-private/pangomm-2.48.pc pangomm-2.56.1/build64/meson-private/pangomm-2.48.pc
 --- pangomm-2.56.1-orig/build64/meson-private/pangomm-2.48.pc	1970-01-01 08:00:00.000000000 +0800

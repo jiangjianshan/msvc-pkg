@@ -46,6 +46,7 @@ patch_package()
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
   patch -Np1 -i "$PKG_DIR/001-dirent-fix-dirent-h-static-assert-failed-on-libunistring.diff"
+  patch -Np1 -i "$PKG_DIR/002-dirent-fix-files-install-location.diff"
 }
 
 . $ROOT_DIR/common.sh

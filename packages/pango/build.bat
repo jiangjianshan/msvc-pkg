@@ -43,7 +43,7 @@ call "%ROOT_DIR%\compiler.bat" %ARCH%
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
-set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics
+set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
 
 call :configure_stage
@@ -67,8 +67,8 @@ meson setup "%BUILD_DIR%"                                                      ^
   -Dc_args="%C_OPTS% %C_DEFS%"                                                 ^
   -Dcpp_std=c++17                                                              ^
   -Dcpp_args="-EHsc %C_OPTS% %C_DEFS%"                                         ^
-  -Dc_winlibs="Advapi32.lib,Ole32.lib,Shell32.lib,User32.lib"                  ^
-  -Dcpp_winlibs="Advapi32.lib,Ole32.lib,Shell32.lib,User32.lib"                ^
+  -Dc_winlibs="Advapi32.lib,Ole32.lib,Shell32.lib,User32.lib,ffi.lib"          ^
+  -Dcpp_winlibs="Advapi32.lib,Ole32.lib,Shell32.lib,User32.lib,ffi.lib"        ^
   -Ddefault_library=shared                                                     ^
   -Dfontconfig=enabled                                                         ^
   -Dfreetype=enabled                                                           ^

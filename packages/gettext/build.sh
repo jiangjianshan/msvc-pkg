@@ -44,7 +44,7 @@ PREFIX=$(cygpath -u "$PREFIX")
 RELS_DIR=$ROOT_DIR/releases
 SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
-C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -Zc:__cplusplus -experimental:c11atomics'
+C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics'
 C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX'
 
 clean_build()
@@ -63,6 +63,13 @@ configure_stage()
   elif [[ "$ARCH" == "x64" ]]; then
     HOST_TRIPLET=x86_64-w64-mingw32
   fi
+  # Issue: 'Warning: linker path does not have real file for library -lpthread'.
+  # The reason should be in the function of func_win32_libid in ltmain.sh. It use OBJDUMP
+  # which is missing from MSVC. That will cause the value of win32_libid_type is unknown.
+  # There are at least two way to solve this issue:
+  # 1. set OBJDUMP=llvm-objdump
+  # 2. set lt_cv_deplibs_check_method as below
+  export lt_cv_deplibs_check_method=${lt_cv_deplibs_check_method='pass_all'}
   # NOTE:
   # 1. Don't use CPP="$ROOT_DIR/wrappers/compile cl -nologo -EP" here,
   #    it will cause checking absolute name of standard files is empty.
@@ -76,8 +83,10 @@ configure_stage()
   #    *.la. So don't set --with-sysroot if --libdir has been set
   # 4. with below options, ncurses which version is 6.2 need to add
   #    '--with-shared' configuation option if not use '--disable-curses'
-  # 5. If want to generate libintl-8.dll, please don't use '--disable-nls'
+  # 5. If want to generate intl-8.dll, please don't use '--disable-nls'
   #    option
+  # TODO: If configure with '--with-included-libxml' option, following issues will occur:
+  #       error LNK2019: unresolved external symbol xmlFreeDoc referenced in function
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
   CC="$ROOT_DIR/wrappers/compile cl"                                           \
   CFLAGS="$C_OPTS"                                                             \
@@ -101,29 +110,22 @@ configure_stage()
     --includedir="$PREFIX/include"                                             \
     --libdir="$PREFIX/lib"                                                     \
     --datarootdir="$PREFIX/share"                                              \
-    --enable-static                                                            \
-    --enable-shared                                                            \
-    --enable-threads=windows                                                   \
-    --disable-java                                                             \
-    --disable-csharp                                                           \
-    --disable-openmp                                                           \
     --disable-curses                                                           \
+    --disable-java                                                             \
     --disable-rpath                                                            \
-    --with-included-libxml                                                     \
-    --with-included-libunistring                                               \
+    --enable-shared                                                            \
+    --enable-static                                                            \
+    --enable-threads=windows                                                   \
     --with-included-gettext                                                    \
-    --with-included-libintl                                                    \
-    --with-included-glib                                                       \
-    --with-included-libcroco                                                   \
-    --without-emacs                                                            \
-    --without-cvs                                                              \
-    --without-git                                                              \
+    --with-included-libunistring                                               \
     gl_cv_func_getopt_posix=yes                                                \
     ac_cv_func_getopt_long_only=yes                                            \
+    ac_cv_func_alphasort=yes                                                   \
     ac_cv_func_opendir=yes                                                     \
     ac_cv_func_readdir=yes                                                     \
     ac_cv_func_closedir=yes                                                    \
     ac_cv_func_rewinddir=yes                                                   \
+    ac_cv_func_scandir=yes                                                     \
     gt_cv_locale_zh_CN=none || exit 1
 }
 
@@ -134,56 +136,77 @@ patch_stage()
   echo "Patching Makefile in gettext-runtime/gnulib-lib"
   pushd gettext-runtime/gnulib-lib
   sed                                                                          \
-    -e 's|libgrt.a|libgrt.lib|g'                                               \
+    -e 's|libgrt\.a|libgrt.lib|g'                                              \
     -i Makefile
   popd
 
   echo "Patching Makefile in gettext-runtime/intl"
   pushd gettext-runtime/intl
   sed                                                                          \
-    -e 's|libintl.a|libintl.lib|g'                                             \
-    -i Makefile
-  popd
-
-  echo "Patching Makefile in gettext-runtime/src"
-  pushd gettext-runtime/src
-  sed                                                                          \
-    -e 's|libgrt.a|libgrt.lib|g'                                               \
+    -e 's|libintl\.a|libintl.lib|g'                                            \
     -i Makefile
   popd
 
   echo "Patching Makefile in gettext-runtime/intl/gnulib-lib"
   pushd gettext-runtime/intl/gnulib-lib
   sed                                                                          \
-    -e 's|libintl.a|libintl.lib|g'                                             \
+    -e 's|libintl\.a|libintl.lib|g'                                            \
+    -i Makefile
+  popd
+
+  echo "Patching Makefile in gettext-runtime/src"
+  pushd gettext-runtime/src
+  sed                                                                          \
+    -e 's|libgrt\.a|libgrt.lib|g'                                              \
     -i Makefile
   popd
 
   echo "Patching Makefile in gettext-tools/src"
   pushd gettext-tools/src
   sed                                                                          \
-    -e 's|libgrep.a|libgrep.lib|g'                                             \
+    -e 's|libgnu\.a|libgnu.lib|g'                                              \
+    -e 's|libgrep\.a|libgrep.lib|g'                                            \
+    -e 's|libxgettextx\.a|libxgettextx.lib|g'                                  \
+    -e 's|libxgettextts1\.a|libxgettextts1.lib|g'                              \
+    -e 's|libxgettextts2\.a|libxgettextts2.lib|g'                              \
+    -e 's|libxgettextts3\.a|libxgettextts3.lib|g'                              \
+    -e 's|libxgettextts4\.a|libxgettextts4.lib|g'                              \
     -i Makefile
   popd
 
   echo "Patching Makefile in gettext-tools/libgrep"
   pushd gettext-tools/libgrep
   sed                                                                          \
-    -e 's|libgrep.a|libgrep.lib|g'                                             \
+    -e 's|libgnu\.a|libgnu.lib|g'                                              \
+    -e 's|libgrep\.a|libgrep.lib|g'                                            \
+    -i Makefile
+  popd
+
+  echo "Patching Makefile in gettext-tools/libgrep/gnulib-lib"
+  pushd gettext-tools/libgrep/gnulib-lib
+  sed                                                                          \
+    -e 's|libgnu\.a|libgnu.lib|g'                                              \
     -i Makefile
   popd
 
   echo "Patching Makefile in gettext-tools/gnulib-tests"
   pushd gettext-tools/gnulib-tests
   sed                                                                          \
-    -e 's|libtests.a|libtests.lib|g'                                           \
+    -e 's|libtests\.a|libtests.lib|g'                                          \
+    -i Makefile
+  popd
+
+  echo "Patching Makefile in gettext-tools/tests/gnulib-lib"
+  pushd gettext-tools/tests/gnulib-lib
+  sed                                                                          \
+    -e 's|libtestsgnu\.a|libtestsgnu.lib|g'                                    \
     -i Makefile
   popd
 
   echo "Patching Makefile in libtextstyle/tests"
   pushd libtextstyle/tests
   sed                                                                          \
-    -e 's|libtests.a|libtests.lib|g'                                           \
+    -e 's|libtests\.a|libtests.lib|g'                                          \
     -i Makefile
   popd
 }
@@ -201,8 +224,6 @@ install_package()
   if ! make install; then
     exit 1
   fi
-  # Fix libtool: warning: '../intl/libintl.la' has not been installed
-  cp -v gettext-runtime/intl/.libs/libintl.lai "$PREFIX/lib/libintl.la"
   # Fix 0xc0000022 issue
   cd "$PREFIX/bin" && chmod 755 intl-8.dll
   clean_build

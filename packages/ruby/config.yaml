@@ -1,7 +1,7 @@
 name: ruby
 version: 3.4.4
-url: https://cache.ruby-lang.org/pub/ruby/3.4/ruby-3.4.4.tar.gz
-sha256: a0597bfdf312e010efd1effaa8d7f1d7833146fdc17950caa8158ffa3dcbfa85
+url: https://cache.ruby-lang.org/pub/ruby/3.4/ruby-3.4.4.tar.xz
+sha256: f76d63efe9499dedd8526b74365c0c811af00dc9feb0bed7f5356488476e28f4
 steps:
   a:
     dependencies:

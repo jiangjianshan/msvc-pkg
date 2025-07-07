@@ -36,7 +36,19 @@ fi
 ROOT_DIR=$(cygpath -u "$ROOT_DIR")
 PKG_DIR=$ROOT_DIR/packages/$PKG_NAME
 RELS_DIR=$ROOT_DIR/releases
-SRC_DIR=$RELS_DIR/$PKG_NAME
+TAGS_DIR=$ROOT_DIR/tags
+SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
+ARCHIVE=$(basename -- "$PKG_URL")
+EXT=${ARCHIVE#$(echo "$ARCHIVE" | sed 's/\.[^[:digit:]].*$//g')}
+
+patch_package()
+{
+  echo "Patching package $PKG_NAME $PKG_VER"
+  cd "$SRC_DIR" || exit 1
+  WANT_AUTOCONF='2.69' WANT_AUTOMAKE='1.16' ./autogen.sh
+  rm -rfv autom4te.cache
+  find . -name "*~" -type f -print -exec rm -rfv {} \;
+}
 
 . $ROOT_DIR/common.sh
-git_sync $PKG_URL $SRC_DIR $PKG_NAME $PKG_VER
+wget_sync $PKG_URL $SRC_DIR $PKG_NAME-$PKG_VER$EXT
