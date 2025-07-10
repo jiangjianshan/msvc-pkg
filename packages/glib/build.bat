@@ -88,6 +88,15 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/glib-2.0.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/gobject-2.0.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/gthread-2.0.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/gmodule-no-export-2.0.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/gmodule-export-2.0.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/gmodule-2.0.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/gio-2.0.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/gio-windows-2.0.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/girepository-2.0.pc"
 call :clean_build
 exit /b 0
 

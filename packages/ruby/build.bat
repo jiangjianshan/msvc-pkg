@@ -43,7 +43,7 @@ call "%ROOT_DIR%\compiler.bat" %ARCH%
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%
-set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
+set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -wd5287 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
 
 call :configure_stage
@@ -100,7 +100,11 @@ rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\st.c:587
 rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\miniruby.exe(rb_vm_encoded_insn_data_table_init+0x1f) [0x00007FF764496E83]
 rem  E:\Githubs\msvc-pkg\releases\ruby-3.4.2\iseq.c:3745
 rem
-win32\configure.bat --prefix="%PREFIX%" --srcdir="%SRC_DIR%" || exit 1
+win32\configure.bat --prefix="%PREFIX%"                                        ^
+  --srcdir="%SRC_DIR%"                                                         ^
+  --disable-install-doc                                                        ^
+  --disable-debug-env                                                          ^
+  --without-git || exit 1
 exit /b 0
 
 rem ==============================================================================

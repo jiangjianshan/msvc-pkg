@@ -1,0 +1,16 @@
+diff -urN libxml2-2.13.5-origin/CMakeLists.txt libxml2-2.13.5/CMakeLists.txt
+--- libxml2-2.13.5-origin/CMakeLists.txt	2024-11-13 01:16:02.000000000 +0800
++++ libxml2-2.13.5/CMakeLists.txt	2025-07-08 20:07:59.435560300 +0800
+@@ -668,11 +668,7 @@
+ file(RELATIVE_PATH PACKAGE_RELATIVE_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/pkgconfig" "${CMAKE_INSTALL_PREFIX}")
+ string(REGEX REPLACE "/$" "" PACKAGE_RELATIVE_PATH "${PACKAGE_RELATIVE_PATH}")
+ 
+-if(WIN32)
+-    set(prefix "\${pcfiledir}/${PACKAGE_RELATIVE_PATH}")
+-else()
+-    set(prefix "${CMAKE_INSTALL_PREFIX}")
+-endif()
++set(prefix "${CMAKE_INSTALL_PREFIX}")
+ set(exec_prefix "\${prefix}")
+ set(libdir "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
+ set(includedir "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")

@@ -1,0 +1,51 @@
+diff -urN SDL3-3.2.4-orig/cmake/sdltargets.cmake SDL3-3.2.4/cmake/sdltargets.cmake
+--- SDL3-3.2.4-orig/cmake/sdltargets.cmake	2025-02-07 08:03:43.000000000 +0800
++++ SDL3-3.2.4/cmake/sdltargets.cmake	2025-07-08 20:20:26.693916300 +0800
+@@ -338,17 +338,7 @@
+     message(STATUS "\"pkg-config --static --libs sdl3\" will return invalid information")
+   endif()
+ 
+-  if(SDL_RELOCATABLE)
+-    # Calculate prefix relative to location of sdl3.pc
+-    if(NOT IS_ABSOLUTE "${CMAKE_INSTALL_PREFIX}")
+-      set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_PREFIX}")
+-    endif()
+-    file(RELATIVE_PATH SDL_PATH_PREFIX_RELATIVE_TO_PKGCONFIG "${CMAKE_INSTALL_PREFIX}/${SDL_PKGCONFIG_INSTALLDIR}" "${CMAKE_INSTALL_PREFIX}")
+-    string(REGEX REPLACE "[/]+$" "" SDL_PATH_PREFIX_RELATIVE_TO_PKGCONFIG "${SDL_PATH_PREFIX_RELATIVE_TO_PKGCONFIG}")
+-    set(SDL_PKGCONFIG_PREFIX "\${pcfiledir}/${SDL_PATH_PREFIX_RELATIVE_TO_PKGCONFIG}")
+-  else()
+-    set(SDL_PKGCONFIG_PREFIX "${CMAKE_INSTALL_PREFIX}")
+-  endif()
++  set(SDL_PKGCONFIG_PREFIX "${CMAKE_INSTALL_PREFIX}")
+ 
+   if(IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}")
+     set(INCLUDEDIR_FOR_PKG_CONFIG "${CMAKE_INSTALL_INCLUDEDIR}")
+diff -urN SDL3-3.2.4-orig/CMakeLists.txt SDL3-3.2.4/CMakeLists.txt
+--- SDL3-3.2.4-orig/CMakeLists.txt	2025-02-07 08:03:43.000000000 +0800
++++ SDL3-3.2.4/CMakeLists.txt	2025-06-10 13:25:58.860971800 +0800
+@@ -3518,11 +3518,7 @@
+ 
+ ##### Configure installation folders #####
+ 
+-if(WINDOWS AND NOT MINGW)
+-  set(SDL_INSTALL_CMAKEDIR_ROOT_DEFAULT "cmake")
+-else()
+-  set(SDL_INSTALL_CMAKEDIR_ROOT_DEFAULT "${CMAKE_INSTALL_LIBDIR}/cmake/SDL3")
+-endif()
++set(SDL_INSTALL_CMAKEDIR_ROOT_DEFAULT "${CMAKE_INSTALL_LIBDIR}/cmake/SDL3")
+ set(SDL_INSTALL_CMAKEDIR_ROOT "${SDL_INSTALL_CMAKEDIR_ROOT_DEFAULT}" CACHE STRING "Root folder where to install SDL3Config.cmake related files (SDL3 subfolder for MSVC projects)")
+ 
+ if(FREEBSD)
+@@ -3532,11 +3528,7 @@
+   set(SDL_PKGCONFIG_INSTALLDIR "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+ endif()
+ 
+-if(WINDOWS AND NOT MINGW)
+-  set(SDL_INSTALL_CMAKEDIR "${SDL_INSTALL_CMAKEDIR_ROOT}")
+-  set(SDL_INSTALL_LICENSEDIR "licenses/SDL3")
+-  set(SDL_INSTALL_HEADERSDIR "${CMAKE_INSTALL_INCLUDEDIR}/SDL3")
+-elseif(SDL_FRAMEWORK)
++if(SDL_FRAMEWORK)
+   set(SDL_INSTALL_CMAKEDIR "SDL3.framework/Versions/${SDL_FRAMEWORK_VERSION}/Resources/CMake")
+   set(SDL_INSTALL_LICENSEDIR "Resources")
+   set(SDL_INSTALL_HEADERSDIR "Headers")

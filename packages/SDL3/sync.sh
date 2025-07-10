@@ -46,6 +46,7 @@ patch_package()
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
   patch -Np1 -i "$PKG_DIR/001-SDL3-fix-files-install-location-on-msvc.diff"
+  patch -Np1 -i "$PKG_DIR/002-SDL3-fix-pc-file-prefix.diff"
 }
 
 . $ROOT_DIR/common.sh

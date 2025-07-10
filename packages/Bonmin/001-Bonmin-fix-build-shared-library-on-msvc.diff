@@ -1,0 +1,629 @@
+diff -urN Bonmin-1.8.9-orig/Bonmin/bonmin.pc.in Bonmin-1.8.9/Bonmin/bonmin.pc.in
+--- Bonmin-1.8.9-orig/Bonmin/bonmin.pc.in	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/bonmin.pc.in	2025-07-08 17:10:54.090755300 +0800
+@@ -7,6 +7,6 @@
+ Description: Basic Open-source Nonlinear Mixed Integer programming
+ URL: https://projects.coin-or.org/Bonmin
+ Version: @PACKAGE_VERSION@
+-Libs: -L${libdir} -lbonmin @BONMINLIB_PCLIBS@
++Libs: -L${libdir} -lbonmin @BONMINLIB_LFLAGS@
+ Cflags: -I${includedir}
+-Requires: @BONMINLIB_PCREQUIRES@
++Requires: @BONMINLIB_PCFILES@
+diff -urN Bonmin-1.8.9-orig/Bonmin/bonmin-uninstalled.pc.in Bonmin-1.8.9/Bonmin/bonmin-uninstalled.pc.in
+--- Bonmin-1.8.9-orig/Bonmin/bonmin-uninstalled.pc.in	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/bonmin-uninstalled.pc.in	2025-07-08 17:10:54.090755300 +0800
+@@ -5,6 +5,6 @@
+ Description: Basic Open-source Nonlinear Mixed Integer programming
+ URL: https://projects.coin-or.org/Bonmin
+ Version: @PACKAGE_VERSION@
+-Libs: ${libdir}/libbonmin.la @BONMINLIB_PCLIBS@
++Libs: ${libdir}/libbonmin.la @BONMINLIB_LFLAGS@
+ Cflags: -I@abs_source_dir@/src -I@abs_source_dir@/src/Algorithms -I@abs_source_dir@/src/Algorithms/Branching -I@abs_source_dir@/src/Algorithms/OaGenerators -I@abs_source_dir@/src/Algorithms/QuadCuts -I@abs_source_dir@/src/CbcBonmin -I@abs_source_dir@/src/CbcBonmin/Heuristics -I@abs_source_dir@/src/Interfaces -I@abs_source_dir@/src/Interfaces/Ipopt -I@ABSBUILDDIR@/src/Interfaces
+-Requires: @BONMINLIB_PCREQUIRES@
++Requires: @BONMINLIB_PCFILES@
+diff -urN Bonmin-1.8.9-orig/Bonmin/configure.ac Bonmin-1.8.9/Bonmin/configure.ac
+--- Bonmin-1.8.9-orig/Bonmin/configure.ac	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/configure.ac	2025-07-08 17:10:54.106407700 +0800
+@@ -34,37 +34,23 @@
+ #                         Standard build tool stuff                         #
+ #############################################################################
+ 
+-# Get the system type
+-AC_CANONICAL_BUILD
+-
+-# If this project depends on external projects, the Externals file in
+-# the source root directory contains definition of where to find those
+-# externals.  The following macro ensures that those externals are
+-# retrieved by svn if they are not there yet.
+-AC_COIN_PROJECTDIR_INIT(Bonmin,12:9:8)
+-
+-# Check if user wants to produce debugging code
+-AC_COIN_DEBUG_COMPILE(Bonmin)
++AC_COIN_INITIALIZE
+ 
+ # Get the name of the C++ compiler and appropriate compiler options
+ AC_COIN_PROG_CXX
+ 
+-
+-# Initialize automake and libtool
+-AC_COIN_INIT_AUTO_TOOLS
+-
+ #############################################################################
+ #                           COIN-OR components                              #
+ #############################################################################
+ 
+-AC_COIN_CHECK_PACKAGE(CoinDepend, [cbc osi-clp ipopt], [BonminLib])
++AC_COIN_CHK_PKG(CoinDepend,[BonminLib],[cbc osi-clp ipopt coinutils])
+ if test $coin_has_coindepend != yes ; then
+   AC_MSG_ERROR([Required package Cbc or Ipopt not available.])
+ fi
+ 
+-AC_COIN_CHECK_PACKAGE(ASL, [ipoptamplinterface], [BonminAmplInterfaceLib])
++AC_COIN_CHK_PKG(ASL,[BonminAmplInterfaceLib],[ipoptamplinterface])
+ 
+-#AC_COIN_CHECK_PACKAGE(Bcp, [bcp])
++#AC_COIN_CHK_PKG(Bcp, [bcp])
+ #
+ #AC_ARG_WITH([bonminbcp],
+ #            AC_HELP_STRING([--with-bonminbcp],
+@@ -82,10 +68,10 @@
+ #############################################################################
+ 
+ # Check whether OsiCplex is available
+-AC_COIN_CHECK_PACKAGE(OsiCpx, [osi-cplex], [BonminLib])
++AC_COIN_CHK_PKG(OsiCpx,[BonminLib],[osi-cplex])
+ 
+ # To get also the directory where cplex.h can be found, we also check for cplex directly.
+-AC_COIN_CHECK_USER_LIBRARY([Cplex], [CPX],[cplex.h],[CPXgetstat])
++AC_COIN_CHK_LIB([CPX],[Cplex],[],[],[CPXgetstat],[cplex.h])
+ 
+ #############################################################################
+ #                                FilterSQP                                  #
+@@ -93,20 +79,17 @@
+ 
+ # for backward compatibility, map --with-filtersqp to --with-filtersqp-libs
+ AC_ARG_WITH([filtersqp],
+-            AC_HELP_STRING([--with-filtersqp],
++            AS_HELP_STRING([--with-filtersqp],
+                            [specify library for FilterSQP (or BUILD for compilation)]),
+             [filtersqp_libs="$withval"])
+ 
+-AC_COIN_CHECK_PACKAGE(FilterSQP, [coinfiltersqp], [BonminLib])
++AC_COIN_CHK_PKG(FilterSQP,[BonminLib],[coinfiltersqp])
+ 
+-if test $coin_has_filtersqp = yes
+-then
+-  # Get the name of the Fortran compiler and appropriate compiler options
+-  AC_COIN_PROG_F77
++# Get the name of the Fortran compiler and appropriate compiler options
++AC_COIN_PROG_F77
+ 
+-  # Find out how to call Fortran from C and determine Fortran runtime libraries
+-  AC_COIN_F77_WRAPPERS
+-fi
++# Find out how to call Fortran from C and determine Fortran runtime libraries
++AC_COIN_F77_WRAPPERS
+ 
+ # we want to keep the linking check for FilterSQP, but cannot do this if FilterSQP will be build later (in ThirdParty)
+ #if test $coin_has_filtersqp = yes ; then
+@@ -132,6 +115,9 @@
+ #  LIBS="$SAVE_LIBS"
+ #fi
+ 
++# Initialize automake and libtool
++AC_COIN_PROG_LIBTOOL
++
+ #############################################################################
+ #                           Feasibility Pump                                #
+ #############################################################################
+@@ -198,6 +184,8 @@
+                   ])
+ fi
+ 
+-AC_CONFIG_HEADER([src/Interfaces/config.h src/Interfaces/config_bonmin.h])
++AC_CONFIG_HEADERS([src/Interfaces/config.h src/Interfaces/config_bonmin.h])
++
++AC_COIN_FINALIZE_FLAGS([BonminLib BonminAmplInterfaceLib])
+ 
+ AC_COIN_FINALIZE
+diff -urN Bonmin-1.8.9-orig/Bonmin/experimental/Bcp/Makefile.am Bonmin-1.8.9/Bonmin/experimental/Bcp/Makefile.am
+--- Bonmin-1.8.9-orig/Bonmin/experimental/Bcp/Makefile.am	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/experimental/Bcp/Makefile.am	2025-07-08 17:10:54.122030500 +0800
+@@ -54,7 +54,7 @@
+ 	$(IPOPTLIBS) \
+ 	$(LIBCBCCOPY) \
+ 	$(COINLIBS) \
+-	amplsolver.a
++	amplsolver.lib
+ 
+ AMPL_PATCHED_FILES = \
+ 	asl.h \
+@@ -63,7 +63,7 @@
+ 	pfg_read.c
+ AMPL_SRC = $(abs_source_dir)/../ThirdParty/ASL/solvers
+ 
+-amplsolver.a:
++amplsolver.lib:
+ 	rm -rf solvers
+ 	mkdir -p solvers ; \
+ 	cd solvers ; \
+@@ -95,7 +95,7 @@
+ 		mv blabla makefile.u ; \
+ 	fi ; \
+ 	$(MAKE) CC="$(CC)" $$ASLMAKEFLAGS CFLAGS="$$CFLAGS" -f makefile.u ; \
+-	cp amplsolver.a ..
++	cp amplsolver.lib ..
+ 	rm -rf solvers
+ 
+ bonminbcp_LDADD = $(bonminbcp_DEPENDENCIES) \
+@@ -134,18 +134,15 @@
+ 
+ if COIN_HAS_CPX
+   AM_CPPFLAGS += \
++    -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/inc \
+ 	-I`$(CYGPATH_W) $(OSISRCDIR)/src/OsiCpx` \
+ 	-I`$(CYGPATH_W) $(CPXINCDIR)`
+ endif
+ 
+-# This line is necessary to allow VPATH compilation with MS compilers
+-# on Cygwin
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/inc
+-
+ ########################################################################
+ #                         make distclean stuff                         #
+ ########################################################################
+ 
+-CLEANFILES = $(LIBCBCCOPY) amplsolver.a
++CLEANFILES = $(LIBCBCCOPY) amplsolver.lib
+ 
+ DISTCLEANFILES = 
+diff -urN Bonmin-1.8.9-orig/Bonmin/Makefile.am Bonmin-1.8.9/Bonmin/Makefile.am
+--- Bonmin-1.8.9-orig/Bonmin/Makefile.am	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/Makefile.am	2025-07-08 17:10:54.138297500 +0800
+@@ -97,7 +97,6 @@
+ #                  Installation of the .pc file                        #
+ ########################################################################
+ 
+-pkgconfiglibdir = $(libdir)/pkgconfig
+ pkgconfiglib_DATA = bonmin.pc
+ if COIN_HAS_ASL
+ pkgconfiglib_DATA += bonminamplinterface.pc
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/Algorithms/Ampl/Makefile.am Bonmin-1.8.9/Bonmin/src/Algorithms/Ampl/Makefile.am
+--- Bonmin-1.8.9-orig/Bonmin/src/Algorithms/Ampl/Makefile.am	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/Algorithms/Ampl/Makefile.am	2025-07-08 17:10:54.153954300 +0800
+@@ -24,6 +24,7 @@
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows
+ AM_CPPFLAGS = \
++    -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces \
+ 	-I`$(CYGPATH_W) $(srcdir)/../OaGenerators` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../Branching` \
+ 	-I`$(CYGPATH_W) $(srcdir)/..` \
+@@ -33,16 +34,13 @@
+ 	-I`$(CYGPATH_W) $(srcdir)/../../Interfaces/Ampl` \
+ 	$(BONMINLIB_CFLAGS)
+ 
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces
+-
+ ########################################################################
+ #                Headers that need to be installed                     #
+ ########################################################################
+ 
+ # Here list all the header files that are required by a user of the library,
+-# and that therefore should be installed in 'include/coin'
+-includecoindir = $(includedir)/coin
++# and that therefore should be installed in 'include/coin-or'
++includecoindir = $(includedir)/coin-or
+ includecoin_HEADERS = BonAmplSetup.hpp
+ 
+ ########################################################################
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/Algorithms/Branching/Makefile.am Bonmin-1.8.9/Bonmin/src/Algorithms/Branching/Makefile.am
+--- Bonmin-1.8.9-orig/Bonmin/src/Algorithms/Branching/Makefile.am	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/Algorithms/Branching/Makefile.am	2025-07-08 17:10:54.153954300 +0800
+@@ -29,6 +29,7 @@
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows
+ AM_CPPFLAGS = \
++    -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces \
+ 	-I`$(CYGPATH_W) $(srcdir)/../OaGenerators` \
+ 	-I`$(CYGPATH_W) $(srcdir)/..` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../../CbcBonmin` \
+@@ -42,17 +43,13 @@
+ 
+ #AM_CPPFLAGS += -I`$(CYGPATH_W) $(srcdir)/../../CbcBonmin`
+ 
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces
+-
+-
+ ########################################################################
+ #                Headers that need to be installed                     #
+ ########################################################################
+ 
+ # Here list all the header files that are required by a user of the library,
+-# and that therefore should be installed in 'include/coin'
+-includecoindir = $(includedir)/coin
++# and that therefore should be installed in 'include/coin-or'
++includecoindir = $(includedir)/coin-or
+ includecoin_HEADERS = \
+ 	BonChooseVariable.hpp \
+ 	BonPseudoCosts.hpp \
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/Algorithms/Makefile.am Bonmin-1.8.9/Bonmin/src/Algorithms/Makefile.am
+--- Bonmin-1.8.9-orig/Bonmin/src/Algorithms/Makefile.am	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/Algorithms/Makefile.am	2025-07-08 17:10:54.153954300 +0800
+@@ -45,6 +45,7 @@
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows
+ AM_CPPFLAGS = \
++  -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces \
+ 	-I`$(CYGPATH_W) $(srcdir)/Branching` \
+ 	-I`$(CYGPATH_W) $(srcdir)/QuadCuts` \
+ 	-I`$(CYGPATH_W) $(srcdir)/OaGenerators` \
+@@ -60,17 +61,13 @@
+   AM_CPPFLAGS += -I`$(CYGPATH_W) $(CPXINCDIR)`
+ endif
+ 
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces
+-
+-
+ ########################################################################
+ #                Headers that need to be installed                     #
+ ########################################################################
+ 
+ # Here list all the header files that are required by a user of the library,
+-# and that therefore should be installed in 'include/coin'
+-includecoindir = $(includedir)/coin
++# and that therefore should be installed in 'include/coin-or'
++includecoindir = $(includedir)/coin-or
+ includecoin_HEADERS = \
+           BonBabSetupBase.hpp \
+           BonSubMipSolver.hpp \
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/Algorithms/OaGenerators/Makefile.am Bonmin-1.8.9/Bonmin/src/Algorithms/OaGenerators/Makefile.am
+--- Bonmin-1.8.9-orig/Bonmin/src/Algorithms/OaGenerators/Makefile.am	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/Algorithms/OaGenerators/Makefile.am	2025-07-08 17:10:54.169568900 +0800
+@@ -32,6 +32,7 @@
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows
+ AM_CPPFLAGS = \
++    -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces \
+ 	-I`$(CYGPATH_W) $(srcdir)/../../Interfaces` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../../CbcBonmin` \
+ 	-I`$(CYGPATH_W) $(srcdir)/..` \
+@@ -42,16 +43,13 @@
+   AM_CPPFLAGS += -I`$(CYGPATH_W) $(CPXINCDIR)`
+ endif
+ 
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces
+-
+ ########################################################################
+ #                Headers that need to be installed                     #
+ ########################################################################
+ 
+ # Here list all the header files that are required by a user of the library,
+-# and that therefore should be installed in 'include/coin'
+-includecoindir = $(includedir)/coin
++# and that therefore should be installed in 'include/coin-or'
++includecoindir = $(includedir)/coin-or
+ includecoin_HEADERS = \
+         BonDummyHeuristic.hpp \
+ 	BonOaNlpOptim.hpp \
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/Algorithms/QuadCuts/Makefile.am Bonmin-1.8.9/Bonmin/src/Algorithms/QuadCuts/Makefile.am
+--- Bonmin-1.8.9-orig/Bonmin/src/Algorithms/QuadCuts/Makefile.am	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/Algorithms/QuadCuts/Makefile.am	2025-07-08 17:10:54.169568900 +0800
+@@ -43,6 +43,7 @@
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows
+ AM_CPPFLAGS = \
++    -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces \
+ 	-I`$(CYGPATH_W) $(srcdir)/../Branching` \
+ 	-I`$(CYGPATH_W) $(srcdir)/..` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../OaGenerators` \
+@@ -53,16 +54,13 @@
+ 	-I`$(CYGPATH_W) $(srcdir)/../../Interfaces/Filter` \
+ 	$(BONMINLIB_CFLAGS)
+ 
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces
+-
+ ########################################################################
+ #                Headers that need to be installed                     #
+ ########################################################################
+ 
+ # Here list all the header files that are required by a user of the library,
+-# and that therefore should be installed in 'include/coin'
+-includecoindir = $(includedir)/coin
++# and that therefore should be installed in 'include/coin-or'
++includecoindir = $(includedir)/coin-or
+ includecoin_HEADERS = \
+             BonArraysHelpers.hpp \
+             BonOuterApprox.hpp \
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/Apps/Makefile.am Bonmin-1.8.9/Bonmin/src/Apps/Makefile.am
+--- Bonmin-1.8.9-orig/Bonmin/src/Apps/Makefile.am	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/Apps/Makefile.am	2025-07-08 17:10:54.185757300 +0800
+@@ -36,6 +36,7 @@
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows
+ AM_CPPFLAGS = \
++    -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces \
+ 	-I`$(CYGPATH_W) $(srcdir)/../Algorithms` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../Algorithms/Branching` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../Algorithms/OaGenerators` \
+@@ -46,9 +47,6 @@
+ 	-I`$(CYGPATH_W) $(srcdir)/../CbcBonmin` \
+ 	$(BONMINLIB_CFLAGS)
+ 
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces
+-
+ ########################################################################
+ #                              nodeSolver                              #
+ ########################################################################
+@@ -72,13 +70,11 @@
+ ########################################################################
+ 
+ if COIN_HAS_ASL
+-if COIN_CXX_IS_CL
+ install-exec-hook:
+ 	test -s bonmin.exe.manifest && \
+ 	mt -manifest bonmin.exe.manifest -outputresource:bonmin.exe;\
+ 	cp bonmin.exe $(bindir)/bonmin.exe
+ endif
+-endif
+ 
+ ########################################################################
+ #                            Astyle stuff                              #
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/CbcBonmin/bonminamplinterface.pc.in Bonmin-1.8.9/Bonmin/src/CbcBonmin/bonminamplinterface.pc.in
+--- Bonmin-1.8.9-orig/Bonmin/src/CbcBonmin/bonminamplinterface.pc.in	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/CbcBonmin/bonminamplinterface.pc.in	2025-07-08 17:10:54.201413000 +0800
+@@ -7,6 +7,6 @@
+ Description: Ampl Interface to Bonmin
+ URL: https://projects.coin-or.org/Bonmin
+ Version: @PACKAGE_VERSION@
+-Libs: -L${libdir} -lbonminampl @BONMINAMPLINTERFACELIB_PCLIBS@
++Libs: -L${libdir} -lbonminampl @BONMINAMPLINTERFACELIB_LFLAGS@
+ Cflags: -I${includedir}
+-Requires: bonmin @BONMINAMPLINTERFACELIB_PCREQUIRES@
++Requires: bonmin @BONMINAMPLINTERFACELIB_PCFILES@
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/CbcBonmin/bonminamplinterface-uninstalled.pc.in Bonmin-1.8.9/Bonmin/src/CbcBonmin/bonminamplinterface-uninstalled.pc.in
+--- Bonmin-1.8.9-orig/Bonmin/src/CbcBonmin/bonminamplinterface-uninstalled.pc.in	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/CbcBonmin/bonminamplinterface-uninstalled.pc.in	2025-07-08 17:10:54.217036400 +0800
+@@ -5,6 +5,6 @@
+ Description: Ampl Interface to Bonmin
+ URL: https://projects.coin-or.org/Bonmin
+ Version: @PACKAGE_VERSION@
+-Libs: ${libdir}/libbonminampl.la @BONMINAMPLINTERFACELIB_PCLIBS@
++Libs: ${libdir}/libbonminampl.la @BONMINAMPLINTERFACELIB_LFLAGS@
+ Cflags: -I@abs_source_dir@/src/Interfaces/Ampl -I@abs_source_dir@/src/Algorithms/Ampl
+-Requires: bonmin @BONMINAMPLINTERFACELIB_PCREQUIRES@
++Requires: bonmin @BONMINAMPLINTERFACELIB_PCFILES@
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/CbcBonmin/Heuristics/Makefile.am Bonmin-1.8.9/Bonmin/src/CbcBonmin/Heuristics/Makefile.am
+--- Bonmin-1.8.9-orig/Bonmin/src/CbcBonmin/Heuristics/Makefile.am	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/CbcBonmin/Heuristics/Makefile.am	2025-07-08 17:10:54.232657100 +0800
+@@ -38,6 +38,7 @@
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows
+ AM_CPPFLAGS = \
++   -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces \
+ 	-I`$(CYGPATH_W) $(srcdir)/..` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../../Algorithms` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../../Interfaces` \
+@@ -50,17 +51,13 @@
+ 
+ #AM_CPPFLAGS += -I`$(CYGPATH_W) $(srcdir)/../../CbcBonmin`
+ 
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces
+-
+-
+ ########################################################################
+ #                Headers that need to be installed                     #
+ ########################################################################
+ 
+ # Here list all the header files that are required by a user of the library,
+-# and that therefore should be installed in 'include/coin'
+-includecoindir = $(includedir)/coin
++# and that therefore should be installed in 'include/coin-or'
++includecoindir = $(includedir)/coin-or
+ includecoin_HEADERS = \
+                      BonLocalSolverBasedHeuristic.hpp \
+                      BonFixAndSolveHeuristic.hpp \
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/CbcBonmin/Makefile.am Bonmin-1.8.9/Bonmin/src/CbcBonmin/Makefile.am
+--- Bonmin-1.8.9-orig/Bonmin/src/CbcBonmin/Makefile.am	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/CbcBonmin/Makefile.am	2025-07-09 08:44:51.883358900 +0800
+@@ -30,9 +30,7 @@
+ 	BonDiver.cpp BonDiver.hpp
+ 
+ libbonmin_la_LIBADD = $(libbonmin_la_DEPENDENCIES)
+-if DEPENDENCY_LINKING
+-libbonmin_la_LIBADD += $(BONMINLIB_LIBS)
+-endif
++libbonmin_la_LIBADD += $(BONMINLIB_LFLAGS)
+ 
+ libbonmin_la_DEPENDENCIES = \
+ 	../Algorithms/libbonalgorithms.la \
+@@ -54,18 +52,14 @@
+ 
+ # List all additionally required libraries
+ libbonminampl_la_LIBADD = $(libbonminampl_la_DEPENDENCIES)
+-if DEPENDENCY_LINKING
+-libbonminampl_la_LIBADD += $(BONMINLIB_LIBS) \
+-	$(BONMINAMPLINTERFACELIB_LIBS)
+-endif
++libbonminampl_la_LIBADD += $(BONMINLIB_LFLAGS) \
++	$(BONMINAMPLINTERFACELIB_LFLAGS)
+ 
+ # List all dependency libraries
+ libbonminampl_la_DEPENDENCIES = \
+ 	../Algorithms/Ampl/libbonamplsetup.la \
+ 	../Interfaces/Ampl/libbonamplinterface.la 
+-if DEPENDENCY_LINKING
+ libbonminampl_la_DEPENDENCIES += libbonmin.la
+-endif
+ 
+ # This is for libtool
+ libbonminampl_la_LDFLAGS = $(LT_LDFLAGS)
+@@ -73,6 +67,7 @@
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows
+ AM_CPPFLAGS = \
++    -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces \
+ 	-I`$(CYGPATH_W) $(srcdir)/../Algorithms` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../Algorithms/OaGenerators` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../Algorithms/Branching` \
+@@ -83,16 +78,13 @@
+ 	-I`$(CYGPATH_W) $(srcdir)/../Interfaces/Filter` \
+ 	$(BONMINLIB_CFLAGS)
+ 
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces
+-
+ ########################################################################
+ #                Headers that need to be installed                     #
+ ########################################################################
+ 
+ # Here list all the header files that are required by a user of the library,
+-# and that therefore should be installed in 'include/coin'
+-includecoindir = $(includedir)/coin
++# and that therefore should be installed in 'include/coin-or'
++includecoindir = $(includedir)/coin-or
+ includecoin_HEADERS = \
+      BonCbcNlpStrategy.hpp \
+      BonCbc.hpp \
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/Interfaces/Ampl/Makefile.am Bonmin-1.8.9/Bonmin/src/Interfaces/Ampl/Makefile.am
+--- Bonmin-1.8.9-orig/Bonmin/src/Interfaces/Ampl/Makefile.am	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/Interfaces/Ampl/Makefile.am	2025-07-08 17:10:54.257542000 +0800
+@@ -28,6 +28,7 @@
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows
+ AM_CPPFLAGS = \
++        -I. -I`$(CYGPATH_W) $(srcdir)` -I.. \
+         -I`$(CYGPATH_W) $(srcdir)/..` \
+         -I`$(CYGPATH_W) $(srcdir)/../Ipopt` \
+         $(BONMINLIB_CFLAGS) $(ASL_CFLAGS)
+@@ -36,16 +37,13 @@
+   AM_CPPFLAGS += -I`$(CYGPATH_W) $(srcdir)/../Filter` 
+ endif
+ 
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I..
+-
+ ########################################################################
+ #                Headers that need to be installed                     #
+ ########################################################################
+ 
+ # Here list all the header files that are required by a user of the library,
+-# and that therefore should be installed in 'include/coin'
+-includecoindir = $(includedir)/coin
++# and that therefore should be installed in 'include/coin-or'
++includecoindir = $(includedir)/coin-or
+ includecoin_HEADERS = BonAmplInterface.hpp BonAmplTMINLP.hpp
+ 
+ ########################################################################
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/Interfaces/Filter/Makefile.am Bonmin-1.8.9/Bonmin/src/Interfaces/Filter/Makefile.am
+--- Bonmin-1.8.9-orig/Bonmin/src/Interfaces/Filter/Makefile.am	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/Interfaces/Filter/Makefile.am	2025-07-08 17:10:54.262306900 +0800
+@@ -32,18 +32,16 @@
+ 
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows
+-AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/..` $(BONMINLIB_CFLAGS)
+-
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I..
++AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/..` $(BONMINLIB_CFLAGS) \
++  -I. -I`$(CYGPATH_W) $(srcdir)` -I..
+ 
+ ########################################################################
+ #                Headers that need to be installed                     #
+ ########################################################################
+ 
+ # Here list all the header files that are required by a user of the library,
+-# and that therefore should be installed in 'include/coin'
+-includecoindir = $(includedir)/coin
++# and that therefore should be installed in 'include/coin-or'
++includecoindir = $(includedir)/coin-or
+ includecoin_HEADERS = \
+                   BonFilterSolver.hpp \
+                   BonBqpdSolver.hpp \
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/Interfaces/Ipopt/Makefile.am Bonmin-1.8.9/Bonmin/src/Interfaces/Ipopt/Makefile.am
+--- Bonmin-1.8.9-orig/Bonmin/src/Interfaces/Ipopt/Makefile.am	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/Interfaces/Ipopt/Makefile.am	2025-07-08 17:10:54.271340300 +0800
+@@ -27,18 +27,16 @@
+ 
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows
+-AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/..` $(BONMINLIB_CFLAGS)
+-
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I..
++AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/..` $(BONMINLIB_CFLAGS) \
++  -I. -I`$(CYGPATH_W) $(srcdir)` -I..
+ 
+ ########################################################################
+ #                Headers that need to be installed                     #
+ ########################################################################
+ 
+ # Here list all the header files that are required by a user of the library,
+-# and that therefore should be installed in 'include/coin'
+-includecoindir = $(includedir)/coin
++# and that therefore should be installed in 'include/coin-or'
++includecoindir = $(includedir)/coin-or
+ includecoin_HEADERS = \
+ 	BonIpoptInteriorWarmStarter.hpp \
+ 	BonIpoptSolver.hpp \
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/Interfaces/Makefile.am Bonmin-1.8.9/Bonmin/src/Interfaces/Makefile.am
+--- Bonmin-1.8.9-orig/Bonmin/src/Interfaces/Makefile.am	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/Interfaces/Makefile.am	2025-07-08 17:10:54.271340300 +0800
+@@ -55,22 +55,20 @@
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Windows
+ AM_CPPFLAGS = \
++    -I. -I`$(CYGPATH_W) $(srcdir)` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../Algorithms` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../Algorithms/OaGenerators` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../Algorithms/Branching` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../CbcBonmin` \
+ 	$(BONMINLIB_CFLAGS)
+ 
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)`
+-
+ ########################################################################
+ #                Headers that need to be installed                     #
+ ########################################################################
+ 
+ # Here list all the header files that are required by a user of the library,
+-# and that therefore should be installed in 'include/coin'
+-includecoindir = $(includedir)/coin
++# and that therefore should be installed in 'include/coin-or'
++includecoindir = $(includedir)/coin-or
+ includecoin_HEADERS = \
+      BonOsiTMINLPInterface.hpp \
+      BonTMINLP2TNLP.hpp \
+diff -urN Bonmin-1.8.9-orig/Bonmin/test/Makefile.am Bonmin-1.8.9/Bonmin/test/Makefile.am
+--- Bonmin-1.8.9-orig/Bonmin/test/Makefile.am	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/test/Makefile.am	2025-07-08 17:10:54.271340300 +0800
+@@ -50,7 +50,8 @@
+ # Here list all include flags, relative to this "srcdir" directory.  This
+ # "cygpath" stuff is necessary to compile with native compilers on Cygwin
+ AM_CPPFLAGS = \
+-        -I`$(CYGPATH_W) $(srcdir)/../src/Apps` \
++    -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces \
++    -I`$(CYGPATH_W) $(srcdir)/../src/Apps` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../src/Interfaces` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../src/Interfaces/Ipopt` \
+ 	-I`$(CYGPATH_W) $(srcdir)/../src/Interfaces/Filter` \
+@@ -62,9 +63,6 @@
+ 	-I`$(CYGPATH_W) $(srcdir)/../src/Algorithms/Ampl` \
+ 	$(BONMINLIB_CFLAGS) $(ASL_CFLAGS) 
+ 
+-# This line is necessary to allow VPATH compilation
+-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I$(top_builddir)/src/Interfaces
+-
+ test: unitTest$(EXEEXT) CppExample$(EXEEXT)
+ 	./unitTest$(EXEEXT)
+ 	./CppExample$(EXEEXT)

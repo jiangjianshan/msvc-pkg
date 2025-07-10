@@ -1,0 +1,16 @@
+diff -urN libxslt-1.1.42-orig/CMakeLists.txt libxslt-1.1.42/CMakeLists.txt
+--- libxslt-1.1.42-orig/CMakeLists.txt	2024-07-04 23:35:48.000000000 +0800
++++ libxslt-1.1.42/CMakeLists.txt	2025-07-08 20:13:55.508972600 +0800
+@@ -529,11 +529,7 @@
+ file(RELATIVE_PATH PACKAGE_RELATIVE_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/pkgconfig" "${CMAKE_INSTALL_PREFIX}")
+ string(REGEX REPLACE "/$" "" PACKAGE_RELATIVE_PATH "${PACKAGE_RELATIVE_PATH}")
+ 
+-if(WIN32)
+-    set(prefix "\${pcfiledir}/${PACKAGE_RELATIVE_PATH}")
+-else()
+-    set(prefix "${CMAKE_INSTALL_PREFIX}")
+-endif()
++set(prefix "${CMAKE_INSTALL_PREFIX}")
+ set(exec_prefix "\${prefix}")
+ set(libdir "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
+ set(includedir "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")

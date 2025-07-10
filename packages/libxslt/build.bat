@@ -85,6 +85,8 @@ cd "%BUILD_DIR%" && ninja install || exit 1
 if not exist "%PREFIX%\\lib\\xslt.lib" (
   mklink "%PREFIX%\\lib\\xslt.lib" "%PREFIX%\\lib\\libxslt.lib"
 )
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/libexslt.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/libxslt.pc"
 call :clean_build
 exit /b 0
 

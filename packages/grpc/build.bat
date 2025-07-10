@@ -94,6 +94,12 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/gpr.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/grpc.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/grpc_unsecure.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/grpc++.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/grpc++_unsecure.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/grpcpp_otel_plugin.pc"
 call :clean_build
 exit /b 0
 

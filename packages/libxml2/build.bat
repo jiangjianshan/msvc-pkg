@@ -122,6 +122,7 @@ cd "%BUILD_DIR%" && ninja install || exit 1
 if not exist "%PREFIX%\lib\xml2.lib" (
   mklink "%PREFIX%\lib\xml2.lib" "%PREFIX%\lib\libxml2.lib"
 )
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/libxml-2.0.pc"
 call :clean_build
 exit /b 0
 

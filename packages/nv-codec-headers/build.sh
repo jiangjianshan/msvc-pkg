@@ -60,6 +60,7 @@ install_package()
   if ! make install PREFIX=$PREFIX; then
     exit 1
   fi
+  sed -E "s|^(prefix=).*|\1${PREFIX}|" -i "${PREFIX}/lib/pkgconfig/ffnvcodec.pc"
 }
 
 build_stage

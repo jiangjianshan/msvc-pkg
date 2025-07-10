@@ -110,6 +110,10 @@ mklink "%PREFIX%\lib\lapacke.lib" "%PREFIX%\lib\lapacke64.lib"
 rem tmglib64.lib -> tmglib.lib
 if exist "%PREFIX%\lib\tmglib.lib" del /q "%PREFIX%\lib\tmglib.lib"
 mklink "%PREFIX%\lib\tmglib.lib" "%PREFIX%\lib\tmglib64.lib"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/lapack64.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/blas64.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/cblas64.pc"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/lapacke64.pc"
 call :clean_build
 exit /b 0
 

@@ -1,0 +1,101 @@
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/Interfaces/BonBranchingTQP.cpp Bonmin-1.8.9/Bonmin/src/Interfaces/BonBranchingTQP.cpp
+--- Bonmin-1.8.9-orig/Bonmin/src/Interfaces/BonBranchingTQP.cpp	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/Interfaces/BonBranchingTQP.cpp	2025-07-10 14:33:13.231893300 +0800
+@@ -25,8 +25,10 @@
+   {
+     bool retval = tminlp2tnlp_->get_nlp_info(n_, m_, nnz_jac_g_,
+ 					     nnz_h_lag_, index_style_);
++    #if 0
+     ASSERT_EXCEPTION(retval, TMINLP_INVALID,
+ 		     "Can't get NLP infor in BranchingTQP");
++    #endif
+     //DBG_ASSERT(x_sol_);
+     //DBG_ASSERT(duals_sol_);
+ 
+@@ -46,18 +48,24 @@
+     // have all the information for the QP
+     bool new_x = true;   // ToDo: maybe NOT new?
+     retval = tminlp2tnlp_->eval_f(n_, x_sol, new_x, obj_val_);
++    #if 0
+     ASSERT_EXCEPTION(retval, TMINLP_INVALID,
+ 		     "Can't evaluate objective function in BranchingTQP");
++    #endif
+     new_x = false;
+     retval = tminlp2tnlp_->eval_grad_f(n_, x_sol, new_x, obj_grad_);
++    #if 0
+     ASSERT_EXCEPTION(retval, TMINLP_INVALID,
+ 		     "Can't evaluate objective gradient in BranchingTQP");
++    #endif
+     bool new_lambda = true; // ToDo: maybe NOT new?
+     retval = tminlp2tnlp_->eval_h(n_, x_sol, new_x, 1., m_, duals_sol + 2 * n_,
+ 			     new_lambda, nnz_h_lag_, obj_hess_irow_,
+ 			     obj_hess_jcol_, NULL);
++    #if 0
+     ASSERT_EXCEPTION(retval, TMINLP_INVALID,
+ 		     "Can't evaluate objective Hessian structure in BranchingTQP");
++    #endif
+     if (index_style_ == TNLP::FORTRAN_STYLE) {
+       for (Index i=0; i<nnz_h_lag_; i++) {
+ 	obj_hess_irow_[i]--;
+@@ -66,15 +74,21 @@
+     }
+     retval = tminlp2tnlp_->eval_h(n_, x_sol, new_x, 1., m_, duals_sol + 2*n_,
+ 			     new_lambda, nnz_h_lag_, NULL, NULL, obj_hess_);
++    #if 0
+     ASSERT_EXCEPTION(retval, TMINLP_INVALID,
+ 		     "Can't evaluate objective Hessian values in BranchingTQP");
++    #endif
+     retval = tminlp2tnlp_->eval_g(n_, x_sol, new_x, m_, g_vals_);
++    #if 0
+     ASSERT_EXCEPTION(retval, TMINLP_INVALID,
+ 		     "Can't evaluate constraint values in BranchingTQP");
++    #endif
+     retval = tminlp2tnlp_->eval_jac_g(n_, x_sol, new_x, m_, nnz_jac_g_,
+ 				 g_jac_irow_, g_jac_jcol_, NULL);
++    #if 0
+     ASSERT_EXCEPTION(retval, TMINLP_INVALID,
+ 		     "Can't evaluate constraint Jacobian structure in BranchingTQP");
++    #endif
+     if (index_style_ == TNLP::FORTRAN_STYLE) {
+       for (Index i=0; i<nnz_jac_g_; i++) {
+ 	g_jac_irow_[i]--;
+@@ -83,9 +97,10 @@
+     }
+     retval = tminlp2tnlp_->eval_jac_g(n_, x_sol, new_x, m_, nnz_jac_g_,
+ 				 NULL, NULL, g_jac_);
++    #if 0
+     ASSERT_EXCEPTION(retval, TMINLP_INVALID,
+ 		     "Can't evaluate constraint Jacobian values in BranchingTQP");
+-
++    #endif
+     // Keep copy of original x_sol and duals_sol values
+     x_sol_copy_ = new Number[n_];
+     IpBlasDcopy(n_, x_sol, 1, x_sol_copy_, 1);
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/Interfaces/BonTMINLP.hpp Bonmin-1.8.9/Bonmin/src/Interfaces/BonTMINLP.hpp
+--- Bonmin-1.8.9-orig/Bonmin/src/Interfaces/BonTMINLP.hpp	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/Interfaces/BonTMINLP.hpp	2025-07-10 14:31:05.235977800 +0800
+@@ -26,8 +26,10 @@
+ 
+ namespace Bonmin
+ {
++  #if 0
+   DECLARE_STD_EXCEPTION(TMINLP_INVALID);
+   DECLARE_STD_EXCEPTION(TMINLP_INVALID_VARIABLE_BOUNDS);
++  #endif
+ 
+   /** Base class for all MINLPs that use a standard triplet matrix form
+    *  and dense vectors.
+diff -urN Bonmin-1.8.9-orig/Bonmin/src/Interfaces/BonTMINLP2TNLP.cpp Bonmin-1.8.9/Bonmin/src/Interfaces/BonTMINLP2TNLP.cpp
+--- Bonmin-1.8.9-orig/Bonmin/src/Interfaces/BonTMINLP2TNLP.cpp	2023-01-30 22:45:31.000000000 +0800
++++ Bonmin-1.8.9/Bonmin/src/Interfaces/BonTMINLP2TNLP.cpp	2025-07-10 14:31:34.250187800 +0800
+@@ -68,8 +68,10 @@
+     bool retval =
+       tminlp_->get_nlp_info(n, m, nnz_jac_g_, nnz_h_lag_, index_style_);
+ 
++    #if 0
+     ASSERT_EXCEPTION(retval, TMINLP_INVALID,
+ 		     "get_nlp_info of TMINLP returns false.");
++    #endif
+ 
+     // Allocate space for the variable types vector
+     var_types_.resize(n);
