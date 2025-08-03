@@ -1,0 +1,32 @@
+diff -urN core-orig/CMakeLists.txt core/CMakeLists.txt
+--- core-orig/CMakeLists.txt	2025-03-28 14:59:55.000000000 +0800
++++ core/CMakeLists.txt	2025-04-05 09:34:45.339399500 +0800
+@@ -479,12 +479,22 @@
+   if (DEFINED _vtk_thread_impl_output)
+     set(thread_impl_output "${_vtk_thread_impl_output}")
+   else ()
+-    execute_process(
+-      COMMAND "${CMAKE_C_COMPILER}" -v
+-      OUTPUT_VARIABLE thread_impl_output
+-      ERROR_VARIABLE  thread_impl_output
+-      RESULT_VARIABLE result
+-      TIMEOUT         10)
++    if (MSVC)
++      execute_process(
++        COMMAND "${CMAKE_C_COMPILER}"
++        OUTPUT_VARIABLE thread_impl_output
++        ERROR_VARIABLE  thread_impl_output
++        RESULT_VARIABLE result
++        OUTPUT_STRIP_TRAILING_WHITESPACE
++        TIMEOUT         10)
++    else()
++      execute_process(
++        COMMAND "${CMAKE_C_COMPILER}" -v
++        OUTPUT_VARIABLE thread_impl_output
++        ERROR_VARIABLE  thread_impl_output
++        RESULT_VARIABLE result
++        TIMEOUT         10)
++    endif()
+     if (result)
+       message(FATAL_ERROR
+         "Failed to determine the thread implementation in use by the "

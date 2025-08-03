@@ -45,18 +45,8 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
-
-  # NOTE: grpc will install ssl.lib and crypt.lib into the same destination with
-  #       openssl. But the real shared library of openssl are libssl.lib and
-  #       libcrypto.lib. Ruby will search ssl.lib and crypto.lib first, this will
-  #       cause Ruby link to the wrong libraries during build.
-  echo "Patching extconf.rb in ext/openssl"
-  pushd ext/openssl || exit 1
-  sed                                                                          \
-    -e 's|"crypto"|"libcrypto"|g'                                              \
-    -e 's|"ssl"|"libssl"|g'                                                    \
-    -i extconf.rb
-  popd || exit 1
+  patch -Np1 -i "$PKG_DIR/001-ruby-fix-link-to-openssl.diff"
+  patch -Np1 -i "$PKG_DIR/002-ruby-fix-link-error-of-ext-fiddle.diff"
 }
 
 . $ROOT_DIR/common.sh

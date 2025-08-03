@@ -1,0 +1,11 @@
+diff -urN FreeImage-3.18.0-orig/Source/OpenEXR/IlmImf/ImfAttribute.cpp FreeImage-3.18.0/Source/OpenEXR/IlmImf/ImfAttribute.cpp
+--- FreeImage-3.18.0-orig/Source/OpenEXR/IlmImf/ImfAttribute.cpp	2017-11-18 21:00:24.000000000 +0800
++++ FreeImage-3.18.0/Source/OpenEXR/IlmImf/ImfAttribute.cpp	2025-07-30 17:45:53.069280900 +0800
+@@ -45,6 +45,7 @@
+ #include "Iex.h"
+ #include <string.h>
+ #include <map>
++#include <functional>
+ 
+ #include "ImfNamespace.h"
+ 

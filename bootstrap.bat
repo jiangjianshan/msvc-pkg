@@ -26,16 +26,49 @@ rem  SOFTWARE.
 
 setlocal enabledelayedexpansion
 
-echo Checking system requirements for mpt
-rem  https://docs.python.org/3/using/windows.html#removing-the-max-path-limitation
-reg query HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled >nul 2>&1 || (
-  reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /t reg_DWORD /d 1
-)
-
 if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
   set ARCH=x64
 ) else (
   set ARCH=x86
+)
+
+if not exist "settings.yaml" (
+  echo components:>settings.yaml
+  echo   cuda: no>>settings.yaml
+  echo   cudnn: no>>settings.yaml
+  echo   oneapi: yes>>settings.yaml
+  echo   rust: no>>settings.yaml
+  echo prefix:>>settings.yaml
+  echo   x64:>>settings.yaml
+  echo     Neovim: D:\Neovim>>settings.yaml
+  echo     llvm-project: D:\LLVM>>settings.yaml
+  echo     lua: D:\Lua>>settings.yaml
+  echo     perl: D:\Perl>>settings.yaml
+  echo     ruby: D:\Ruby>>settings.yaml
+  echo     tcl: D:\Tcl>>settings.yaml
+  echo     tk: D:\Tcl>>settings.yaml
+  echo     Vim: D:\Vim>>settings.yaml
+  echo   x86:>>settings.yaml
+  echo WARNING:
+  echo Creating a default settings.yaml for you.
+  echo You should check the content before you use mpt.
+  echo.
+  echo # the content of settings.yaml
+  type settings.yaml
+  echo.
+  echo NOTE:
+  echo 1. If you want to install some tools defined in settings.yaml,
+  echo    change 'no' to 'yes' on that item
+  echo 2. You can define custom install location for some libraries
+  echo    The default location is in %~dp0%ARCH%
+  echo.
+  goto restart
+)
+
+echo Checking system requirements for mpt
+rem  https://docs.python.org/3/using/windows.html#removing-the-max-path-limitation
+reg query HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled >nul 2>&1 || (
+  reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /t reg_DWORD /d 1
 )
 
 set "ROOT_DIR=%~dp0"

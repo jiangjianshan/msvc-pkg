@@ -93,10 +93,10 @@ if not exist "%PREFIX%\bin" mkdir "%PREFIX%\bin"
 if not exist "%PREFIX%\include" mkdir "%PREFIX%\include"
 if not exist "%PREFIX%\lib" mkdir "%PREFIX%\lib"
 cd "%BUILD_DIR%" && (
-  copy /Y /V *.exe "%PREFIX%\bin" || exit 1
-  copy /Y /V *.lib "%PREFIX%\lib" || exit 1
-  copy /Y /V *.dll "%PREFIX%\bin" || exit 1
-  copy /Y /V gif_lib.h "%PREFIX%\include"
+  xcopy /Y /F /I *.exe "%PREFIX%\bin" || exit 1
+  xcopy /Y /F /I *.lib "%PREFIX%\lib" || exit 1
+  xcopy /Y /F /I *.dll "%PREFIX%\bin" || exit 1
+  xcopy /Y /F /I gif_lib.h "%PREFIX%\include"
 )
 call :clean_build
 exit /b 0

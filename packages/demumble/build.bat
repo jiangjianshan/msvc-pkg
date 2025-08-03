@@ -80,7 +80,7 @@ rem  Install package
 rem ==============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
-cd "%BUILD_DIR%" && copy /Y /V demumble.exe "%PREFIX%\bin" || exit 1
+cd "%BUILD_DIR%" && xcopy /Y /F /I demumble.exe "%PREFIX%\bin" || exit 1
 call :clean_build
 exit /b 0
 

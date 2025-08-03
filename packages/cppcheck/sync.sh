@@ -45,7 +45,7 @@ patch_package()
 {
   echo "Patching package $PKG_NAME $PKG_VER"
   cd "$SRC_DIR"
-  patch -Np1 -i "$PKG_DIR/001-cppcheck-link-error-if-pcre-built-as-shared-library.diff"
+  patch -Np1 -i "$PKG_DIR/001-cppcheck-fix-issues-if-build-with-core-dll.diff"
 }
 
 . $ROOT_DIR/common.sh

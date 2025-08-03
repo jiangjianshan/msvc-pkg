@@ -34,4 +34,5 @@ steps:
       - VVenc
       - x264
       - x265
+      - zlib
     run: build.sh

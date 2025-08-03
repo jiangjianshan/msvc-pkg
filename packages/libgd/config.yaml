@@ -8,6 +8,21 @@ steps:
       - dirent
       - fontconfig
       - libavif
+      - libiconv
+      - libwebp
+      - libjpeg-turbo
+      - libraqm
+      - freetype
+      - libpng
+      - getopt
+      - zlib
+      - winpthreads
+    run: build.bat
+  b:
+    dependencies:
+      - dirent
+      - fontconfig
+      - libavif
       - libheif
       - libiconv
       - libwebp

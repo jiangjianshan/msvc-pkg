@@ -76,6 +76,8 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_POLICY_DEFAULT_CMP0153=OLD                                           ^
   -DCMAKE_POLICY_DEFAULT_CMP0167=OLD                                           ^
   -DEIGEN_BUILD_BTL=ON                                                         ^
+  -DEIGEN_BUILD_DOC=OFF                                                        ^
+  -DEIGEN_BUILD_PKGCONFIG=ON                                                   ^
   -DEIGEN_BUILD_SHARED_LIBS=ON                                                 ^
   -DEIGEN_TEST_SSE2=ON                                                         ^
   -DEIGEN_TEST_SSE3=ON                                                         ^
@@ -94,6 +96,8 @@ cmake -G "Ninja"                                                               ^
   -DEIGEN_TEST_NEON64=ON                                                       ^
   -DEIGEN_TEST_OPENMP=ON                                                       ^
   -DEIGEN_TEST_CXX11=ON                                                        ^
+  -DBUILD_TESTING=OFF                                                          ^
+  -DPKGCONFIG_INSTALL_DIR="%PREFIX%/lib/pkgconfig"                             ^
   -DFFTW_ROOT="!FFTW_PREFIX:\=/!"                                              ^
   .. || exit 1
 exit /b 0

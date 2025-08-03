@@ -88,7 +88,7 @@ rem ============================================================================
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
 if not exist "%PREFIX%\include\win32" mkdir "%PREFIX%\include\win32"
-cd "%SRC_DIR%" && copy /Y /V win32\adapt.h "%PREFIX%\include\win32"
+cd "%SRC_DIR%" && xcopy /Y /F /I win32\adapt.h "%PREFIX%\include\win32"
 call :clean_build
 exit /b 0
 

@@ -12,6 +12,7 @@ steps:
       - sparsehash
       - gmp
       - gsl
+      - METIS
       - mpfr
       - mpreal
       - OpenBLAS

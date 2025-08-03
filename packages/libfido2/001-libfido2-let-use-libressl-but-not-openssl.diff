@@ -1,0 +1,13 @@
+diff -urN libfido2-1.16.0-origin/CMakeLists.txt libfido2-1.16.0/CMakeLists.txt
+--- libfido2-1.16.0-origin/CMakeLists.txt	2025-05-06 14:40:51.000000000 +0800
++++ libfido2-1.16.0/CMakeLists.txt	2025-07-17 07:30:23.046889600 +0800
+@@ -394,8 +394,8 @@
+ endif()
+ 
+ include_directories(${PROJECT_SOURCE_DIR}/src)
+-include_directories(${CBOR_INCLUDE_DIRS})
+ include_directories(${CRYPTO_INCLUDE_DIRS})
++include_directories(${CBOR_INCLUDE_DIRS})
+ include_directories(${HIDAPI_INCLUDE_DIRS})
+ include_directories(${PCSC_INCLUDE_DIRS})
+ include_directories(${UDEV_INCLUDE_DIRS})

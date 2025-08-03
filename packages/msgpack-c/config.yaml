@@ -1,0 +1,9 @@
+name: msgpack-c
+version: 6.1.0
+url: https://github.com/msgpack/msgpack-c/archive/refs/tags/c-6.1.0.tar.gz
+sha256: c23c4070dbe01f46044bf70c5349f29453d655935b6dc710714c008bca0825a7
+steps:
+  a:
+    dependencies:
+      - cJSON
+    run: build.bat

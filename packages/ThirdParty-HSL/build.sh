@@ -106,7 +106,25 @@ configure_stage()
     --with-metis-cflags="-I$(cygpath -u "${THIRDPARTY_METIS_PREFIX:-$_PREFIX}/include/coin-or/metis")"       \
     --with-metis-lflags="-lcoinmetis"                                                                        \
     ac_cv_prog_f77_v="-verbose"                                                                              \
+    lt_cv_deplibs_check_method=${lt_cv_deplibs_check_method='pass_all'}                                      \
     gt_cv_locale_zh_CN=none || exit 1
+}
+
+patch_stage()
+{
+  echo "Patching $PKG_NAME $PKG_VER after configure"
+  cd "$BUILD_DIR" || exit 1
+  # FIXME:
+  # To solve following issue
+  # libtool: warning: undefined symbols not allowed in x86_64-w64-mingw32
+  # shared libraries; building static only
+  if [ -f "libtool" ]; then
+    echo "Patching libtool in top level"
+    sed                                                                                                      \
+      -e "s/\(allow_undefined=\)yes/\1no/"                                                                   \
+      -i libtool
+    chmod +x libtool
+  fi
 }
 
 build_stage()
@@ -126,5 +144,6 @@ install_package()
 }
 
 configure_stage
+patch_stage
 build_stage
 install_package

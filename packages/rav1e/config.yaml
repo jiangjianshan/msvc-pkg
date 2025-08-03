@@ -1,7 +1,7 @@
 name: rav1e
-version: 0.7.1
-url: https://github.com/xiph/rav1e/archive/refs/tags/v0.7.1.tar.gz
-sha256: da7ae0df2b608e539de5d443c096e109442cdfa6c5e9b4014361211cf61d030c
+version: 0.8.1
+url: https://github.com/xiph/rav1e/archive/refs/tags/v0.8.1.tar.gz
+sha256: 06d1523955fb6ed9cf9992eace772121067cca7e8926988a1ee16492febbe01e
 steps:
   a:
     dependencies:

@@ -1,0 +1,17 @@
+name: tesseract
+version: 5.5.1
+url: https://github.com/tesseract-ocr/tesseract/archive/refs/tags/5.5.1.tar.gz
+sha256: a7a3f2a7420cb6a6a94d80c24163e183cf1d2f1bed2df3bbc397c81808a57237
+steps:
+  a:
+    dependencies:
+      - cairo
+      - curl
+      - fontconfig
+      - icu4c
+      - leptonica
+      - libarchive
+      - libtiff:b
+      - pango
+      - pkg-config
+    run: build.bat

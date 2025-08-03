@@ -1,0 +1,72 @@
+diff -urN jbigkit-2.1-orig/CMakeLists.txt jbigkit-2.1/CMakeLists.txt
+--- jbigkit-2.1-orig/CMakeLists.txt	1970-01-01 08:00:00.000000000 +0800
++++ jbigkit-2.1/CMakeLists.txt	2025-08-02 08:42:42.048511600 +0800
+@@ -0,0 +1,68 @@
++cmake_minimum_required(VERSION 3.5)
++project(jbigkit C)
++
++option(BUILD_PROGRAMS "Build programs." ON)
++option(BUILD_TOOLS "Build pbm tools." ON)
++
++include_directories(${CMAKE_CURRENT_SOURCE_DIR})
++include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libjbig)
++
++########################################
++# JBIG-KIT library
++########################################
++
++set(libjbig_src
++  "${CMAKE_CURRENT_SOURCE_DIR}/libjbig/jbig.c"
++  "${CMAKE_CURRENT_SOURCE_DIR}/libjbig/jbig_ar.c"
++)
++add_library(libjbig ${libjbig_src})
++set_target_properties(libjbig PROPERTIES OUTPUT_NAME jbig)
++set(libjbig85_src
++  "${CMAKE_CURRENT_SOURCE_DIR}/libjbig/jbig85.c"
++  "${CMAKE_CURRENT_SOURCE_DIR}/libjbig/jbig_ar.c"
++)
++add_library(libjbig85 ${libjbig85_src})
++set_target_properties(libjbig85 PROPERTIES OUTPUT_NAME jbig85)
++install(TARGETS libjbig RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
++install(TARGETS libjbig85 RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
++install(FILES
++  "${CMAKE_CURRENT_SOURCE_DIR}/libjbig/jbig.h"
++  "${CMAKE_CURRENT_SOURCE_DIR}/libjbig/jbig_ar.h"
++  "${CMAKE_CURRENT_SOURCE_DIR}/libjbig/jbig85.h"
++  DESTINATION include/)
++
++########################################
++# Programs
++########################################
++
++if(BUILD_PROGRAMS)
++  add_executable (tstcodec "${CMAKE_CURRENT_SOURCE_DIR}/libjbig/tstcodec.c")
++  target_link_libraries (tstcodec libjbig)
++  install(TARGETS tstcodec RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
++
++  add_executable (tstcodec85 "${CMAKE_CURRENT_SOURCE_DIR}/libjbig/tstcodec85.c")
++  target_link_libraries (tstcodec85 libjbig85)
++  install(TARGETS tstcodec85 RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
++endif(BUILD_PROGRAMS)
++
++########################################
++# pbm tools
++########################################
++
++if(BUILD_TOOLS)
++  add_executable (pbmtojbg "${CMAKE_CURRENT_SOURCE_DIR}/pbmtools/jbgtopbm.c")
++  target_link_libraries (pbmtojbg libjbig)
++  install (TARGETS pbmtojbg RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
++
++  add_executable (jbgtopbm85 "${CMAKE_CURRENT_SOURCE_DIR}/pbmtools/jbgtopbm85.c")
++  target_link_libraries (jbgtopbm85 libjbig85)
++  install (TARGETS jbgtopbm85 RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
++
++  add_executable (jbgtopbm "${CMAKE_CURRENT_SOURCE_DIR}/pbmtools/jbgtopbm.c")
++  target_link_libraries (jbgtopbm libjbig)
++  install (TARGETS jbgtopbm RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
++
++  add_executable (pbmtojbg85 "${CMAKE_CURRENT_SOURCE_DIR}/pbmtools/pbmtojbg85.c")
++  target_link_libraries (pbmtojbg85 libjbig85)
++  install (TARGETS pbmtojbg85 RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
++endif(BUILD_TOOLS)

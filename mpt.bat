@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 rem
 rem  This is the initial call entry of msvc-pkg from command line
 rem
@@ -35,6 +36,7 @@ rem       msys2 environment.
 rem set MSYSTEM=MINGW64
 rem Don't want to generate .pyc files when run python scripts
 set PYTHONDONTWRITEBYTECODE=1
+set GI_SCANNER_DISABLE_CACHE=1
 
 goto begin
 

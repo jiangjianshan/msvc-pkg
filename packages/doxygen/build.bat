@@ -74,6 +74,8 @@ cmake -G "Ninja"                                                               ^
   -Dbuild_parse=ON                                                             ^
   -Dbuild_search=ON                                                            ^
   -Denable_console=ON                                                          ^
+  -Dstatic_libclang=ON                                                         ^
+  -Duse_libclang=ON                                                            ^
   -Duse_sys_spdlog=ON                                                          ^
   -Duse_sys_sqlite3=ON                                                         ^
   .. || exit 1

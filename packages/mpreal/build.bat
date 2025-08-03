@@ -55,7 +55,7 @@ rem  Install package
 rem ==============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
-cd "%SRC_DIR%" && copy /Y /V mpreal.h "%PREFIX%\include" || exit 1
+cd "%SRC_DIR%" && xcopy /Y /F /I mpreal.h "%PREFIX%\include" || exit 1
 exit /b 0
 
 

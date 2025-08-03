@@ -1,0 +1,11 @@
+name: SHOT
+version: master
+url: https://github.com/coin-or/SHOT.git
+sha256:
+steps:
+  a:
+    dependencies:
+      - Cbc
+      - pkg-config
+      - Ipopt
+    run: build.bat

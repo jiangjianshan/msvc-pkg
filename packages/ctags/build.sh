@@ -74,7 +74,6 @@ configure_stage()
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
   CC="$ROOT_DIR/wrappers/compile cl"                                           \
   CFLAGS="$C_OPTS"                                                             \
-  EXTRA_CFLAGS="-std:c11"                                                      \
   CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
   CPPFLAGS="$C_DEFS"                                                           \
   CXX="$ROOT_DIR/wrappers/compile cl"                                          \
@@ -98,6 +97,7 @@ configure_stage()
     ac_cv_prog_cc_c11="-std:c11"                                               \
     ac_cv_func_opendir=yes                                                     \
     ac_cv_func_scandir=yes                                                     \
+    lt_cv_deplibs_check_method=${lt_cv_deplibs_check_method='pass_all'}        \
     gt_cv_locale_zh_CN=none || exit 1
 }
 
@@ -105,6 +105,18 @@ patch_stage()
 {
   echo "Patching $PKG_NAME $PKG_VER after configure"
   cd "$BUILD_DIR" || exit 1
+  # FIXME:
+  # To solve following issue
+  # libtool: warning: undefined symbols not allowed in x86_64-w64-mingw32
+  # shared libraries; building static only
+  if [ -f "libtool" ]; then
+    echo "Patching libtool in top level"
+    sed                                                                        \
+      -e "s/\(allow_undefined=\)yes/\1no/"                                     \
+      -i libtool
+    chmod +x libtool
+  fi
+
   echo "Patching Makefile in top level"
   sed                                                                          \
     -e 's|libctags\.a|libctags.lib|g'                                          \

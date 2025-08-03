@@ -1,0 +1,52 @@
+diff -urN Dip-0.95.1-orig/Dip/bugs/main.cpp Dip-0.95.1/Dip/bugs/main.cpp
+--- Dip-0.95.1-orig/Dip/bugs/main.cpp	2025-07-02 00:37:50.000000000 +0800
++++ Dip-0.95.1/Dip/bugs/main.cpp	2025-07-11 13:45:53.855760600 +0800
+@@ -13,7 +13,8 @@
+    si.readLp(lpFile.c_str());
+ 
+    CbcModel cbc(si);
+-   CbcMain0(cbc);
++   CbcSolverUsefulData cbcData;
++   CbcMain0(cbc, cbcData);
+ 
+    const  char * cbcArgv[20];
+    int    cbcArgc   = 0;
+@@ -27,7 +28,7 @@
+    cbcArgv[cbcArgc++]  = cbcLogSet.c_str();      
+    cbcArgv[cbcArgc++]  = cbcSolve.c_str();
+    cbcArgv[cbcArgc++]  = cbcQuit.c_str();
+-   CbcMain1(cbcArgc, cbcArgv, cbc);
++   CbcMain1(cbcArgc, cbcArgv, cbc, cbcData);
+    printf("cbc.status() = %d\n", cbc.status());
+    printf("cbc.isProveOptimal() = %d\n", cbc.isProvenOptimal());
+ }
+diff -urN Dip-0.95.1-orig/Dip/src/DecompAlgoPC.cpp Dip-0.95.1/Dip/src/DecompAlgoPC.cpp
+--- Dip-0.95.1-orig/Dip/src/DecompAlgoPC.cpp	2025-07-02 00:37:50.000000000 +0800
++++ Dip-0.95.1/Dip/src/DecompAlgoPC.cpp	2025-07-11 13:45:42.666270200 +0800
+@@ -15,6 +15,7 @@
+ //===========================================================================//
+ 
+ //===========================================================================//
++#include "CbcSolver.hpp"
+ #include "DecompApp.h"
+ #include "DecompAlgoPC.h"
+ #include "DecompSolverResult.h"
+@@ -867,7 +868,8 @@
+ #if 0
+    cbc.branchAndBound();
+ #else
+-   CbcMain0(cbc);
++   CbcSolverUsefulData cbcData;
++   CbcMain0(cbc, cbcData);
+    //---
+    //--- build argument list
+    //---
+@@ -899,7 +901,7 @@
+    //---
+    //--- solve IP using argument list
+    //---
+-   CbcMain1(argc, argv, cbc);
++   CbcMain1(argc, argv, cbc, cbcData);
+ #endif
+    //---
+    //--- get solver status

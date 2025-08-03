@@ -1,0 +1,16 @@
+diff -urN Core-orig/vtkMultiThreader.h Core/vtkMultiThreader.h
+--- Core-orig/vtkMultiThreader.h	2025-03-28 14:59:55.000000000 +0800
++++ Core/vtkMultiThreader.h	2025-07-25 20:33:19.917443800 +0800
+@@ -22,8 +22,12 @@
+ #if defined(VTK_USE_PTHREADS)
+ #include <pthread.h>   // Needed for PTHREAD implementation of mutex
+ #include <sys/types.h> // Needed for unix implementation of pthreads
++#ifdef _WIN32
++#include <io.h>
++#else
+ #include <unistd.h>    // Needed for unix implementation of pthreads
+ #endif
++#endif
+ 
+ // If VTK_USE_PTHREADS is defined, then pthread_create() will be
+ // used to create multiple threads

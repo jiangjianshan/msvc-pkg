@@ -87,8 +87,8 @@ cd "%BUILD_DIR%" && ninja install
 if not exist "%PREFIX%\bin" mkdir "%PREFIX%\bin"
 if not exist "%PREFIX%\lib" mkdir "%PREFIX%\lib"
 if exist "%PREFIX%\bin\data" rmdir /s /q "%PREFIX%\bin\data"
-copy /Y /V "flex\fl.lib" "%PREFIX%\lib\fl.lib" || exit 1
-copy /Y /V "bison\y.lib" "%PREFIX%\lib\y.lib" || exit 1
+xcopy /Y /F /I "flex\fl.lib" "%PREFIX%\lib\fl.lib" || exit 1
+xcopy /Y /F /I "bison\y.lib" "%PREFIX%\lib\y.lib" || exit 1
 move /Y "%PREFIX%\data" "%PREFIX%\bin\data" || exit 1
 move /Y "%PREFIX%\win_bison.exe" "%PREFIX%\bin\win_bison.exe" || exit 1
 move /Y "%PREFIX%\win_flex.exe" "%PREFIX%\bin\win_flex.exe" || exit 1

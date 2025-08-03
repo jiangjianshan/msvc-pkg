@@ -42,24 +42,38 @@ if "%ROOT_DIR%"=="" (
 call "%ROOT_DIR%\compiler.bat" %ARCH%
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
-set BUILD_DIR=%SRC_DIR%
-set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
-set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX -DCPPCHECKLIB_EXPORT -DTINYXML2_EXPORT -DSIMPLECPP_EXPORT
+set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
+set C_OPTS=-nologo -MD -diagnostics:column -wd4018 -wd4127 -wd4146 -wd4244 -wd4251 -wd4267 -wd4389 -wd4701 -wd4706 -wd4800 -wd4805 -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
+set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
 
-
+call :configure_stage
 call :build_stage
 call :install_package
 goto :end
 
+rem ==============================================================================
+rem  Configure package and ready to build
+rem ==============================================================================
+:configure_stage
+call :clean_build
+echo "Configuring %PKG_NAME% %PKG_VER%"
+mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
+cmake -G "Ninja"                                                               ^
+  -DBUILD_CORE_DLL=ON                                                          ^
+  -DCMAKE_BUILD_TYPE=Release                                                   ^
+  -DCMAKE_CXX_COMPILER=cl                                                      ^
+  -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
+  -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
+  -DBUILD_CLI=ON                                                               ^
+  .. || exit 1
+exit /b 0
 
 rem ==============================================================================
 rem  Build package
 rem ==============================================================================
 :build_stage
 echo "Building %PKG_NAME% %PKG_VER%"
-cd "%BUILD_DIR%" && msbuild cppcheck.sln /p:Configuration=Release              ^
-  /p:Platform=%ARCH% /p:PlatformToolset=v143 /p:UseEnv=true                    ^
-  /p:SkipUWP=true || exit 1
+cd "%BUILD_DIR%" && ninja -j%NUMBER_OF_PROCESSORS%
 exit /b 0
 
 rem ==============================================================================
@@ -67,13 +81,7 @@ rem  Install package
 rem ==============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
-if not exist "%PREFIX%\bin" mkdir "%PREFIX%\bin"
-if not exist "%PREFIX%\lib" mkdir "%PREFIX%\lib"
-cd "%BUILD_DIR%" && (
-  copy /Y /V bin\cppcheck.exe "%PREFIX%\bin" || exit 1
-  copy /Y /V bin\cppcheck-core.dll "%PREFIX%\bin" || exit 1
-  copy /Y /V bin\cppcheck-core.lib "%PREFIX%\lib" || exit 1
-)
+cd "%BUILD_DIR%" && ninja install || exit 1
 call :clean_build
 exit /b 0
 
@@ -82,11 +90,7 @@ rem  Clean files generated during build procedure
 rem ==============================================================================
 :clean_build
 echo "Cleaning %PKG_NAME% %PKG_VER%"
-cd "%BUILD_DIR%"
-rmdir /s /q bin
-rmdir /s /q cli\temp
-rmdir /s /q lib\temp
-rmdir /s /q test\temp
+cd "%SRC_DIR%" && if exist "%BUILD_DIR%" rmdir /s /q "%BUILD_DIR%"
 exit /b 0
 
 :end

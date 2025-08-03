@@ -55,7 +55,7 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 if not exist "%PREFIX%\include\Random123" mkdir "%PREFIX%\include\Random123"
-cd "%SRC_DIR%" && xcopy /S /F /Y include\Random123 "%PREFIX%\include\Random123" || exit 1
+cd "%SRC_DIR%" && xcopy /S /Y /F /I include\Random123 "%PREFIX%\include\Random123" || exit 1
 exit /b 0
 
 

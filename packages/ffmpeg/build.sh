@@ -138,5 +138,6 @@ install_package()
 }
 
 configure_stage
+patch_stage
 build_stage
 install_package

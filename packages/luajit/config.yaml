@@ -1,0 +1,8 @@
+name: luajit
+version: 2.1
+url: https://github.com/LuaJIT/LuaJIT.git
+sha256:
+steps:
+  a:
+    dependencies:
+    run: build.bat

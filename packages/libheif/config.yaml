@@ -6,7 +6,10 @@ steps:
   a:
     dependencies:
       - dav1d
+      - doxygen
+      - ffmpeg
       - getopt
+      - graphviz
       - kvazaar
       - libaom
       - libde265
@@ -22,4 +25,5 @@ steps:
       - OpenJPH
       - VVdeC
       - VVenC
+      - rav1e
     run: build.bat

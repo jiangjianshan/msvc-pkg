@@ -1,0 +1,8 @@
+name: mbedTLS
+version: 3.6.4
+url: https://github.com/Mbed-TLS/mbedtls.git
+sha256:
+steps:
+  a:
+    dependencies:
+    run: build.bat

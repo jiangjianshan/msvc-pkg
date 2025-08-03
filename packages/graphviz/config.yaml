@@ -12,7 +12,7 @@ steps:
       - glib:b
       - fontconfig
       - harfbuzz:b
-      - libgd
+      - libgd:a
       - libpng
       - libjpeg-turbo
       - pixman

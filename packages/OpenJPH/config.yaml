@@ -5,4 +5,5 @@ sha256: 2484908bf5a171cda957643d9bc85c39d58ef939016e2d1a00122b1cefbbd4f8
 steps:
   a:
     dependencies:
+      - libtiff:b
     run: build.bat

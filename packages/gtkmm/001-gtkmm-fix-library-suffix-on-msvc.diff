@@ -1,0 +1,11 @@
+diff -urN gtkmm-4.18.0-orig/gdk/gdkmm/meson.build gtkmm-4.18.0/gdk/gdkmm/meson.build
+--- gtkmm-4.18.0-orig/gdk/gdkmm/meson.build	2025-03-24 01:00:45.000000000 +0800
++++ gtkmm-4.18.0/gdk/gdkmm/meson.build	2025-04-12 21:18:33.410831700 +0800
+@@ -265,6 +265,7 @@
+   include_directories: extra_include_dirs,
+   cpp_args: gdkmm_cpp_args,
+   dependencies: gdkmm_build_dep,
++  name_suffix: 'lib',
+   install: false,
+ )
+ 

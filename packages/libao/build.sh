@@ -44,7 +44,7 @@ PREFIX=$(cygpath -u "$PREFIX")
 RELS_DIR=$ROOT_DIR/releases
 SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
-C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -Wno-implicit-function-declaration -Wno-pointer-sign -Xclang -O2 -fms-extensions -fms-compatibility -fms-compatibility-version='${MSC_VER}
+C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -Wno-implicit-function-declaration -Wno-pointer-sign -Xclang -O2 -fms-extensions -fms-hotpatch -fms-compatibility -fms-compatibility-version='${MSC_VER}
 C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX'
 
 clean_build()
@@ -63,13 +63,6 @@ configure_stage()
   elif [[ "$ARCH" == "x64" ]]; then
     HOST_TRIPLET=x86_64-w64-mingw32
   fi
-  # Issue: 'Warning: linker path does not have real file for library -lpthread'.
-  # The reason should be in the function of func_win32_libid in ltmain.sh. It use OBJDUMP
-  # which is missing from MSVC. That will cause the value of win32_libid_type is unknown.
-  # There are at least two way to solve this issue:
-  # 1. set OBJDUMP=llvm-objdump but seems not work with clang-cl as compiler
-  # 2. set lt_cv_deplibs_check_method as below
-  export lt_cv_deplibs_check_method=${lt_cv_deplibs_check_method='pass_all'}
   # NOTE:
   # 1. Don't use CPP="$ROOT_DIR/wrappers/compile cl -nologo -EP" here,
   #    it will cause checking absolute name of standard files is empty.
@@ -111,7 +104,25 @@ configure_stage()
     --enable-arts                                                              \
     --enable-nas                                                               \
     --enable-pulse                                                             \
+    lt_cv_deplibs_check_method=${lt_cv_deplibs_check_method='pass_all'}        \
     gt_cv_locale_zh_CN=none || exit 1
+}
+
+patch_stage()
+{
+  echo "Patching $PKG_NAME $PKG_VER after configure"
+  cd "$BUILD_DIR" || exit 1
+  # FIXME:
+  # To solve following issue
+  # libtool: warning: undefined symbols not allowed in x86_64-w64-mingw32
+  # shared libraries; building static only
+  if [ -f "libtool" ]; then
+    echo "Patching libtool in top level"
+    sed                                                                        \
+      -e "s/\(allow_undefined=\)yes/\1no/"                                     \
+      -i libtool
+    chmod +x libtool
+  fi
 }
 
 build_stage()
@@ -131,5 +142,6 @@ install_package()
 }
 
 configure_stage
+patch_stage
 build_stage
 install_package

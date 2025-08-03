@@ -1,0 +1,48 @@
+diff -urN cppcheck-2.18.0-orig/cli/CMakeLists.txt cppcheck-2.18.0/cli/CMakeLists.txt
+--- cppcheck-2.18.0-orig/cli/CMakeLists.txt	2025-07-20 18:15:59.000000000 +0800
++++ cppcheck-2.18.0/cli/CMakeLists.txt	2025-08-02 19:33:37.416675700 +0800
+@@ -2,8 +2,6 @@
+ 
+     file(GLOB hdrs "*.h")
+     file(GLOB srcs "*.cpp")
+-    file(GLOB mainfile "main.cpp")
+-    list(REMOVE_ITEM srcs ${mainfile})
+ 
+     add_library(cli_objs OBJECT ${hdrs} ${srcs})
+     target_include_directories(cli_objs PRIVATE ${PROJECT_SOURCE_DIR}/lib/ ${PROJECT_SOURCE_DIR}/frontend/)
+@@ -26,7 +24,7 @@
+         set_source_files_properties(processexecutor.cpp PROPERTIES COMPILE_FLAGS -Wno-reserved-identifier)
+     endif()
+ 
+-    list(APPEND cppcheck_SOURCES ${hdrs} ${mainfile} $<TARGET_OBJECTS:cli_objs> $<TARGET_OBJECTS:frontend_objs>)
++    list(APPEND cppcheck_SOURCES ${hdrs} $<TARGET_OBJECTS:cli_objs> $<TARGET_OBJECTS:frontend_objs>)
+     if (NOT BUILD_CORE_DLL)
+         list(APPEND cppcheck_SOURCES $<TARGET_OBJECTS:cppcheck-core>)
+         list(APPEND cppcheck_SOURCES $<TARGET_OBJECTS:simplecpp_objs>)
+@@ -75,6 +73,12 @@
+         RUNTIME DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
+         COMPONENT applications)
+ 
++    if (BUILD_CORE_DLL)
++        install(TARGETS cppcheck-core
++            RUNTIME DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
++            ARCHIVE DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR})
++    endif()
++
+     install(PROGRAMS ${CMAKE_SOURCE_DIR}/htmlreport/cppcheck-htmlreport
+         DESTINATION ${CMAKE_INSTALL_FULL_BINDIR}
+         COMPONENT applications)
+diff -urN cppcheck-2.18.0-orig/frontend/CMakeLists.txt cppcheck-2.18.0/frontend/CMakeLists.txt
+--- cppcheck-2.18.0-orig/frontend/CMakeLists.txt	2025-07-20 18:15:59.000000000 +0800
++++ cppcheck-2.18.0/frontend/CMakeLists.txt	2025-08-02 19:31:35.614802500 +0800
+@@ -2,4 +2,7 @@
+ file(GLOB srcs "*.cpp")
+ 
+ add_library(frontend_objs OBJECT ${hdrs} ${srcs})
+-target_include_directories(frontend_objs PRIVATE ${PROJECT_SOURCE_DIR}/lib)
+\ No newline at end of file
++target_include_directories(frontend_objs PRIVATE ${PROJECT_SOURCE_DIR}/lib)
++if (BUILD_CORE_DLL)
++    target_compile_definitions(frontend_objs PRIVATE CPPCHECKLIB_IMPORT TINYXML2_IMPORT)
++endif()
+\ No newline at end of file

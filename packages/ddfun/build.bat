@@ -76,7 +76,7 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%"
-copy /Y /V *.exe "%PREFIX%\bin"
+xcopy /Y /F /I *.exe "%PREFIX%\bin"
 call :clean_build
 exit /b 0
 

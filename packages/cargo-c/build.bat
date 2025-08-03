@@ -56,7 +56,7 @@ rem ============================================================================
 :build_stage
 call :clean_build
 echo "Building %PKG_NAME% %PKG_VER%"
-cd "%BUILD_DIR%" && cargo build --release || exit 1
+cd "%BUILD_DIR%" && cargo build --release --verbose || exit 1
 exit /b 0
 
 rem ==============================================================================

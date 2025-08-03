@@ -46,7 +46,7 @@ set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%
 set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
-set CL=/MP
+set CL=-MP %C_OPTS% %C_DEFS%
 
 call :build_stage
 call :install_package
@@ -83,10 +83,10 @@ if not exist "%PREFIX%\bin" mkdir "%PREFIX%\bin"
 if not exist "%PREFIX%\include" mkdir "%PREFIX%\include"
 if not exist "%PREFIX%\lib" mkdir "%PREFIX%\lib"
 cd "%BUILD_DIR%" && (
-  copy /Y /V *.exe %PREFIX%\bin || exit 1
-  copy /Y /V *.dll %PREFIX%\bin || exit 1
-  copy /Y /V *.lib %PREFIX%\lib || exit 1
-  copy /Y /V sqlite3.h %PREFIX%\include
+  xcopy /Y /F /I *.exe %PREFIX%\bin || exit 1
+  xcopy /Y /F /I *.dll %PREFIX%\bin || exit 1
+  xcopy /Y /F /I *.lib %PREFIX%\lib || exit 1
+  xcopy /Y /F /I sqlite3.h %PREFIX%\include
 )
 call :clean_build
 exit /b 0

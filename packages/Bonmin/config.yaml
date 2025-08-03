@@ -1,14 +1,11 @@
 name: Bonmin
-version: 1.8.9
-url: https://github.com/coin-or/Bonmin/archive/refs/tags/releases/1.8.9.tar.gz
-sha256: 8d130430a2776e250e941ee16f51dba301d5f0a00cc288e05f5b985cf1f426cd
+version: master
+url: https://github.com/coin-or/Bonmin.git
+sha256:
 steps:
   a:
     dependencies:
-      - BuildTools
       - CoinUtils
-      - ThirdParty-Blas
-      - ThirdParty-Lapack
       - ThirdParty-HSL
       - ThirdParty-ASL
       - ThirdParty-Mumps
@@ -20,4 +17,5 @@ steps:
       - Cgl
       - Cbc
       - Ipopt
+      - lapack
     run: build.sh

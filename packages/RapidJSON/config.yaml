@@ -1,0 +1,8 @@
+name: RapidJSON
+version: master
+url: https://github.com/Tencent/rapidjson.git
+sha256:
+steps:
+  a:
+    dependencies:
+    run: build.bat

@@ -66,6 +66,7 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_CXX_COMPILER=cl                                                      ^
   -DCMAKE_CXX_FLAGS="-EHsc %C_OPTS% %C_DEFS%"                                  ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
+  -DOJPH_BUILD_STREAM_EXPAND=ON                                                ^
   .. || exit 1
 exit /b 0
 
@@ -85,6 +86,9 @@ echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
 if %errorlevel% neq 0 exit 1
 sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%\lib\pkgconfig\openjph.pc"
+for /f "tokens=1-4 delims=." %%a in ("!PKG_VER!") do set openjph_major_minor=%%a.%%b
+if exist "%PREFIX%\lib\openjph.lib" del /q "%PREFIX%\lib\openjph.lib"
+mklink "%PREFIX%\lib\openjph.lib" "%PREFIX%\lib\openjph.!openjph_major_minor!.lib"
 call :clean_build
 exit /b 0
 

@@ -1,0 +1,14 @@
+diff -urN LPeg-1.1.0-orig/lptree.c LPeg-1.1.0/lptree.c
+--- LPeg-1.1.0-orig/lptree.c	2023-06-27 00:30:55.000000000 +0800
++++ LPeg-1.1.0/lptree.c	2025-08-02 17:02:45.903844200 +0800
+@@ -1382,8 +1382,8 @@
+ };
+ 
+ 
+-int luaopen_lpeg (lua_State *L);
+-int luaopen_lpeg (lua_State *L) {
++LUA_API int luaopen_lpeg (lua_State *L);
++LUA_API int luaopen_lpeg (lua_State *L) {
+   luaL_newmetatable(L, PATTERN_T);
+   lua_pushnumber(L, MAXBACK);  /* initialize maximum backtracking */
+   lua_setfield(L, LUA_REGISTRYINDEX, MAXSTACKIDX);

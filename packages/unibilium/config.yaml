@@ -1,0 +1,8 @@
+name: unibilium
+version: 2.1.2
+url: https://github.com/neovim/unibilium/archive/v2.1.2.tar.gz
+sha256: 370ecb07fbbc20d91d1b350c55f1c806b06bf86797e164081ccc977fc9b3af7a
+steps:
+  a:
+    dependencies:
+    run: build.bat

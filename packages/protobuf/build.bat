@@ -43,8 +43,8 @@ call "%ROOT_DIR%\compiler.bat" %ARCH%
 set RELS_DIR=%ROOT_DIR%\releases
 set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
-set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
-set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
+set C_OPTS=-nologo -MD -diagnostics:column -wd4047 -wd4091 -wd4819 -wd4996 -wd5287 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
+set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX -DPROTOBUF_USE_DLLS
 
 call :configure_stage
 call :build_stage
@@ -57,6 +57,15 @@ rem ============================================================================
 :configure_stage
 call :clean_build
 echo "Configuring %PKG_NAME% %PKG_VER%"
+if not defined PROTOBUF_PREFIX set PROTOBUF_PREFIX=%_PREFIX%
+rem Clean old installation to avoid possible compile errors
+pushd "!PROTOBUF_PREFIX!\include"
+if exist "upb" rmdir /s /q "upb"
+if exist "upb_generator" rmdir /s /q "upb_generator"
+if exist "google\protobuf\descriptor.upb.h" del /s /q "google\protobuf\descriptor.upb.h"
+if exist "google\protobuf\descriptor.upb_minitable.h" del /s /q "google\protobuf\descriptor.upb_minitable.h"
+if exist "google\protobuf\compiler\rust\upb_helpers.h" del /s /q "google\protobuf\compiler\rust\upb_helpers.h"
+popd
 mkdir "%BUILD_DIR%" && cd "%BUILD_DIR%"
 cmake -G "Ninja"                                                               ^
   -DBUILD_SHARED_LIBS=ON                                                       ^
@@ -64,9 +73,10 @@ cmake -G "Ninja"                                                               ^
   -DCMAKE_C_COMPILER=cl                                                        ^
   -DCMAKE_C_FLAGS="%C_OPTS% %C_DEFS%"                                          ^
   -DCMAKE_INSTALL_PREFIX="%PREFIX%"                                            ^
+  -Dprotobuf_BUILD_EXAMPLES=OFF                                                ^
   -Dprotobuf_BUILD_LIBPROTOC=ON                                                ^
+  -Dprotobuf_BUILD_SHARED_LIBS=ON                                              ^
   -Dprotobuf_BUILD_TESTS=OFF                                                   ^
-  -Dprotobuf_ABSL_PROVIDER=package                                             ^
   .. || exit 1
 exit /b 0
 

@@ -63,13 +63,6 @@ configure_stage()
   elif [[ "$ARCH" == "x64" ]]; then
     HOST_TRIPLET=x86_64-w64-mingw32
   fi
-  # Issue: 'Warning: linker path does not have real file for library -lShell32'.
-  # The reason should be in the function of func_win32_libid in ltmain.sh. It use OBJDUMP
-  # which is missing from MSVC. That will cause the value of win32_libid_type is unknown.
-  # There are at least two way to solve this issue:
-  # 1. set OBJDUMP=llvm-objdump
-  # 2. set lt_cv_deplibs_check_method as below
-  export lt_cv_deplibs_check_method=${lt_cv_deplibs_check_method='pass_all'}
   # NOTE:
   # 1. Don't use CPP="$ROOT_DIR/wrappers/compile cl -nologo -EP" here,
   #    it will cause checking absolute name of standard files is empty.
@@ -116,39 +109,51 @@ configure_stage()
     ac_cv_func_closedir=yes                                                              \
     ac_cv_func_rewinddir=yes                                                             \
     ac_cv_func_snprintf=yes                                                              \
+    lt_cv_deplibs_check_method=${lt_cv_deplibs_check_method='pass_all'}                  \
     gt_cv_locale_zh_CN=none || exit 1
 }
 
 patch_stage()
 {
   echo "Patching $PKG_NAME $PKG_VER after configure"
-  cd "$BUILD_DIR"
+  cd "$BUILD_DIR" || exit 1
+  # FIXME:
+  # To solve following issue
+  # libtool: warning: undefined symbols not allowed in x86_64-w64-mingw32
+  # shared libraries; building static only
+  if [ -f "libtool" ]; then
+    echo "Patching libtool in top level"
+    sed                                                                                  \
+      -e "s/\(allow_undefined=\)yes/\1no/"                                               \
+      -i libtool
+    chmod +x libtool
+  fi
 
   echo "Patching Makefile libdb"
   pushd libdb || exit 1
-  sed                                                                          \
-    -e 's|libglodb\.a|libglodb\.lib|g'                                         \
+  sed                                                                                    \
+    -e 's|libglodb\.a|libglodb\.lib|g'                                                   \
     -i Makefile
   popd || exit 1
 
   echo "Patching Makefile in libglibc"
   pushd libglibc || exit 1
-  sed                                                                          \
-    -e 's|libgloglibc\.a|libgloglibc\.lib|g'                                   \
+  sed                                                                                    \
+    -e 's|libgloglibc\.a|libgloglibc\.lib|g'                                             \
     -i Makefile
   popd || exit 1
 
   echo "Patching Makefile in libparser"
   pushd libparser || exit 1
-  sed                                                                          \
-    -e 's|libgloparser\.a|libgloparser\.lib|g'                                 \
+  sed                                                                                    \
+    -e 's|libgloparser\.a|libgloparser\.lib|g'                                           \
     -i Makefile
   popd || exit 1
 
   echo "Patching Makefile in libutil"
   pushd libutil || exit 1
-  sed                                                                          \
-    -e 's|libgloutil\.a|libgloutil\.lib|g'                                     \
+  sed                                                                                    \
+    -e 's|libgloutil\.a|libgloutil\.lib|g'                                               \
     -i Makefile
   popd || exit 1
 

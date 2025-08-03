@@ -1,15 +1,8 @@
 # 🚀 msvc-pkg
-`msvc-pkg` consists solely of 📜scripts, 🔧patches, and 📄YAML configuration files. Leveraging MSVC/MSVC-like command-line 🛠️toolchains, it enables users to compile each library from source within the `packages` directory of this repository
-
-**Native Windows Compilation | Compiler | Dependency Managment | Colorized Output**  
-[![Build Systems](https://img.shields.io/badge/Build-CMake%20|%20Meson%20|%20Autotools%20|%20Nmake%20|%20MSBuild-blue)]()
-[![Compilers](https://img.shields.io/badge/Compiler-MSVC%20|%20Intel%20C++%20|%20Intel%20Fortran%20|%20llvm-green)]()
-[![Dependency](https://img.shields.io/badge/Dependency-Auto%20Resolution-orange)]()
-[![Rich Colors](https://img.shields.io/badge/Colors-Rich-yellow)]()
+`msvc-pkg` consists solely of 📜scripts, 🔧patches, and 📄YAML configuration files. Leveraging MSVC/MSVC-like command-line 🛠️toolchains, it enables users to compile each library from source within the `packages` directory of this repository.
 
 ## ✨ Key Features
 
-`msvc-pkg` is similar to [vcpkg](https://github.com/microsoft/vcpkg) and [MINGW-Packages](https://github.com/msys2/MINGW-packages), but its lightweight design and focus on the following features make it worth trying
 - 🔧 Fully relies on MSVC/MSVC-like toolchains to generate native Windows binaries
 - 🛠️ Lightweight UNIX-like environment without requiring additional installations of Cygwin/MSYS2
 - 🤖 Automatically generate dependency tree and detect circular dependencies based on package configurations
@@ -18,18 +11,24 @@
 - 🚧 Each library's build environment (UNIX-like or Windows) is isolated within the terminal
 - 🔌 Enhanced compiler's wrappers for C/C++/Fortran/MPI and etc
 
+## Screenshots
+<div align="center">
+  <img src="https://raw.githubusercontent.com/jiangjianshan/i/master/list-pkgs.png" alt="list-pkgs" width="427" height="510">
+</div>
+<div align="center">
+  <img src="https://raw.githubusercontent.com/jiangjianshan/i/master/dep-tree.png" alt="dep-tree" width="649" height="377">
+</div>
+<div align="center">
+  <img src="https://raw.githubusercontent.com/jiangjianshan/i/master/cmake-build.png" alt="cmake-build" width="827" height="454">
+</div>
 
 ## 📜 Special Notes
 
 - **Intel Compiler Support**: `2024.2.1` is the final version supporting `ifort`
-- **NVDIA CUDA Support**: if cuda 12.9+ installed, cmake version must be not less than 4.0.2
-- **Internet connection**: msvc-pkg automatically checks for missing runtime dependencies, so ensure a stable internet connection is maintained during runtime
-- **Saving your time**: with the poor documents or not so friendly on Win32 platform, many libraries aren't so easy to build with MSVC/MSVC-like toolset. But `msvc-pkg` help you a lot
 
 ## 🚀 Getting Started
 
 ### 🏗️ Initial Setup
-1. Synchronize the github repository:
    ```bash
    # Initial cloning
    git clone https://github.com/jiangjianshan/msvc-pkg.git
@@ -39,32 +38,13 @@
    git fetch origin main
    git reset --hard origin/main
    ```
-
-2. Create `settings.yaml` to decide whether to install some components and define default install prefix of some libraries (optional, but it is good to have):
-   ```yaml
-    components:
-      cuda: no
-      cudnn: no
-      oneapi: yes
-      rust: yes
-    prefix:
-      x64:
-        Vim: D:\Vim
-        llvm-project: D:\LLVM
-        lua: D:\Lua
-        perl: D:\Perl
-        ruby: D:\Ruby
-        tcl: D:\Tcl
-        tk: D:\Tcl
-      x86:
-   ```
-  > 💡 Pro Tip: The `settings.yaml` must be on the root of `msvc-pkg` folder. If you don't want to install some components, change its value from `yes` to `no`.
+  > 💡 Pro Tip: The `settings.yaml` will be created on the root of `msvc-pkg` folder if it is missing, you must check the content of it before run `mpt` with or without parameters.
 
 ### 🖥️ Basic Commands
 
 | Command                        | Description                                                                 | Example Usage               |
 |--------------------------------|-----------------------------------------------------------------------------|-----------------------------|
-| `mpt --list`                   | List all available packages                                                 | `mpt --list`                |
+| `mpt --list`                   | List all available libraries which support by `msvc-pkg`                    | `mpt --list`                |
 | `mpt`                          | Build all libraries for default architecture (`x64`)                        | `mpt`                       |
 | `mpt <arch>`                   | Build all libraries for specified architecture (`x86`/`x64`)                | `mpt x86`                   |
 | `mpt <arch> <pkg1> <pkg2>...`  | Build specific packages with dependencies for specified architecture        | `mpt x86 gmp ffmpeg`        |
@@ -73,7 +53,7 @@
 ## ➕ How To Add New Package
 
 1. Create package directory in `packages/`, e.g. `gmp`
-2. Add required files:
+2. For those libraries using cmake, meson, autotools, msbuild, nmake and so on, take the examples inside `packages/` and add required files:
    ```bash
    gmp/
    ├── sync.sh                # Source fetching and patching if have
@@ -81,7 +61,6 @@
    ├── config.yaml            # define package essential information
    └── *.diff                 # Patch files for this package (required if need)
    ```
-> 💡 Pro Tip: There many examples exist inside `packages` folder can be taken as reference
 
 ## 🤝 Contributing
 
@@ -90,6 +69,3 @@ It is a huge job to create the scripts to build as many as libraries as possible
 - 💡 Feature proposals
 - 📦 New package additions
 - 📚 Documentation improvements
-
-### 🏆 Contributors
-[![Contributors](https://contrib.rocks/image?repo=jiangjianshan/msvc-pkg)](https://github.com/jiangjianshan/msvc-pkg/graphs/contributors)

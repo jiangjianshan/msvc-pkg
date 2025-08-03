@@ -56,7 +56,7 @@ patch_package()
     -e 's|-DCMAKE_CONFIGURATION_TYPES=|-DCMAKE_BUILD_TYPE=|g'                  \
     -i 'vsgen.bat'
 
-  # NOTE: ThirdParty-HSL need 'IDXTYPEWIDTH' to 32 but not 64
+  # NOTE: Fix issue when build ceres-solver: cannot convert argument 1 from 'StorageIndex *' to 'idx_t *'
   pushd "include" || exit 1
   sed                                                                          \
     -e 's|\/\/#define IDXTYPEWIDTH 32|#define IDXTYPEWIDTH 32|g'               \

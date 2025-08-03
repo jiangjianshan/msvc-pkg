@@ -1,0 +1,25 @@
+diff -urN ruby-3.4.5-orig/ext/openssl/extconf.rb ruby-3.4.5/ext/openssl/extconf.rb
+--- ruby-3.4.5-orig/ext/openssl/extconf.rb	2025-07-16 00:27:14.000000000 +0800
++++ ruby-3.4.5/ext/openssl/extconf.rb	2025-07-27 08:21:20.555433400 +0800
+@@ -66,8 +66,8 @@
+ 
+   return false unless have_header("openssl/ssl.h")
+ 
+-  ret = have_library("crypto", "CRYPTO_malloc") &&
+-    have_library("ssl", "SSL_new")
++  ret = have_library("libcrypto", "CRYPTO_malloc") &&
++    have_library("libssl", "SSL_new")
+   return ret if ret
+ 
+   if $mswin
+@@ -90,8 +90,8 @@
+     libpath.map! { |d| d.tr(File::ALT_SEPARATOR, File::SEPARATOR) }
+ 
+     ret = [
+-      ["crypto", "CRYPTO_malloc"],
+-      ["ssl", "SSL_new"]
++      ["libcrypto", "CRYPTO_malloc"],
++      ["libssl", "SSL_new"]
+     ].all? do |base, func|
+       result = false
+       libs = ["lib#{base}-[0-9][0-9]", "lib#{base}-[0-9][0-9][0-9]"]

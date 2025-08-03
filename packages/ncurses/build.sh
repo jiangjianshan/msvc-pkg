@@ -131,15 +131,16 @@ configure_stage()
     --enable-warnings                                                          \
     --enable-wgetch-events                                                     \
     --with-build-cc="$ROOT_DIR/wrappers/compile cl -nologo"                    \
-    --with-build-cflags="$C_OPTS"                                             \
+    --with-build-cflags="$C_OPTS"                                              \
     --with-build-cpp="$ROOT_DIR/wrappers/compile cl -nologo -E"                \
-    --with-build-cppflags="-DBUILDING_NCURSES $C_DEFS"                        \
+    --with-build-cppflags="-DBUILDING_NCURSES $C_DEFS"                         \
     --with-cxx-shared                                                          \
     --with-fallbacks=ms-terminal                                               \
     --with-form-libname=form                                                   \
     --with-menu-libname=menu                                                   \
     --with-normal                                                              \
     --with-panel-libname=panel                                                 \
+    --with-pkg-config-libdir="$PREFIX/lib/pkgconfig"                           \
     --with-progs                                                               \
     --with-shared                                                              \
     --without-ada                                                              \
@@ -152,13 +153,26 @@ configure_stage()
     ac_cv_func_getopt=yes                                                      \
     ac_cv_header_dirent_dirent_h=yes                                           \
     cf_cv_mb_len_max=yes                                                       \
+    lt_cv_deplibs_check_method=${lt_cv_deplibs_check_method='pass_all'}        \
     gt_cv_locale_zh_CN=none || exit 1
 }
 
 patch_stage()
 {
   echo "Patching $PKG_NAME $PKG_VER after configure"
-  cd "$BUILD_DIR"
+  cd "$BUILD_DIR" || exit 1
+
+  # FIXME:
+  # To solve following issue
+  # libtool: warning: undefined symbols not allowed in x86_64-w64-mingw32 shared libraries; building static only
+  if [ -f "libtool" ]; then
+    echo "Patching libtool in top level"
+    sed                                                                        \
+      -e "s/\(allow_undefined=\)yes/\1no/"                                     \
+      -i libtool
+    chmod +x libtool
+  fi
+
   # fix .a to .lib and .dll.a to .lib
   sed                                                                          \
     -e 's|.dll.a|.lib|g'                                                       \

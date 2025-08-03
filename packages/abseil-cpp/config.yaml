@@ -1,7 +1,7 @@
 name: abseil-cpp
-version: 20240722.0
-url: https://github.com/abseil/abseil-cpp/releases/download/20240722.0/abseil-cpp-20240722.0.tar.gz
-sha256: f50e5ac311a81382da7fa75b97310e4b9006474f9560ac46f54a9967f07d4ae3
+version: 20250512.1
+url: https://github.com/abseil/abseil-cpp/archive/refs/tags/20250512.1.tar.gz
+sha256: 9b7a064305e9fd94d124ffa6cc358592eb42b5da588fb4e07d09254aa40086db
 steps:
   a:
     dependencies:

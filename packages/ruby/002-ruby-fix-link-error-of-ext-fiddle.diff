@@ -1,0 +1,13 @@
+diff -urN ruby-3.4.5-orig/ext/fiddle/extconf.rb ruby-3.4.5/ext/fiddle/extconf.rb
+--- ruby-3.4.5-orig/ext/fiddle/extconf.rb	2025-07-16 00:27:14.000000000 +0800
++++ ruby-3.4.5/ext/fiddle/extconf.rb	2025-07-27 09:18:57.727654000 +0800
+@@ -196,7 +196,8 @@
+   have_func "dlerror"
+   have_func "dlinfo"
+   have_const("RTLD_DI_LINKMAP", "dlfcn.h")
+-elsif have_header "windows.h"
++end
++if have_header "windows.h"
+   %w{ LoadLibrary FreeLibrary GetProcAddress GetModuleFileName }.each do |func|
+     abort "missing function #{func}" unless have_func(func)
+   end

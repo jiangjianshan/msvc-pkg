@@ -45,7 +45,7 @@ set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
 set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
-set CL=/MP
+set CL=-MP %C_OPTS% %C_DEFS%
 
 call :configure_stage
 call :install_package
@@ -70,7 +70,7 @@ set BITS=64
 if "%ARCH%" == "x86" set BITS=32
 cd "%SRC_DIR%" && b2 install -j%NUMBER_OF_PROCESSORS% --prefix="%PREFIX%"              ^
   --build-dir="%BUILD_DIR%" --build-type=complete variant=release                      ^
-  address-model=!BITS! threading=multi link=static,shared runtime-link=shared          ^
+  address-model=!BITS! threading=multi link=shared runtime-link=shared                 ^
   --without-mpi --without-graph_parallel
 call :clean_build
 exit /b 0

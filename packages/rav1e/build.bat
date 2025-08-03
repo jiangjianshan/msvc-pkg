@@ -45,6 +45,7 @@ set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%
 set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
+set RUSTFLAGS=-C target-cpu=native
 
 call :build_stage
 call :install_package
@@ -56,7 +57,7 @@ rem ============================================================================
 :build_stage
 call :clean_build
 echo "Building %PKG_NAME% %PKG_VER%"
-cd "%BUILD_DIR%" && cargo build --release || exit 1
+cd "%BUILD_DIR%" && cargo build --release --verbose || exit 1
 exit /b 0
 
 rem ==============================================================================
@@ -65,7 +66,13 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 if not exist "%PREFIX%\bin" mkdir "%PREFIX%\bin"
-cd "%BUILD_DIR%" && copy /Y /V /B target\release\*.exe "%PREFIX%\bin" || exit 1
+cd "%BUILD_DIR%"
+xcopy /Y /F /I target\release\*.exe "%PREFIX%\bin" || exit 1
+cargo cinstall --release --verbose --prefix "%PREFIX%" || exit 1
+if exist "%PREFIX%\lib\librav1e.lib" del /S /Q "%PREFIX%\lib\librav1e.lib"
+move "%PREFIX%\lib\rav1e.lib" "%PREFIX%\lib\librav1e.lib"
+move "%PREFIX%\lib\rav1e.dll.lib" "%PREFIX%\lib\rav1e.lib"
+sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/rav1e.pc"
 call :clean_build
 exit /b 0
 
@@ -74,7 +81,7 @@ rem  Clean files generated during build procedure
 rem ==============================================================================
 :clean_build
 echo "Cleaning %PKG_NAME% %PKG_VER%"
-cd "%BUILD_DIR%" && rmdir /s /q target
+cd "%BUILD_DIR%" && if exist "target" rmdir /s /q target
 exit /b 0
 
 :end

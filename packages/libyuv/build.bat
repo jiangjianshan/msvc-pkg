@@ -83,6 +83,32 @@ rem ============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
+echo "Generating libyuv.pc to %PREFIX%\lib\pkgconfig"
+set PC_FILE=%PREFIX%\lib\pkgconfig\libyuv.pc
+if not exist "%PREFIX%\lib\pkgconfig" mkdir "%PREFIX%\lib\pkgconfig"
+where cygpath >nul 2>&1
+if "%errorlevel%" neq "0" (
+	echo prefix=%PREFIX:\=/%> %PC_FILE%
+	echo exec_prefix=%PREFIX:\=/%>> %PC_FILE%
+	echo libdir=%PREFIX:\=/%/lib>> %PC_FILE%
+	echo sharedlibdir=%PREFIX:\=/%/lib>> %PC_FILE%
+	echo includedir=%PREFIX:\=/%/include>> %PC_FILE%
+) else (
+  for /f "delims=" %%i in ('cygpath -u "%PREFIX%"') do set PREFIX_UNIX=%%i
+	echo prefix=!PREFIX_UNIX!> %PC_FILE%
+	echo exec_prefix=!PREFIX_UNIX!>> %PC_FILE%
+	echo libdir=!PREFIX_UNIX!/lib>> %PC_FILE%
+	echo sharedlibdir=!PREFIX_UNIX!/lib>> %PC_FILE%
+	echo includedir=!PREFIX_UNIX!/include>> %PC_FILE%
+)
+echo:>> %PC_FILE%
+echo Name: libyuv>> %PC_FILE%
+echo Description: Google's Open-Source Library for conversion, rotation and scaling between YUV and RGB>> %PC_FILE%
+echo Version:>> %PC_FILE%
+echo Requires:>> %PC_FILE%
+echo Libs: -L${libdir} -L${sharedlibdir} -lyuv>> %PC_FILE%
+echo Cflags: -I${includedir}>> %PC_FILE%
+echo "Done"
 call :clean_build
 exit /b 0
 

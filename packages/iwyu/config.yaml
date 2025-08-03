@@ -1,0 +1,12 @@
+name: iwyu
+version: 0.24
+url: https://include-what-you-use.org/downloads/include-what-you-use-0.24.src.tar.gz
+sha256: a23421ceff601d3ea215e8fa9292bfa8ca39eb1ac2098dbbedfc6cfe65541c10
+steps:
+  a:
+    dependencies:
+      - llvm-project
+      - libxml2
+      - zstd
+      - zlib
+    run: build.bat

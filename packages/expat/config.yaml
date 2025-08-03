@@ -1,7 +1,7 @@
 name: expat
-version: 2.6.2
-url: https://github.com/libexpat/libexpat/releases/download/R_2_6_2/expat-2.6.2.tar.bz2
-sha256: 9c7c1b5dcbc3c237c500a8fb1493e14d9582146dd9b42aa8d3ffb856a3b927e0
+version: 2.7.1
+url: https://github.com/libexpat/libexpat/archive/refs/tags/R_2_7_1.tar.gz
+sha256: 85372797ff0673a8fc4a6be16466bb5a0ca28c0dcf3c6f7ac1686b4a3ba2aabb
 steps:
   a:
     dependencies:

@@ -110,24 +110,37 @@ configure_stage()
     g_have_gnuc_visibility=no                                                  \
     g_have_sunstudio_visibility=no                                             \
     enable_fvisibility_hidden=no                                               \
+    lt_cv_deplibs_check_method=${lt_cv_deplibs_check_method='pass_all'}        \
     gt_cv_locale_zh_CN=none || exit 1
 }
 
 patch_stage()
 {
   echo "Patching $PKG_NAME $PKG_VER after configure"
-  cd "$BUILD_DIR"
+  cd "$BUILD_DIR" || exit 1
+  # FIXME:
+  # To solve following issue
+  # libtool: warning: undefined symbols not allowed in x86_64-w64-mingw32
+  # shared libraries; building static only
+  if [ -f "libtool" ]; then
+    echo "Patching libtool in top level"
+    sed                                                                        \
+      -e "s/\(allow_undefined=\)yes/\1no/"                                     \
+      -i libtool
+    chmod +x libtool
+  fi
+
   echo "Patching config.h in top level"
-  sed                                                                        \
-    -e 's|#define HAVE_INTTYPES_H 1|\/* #undef HAVE_INTTYPES_H *\/|g'        \
-    -e 's|#define HAVE_STDINT_H 1|\/* #undef HAVE_STDINT_H *\/|g'            \
+  sed                                                                          \
+    -e 's|#define HAVE_INTTYPES_H 1|\/* #undef HAVE_INTTYPES_H *\/|g'          \
+    -e 's|#define HAVE_STDINT_H 1|\/* #undef HAVE_STDINT_H *\/|g'              \
     -i config.h
 
   echo "Patching config.h in glib"
   pushd glib
-  sed                                                                        \
-    -e 's|__attribute__((visibility("default")))||g'                         \
-    -e 's|_WIN32_WINNT 0x0501|_WIN32_WINNT _WIN32_WINNT_WIN10|g'             \
+  sed                                                                          \
+    -e 's|__attribute__((visibility("default")))||g'                           \
+    -e 's|_WIN32_WINNT 0x0501|_WIN32_WINNT _WIN32_WINNT_WIN10|g'               \
     -i config.h
   popd
 }

@@ -1,0 +1,10 @@
+diff -urN unibilium-2.1.2-orig/CMakeLists.txt unibilium-2.1.2/CMakeLists.txt
+--- unibilium-2.1.2-orig/CMakeLists.txt	2024-09-13 17:47:46.000000000 +0800
++++ unibilium-2.1.2/CMakeLists.txt	2025-08-03 09:03:34.530868100 +0800
+@@ -24,5 +24,6 @@
+ include(GNUInstallDirs)
+ install(TARGETS unibilium
+   PUBLIC_HEADER
++  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

@@ -95,8 +95,8 @@ rem  Install package
 rem ==============================================================================
 :install_package
 echo "Installing %PKG_NAME% %PKG_VER%"
-cd "%BUILD_DIR%\fortran-var1" && copy /Y /V *.exe "%PREFIX%\bin"
-cd "%BUILD_DIR%\fortran-var2" && copy /Y /V *.exe "%PREFIX%\bin"
+cd "%BUILD_DIR%\fortran-var1" && xcopy /Y /F /I *.exe "%PREFIX%\bin"
+cd "%BUILD_DIR%\fortran-var2" && xcopy /Y /F /I *.exe "%PREFIX%\bin"
 call :clean_build
 exit /b 0
 

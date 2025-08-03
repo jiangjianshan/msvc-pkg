@@ -1,0 +1,8 @@
+name: tree-sitter-vim
+version: 0.7.0
+url: https://github.com/tree-sitter-grammars/tree-sitter-vim/archive/v0.7.0.tar.gz
+sha256: 44eabc31127c4feacda19f2a05a5788272128ff561ce01093a8b7a53aadcc7b2
+steps:
+  a:
+    dependencies:
+    run: build.bat

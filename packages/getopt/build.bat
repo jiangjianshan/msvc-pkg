@@ -69,9 +69,9 @@ if not exist "%PREFIX%\bin" mkdir "%PREFIX%\bin"
 if not exist "%PREFIX%\include" mkdir "%PREFIX%\include"
 if not exist "%PREFIX%\lib" mkdir "%PREFIX%\lib"
 cd "%BUILD_DIR%" && (
-  copy /Y /V getopt.dll %PREFIX%\bin || exit 1
-  copy /Y /V getopt.lib %PREFIX%\lib || exit 1
-  copy /Y /V getopt.h %PREFIX%\include || exit 1
+  xcopy /Y /F /I getopt.dll %PREFIX%\bin || exit 1
+  xcopy /Y /F /I getopt.lib %PREFIX%\lib || exit 1
+  xcopy /Y /F /I getopt.h %PREFIX%\include || exit 1
 )
 call :clean_build
 exit /b 0

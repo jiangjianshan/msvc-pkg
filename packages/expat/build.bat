@@ -68,7 +68,7 @@ cmake -G "Ninja"                                                               ^
   -DEXPAT_LARGE_SIZE=ON                                                        ^
   -DEXPAT_MIN_SIZE=ON                                                          ^
   -DEXPAT_BUILD_TESTS=OFF                                                      ^
-  .. || exit 1
+  ..\expat || exit 1
 exit /b 0
 
 rem ==============================================================================

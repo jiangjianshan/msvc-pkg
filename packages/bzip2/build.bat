@@ -76,30 +76,30 @@ if not exist "%PREFIX%\include" mkdir "%PREFIX%\include"
 if not exist "%PREFIX%\lib" mkdir "%PREFIX%\lib"
 if not exist "%PREFIX%\share\man\man1" mkdir "%PREFIX%\share\man\man1"
 cd "%BUILD_DIR%" && (
-	copy /Y /V bzip2.exe "%PREFIX%\bin\bzip2.exe"
-	copy /Y /V bzip2.exe "%PREFIX%\bin\bunzip2.exe"
-	copy /Y /V bzip2.exe "%PREFIX%\bin\bzcat.exe"
-	copy /Y /V bzip2recover.exe "%PREFIX%\bin\bzip2recover.exe"
-	copy /Y /V bzip2.1 "%PREFIX%\share\man\man1"
-	copy /Y /V bzlib.h "%PREFIX%\include"
-	copy /Y /V *.dll "%PREFIX%\bin"
-	copy /Y /V *.lib "%PREFIX%\lib"
-	copy /Y /V bzgrep "%PREFIX%\bin"
+	xcopy /Y /F bzip2.exe "%PREFIX%\bin\bzip2.exe"
+	xcopy /Y /F bzip2.exe "%PREFIX%\bin\bunzip2.exe"
+	xcopy /Y /F bzip2.exe "%PREFIX%\bin\bzcat.exe"
+	xcopy /Y /F bzip2recover.exe "%PREFIX%\bin\bzip2recover.exe"
+	xcopy /Y /F bzip2.1 "%PREFIX%\share\man\man1"
+	xcopy /Y /F bzlib.h "%PREFIX%\include"
+	xcopy /Y /F /I *.dll "%PREFIX%\bin"
+	xcopy /Y /F /I *.lib "%PREFIX%\lib"
+	xcopy /Y /F bzgrep "%PREFIX%\bin"
 	if not exist "%PREFIX%\bin\bzegrep" (
   	mklink "%PREFIX%\bin\bzegrep" "%PREFIX%\bin\bzgrep"
   )
 	if not exist "%PREFIX%\bin\bzfgrep" (
 	  mklink "%PREFIX%\bin\bzfgrep" "%PREFIX%\bin\bzgrep"
 	)
-	copy /Y /V bzmore "%PREFIX%\bin"
+	xcopy /Y /V /F bzmore "%PREFIX%\bin"
 	if not exist "%PREFIX%\bin\bzless" (
 	  mklink "%PREFIX%\bin\bzless" "%PREFIX%\bin\bzmore"
 	)
-	copy /Y /V bzdiff "%PREFIX%\bin"
+	xcopy /Y /V /F bzdiff "%PREFIX%\bin"
 	if not exist "%PREFIX%\bin\bzcmp" (
 	  mklink "%PREFIX%\bin\bzcmp" "%PREFIX%\bin\bzdiff"
 	)
-	copy /Y /V *.1 "%PREFIX%\share\man\man1"
+	xcopy /Y /F /I *.1 "%PREFIX%\share\man\man1"
 	echo .dll man1\bzgrep.1> "%PREFIX%\share\man\man1\bzegrep.1"
 	echo .dll man1\bzgrep.1> "%PREFIX%\share\man\man1\bzfgrep.1"
 	echo .dll man1\bzmore.1> "%PREFIX%\share\man\man1\bzless.1"

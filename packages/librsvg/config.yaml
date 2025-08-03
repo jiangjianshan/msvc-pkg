@@ -1,7 +1,7 @@
 name: librsvg
-version: 2.59.91
-url: https://download.gnome.org/sources/librsvg/2.59/librsvg-2.59.91.tar.xz
-sha256: b1ff70d5b04441ba2ba3f80404b7d98127128fba1020211e3d99b7bf400e4f83
+version: 2.60.0
+url: https://download.gnome.org/sources/librsvg/2.60/librsvg-2.60.0.tar.xz
+sha256: 0b6ffccdf6e70afc9876882f5d2ce9ffcf2c713cbaaf1ad90170daa752e1eec3
 steps:
   a:
     dependencies:
