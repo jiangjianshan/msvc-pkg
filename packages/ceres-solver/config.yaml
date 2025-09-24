@@ -2,12 +2,11 @@ name: ceres-solver
 version: 2.2.0
 url: https://github.com/ceres-solver/ceres-solver/archive/refs/tags/2.2.0.tar.gz
 sha256: 12efacfadbfdc1bbfa203c236e96f4d3c210bed96994288b3ff0c8e7c6f350d4
-steps:
-  a:
-    dependencies:
-      - eigen
-      - gflags
-      - google-glog
-      - METIS
-      - SuiteSparse
-    run: build.bat
+dependencies:
+  required:
+    - eigen
+    - gflags
+    - google-glog
+    - METIS
+    - SuiteSparse
+run: build.bat

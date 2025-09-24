@@ -2,14 +2,13 @@ name: gstreamer
 version: 1.26.0
 url: https://gstreamer.freedesktop.org/src/gstreamer/gstreamer-1.26.0.tar.xz
 sha256: 1b2ee4028010c25b776effa7c396c7e3e1861b60b9417e416f4914abcdff279f
-steps:
-  a:
-    dependencies:
-      - pkg-config
-      - dlfcn-win32
-      - gettext
-      - glib:b
-      - gmp:b
-      - gsl
-      - gobject-introspection:b
-    run: build.bat
+dependencies:
+  required:
+    - pkg-config
+    - dlfcn-win32
+    - gettext
+    - glib
+    - gmp
+    - gsl
+    - gobject-introspection
+run: build.bat

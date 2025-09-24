@@ -2,7 +2,5 @@ name: VulkanSC-Loader
 version: 1.0.18
 url: https://github.com/KhronosGroup/VulkanSC-Loader/archive/refs/tags/vksc1.0.18.tar.gz
 sha256: cbc6ce2cf9f21d1b86aebea698489e2bd871eb31fb501cf0cae81e8780bd6bf9
-steps:
-  a:
-    dependencies:
-    run: build.bat
+dependencies:
+run: build.bat

@@ -1,12 +1,31 @@
 name: effcee
 version: main
 url: https://github.com/google/effcee.git
-sha256:
-steps:
-  a:
-    dependencies:
-      - abseil-cpp
-      - googletest
-      - re2
-      - winpthreads
-    run: build.bat
+recursive: false
+depth: 1
+extras:
+  - name: abseil_cpp
+    version: master
+    url: https://github.com/abseil/abseil-cpp.git
+    recursive: false
+    depth: 1
+    target: third_party/abseil_cpp
+  - name: googletest
+    version: master
+    url: https://github.com/google/googletest.git
+    recursive: false
+    depth: 1
+    target: third_party/googletest
+  - name: re2
+    version: master
+    url: https://github.com/google/re2.git
+    recursive: false
+    depth: 1
+    target: third_party/re2
+dependencies:
+  required:
+    - abseil-cpp
+    - googletest
+    - re2
+    - winpthreads
+run: build.bat

@@ -2,13 +2,12 @@ name: ctags
 version: 6.2.0
 url: https://github.com/universal-ctags/ctags/archive/refs/tags/v6.2.0.tar.gz
 sha256: 313c864bb19c7da79aea77b94db1bb44d14c1f88b992285d7ea8968b3cbc125f
-steps:
-  a:
-    dependencies:
-      - dirent
-      - libiconv
-      - libxml2
-      - pcre2:b
-      - yaml
-      - winpthreads
-    run: build.sh
+dependencies:
+  required:
+    - dirent
+    - libiconv
+    - libxml2
+    - pcre2
+    - yaml
+    - winpthreads
+run: build.sh

@@ -2,9 +2,8 @@ name: perl
 version: 5.41.6
 url: https://www.cpan.org/src/5.0/perl-5.41.6.tar.gz
 sha256: efe7b25a353e2f370818bf6cf1545807c144acf2d9a48368a990827aa71db21d
-steps:
-  a:
-    dependencies:
-      - bzip2
-      - zlib
-    run: build.bat
+dependencies:
+  required:
+    - bzip2
+    - zlib
+run: build.bat

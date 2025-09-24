@@ -1,37 +1,18 @@
 #!/bin/bash
 #
 #  Build script for the current library, it should not be called directly from the
-#  command line, but should be called from mpt.py.
+#  command line, but should be called from mpt.bat.
 #
-#  The values of these environment variables come from mpt.py:
+#  The values of these environment variables come from mpt.bat:
 #  ARCH            - x64 or x86
+#  PKG_NAME        - name of library
+#  PKG_VER         - version of library
 #  ROOT_DIR        - root location of msvc-pkg
 #  PREFIX          - install location of current library
 #  PREFIX_PATH     - install location of third party libraries
 #  _PREFIX         - default install location if not list in settings.yaml
 #
-#  Copyright (c) 2024 Jianshan Jiang
-#
-#  Permission is hereby granted, free of charge, to any person obtaining a copy
-#  of this software and associated documentation files (the "Software"), to deal
-#  in the Software without restriction, including without limitation the rights
-#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#  copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-#
-#  The above copyright notice and this permission notice shall be included in all
-#  copies or substantial portions of the Software.
-#
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-#  SOFTWARE.
 
-PKG_NAME=$(yq -r '.name' config.yaml)
-PKG_VER=$(yq -r '.version' config.yaml)
 if [ -z "$ROOT_DIR" ]; then
     echo "Don't directly run $0 from command line."
     echo "To build $PKG_NAME and its dependencies, please go to the root location of msvc-pkg, and then press"
@@ -45,6 +26,8 @@ RELS_DIR=$ROOT_DIR/releases
 SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
 C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics'
+# NOTE:
+# 1. Don't add '-D_DLL' option. It will cause build shared library of gmp failed.
 C_DEFS='-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX'
 
 clean_build()
@@ -53,9 +36,9 @@ clean_build()
   cd "$SRC_DIR" && [[ -d "$BUILD_DIR" ]] && rm -rf "$BUILD_DIR"
 }
 
-configure_stage()
+configure_stage1()
 {
-  echo "Configuring $PKG_NAME $PKG_VER"
+  echo "Configuring $PKG_NAME $PKG_VER" on stage 1
   clean_build
   mkdir -p "$BUILD_DIR" && cd "$BUILD_DIR" || exit 1
   if [[ "$ARCH" == "x86" ]]; then
@@ -117,6 +100,70 @@ configure_stage()
     gt_cv_locale_zh_CN=none || exit 1
 }
 
+configure_stage2()
+{
+  echo "Configuring $PKG_NAME $PKG_VER" on stage 2
+  clean_build
+  mkdir -p "$BUILD_DIR" && cd "$BUILD_DIR" || exit 1
+  if [[ "$ARCH" == "x86" ]]; then
+    HOST_TRIPLET=i686-w64-mingw32
+    YASM_OBJ_FMT=win32
+  elif [[ "$ARCH" == "x64" ]]; then
+    HOST_TRIPLET=x86_64-w64-mingw32
+    YASM_OBJ_FMT=win64
+  fi
+  # NOTE:
+  # 1. Don't use CPP="$ROOT_DIR/wrappers/compile cl -nologo -EP" here,
+  #    it will cause checking absolute name of standard files is empty.
+  #    e.g. checking absolute name of <fcntl.h> ... '', but we can use
+  #    CPP="$ROOT_DIR/wrappers/compile cl -nologo -E"
+  # 2. Don't use 'compile cl -nologo' but 'compile cl'. Because configure
+  #    on some libraries will detect whether is msvc compiler according to
+  #    '*cl | cl.exe'
+  # 3. Taken care of the logic of func_resolve_sysroot() and func_replace_sysroot()
+  #    in ltmain.sh, otherwise may have '-L=*' in the filed of 'dependency_libs' in
+  #    *.la. So don't set --with-sysroot if --libdir has been set
+  # 4. Don't set CFLAGS for gmp, because yasm also use this flags. If
+  #    there are some flags are unknown for yasm, the configuration will
+  #    fail
+  # 5. Don't use yasm 1.3.0 to build it because some syntax of .s is not
+  #    supported. It's recommand to use git master version of yasm
+  AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
+  AS="yasm -Xvc -f $YASM_OBJ_FMT -rraw -pgas"                                  \
+  CC="$ROOT_DIR/wrappers/compile cl"                                           \
+  CC_FOR_BUILD="$ROOT_DIR/wrappers/compile cl"                                 \
+  CCAS="yasm -Xvc -f $YASM_OBJ_FMT -rraw -pgas"                                \
+  CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
+  CPPFLAGS="$C_DEFS -I$SRC_DIR -I$BUILD_DIR"                                   \
+  CPP_FOR_BUILD="$ROOT_DIR/wrappers/compile cl -E"                             \
+  CXX="$ROOT_DIR/wrappers/compile cl"                                          \
+  CXXFLAGS="-EHsc $C_OPTS"                                                     \
+  CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
+  DLLTOOL="link -verbose -dll"                                                 \
+  LD="link -nologo"                                                            \
+  NM="dumpbin -nologo -symbols"                                                \
+  PKG_CONFIG="/usr/bin/pkg-config"                                             \
+  RANLIB=":"                                                                   \
+  RC="$ROOT_DIR/wrappers/windres-rc rc -nologo"                                \
+  STRIP=":"                                                                    \
+  WINDRES="$ROOT_DIR/wrappers/windres-rc rc -nologo"                           \
+  ../configure --host="$HOST_TRIPLET"                                          \
+    --prefix="$PREFIX"                                                         \
+    --bindir="$PREFIX/bin"                                                     \
+    --includedir="$PREFIX/include"                                             \
+    --libdir="$PREFIX/lib"                                                     \
+    --datarootdir="$PREFIX/share"                                              \
+    --enable-cxx                                                               \
+    --enable-shared                                                            \
+    --disable-static                                                           \
+    ac_cv_func_vsnprintf=yes                                                   \
+    ac_cv_header_sstream=yes                                                   \
+    ac_cv_type_std__locale=yes                                                 \
+    gmp_cv_asm_w32=".word"                                                     \
+    lt_cv_deplibs_check_method=${lt_cv_deplibs_check_method='pass_all'}        \
+    gt_cv_locale_zh_CN=none || exit 1
+}
+
 patch_stage()
 {
   echo "Patching $PKG_NAME $PKG_VER after configure"
@@ -140,7 +187,7 @@ build_stage()
   cd "$BUILD_DIR" && make -j$(nproc)
 }
 
-install_package()
+install_stage()
 {
   echo "Installing $PKG_NAME $PKG_VER"
   cd "$BUILD_DIR" || exit 1
@@ -150,7 +197,11 @@ install_package()
   clean_build
 }
 
-configure_stage
+configure_stage1
 patch_stage
 build_stage
-install_package
+install_stage
+configure_stage2
+patch_stage
+build_stage
+install_stage

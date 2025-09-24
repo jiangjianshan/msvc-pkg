@@ -2,7 +2,5 @@ name: NLopt
 version: 2.7.1
 url: https://github.com/stevengj/nlopt/archive/v2.7.1.tar.gz
 sha256: db88232fa5cef0ff6e39943fc63ab6074208831dc0031cf1545f6ecd31ae2a1a
-steps:
-  a:
-    dependencies:
-    run: build.bat
+dependencies:
+run: build.bat

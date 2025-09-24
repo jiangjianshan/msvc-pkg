@@ -2,7 +2,5 @@ name: Data-miplib3
 version: 1.2.9
 url: https://github.com/coin-or-tools/Data-miplib3/archive/refs/tags/releases/1.2.9.tar.gz
 sha256: 4e4aa82d70989b115542c8394384e5e43a16db0550df472fed8fb0d67111e5ec
-steps:
-  a:
-    dependencies:
-    run: build.sh
+dependencies:
+run: build.sh

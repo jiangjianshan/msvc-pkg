@@ -2,15 +2,13 @@ name: gdk-pixbuf
 version: 2.42.12
 url: https://download.gnome.org/sources/gdk-pixbuf/2.42/gdk-pixbuf-2.42.12.tar.xz
 sha256: b9505b3445b9a7e48ced34760c3bcb73e966df3ac94c95a148cb669ab748e3c7
-steps:
-  a:
-    dependencies:
-      - pkg-config
-      - gettext
-      - gobject-introspection:b
-      - glib:b
-      - libjpeg-turbo
-      - libpng
-      - libavif
-      - libiconv
-    run: build.bat
+dependencies:
+  required:
+    - pkg-config
+    - gettext
+    - glib
+    - libjpeg-turbo
+    - libpng
+    - libavif
+    - libiconv
+run: build.bat

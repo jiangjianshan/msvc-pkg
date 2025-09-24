@@ -2,12 +2,11 @@ name: CHiPPS-ALPS
 version: 1.5.12
 url: https://github.com/coin-or/CHiPPS-ALPS/archive/refs/tags/releases/1.5.12.tar.gz
 sha256: b781e32c0e1bedd3ba7eddf72943408693e314377879ee3ef8ef562aa94bbdfc
-steps:
-  a:
-    dependencies:
-      - BuildTools
-      - CoinUtils
-      - Osi
-      - Clp
-      - Cgl
-    run: build.sh
+dependencies:
+  required:
+    - BuildTools
+    - CoinUtils
+    - Osi
+    - Clp
+    - Cgl
+run: build.sh

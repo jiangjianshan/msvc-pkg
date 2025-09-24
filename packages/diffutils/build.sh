@@ -1,10 +1,12 @@
 #!/bin/bash
 #
 #  Build script for the current library, it should not be called directly from the
-#  command line, but should be called from mpt.py.
+#  command line, but should be called from mpt.bat.
 #
-#  The values of these environment variables come from mpt.py:
+#  The values of these environment variables come from mpt.bat:
 #  ARCH            - x64 or x86
+#  PKG_NAME        - name of library
+#  PKG_VER         - version of library
 #  ROOT_DIR        - root location of msvc-pkg
 #  PREFIX          - install location of current library
 #  PREFIX_PATH     - install location of third party libraries
@@ -30,8 +32,6 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #  SOFTWARE.
 
-PKG_NAME=$(yq -r '.name' config.yaml)
-PKG_VER=$(yq -r '.version' config.yaml)
 if [ -z "$ROOT_DIR" ]; then
     echo "Don't directly run $0 from command line."
     echo "To build $PKG_NAME and its dependencies, please go to the root location of msvc-pkg, and then press"

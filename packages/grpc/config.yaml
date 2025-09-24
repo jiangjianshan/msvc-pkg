@@ -1,15 +1,15 @@
 name: grpc
-version: 1.73.1
+version: v1.73.1
 url: https://github.com/grpc/grpc.git
-sha256:
-steps:
-  a:
-    dependencies:
-      - nasm
-      - abseil-cpp
-      - c-ares
-      - protobuf
-      - re2
-      - zlib
-      - winpthreads
-    run: build.bat
+recursive: true
+depth: 1
+dependencies:
+  required:
+    - nasm
+    - abseil-cpp
+    - c-ares
+    - protobuf
+    - re2
+    - zlib
+    - winpthreads
+run: build.bat

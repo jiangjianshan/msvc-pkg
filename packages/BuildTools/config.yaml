@@ -1,8 +1,7 @@
 name: BuildTools
 version: master
 url: https://github.com/coin-or-tools/BuildTools.git
-sha256:
-steps:
-  a:
-    dependencies:
-    run:
+recursive: false
+depth: 1
+dependencies:
+run:

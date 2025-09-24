@@ -162,7 +162,11 @@ func_cl_wrapper ()
 					case $2 in
 						*.o | *.lo | *.[oO][bB][jJ])
 							func_file_conv "$2"
-							set x "$@" -Fo"$file"
+					    if test -z "$msvc_like"; then
+							  set x "$@" -Fo"$file"
+							else
+							  set x "$@" -o "$file"
+							fi
 							shift
 							;;
 						*.dll)
@@ -181,7 +185,11 @@ func_cl_wrapper ()
 					func_file_conv "${1#-Fe}"
 					case $file in
 						*.o | *.lo | *.[oO][bB][jJ])
-							set x "$@" -Fo"$file"
+					    if test -z "$msvc_like"; then
+							  set x "$@" -Fo"$file"
+							else
+							  set x "$@" -o "$file"
+							fi
 							shift
 							;;
 						*.dll)
@@ -254,6 +262,11 @@ func_cl_wrapper ()
 					;;
 				-static)
 					shared=false
+					;;
+				-warn)
+					# -warn all
+					eat=1
+					shift
 					;;
 				-W)
 					if test -z "$msvc_like"; then

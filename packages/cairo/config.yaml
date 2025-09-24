@@ -2,18 +2,17 @@ name: cairo
 version: 1.18.4
 url: https://www.cairographics.org/releases/cairo-1.18.4.tar.xz
 sha256: 445ed8208a6e4823de1226a74ca319d3600e83f6369f99b14265006599c32ccb
-steps:
-  a:
-    dependencies:
-      - pkg-config
-      - fontconfig
-      - freetype
-      - libpng
-      - glib:b
-      - libffi
-      - libatomic_ops
-      - lzo
-      - pixman
-      - zlib
-      - winpthreads
-    run: build.bat
+dependencies:
+  required:
+    - pkg-config
+    - fontconfig
+    - freetype
+    - libpng
+    - glib
+    - libffi
+    - libatomic_ops
+    - lzo
+    - pixman
+    - zlib
+    - winpthreads
+run: build.bat

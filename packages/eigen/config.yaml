@@ -2,21 +2,20 @@ name: eigen
 version: 3.4.0
 url: https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.bz2
 sha256: b4c198460eba6f28d34894e3a5710998818515104d6e74e5cc331ce31e46e626
-steps:
-  a:
-    dependencies:
-      - pkg-config
-      - ADOL-C
-      - boost
-      - fftw:c
-      - sparsehash
-      - gmp
-      - gsl
-      - METIS
-      - mpfr
-      - mpreal
-      - OpenBLAS
-      - SuiteSparse
-      - superlu
-      - sparsehash
-    run: build.bat
+dependencies:
+  required:
+    - pkg-config
+    - ADOL-C
+    - boost
+    - fftw
+    - sparsehash
+    - gmp
+    - gsl
+    - METIS
+    - mpfr
+    - mpreal
+    - OpenBLAS
+    - SuiteSparse
+    - superlu
+    - sparsehash
+run: build.bat

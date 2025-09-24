@@ -2,13 +2,12 @@ name: cairomm
 version: 1.18.0
 url: https://www.cairographics.org/releases/cairomm-1.18.0.tar.xz
 sha256: b81255394e3ea8e8aa887276d22afa8985fc8daef60692eb2407d23049f03cfb
-steps:
-  a:
-    dependencies:
-      - pkg-config
-      - boost
-      - fontconfig
-      - mm-common
-      - cairo
-      - libsigc++
-    run: build.bat
+dependencies:
+  required:
+    - pkg-config
+    - boost
+    - fontconfig
+    - mm-common
+    - cairo
+    - libsigc++
+run: build.bat

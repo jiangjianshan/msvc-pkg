@@ -2,10 +2,9 @@ name: SDL2
 version: 2.32.0
 url: https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.32.0.tar.gz
 sha256: 745673d0649e1834fc15c20f5c93a8a80a3a26513d617e4c3acb20d69bfac13d
-steps:
-  a:
-    dependencies:
-      - pkg-config
-      - libiconv
-      - libusb
-    run: build.bat
+dependencies:
+  required:
+    - pkg-config
+    - libiconv
+    - libusb
+run: build.bat

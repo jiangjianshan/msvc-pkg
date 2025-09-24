@@ -2,8 +2,7 @@ name: giflib
 version: 5.2.2
 url: https://sourceforge.net/projects/giflib/files/giflib-5.2.2.tar.gz
 sha256: be7ffbd057cadebe2aa144542fd90c6838c6a083b5e8a9048b8ee3b66b29d5fb
-steps:
-  a:
-    dependencies:
-      - getopt
-    run: build.bat
+dependencies:
+  required:
+    - getopt
+run: build.bat

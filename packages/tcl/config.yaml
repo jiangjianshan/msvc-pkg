@@ -2,8 +2,7 @@ name: tcl
 version: 8.6.15
 url: https://sourceforge.net/projects/tcl/files/Tcl/8.6.15/tcl8.6.15-src.tar.gz
 sha256: 861e159753f2e2fbd6ec1484103715b0be56be3357522b858d3cbb5f893ffef1
-steps:
-  a:
-    dependencies:
-      - zlib
-    run: build.bat
+dependencies:
+  required:
+    - zlib
+run: build.bat

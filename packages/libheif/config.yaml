@@ -1,29 +1,29 @@
 name: libheif
-version: 1.19.5
-url: https://github.com/strukturag/libheif/archive/refs/tags/v1.19.5.tar.gz
-sha256: 5cd9a3e28493310358e1c1299cd596cc4c7ae5fb985eceb758fa6141424e58bb
-steps:
-  a:
-    dependencies:
-      - dav1d
-      - doxygen
-      - ffmpeg
-      - getopt
-      - graphviz
-      - kvazaar
-      - libaom
-      - libde265
-      - libjpeg-turbo
-      - libpng
-      - SVT-AV1
-      - libtiff:b
-      - uvg266
-      - vmaf
-      - x265
-      - zlib
-      - openh264
-      - OpenJPH
-      - VVdeC
-      - VVenC
-      - rav1e
-    run: build.bat
+version: 1.20.2
+url: https://github.com/strukturag/libheif/archive/refs/tags/v1.20.2.tar.gz
+sha256: b70340395d84184bb8dfc833dd51c95ae049435f7ff9abc7b505a08b5ee2bd2a
+dependencies:
+  required:
+    - dav1d
+    - doxygen
+    - ffmpeg
+    - getopt
+    - kvazaar
+    - libaom
+    - libde265
+    - libjpeg-turbo
+    - libpng
+    - SVT-AV1
+    - libtiff
+    - uvg266
+    - vmaf
+    - x265
+    - zlib
+    - openh264
+    - OpenJPH
+    - VVdeC
+    - VVenC
+    - rav1e
+  optional:
+    - graphviz:required
+run: build.bat

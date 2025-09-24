@@ -2,10 +2,9 @@ name: protobuf
 version: 31.1
 url: https://github.com/protocolbuffers/protobuf/archive/refs/tags/v31.1.tar.gz
 sha256: c3a0a9ece8932e31c3b736e2db18b1c42e7070cd9b881388b26d01aa71e24ca2
-steps:
-  a:
-    dependencies:
-      - abseil-cpp
-      - winpthreads
-      - zlib
-    run: build.bat
+dependencies:
+  required:
+    - abseil-cpp
+    - winpthreads
+    - zlib
+run: build.bat

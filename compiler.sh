@@ -1,6 +1,22 @@
 #!/bin/bash
 #
-#  Set build environment of Visutal C++ Build Tools, Intel OneAPI and CUDA ...
+#  compiler.sh - Visual Studio Build Environment Configuration Script (Cygwin/MSYS2)
+#
+#  Purpose: Initializes the command-line build environment for Microsoft Visual C++,
+#           Intel oneAPI Base Toolkit, and NVIDIA CUDA Toolkit on Windows within
+#           Cygwin or MSYS2 shells. This script mirrors the functionality of vcenv.bat
+#           but uses native shell commands to manipulate environment variables,
+#           making it suitable for Unix-like environments on Windows.
+#
+#  Key Functionality:
+#    - Detects Visual Studio installation and Windows SDK locations via registry queries.
+#    - Constructs the MSVC build environment (INCLUDE, LIB, PATH, etc.) manually.
+#    - Optionally initializes the extensive Intel oneAPI environment (compilers, MPI, MKL, TBB, etc.).
+#    - Optionally initializes the CUDA Toolkit environment.
+#    - Processes the $PREFIX_PATH variable to prepend third-party library paths.
+#
+#  Usage: source vcenv.sh [x86|x64|amd64|x86_amd64|...] [oneapi]
+#         Arguments specify target architecture and whether to enable Intel oneAPI.
 #
 #  Copyright (c) 2024 Jianshan Jiang
 #
@@ -11,20 +27,18 @@
 #  copies of the Software, and to permit persons to whom the Software is
 #  furnished to do so, subject to the following conditions:
 #
-#  The above copyright notice and this permission notice shall be included in all
-#  copies or substantial portions of the Software.
-#
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-#  SOFTWARE.
 
 LANG=en_US
 export LANG
 
+# Function: prepend_path
+# Purpose: Safely prepends a new directory path to an existing path string.
+#          Handles cases where the existing path might be empty or undefined.
+# Parameters:
+#   $1 - The new path segment to add to the front.
+#   $2 - The existing path variable contents.
+#   $3 - The path separator character (e.g., ':' for Unix, ';' for Windows within this script).
+# Returns: Prints the new composite path string to stdout.
 prepend_path()
 {
   path_to_add="$1"
@@ -37,6 +51,10 @@ prepend_path()
   fi
 }
 
+# Function: check_arch
+# Purpose: Detects the host machine's architecture (x86 or x64) by querying `uname -m`.
+#          Sets the global HOST_ARCH variable accordingly. This is used to determine
+#          the correct paths for host tools within the Visual Studio directory structure.
 check_arch()
 {
   local mach_name=
@@ -55,6 +73,11 @@ check_arch()
   export HOST_ARCH
 }
 
+# Function: config_msvc
+# Purpose: Core function to set up the Microsoft Visual C++ build environment.
+#          Reads registry keys to find Windows SDK and Visual Studio install locations,
+#          then constructs INCLUDE, LIB, and PATH variables to mimic the behavior of
+#          vcvarsall.bat. Also extracts the compiler version.
 config_msvc()
 {
   #
@@ -134,6 +157,17 @@ tionFolder\s{4}REG_SZ\s{4}).*')
   export MSC_VER
 }
 
+# Function: config_oneapi
+# Purpose: Comprehensive setup for the Intel oneAPI toolchain environment.
+#          Configures environment variables for multiple oneAPI components:
+#          - Intel LLVM-based C++ Compiler (ICX/ICPX) and classic Fortran Compiler
+#          - Intel MPI Library
+#          - Intel Math Kernel Library (MKL)
+#          - Intel Threading Building Blocks (TBB)
+#          - Intel Integrated Performance Primitives (IPP) and Cryptography (IPPCP)
+#          - Intel DPC++ Library (oneDPL)
+#          - And other tools (Debugger, OCLOC, etc.)
+#          The specific components activated depend on their installation presence.
 config_oneapi()
 {
   ONEAPI_ROOT='C:\Program Files (x86)\Intel\oneAPI'
@@ -349,6 +383,10 @@ config_oneapi()
   fi
 }
 
+# Function: config_cuda
+# Purpose: Initializes the environment for the NVIDIA CUDA Toolkit.
+#          Adds CUDA binary, include, and library directories to PATH, INCLUDE, and LIB.
+#          Queries and displays the GPU's compute capability version.
 config_cuda()
 {
   if [ -d "${CUDA_PATH:-}" ]; then
@@ -370,6 +408,12 @@ config_cuda()
   fi
 }
 
+# Function: config_misc
+# Purpose: Processes the semicolon-separated list of directories in $PREFIX_PATH.
+#          Prepend their include/, lib/, lib/cmake, and lib/pkgconfig subdirectories
+#          to the respective environment variables (INCLUDE, LIB, CMAKE_PREFIX_PATH, PKG_CONFIG_PATH).
+#          This prioritizes user-provided or third-party libraries over system ones,
+#          crucial for avoiding conflicts (e.g., with ICU libraries provided by VC++).
 config_misc()
 {
   # NOTE:
@@ -405,6 +449,7 @@ config_misc()
   export PKG_CONFIG_PATH
 }
 
+# Main script argument parsing loop
 HOST_ARCH=
 TARGET_ARCH=
 WITH_ONEAPI=

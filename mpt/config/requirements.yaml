@@ -1,0 +1,431 @@
+dependencies:
+  - name: Visual C++ Build Tools
+    url: "https://aka.ms/vs/17/release/vs_buildtools.exe"
+    sha256: 5d363591aa59a4d1f04300d66e1d402bf009bfc4f7afd985c8aedcf0ffbc20f5
+    check: '"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -nologo -latest -products "*" -all -property installationVersion'
+    install: |
+      vs_buildtools.exe --includeRecommended
+      --wait
+      --passive
+      --norestart
+      --removeOos true
+      --downloadThenInstall
+      --addProductLang En-us
+      --add Microsoft.VisualStudio.Workload.VCTools
+      --add Microsoft.Net.Component.4.8.1.TargetingPack
+      --add Microsoft.VisualStudio.Component.VC.ATL
+      --add Microsoft.VisualStudio.Component.VC.ATLMFC
+      --add Microsoft.VisualStudio.Component.VC.ASAN
+      --remove Microsoft.VisualStudio.Component.VC.CMake.Project
+      --remove Microsoft.VisualStudio.Component.TestTools.BuildTools
+    restart: true
+  - name: Intel oneAPI DPC++/C++ Compiler Runtime for Windows
+    url: https://registrationcenter-download.intel.com/akdlm/IRC_NAS/15a35578-2f9a-4f39-804b-3906e0a5f8fc/w_dpcpp_cpp_runtime_p_2024.2.1.1084.exe
+    sha256: 0c060cde2ace56e05c0336024ca15746e55aed8cf75892ef6c43749560976582
+    check: "where sycl*.dll"
+    install: |
+      w_dpcpp_cpp_runtime_p_2024.2.1.1084.exe --silent
+  - name: Intel Fortran Compiler Runtime for Windows
+    url: https://registrationcenter-download.intel.com/akdlm/IRC_NAS/ea23d696-a77f-4a4a-8996-20d02cdbc48f/w_ifort_runtime_p_2024.2.1.1084.exe
+    sha256: 86c91257706458d4cfafcd527df055d1b273092e384760d93343044e848b6ec7
+    check: "where libifcoremd.dll"
+    install: |
+      w_ifort_runtime_p_2024.2.1.1084.exe --silent
+  - name: Intel oneAPI BaseKit
+    url: https://registrationcenter-download.intel.com/akdlm/IRC_NAS/d91caaa0-7306-46ea-a519-79a0423e1903/w_BaseKit_p_2024.2.1.101_offline.exe
+    sha256: edb3b687d334937f68347750c155a30a3ff69ed8ca0194e2a253276e81f099da
+    check: "if exist \"%ProgramFiles(x86)%\\Intel\\oneAPI\\compiler\\2024.2\\bin\\icx-cl.exe\" (exit 0) else (exit 1)"
+    install: |
+      w_BaseKit_p_2024.2.1.101_offline.exe -a --silent --eula accept
+      --components intel.oneapi.win.cpp-dpcpp-common
+  - name: Intel oneAPI HPCKit
+    url: https://registrationcenter-download.intel.com/akdlm/IRC_NAS/745e923a-3f85-4e1e-b6dd-637c0e9ccba6/w_HPCKit_p_2024.2.1.80_offline.exe
+    sha256: 4cd16d89bff0f5c3ad1cab0661941b644e54dd7c76e2a03f62e8dfbc0b61d107
+    check: "if exist \"%ProgramFiles(x86)%\\Intel\\oneAPI\\compiler\\2024.2\\bin\\ifort.exe\" (exit 0) else (exit 1)"
+    install: |
+      w_HPCKit_p_2024.2.1.80_offline.exe -a --silent --eula accept
+      --components intel.oneapi.win.cpp-dpcpp-common:intel.oneapi.win.ifort-compiler:intel.oneapi.win.mpi.devel
+  - name: CUDA Toolkit
+    url: https://developer.download.nvidia.com/compute/cuda/12.9.1/local_installers/cuda_12.9.1_576.57_windows.exe
+    sha256: f0ca7cc7b4cea2fac2c4951819d2a9caea31e04000e9110e2048719525f8ea0e
+    check: "nvcc --version"
+    install: |
+      cuda_12.9.1_576.57_windows.exe -s -n
+      cublas_12.9 cublas_dev_12.9
+      cuda_profiler_api_12.9
+      cudart_12.9
+      cufft_12.9 cufft_dev_12.9
+      cuobjdump_12.9
+      cupti_12.9
+      curand_12.9 curand_dev_12.9
+      cusolver_12.9 cusolver_dev_12.9
+      cusparse_12.9 cusparse_dev_12.9
+      cuxxfilt_12.9
+      demo_suite_12.9
+      npp_12.9 npp_dev_12.9
+      nvcc_12.9
+      nvdisasm_12.9
+      nvfatbin_12.9
+      nvjitlink_12.9
+      nvjpeg_12.9 nvjpeg_dev_12.9
+      nvml_dev_12.9
+      nvprof_12.9
+      nvprune_12.9
+      nvrtc_12.9 nvrtc_dev_12.9
+      nvtx_12.9
+      occupancy_calculator_12.9
+      opencl_12.9
+      sanitizer_12.9
+      thrust_12.9
+      visual_profiler_12.9
+      visual_studio_integration_12.9
+    restart: true
+    extensions:
+      - name: cuDNN
+        url: https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-9.13.0.50_cuda12-archive.zip
+        sha256: 827e294e13e352586a5bcf5b2188025fe5cba590df69b8010e97dd30b9a0266f
+        check: "if exist \"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.9\\bin\\cudnn64_9.dll\" (exit 0) else (exit 1)"
+        target: "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.9"
+  - name: meson
+    check: "meson --version"
+    install: "python -m pip install meson"
+  - name: ninja
+    hint: https://github.com/ninja-build/ninja/releases
+    check: "where ninja"
+  - name: wget
+    hint: "https://eternallybored.org/misc/wget/"
+    check: "where wget"
+  - name: yq
+    hint: "https://github.com/mikefarah/yq/releases"
+    check: "where yq"
+  - name: rust
+    hint: "https://www.rust-lang.org/tools/install"
+    check: "where rustc"
+  - name: cmake
+    hint: "https://cmake.org/files/ and choose the version not higher than 3.31"
+    check: "where cmake"
+  - name: git
+    hint: "https://git-scm.com/downloads/win"
+    check: "where git"
+    extensions:
+      - name: autoconf2.13
+        hint: https://packages.msys2.org/packages/autoconf2.13
+        url: https://mirror.msys2.org/msys/x86_64/autoconf2.13-2.13-6-any.pkg.tar.zst
+        sha256: 38bd817375f053b6d939f80a30582d05bc6ed5cd07db135e7f3120a27f1b9512
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\share\\autoconf-2.13\" (exit 0) else (exit 1)"
+      - name: autoconf2.69
+        hint: https://packages.msys2.org/packages/autoconf2.69
+        url: https://mirror.msys2.org/msys/x86_64/autoconf2.69-2.69-4-any.pkg.tar.zst
+        sha256: 56b2de8e53e46a88bb217a427c2f7b5671ac6400148681fb2089e9b7be817364
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\share\\autoconf-2.69\" (exit 0) else (exit 1)"
+      - name: autoconf2.71
+        hint: https://packages.msys2.org/packages/autoconf2.71
+        url: https://mirror.msys2.org/msys/x86_64/autoconf2.71-2.71-3-any.pkg.tar.zst
+        sha256: 40ccdab38848766c00b417a2c424fd5aa6e20f05dd6e50e9aa02c78c2766eb80
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\share\\autoconf-2.71\" (exit 0) else (exit 1)"
+      - name: autoconf2.72
+        hint: https://packages.msys2.org/packages/autoconf2.72
+        url: https://mirror.msys2.org/msys/x86_64/autoconf2.72-2.72-1-any.pkg.tar.zst
+        sha256: 740b1de1dcb89c64f0ac1cd8591ae1b822f53600ab5fbf28e9ab8d0d21a05857
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\share\\autoconf-2.72\" (exit 0) else (exit 1)"
+      - name: autoconf-wrapper
+        hint: https://packages.msys2.org/packages/autoconf-wrapper
+        url: https://mirror.msys2.org/msys/x86_64/autoconf-wrapper-20250528-1-any.pkg.tar.zst
+        sha256: 6fae49791986ceee678e7073bd9d02867d5219f9c6a8d87234d8603543eda13e
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\autoconf\" (exit 0) else (exit 1)"
+      - name: autoconf-archive
+        hint: https://packages.msys2.org/packages/autoconf-archive
+        url: https://mirror.msys2.org/msys/x86_64/autoconf-archive-2023.02.20-1-any.pkg.tar.zst
+        sha256: 3a323a389db84ff4119de59b7b605c3400247689a1a1d76b5af204e84d352bda
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\share\\aclocal\" (exit 0) else (exit 1)"
+      - name: automake1.11
+        hint: https://packages.msys2.org/packages/automake1.11
+        url: https://mirror.msys2.org/msys/x86_64/automake1.11-1.11.6-6-any.pkg.tar.zst
+        sha256: 25ecc6296e1416513153c290442cbca6dcb813c1c50e5beb3a708408ba5de3a5
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\share\\automake-1.11\" (exit 0) else (exit 1)"
+      - name: automake1.12
+        hint: https://packages.msys2.org/packages/automake1.12
+        url: https://mirror.msys2.org/msys/x86_64/automake1.12-1.12.6-6-any.pkg.tar.zst
+        sha256: b6c91241999c6ff8d04c5ea8011b10544a373b01eacb7993c66db99e5f4fb373
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\share\\automake-1.12\" (exit 0) else (exit 1)"
+      - name: automake1.13
+        hint: https://packages.msys2.org/packages/automake1.13
+        url: https://mirror.msys2.org/msys/x86_64/automake1.13-1.13.4-7-any.pkg.tar.zst
+        sha256: a0d3eb1b359a67c1c8a9161cf79ba681cccabf47c78cb40d3065b5eff02a82f0
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\share\\automake-1.13\" (exit 0) else (exit 1)"
+      - name: automake1.14
+        hint: https://packages.msys2.org/packages/automake1.14
+        url: https://mirror.msys2.org/msys/x86_64/automake1.14-1.14.1-6-any.pkg.tar.zst
+        sha256: 0b097559c1fa79124552334b63d13417bcec8a08008ab65f77d27300a4ccc5b4
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\share\\automake-1.14\" (exit 0) else (exit 1)"
+      - name: automake1.15
+        hint: https://packages.msys2.org/packages/automake1.15
+        url: https://mirror.msys2.org/msys/x86_64/automake1.15-1.15.1-4-any.pkg.tar.zst
+        sha256: e3c73d0094eebbc2353b2ddd0b7c81020917c2ec09d3e4967d7abc9794fa7843
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\share\\automake-1.15\" (exit 0) else (exit 1)"
+      - name: automake1.16
+        hint: https://packages.msys2.org/packages/automake1.16
+        url: https://mirror.msys2.org/msys/x86_64/automake1.16-1.16.5-1-any.pkg.tar.zst
+        sha256: 1963b5fa0ab5eaf1bdc311501cd742c6bb19941e831dcc8ab1e51a8c7f1634fe
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\share\\automake-1.16\" (exit 0) else (exit 1)"
+      - name: automake1.17
+        hint: https://packages.msys2.org/packages/automake1.17
+        url: https://mirror.msys2.org/msys/x86_64/automake1.17-1.17-1-any.pkg.tar.zst
+        sha256: bb069dbb6f580c2346d2f6d74268b5e12e625f7ba57299426f9cd6c0fa714191
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\share\\automake-1.17\" (exit 0) else (exit 1)"
+      - name: automake1.18
+        hint: https://packages.msys2.org/packages/automake1.18
+        url: https://mirror.msys2.org/msys/x86_64/automake1.18-1.18.1-1-any.pkg.tar.zst
+        sha256: c045d9eddf900dbacae06d9e0e19e250cc32d849def7d06b833253f85e3fc941
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\share\\automake-1.18\" (exit 0) else (exit 1)"
+      - name: automake-wrapper
+        hint: https://packages.msys2.org/packages/automake-wrapper
+        url: https://mirror.msys2.org/msys/x86_64/automake-wrapper-20250528-1-any.pkg.tar.zst
+        sha256: c82643326a35605b98e5b5da35aec846ca38d2b08f390ce13077ad1fa96e79e4
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\automake\" (exit 0) else (exit 1)"
+      - name: bison
+        hint: https://packages.msys2.org/packages/bison
+        url: https://mirror.msys2.org/msys/x86_64/bison-3.8.2-5-x86_64.pkg.tar.zst
+        sha256: 7439ca784a9909e0730a513d3aff15852c3b292ac85053fa2dd7a2a19c1ce04c
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\bison.exe\" (exit 0) else (exit 1)"
+      - name: flex
+        hint: https://packages.msys2.org/packages/flex
+        url: https://mirror.msys2.org/msys/x86_64/flex-2.6.4-3-x86_64.pkg.tar.zst
+        sha256: 6ee24cb84a157617f86fabdd342c7f883cca3cd2c58cf85b2106710375325a2c
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\flex.exe\" (exit 0) else (exit 1)"
+      - name: gcc-libs
+        hint: https://packages.msys2.org/packages/gcc-libs
+        url: https://mirror.msys2.org/msys/x86_64/gcc-libs-15.2.0-1-x86_64.pkg.tar.zst
+        sha256: d77e7228e596283cb5fbdcba67bbf9c3abd4bc3e21fc225a9752c0c8cdc8b91d
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\msys-stdc++-6.dll\" (exit 0) else (exit 1)"
+      - name: gperf
+        hint: https://packages.msys2.org/packages/gperf
+        url: https://mirror.msys2.org/msys/x86_64/gperf-3.1-6-x86_64.pkg.tar.zst
+        sha256: 393a048d6eb490e572951df7a99e0548cf064703adce365f960f3c0b45996256
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\gperf.exe\" (exit 0) else (exit 1)"
+      - name: help2man
+        hint: https://packages.msys2.org/packages/help2man
+        url: https://mirror.msys2.org/msys/x86_64/help2man-1.49.3-1-x86_64.pkg.tar.zst
+        sha256: 2a97824b57f23ba042cd0087fce2b05d9f54f371b2ab7d6f1ef656250d7dc46d
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\help2man\" (exit 0) else (exit 1)"
+      - name: liblz4
+        hint: https://packages.msys2.org/packages/liblz4
+        url: https://mirror.msys2.org/msys/x86_64/liblz4-1.10.0-1-x86_64.pkg.tar.zst
+        sha256: 1cbbe51ee91bf32691aabb15bdb7c8548e8b5ef8195122ef31f10edcca6e952f
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: |
+          if not exist "{GIT_ROOT}\\usr\\bin\\msys-lz4-1.dll" exit 1
+          powershell "
+            $expected = [Version]'1.10.0.0'
+            $actual = [Version](Get-Item '{GIT_ROOT}\\usr\\bin\\msys-lz4-1.dll').VersionInfo.ProductVersion
+            if ($actual -ge $expected) { exit 0 } else { exit 1 }
+          "
+      - name: libtool
+        hint: https://packages.msys2.org/packages/libtool
+        url: https://mirror.msys2.org/msys/x86_64/libtool-2.5.4-1-x86_64.pkg.tar.zst
+        sha256: 82a635ac6a9b6b0bed8866e9a07f95296f53c7c4652ce4a55e713c8a6096a933
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\libtool\" (exit 0) else (exit 1)"
+        patch:
+          - libtool.diff
+      - name: libxxhash
+        hint: https://packages.msys2.org/packages/libxxhash
+        url: https://mirror.msys2.org/msys/x86_64/libxxhash-0.8.3-1-x86_64.pkg.tar.zst
+        sha256: fbe21b886bb1e3895a081ce84122062eef88e8b39affcba3a6863cdff21c73b8
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: |
+          if not exist "{GIT_ROOT}\\usr\\bin\\msys-xxhash-0.dll" exit 1
+          powershell "
+            $expected = [Version]'0.8.3.0'
+            $actual = [Version](Get-Item '{GIT_ROOT}\\usr\\bin\\msys-xxhash-0.dll').VersionInfo.ProductVersion
+            if ($actual -ge $expected) { exit 0 } else { exit 1 }
+          "
+      - name: libzstd
+        hint: https://packages.msys2.org/packages/libzstd
+        url: https://mirror.msys2.org/msys/x86_64/libzstd-1.5.7-1-x86_64.pkg.tar.zst
+        sha256: 5e370b2e725a0a7e5ff58d84653c9a0cd5a10b9cfe930f2d949a28ad2a11c1f2
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\msys-zstd-1.dll\" (exit 0) else (exit 1)"
+        check: |
+          if not exist "{GIT_ROOT}\\usr\\bin\\msys-zstd-1.dll" exit 1
+          powershell "
+            $expected = [Version]'1.5.7.0'
+            $actual = [Version](Get-Item '{GIT_ROOT}\\usr\\bin\\msys-zstd-1.dll').VersionInfo.ProductVersion
+            if ($actual -ge $expected) { exit 0 } else { exit 1 }
+          "
+      - name: m4
+        hint: https://packages.msys2.org/packages/m4
+        url: https://mirror.msys2.org/msys/x86_64/m4-1.4.19-2-x86_64.pkg.tar.zst
+        sha256: 4a1d296571afa7b8837fd5e227e16c9cb7e26c0f31f03b364e11c1ae8ee2a913
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\m4.exe\" (exit 0) else (exit 1)"
+      - name: make
+        hint: https://packages.msys2.org/packages/make
+        url: https://mirror.msys2.org/msys/x86_64/make-4.4.1-2-x86_64.pkg.tar.zst
+        sha256: 2408af61717dae87b00c855b132769a125c708907fc94a46bb16dae076113e5c
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\make.exe\" (exit 0) else (exit 1)"
+      - name: pkgconf
+        hint: https://packages.msys2.org/packages/pkgconf
+        url: https://mirror.msys2.org/msys/x86_64/pkgconf-2.5.1-1-x86_64.pkg.tar.zst
+        sha256: 38efd4928ac0cb06e9bd558baa533fc923c0592115bf9bd44970250f3ae2cb7e
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\pkgconf.exe\" (exit 0) else (exit 1)"
+      - name: rsync
+        hint: https://packages.msys2.org/packages/rsync
+        url: https://mirror.msys2.org/msys/x86_64/rsync-3.4.1-1-x86_64.pkg.tar.zst
+        sha256: ced7a6d0cd397b13f1a24e73928674d6f973ee50a7467526047b1f4721b81683
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\rsync.exe\" (exit 0) else (exit 1)"
+      - name: texinfo
+        hint: https://packages.msys2.org/packages/texinfo
+        url: https://mirror.msys2.org/msys/x86_64/texinfo-7.2-2-x86_64.pkg.tar.zst
+        sha256: 7c166df27fc3361fff71ae4b252a941839d60a7025a38d862b80765e05a15a29
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\makeinfo\" (exit 0) else (exit 1)"
+      - name: texinfo-tex
+        hint: https://packages.msys2.org/packages/texinfo-tex
+        url: https://mirror.msys2.org/msys/x86_64/texinfo-tex-7.2-2-x86_64.pkg.tar.zst
+        sha256: f5a4c047d42907bfe7370dad836ae3ff3457e57fb27a353c7be194c3d818499b
+        target: "{GIT_ROOT}\\usr"
+        exclude:
+          - .BUILDINFO
+          - .MTREE
+          - .PKGINFO
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\texi2dvi\" (exit 0) else (exit 1)"

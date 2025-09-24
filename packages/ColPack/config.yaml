@@ -1,0 +1,8 @@
+name: ColPack
+version: 1.0.10
+url: https://github.com/CSCsw/ColPack/archive/refs/tags/v1.0.10.tar.gz
+sha256: b22ead7da80fa1735291b2d83198adf41bf36101e4fcb2c4f07c1cfacf211c75
+dependencies:
+  required:
+    - llvm-project
+run: build.sh

@@ -2,14 +2,13 @@ name: gst-plugins-base
 version: 1.26.0
 url: https://gstreamer.freedesktop.org/src/gst-plugins-base/gst-plugins-base-1.26.0.tar.xz
 sha256: e23189fbed2ec486690382d1055c19eeaf5aae3e95e2576fc4c884d96a90e69e
-steps:
-  a:
-    dependencies:
-      - pkg-config
-      - dlfcn-win32
-      - gettext
-      - glib:b
-      - gobject-introspection:b
-      - OpenCL-Headers
-      - gstreamer
-    run: build.bat
+dependencies:
+  required:
+    - pkg-config
+    - dlfcn-win32
+    - gettext
+    - glib
+    - gobject-introspection
+    - OpenCL-Headers
+    - gstreamer
+run: build.bat

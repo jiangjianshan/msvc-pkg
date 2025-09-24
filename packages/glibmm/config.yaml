@@ -2,11 +2,10 @@ name: glibmm
 version: 2.83.1
 url: https://download.gnome.org/sources/glibmm/2.83/glibmm-2.83.1.tar.xz
 sha256: 68350a823c33da8acfb1263715bb002a36c68346bd44c19ac4c3f0bd190fd2b1
-steps:
-  a:
-    dependencies:
-      - pkg-config
-      - glib:b
-      - libsigc++
-      - mm-common
-    run: build.bat
+dependencies:
+  required:
+    - pkg-config
+    - glib
+    - libsigc++
+    - mm-common
+run: build.bat

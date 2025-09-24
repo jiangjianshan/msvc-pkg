@@ -2,10 +2,9 @@ name: mpfr
 version: 4.2.1
 url: https://ftp.gnu.org/gnu/mpfr/mpfr-4.2.1.tar.xz
 sha256: 277807353a6726978996945af13e52829e3abd7a9a5b7fb2793894e18f1fcbb2
-steps:
-  a:
-    dependencies:
-      - dlfcn-win32
-      - yasm
-      - gmp:b
-    run: build.sh
+dependencies:
+  required:
+    - dlfcn-win32
+    - yasm
+    - gmp
+run: build.sh

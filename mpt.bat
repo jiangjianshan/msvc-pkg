@@ -1,71 +1,85 @@
 @echo off
+rem
+rem MSVC-PKG Main Entry Batch Script - Windows Environment Configuration and Bootstrap
+rem
+rem Provides the primary execution environment for the MSVC-PKG package management system.
+rem Configures Windows environment variables, validates dependencies, and initializes
+rem the Python-based package management toolchain with proper system configuration.
+
+rem Set console code page to UTF-8 (65001) to support Unicode characters
+rem Essential for proper display of formatted output and international text
 chcp 65001 >nul
-rem
-rem  This is the initial call entry of msvc-pkg from command line
-rem
-rem  Copyright (c) 2024 Jianshan Jiang
-rem
-rem  Permission is hereby granted, free of charge, to any person obtaining a copy
-rem  of this software and associated documentation files (the "Software"), to deal
-rem  in the Software without restriction, including without limitation the rights
-rem  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-rem  copies of the Software, and to permit persons to whom the Software is
-rem  furnished to do so, subject to the following conditions:
-rem
-rem  The above copyright notice and this permission notice shall be included in all
-rem  copies or substantial portions of the Software.
-rem
-rem  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-rem  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-rem  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-rem  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-rem  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-rem  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-rem  SOFTWARE.
 
 setlocal enabledelayedexpansion
 
+rem Configure MSYS2 compatibility environment variables
+rem These settings ensure proper symbolic link handling and path inheritance
 set LOGONSERVER=\\LOCALHOST
+
+rem Native Windows symbolic link support
 set MSYS=winsymlinks:nativestrict
+
+rem Inherit system PATH in MSYS2 environment
 set MSYS2_PATH_TYPE=inherit
-rem NOTE: It's not necessary to set MSYSTEM because we don't use mingw-w64 toolchain.
-rem       The environment variable MSYSTEM will impact the build environment of some
-rem       packages, e.g. gobject-introspection. The ccompiler.py will get compiler_name
-rem       depend on this environment variable. But in fact all build.bat are not in
-rem       msys2 environment.
+
+rem NOTE:
+rem MSYSTEM environment variable intentionally not set
+rem This prevents interference with MSYS2 toolchain detection while maintaining
+rem compatibility with packages that inspect MSYSTEM for build configuration
+rem Some packages (e.g., gobject-introspection) use MSYSTEM to determine compiler
+rem behavior, but all build.bat scripts execute outside MSYS2 environment
 rem set MSYSTEM=MINGW64
-rem Don't want to generate .pyc files when run python scripts
+
+rem Configure Python runtime environment
+rem Prevent .pyc file generation to avoid clutter and potential version conflicts
 set PYTHONDONTWRITEBYTECODE=1
+
+rem Ensure UTF-8 encoding for all Python input/output operations
+set PYTHONIOENCODING=utf-8
+
+rem Set internationalization and localization variables
+rem Uniform UTF-8 locale settings for consistent text processing
+set LANG=en_US.UTF-8
+set LC_ALL=en_US.UTF-8
+set LC_CTYPE=en_US.UTF-8
+
+rem Disable GObject introspection cache to prevent stale binding issues
 set GI_SCANNER_DISABLE_CACHE=1
 
-goto begin
+rem Verify Python installation exists and is accessible
+python --version >nul 2>&1 || (
+    echo Python not found. Please install from: https://www.python.org/downloads/
+    pause
+    exit /b 1
+)
 
-rem ---------------------------------------------------------------------------
-rem Help information
-rem ---------------------------------------------------------------------------
-:usage
-echo Script for building open source libraries on Windows,
-echo  Usage: mpt [help^|--help^|-h] [arch] [packages]
-echo
-echo  Optional Options:
-echo  help ^| --help ^| -h    : Display this help
-echo  arch                    : Available value are x86 or x64. [default: x64]
-echo  packages                : list of those packages want to be built.
-echo                            [default: build all available packages and their
-echo                            dependencies if they haven't built successful yet]
-echo  Example:
-echo    mpt
-echo    mpt x86 gmp gettext
-echo    mpt x64
-echo    mpt gmp gettext
-goto end
+rem Check for required Python packages using importlib
+rem Installs missing dependencies automatically if not present
+python -c "import importlib.util as i;exit(any(not i.find_spec(m) for m in('pygments','yaml','rich','requests','zstandard')))" >nul 2>&1 || (
+    echo Installing required Python packages...
+    python -m pip install Pygments PyYAML rich requests zstandard
+)
 
-rem ---------------------------------------------------------------------------
-rem The first entry point
-rem ---------------------------------------------------------------------------
-:begin
-if "%1"=="help" goto usage
-if "%1"=="--help" goto usage
-if "%1"=="-h" goto usage
-call bootstrap.bat
-python mpt.py %*
+if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
+  set TARGET_ARCH=x64
+) else (
+  set TARGET_ARCH=x86
+)
+
+rem Initialize root directory structure
+rem Ensures all required directories exist for package management operations
+set "ROOT_DIR=%~dp0"
+if "!ROOT_DIR:~-1!"=="\" set "ROOT_DIR=!ROOT_DIR:~0,-1!"
+
+rem Create essential working directories if they don't exist
+if not exist "%ROOT_DIR%\%TARGET_ARCH%\bin" mkdir "%ROOT_DIR%\%TARGET_ARCH%\bin"
+if not exist "%ROOT_DIR%\tags" mkdir "%ROOT_DIR%\tags"
+if not exist "%ROOT_DIR%\logs" mkdir "%ROOT_DIR%\logs"
+if not exist "%ROOT_DIR%\releases" mkdir "%ROOT_DIR%\releases"
+
+rem  https://docs.python.org/3/using/windows.html#removing-the-max-path-limitation
+reg query HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled >nul 2>&1 || (
+  reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /t reg_DWORD /d 1
+)
+
+python main.py %*

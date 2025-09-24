@@ -1,10 +1,10 @@
 name: ThirdParty-Glpk
 version: master
 url: https://github.com/coin-or-tools/ThirdParty-Glpk.git
-sha256:
-steps:
-  a:
-    dependencies:
-      - dlfcn-win32
-      - gmp:b
-    run: build.sh
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - dlfcn-win32
+    - gmp
+run: build.sh

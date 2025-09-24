@@ -2,7 +2,5 @@ name: utf8proc
 version: 2.10.0
 url: https://github.com/JuliaStrings/utf8proc/archive/v2.10.0.tar.gz
 sha256: 6f4f1b639daa6dca9f80bc5db1233e9cbaa31a67790887106160b33ef743f136
-steps:
-  a:
-    dependencies:
-    run: build.bat
+dependencies:
+run: build.bat

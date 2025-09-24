@@ -1,8 +1,7 @@
 name: SPIRV-Headers
 version: main
 url: https://github.com/KhronosGroup/SPIRV-Headers.git
-sha256:
-steps:
-  a:
-    dependencies:
-    run: build.bat
+recursive: false
+depth: 1
+dependencies:
+run: build.bat

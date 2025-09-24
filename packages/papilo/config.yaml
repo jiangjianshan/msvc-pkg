@@ -2,11 +2,10 @@ name: papilo
 version: 2.3.1
 url: https://github.com/scipopt/papilo/archive/refs/tags/v2.3.1.tar.gz
 sha256: 7491ebec89480b124e24c74e05d5fd4bb289ed7ada01f218145734ad65ec3fd8
-steps:
-  a:
-    dependencies:
-      - boost
-      - gmp:b
-      - oneTBB
-      - winpthreads
-    run: build.bat
+dependencies:
+  required:
+    - boost
+    - gmp
+    - oneTBB
+    - winpthreads
+run: build.bat

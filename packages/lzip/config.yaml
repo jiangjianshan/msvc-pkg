@@ -2,7 +2,5 @@ name: lzip
 version: 1.24.1
 url: http://download.savannah.gnu.org/releases/lzip/lzip-1.24.1.tar.gz
 sha256: 30c9cb6a0605f479c496c376eb629a48b0a1696d167e3c1e090c5defa481b162
-steps:
-  a:
-    dependencies:
-    run: build.sh
+dependencies:
+run: build.sh

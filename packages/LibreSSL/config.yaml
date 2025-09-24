@@ -2,7 +2,5 @@ name: LibreSSL
 version: 4.1.0
 url: https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/libressl-4.1.0.tar.gz
 sha256: 0f71c16bd34bdaaccdcb96a5d94a4921bfb612ec6e0eba7a80d8854eefd8bb61
-steps:
-  a:
-    dependencies:
-    run: build.bat
+dependencies:
+run: build.bat

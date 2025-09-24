@@ -2,21 +2,20 @@ name: gtkmm
 version: 4.18.0
 url: https://download.gnome.org/sources/gtkmm/4.18/gtkmm-4.18.0.tar.xz
 sha256: 2ee31c15479fc4d8e958b03c8b5fbbc8e17bc122c2a2f544497b4e05619e33ec
-steps:
-  a:
-    dependencies:
-      - pkg-config
-      - gtk
-      - cairo
-      - cairomm
-      - doxygen
-      - freetype
-      - glibmm
-      - libxslt
-      - libsigc++
-      - mm-common
-      - pango
-      - pangomm
-      - perl
-      - Vulkan-Loader
-    run: build.bat
+dependencies:
+  required:
+    - pkg-config
+    - gtk
+    - cairo
+    - cairomm
+    - doxygen
+    - freetype
+    - glibmm
+    - libxslt
+    - libsigc++
+    - mm-common
+    - pango
+    - pangomm
+    - perl
+    - Vulkan-Loader
+run: build.bat

@@ -2,35 +2,19 @@ name: libgd
 version: 2.3.3
 url: https://github.com/libgd/libgd/archive/refs/tags/gd-2.3.3.tar.gz
 sha256: 24429f9d0dbe0f865aaa4b1a63558242396ba9134e6cfd32ca5e486a84483350
-steps:
-  a:
-    dependencies:
-      - dirent
-      - fontconfig
-      - libavif
-      - libiconv
-      - libwebp
-      - libjpeg-turbo
-      - libraqm
-      - freetype
-      - libpng
-      - getopt
-      - zlib
-      - winpthreads
-    run: build.bat
-  b:
-    dependencies:
-      - dirent
-      - fontconfig
-      - libavif
-      - libheif
-      - libiconv
-      - libwebp
-      - libjpeg-turbo
-      - libraqm
-      - freetype
-      - libpng
-      - getopt
-      - zlib
-      - winpthreads
-    run: build.bat
+dependencies:
+  required:
+    - dirent
+    - fontconfig
+    - libavif
+    - libiconv
+    - libwebp
+    - libjpeg-turbo
+    - libraqm
+    - freetype
+    - libpng
+    - getopt
+    - zlib
+    - winpthreads
+    - libheif:required
+run: build.bat

@@ -2,17 +2,16 @@ name: librsvg
 version: 2.60.0
 url: https://download.gnome.org/sources/librsvg/2.60/librsvg-2.60.0.tar.xz
 sha256: 0b6ffccdf6e70afc9876882f5d2ce9ffcf2c713cbaaf1ad90170daa752e1eec3
-steps:
-  a:
-    dependencies:
-      - cairo
-      - cargo-c
-      - gobject-introspection:b
-      - glib:b
-      - freetype
-      - pkg-config
-      - pango
-      - gdk-pixbuf
-      - libxml2
-      - vala
-    run: build.bat
+dependencies:
+  required:
+    - cairo
+    - cargo-c
+    - gobject-introspection
+    - glib
+    - freetype
+    - pkg-config
+    - pango
+    - gdk-pixbuf
+    - libxml2
+    - vala
+run: build.bat

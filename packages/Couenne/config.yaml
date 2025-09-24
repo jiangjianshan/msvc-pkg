@@ -1,20 +1,19 @@
 name: Couenne
 version: master
 url: https://github.com/coin-or/Couenne.git
-sha256:
-steps:
-  a:
-    dependencies:
-      - BuildTools
-      - CoinUtils
-      - ThirdParty-ASL
-      - ThirdParty-HSL
-      - ThirdParty-Mumps
-      - Data-Sample
-      - Osi
-      - Clp
-      - Cgl
-      - Cbc
-      - Ipopt
-      - Bonmin
-    run: build.sh
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - BuildTools
+    - CoinUtils
+    - ThirdParty-ASL
+    - ThirdParty-Mumps
+    - Data-Sample
+    - Osi
+    - Clp
+    - Cgl
+    - Cbc
+    - Ipopt
+    - Bonmin
+run: build.sh

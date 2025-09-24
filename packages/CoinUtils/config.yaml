@@ -1,17 +1,17 @@
 name: CoinUtils
 version: master
 url: https://github.com/coin-or/CoinUtils.git
-sha256:
-steps:
-  a:
-    dependencies:
-      - bzip2
-      - dlfcn-win32
-      - Data-Sample
-      - Data-Netlib
-      - lapack
-      - ThirdParty-ASL
-      - ThirdParty-Glpk
-      - zlib
-      - readline
-    run: build.sh
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - bzip2
+    - dlfcn-win32
+    - Data-Sample
+    - Data-Netlib
+    - lapack
+    - ThirdParty-ASL
+    - ThirdParty-Glpk
+    - zlib
+    - readline
+run: build.sh

@@ -1,13 +1,13 @@
 name: Cgl
 version: master
 url: https://github.com/coin-or/Cgl.git
-sha256:
-steps:
-  a:
-    dependencies:
-      - CoinUtils
-      - dlfcn-win32
-      - Data-Sample
-      - Osi
-      - Clp
-    run: build.sh
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - CoinUtils
+    - dlfcn-win32
+    - Data-Sample
+    - Osi
+    - Clp
+run: build.sh

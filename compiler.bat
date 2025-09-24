@@ -1,6 +1,23 @@
 @echo off
 rem
-rem  Set Visual C++ Build Tools environment
+rem  compiler.bat - Visual Studio Build Environment Configuration Script
+rem
+rem  Purpose: Initializes the command-line build environment for Microsoft Visual C++,
+rem           Intel oneAPI Base Toolkit, and NVIDIA CUDA Toolkit on Windows. This script
+rem           is typically sourced before building projects to set necessary include,
+rem           library, and executable paths.
+rem
+rem  Key Functionality:
+rem    - Detects the latest or specified Visual Studio installation.
+rem    - Calls the native Visual Studio vcvarsall.bat to set core MSVC environment.
+rem    - Optionally initializes the Intel oneAPI compiler and library environment.
+rem    - Optionally initializes the CUDA Toolkit environment.
+rem    - Prepends user-provided third-party library paths (from %PREFIX_PATH%) to
+rem      INCLUDE, LIB, and other variables to prevent conflicts with system libraries.
+rem    - Adds Unix-like tools from Git for Windows to PATH for compatibility.
+rem
+rem  Usage: call vcenv.bat [x86|x64|amd64|x86_amd64|...] [oneapi]
+rem         Arguments specify target architecture and whether to enable Intel oneAPI.
 rem
 rem  Copyright (c) 2024 Jianshan Jiang
 rem
@@ -11,16 +28,6 @@ rem  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 rem  copies of the Software, and to permit persons to whom the Software is
 rem  furnished to do so, subject to the following conditions:
 rem
-rem  The above copyright notice and this permission notice shall be included in all
-rem  copies or substantial portions of the Software.
-rem
-rem  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-rem  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-rem  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-rem  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-rem  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-rem  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-rem  SOFTWARE.
 
 set vsinstall=
 set vc_target_arch=

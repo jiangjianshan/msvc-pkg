@@ -2,10 +2,9 @@ name: SDL3
 version: 3.2.4
 url: https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.2.4.tar.gz
 sha256: 0fc1d23e225e2a098976571bf5d62b6d81e0ae84ff3d82a35a3d19ab04d07e5c
-steps:
-  a:
-    dependencies:
-      - pkg-config
-      - libiconv
-      - libusb
-    run: build.bat
+dependencies:
+  required:
+    - pkg-config
+    - libiconv
+    - libusb
+run: build.bat

@@ -1,8 +1,7 @@
 name: libyuv
 version: main
 url: https://github.com/lemenkov/libyuv.git
-sha256:
-steps:
-  a:
-    dependencies:
-    run: build.bat
+recursive: false
+depth: 1
+dependencies:
+run: build.bat

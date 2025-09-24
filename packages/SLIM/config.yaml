@@ -1,9 +1,9 @@
 name: SLIM
 version: master
 url: https://github.com/KarypisLab/SLIM.git
-sha256:
-steps:
-  a:
-    dependencies:
-      - GKlib
-    run: build.bat
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - GKlib
+run: build.bat

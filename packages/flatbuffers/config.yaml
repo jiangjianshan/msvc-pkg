@@ -2,7 +2,5 @@ name: flatbuffers
 version: 24.3.25
 url: https://github.com/google/flatbuffers/archive/refs/tags/v24.3.25.tar.gz
 sha256: 4157c5cacdb59737c5d627e47ac26b140e9ee28b1102f812b36068aab728c1ed
-steps:
-  a:
-    dependencies:
-    run: build.bat
+dependencies:
+run: build.bat

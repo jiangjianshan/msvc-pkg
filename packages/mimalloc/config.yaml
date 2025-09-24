@@ -2,7 +2,5 @@ name: mimalloc
 version: 2.1.7
 url:  https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.7.tar.gz
 sha256: 0eed39319f139afde8515010ff59baf24de9e47ea316a315398e8027d198202d
-steps:
-  a:
-    dependencies:
-    run: build.bat
+dependencies:
+run: build.bat

@@ -1,8 +1,6 @@
 name: dqfun
 version: v03
 url: https://www.davidhbailey.com/dhbsoftware/dqfun-v03.tar.gz
-sha256: 56f14772be6f4e5522bc757d3df40e14ae50e98cab3da2266a356f2697b9c416
-steps:
-  a:
-    dependencies:
-    run: build.bat
+sha256: 3ad51ea391dfbfe69c0f84ef988fe136d5910a2cafe860ddc6c78d3589468295
+dependencies:
+run: build.bat

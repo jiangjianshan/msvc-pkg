@@ -1,0 +1,235 @@
+diff -urN usr-orig/bin/libtool usr/bin/libtool
+--- usr-orig/bin/libtool	2025-09-08 14:57:58.119315800 +0800
++++ usr/bin/libtool	2025-09-08 15:08:39.596682100 +0800
+@@ -9822,7 +9822,7 @@
+ 	  # Some compilers have problems with a '.al' extension so
+ 	  # convenience libraries should have the same extension an
+ 	  # archive normally would.
+-	  oldlibs="$output_objdir/$libname.$libext $oldlibs"
++	  oldlibs="$output_objdir/lib$libname.$libext $oldlibs"
+ 	  build_libtool_libs=convenience
+ 	  build_old_libs=yes
+ 	fi
+@@ -10120,7 +10120,7 @@
+ 
+       # Now set the variables for building old libraries.
+       if test yes = "$build_old_libs" && test convenience != "$build_libtool_libs"; then
+-	func_append oldlibs " $output_objdir/$libname.$libext"
++	func_append oldlibs " $output_objdir/lib$libname.$libext"
+ 
+ 	# Transform .lo files to .o files.
+ 	oldobjs="$objs "`$ECHO "$libobjs" | $SP2NL | $SED "/\.$libext$/d; $lo2o" | $NL2SP`
+@@ -10417,7 +10417,7 @@
+ 	      func_warning "'nm' from GNU binutils and a full rebuild may help."
+ 	    fi
+ 	    if test no = "$build_old_libs"; then
+-	      oldlibs=$output_objdir/$libname.$libext
++	      oldlibs=$output_objdir/lib$libname.$libext
+ 	      build_libtool_libs=module
+ 	      build_old_libs=yes
+ 	    else
+@@ -10435,7 +10435,7 @@
+ 	      echo "*** it was explicitly requested with -no-undefined,"
+ 	      echo "*** libtool will only create a static version of it."
+ 	      if test no = "$build_old_libs"; then
+-		oldlibs=$output_objdir/$libname.$libext
++		oldlibs=$output_objdir/lib$libname.$libext
+ 		build_libtool_libs=module
+ 		build_old_libs=yes
+ 	      else
+@@ -11711,7 +11711,7 @@
+     case $output in
+     *.la)
+       old_library=
+-      test yes = "$build_old_libs" && old_library=$libname.$libext
++      test yes = "$build_old_libs" && old_library=lib$libname.$libext
+       func_verbose "creating $output"
+ 
+       # Preserve any variables that may affect compiler behavior
+diff -urN usr-orig/share/aclocal/libtool.m4 usr/share/aclocal/libtool.m4
+--- usr-orig/share/aclocal/libtool.m4	2025-09-08 14:57:58.134939700 +0800
++++ usr/share/aclocal/libtool.m4	2025-09-08 15:07:40.081057700 +0800
+@@ -2409,7 +2409,7 @@
+   sys_lib_search_path_spec="/lib /usr/lib /usr/local/lib"
+ fi])
+ library_names_spec=
+-libname_spec='lib$name'
++libname_spec='$name'
+ soname_spec=
+ shrext_cmds=.so
+ postinstall_cmds=
+@@ -2628,11 +2628,11 @@
+     dynamic_linker='Win32 ld.exe'
+     ;;
+ 
+-  *,cl* | *,icl*)
++  *,cl* | *,icl* | *,ifort* | *,icx* | *,ifx*)
+     # Native MSVC or ICC
+     libname_spec='$name'
+     soname_spec='$libname`echo $release | $SED -e 's/[[.]]/-/g'`$versuffix$shared_ext'
+-    library_names_spec='$libname.dll.lib'
++    library_names_spec='$libname.lib'
+ 
+     case $build_os in
+     mingw* | windows*)
+@@ -5083,7 +5083,7 @@
+     ;;
+   cygwin* | msys* | mingw* | windows* | cegcc*)
+     case $cc_basename in
+-    cl* | icl*)
++    cl* | icl* | ifort* | icx* | ifx*)
+       _LT_TAGVAR(exclude_expsyms, $1)='_NULL_IMPORT_DESCRIPTOR|_IMPORT_DESCRIPTOR_.*'
+       ;;
+     *)
+@@ -5721,7 +5721,7 @@
+       # hardcode_libdir_flag_spec is actually meaningless, as there is
+       # no search path for DLLs.
+       case $cc_basename in
+-      cl* | icl*)
++      cl* | icl* | ifort* | icx* | ifx*)
+ 	# Native MSVC or ICC
+ 	_LT_TAGVAR(hardcode_libdir_flag_spec, $1)=' '
+ 	_LT_TAGVAR(allow_undefined_flag, $1)=unsupported
+@@ -5732,14 +5732,14 @@
+ 	# Tell ltmain to make .dll files, not .so files.
+ 	shrext_cmds=.dll
+ 	# FIXME: Setting linknames here is a bad hack.
+-	_LT_TAGVAR(archive_cmds, $1)='$CC -Fe$output_objdir/$soname $libobjs $compiler_flags $deplibs -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.dll.lib"~linknames='
++	_LT_TAGVAR(archive_cmds, $1)='$CC -Fe$output_objdir/$soname $libobjs $compiler_flags $deplibs -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.lib"~linknames='
+ 	_LT_TAGVAR(archive_expsym_cmds, $1)='if _LT_DLL_DEF_P([$export_symbols]); then
+             cp "$export_symbols" "$output_objdir/$soname.def";
+             echo "$tool_output_objdir$soname.def" > "$output_objdir/$soname.exp";
+           else
+             $SED -e '\''s/^/-link -EXPORT:/'\'' < $export_symbols > $output_objdir/$soname.exp;
+           fi~
+-          $CC -Fe$tool_output_objdir$soname $libobjs $compiler_flags $deplibs "@$tool_output_objdir$soname.exp" -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.dll.lib"~
++          $CC -Fe$tool_output_objdir$soname $libobjs $compiler_flags $deplibs "@$tool_output_objdir$soname.exp" -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.lib"~
+           linknames='
+ 	# The linker will not automatically build a static lib if we build a DLL.
+ 	# _LT_TAGVAR(old_archive_from_new_cmds, $1)='true'
+@@ -6799,7 +6799,7 @@
+ 
+       cygwin* | msys* | mingw* | windows* | pw32* | cegcc*)
+ 	case $GXX,$cc_basename in
+-	,cl* | no,cl* | ,icl* | no,icl*)
++	,cl* | no,cl* | ,icl* | no,icl* | ,ifort* | no,ifort* | ,icx* | no,icx* | ,ifx* | no,ifx*)
+ 	  # Native MSVC or ICC
+ 	  # hardcode_libdir_flag_spec is actually meaningless, as there is
+ 	  # no search path for DLLs.
+@@ -6812,14 +6812,14 @@
+ 	  # Tell ltmain to make .dll files, not .so files.
+ 	  shrext_cmds=.dll
+ 	  # FIXME: Setting linknames here is a bad hack.
+-	  _LT_TAGVAR(archive_cmds, $1)='$CC -o $output_objdir/$soname $libobjs $compiler_flags $deplibs -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.dll.lib"~linknames='
++	  _LT_TAGVAR(archive_cmds, $1)='$CC -o $output_objdir/$soname $libobjs $compiler_flags $deplibs -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.lib"~linknames='
+ 	  _LT_TAGVAR(archive_expsym_cmds, $1)='if _LT_DLL_DEF_P([$export_symbols]); then
+               cp "$export_symbols" "$output_objdir/$soname.def";
+               echo "$tool_output_objdir$soname.def" > "$output_objdir/$soname.exp";
+             else
+               $SED -e '\''s/^/-link -EXPORT:/'\'' < $export_symbols > $output_objdir/$soname.exp;
+             fi~
+-            $CC -o $tool_output_objdir$soname $libobjs $compiler_flags $deplibs "@$tool_output_objdir$soname.exp" -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.dll.lib"~
++            $CC -o $tool_output_objdir$soname $libobjs $compiler_flags $deplibs "@$tool_output_objdir$soname.exp" -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.lib"~
+             linknames='
+ 	  # The linker will not automatically build a static lib if we build a DLL.
+ 	  # _LT_TAGVAR(old_archive_from_new_cmds, $1)='true'
+diff -urN usr-orig/share/libtool/build-aux/ltmain.sh Git/usr/share/libtool/build-aux/ltmain.sh
+--- usr-orig/share/libtool/build-aux/ltmain.sh	2025-09-08 14:57:58.167552300 +0800
++++ usr/share/libtool/build-aux/ltmain.sh	2025-09-08 15:08:39.594185500 +0800
+@@ -9289,7 +9289,7 @@
+ 	  # Some compilers have problems with a '.al' extension so
+ 	  # convenience libraries should have the same extension an
+ 	  # archive normally would.
+-	  oldlibs="$output_objdir/$libname.$libext $oldlibs"
++	  oldlibs="$output_objdir/lib$libname.$libext $oldlibs"
+ 	  build_libtool_libs=convenience
+ 	  build_old_libs=yes
+ 	fi
+@@ -9587,7 +9587,7 @@
+ 
+       # Now set the variables for building old libraries.
+       if test yes = "$build_old_libs" && test convenience != "$build_libtool_libs"; then
+-	func_append oldlibs " $output_objdir/$libname.$libext"
++	func_append oldlibs " $output_objdir/lib$libname.$libext"
+ 
+ 	# Transform .lo files to .o files.
+ 	oldobjs="$objs "`$ECHO "$libobjs" | $SP2NL | $SED "/\.$libext$/d; $lo2o" | $NL2SP`
+@@ -9884,7 +9884,7 @@
+ 	      func_warning "'nm' from GNU binutils and a full rebuild may help."
+ 	    fi
+ 	    if test no = "$build_old_libs"; then
+-	      oldlibs=$output_objdir/$libname.$libext
++	      oldlibs=$output_objdir/lib$libname.$libext
+ 	      build_libtool_libs=module
+ 	      build_old_libs=yes
+ 	    else
+@@ -9902,7 +9902,7 @@
+ 	      echo "*** it was explicitly requested with -no-undefined,"
+ 	      echo "*** libtool will only create a static version of it."
+ 	      if test no = "$build_old_libs"; then
+-		oldlibs=$output_objdir/$libname.$libext
++		oldlibs=$output_objdir/lib$libname.$libext
+ 		build_libtool_libs=module
+ 		build_old_libs=yes
+ 	      else
+@@ -11178,7 +11178,7 @@
+     case $output in
+     *.la)
+       old_library=
+-      test yes = "$build_old_libs" && old_library=$libname.$libext
++      test yes = "$build_old_libs" && old_library=lib$libname.$libext
+       func_verbose "creating $output"
+ 
+       # Preserve any variables that may affect compiler behavior
+diff -urN usr-orig/share/libtool/configure Git/usr/share/libtool/configure
+--- usr-orig/share/libtool/configure	2025-09-08 14:57:58.183760600 +0800
++++ usr/share/libtool/configure	2025-09-08 15:07:10.869329800 +0800
+@@ -10914,7 +10914,7 @@
+       # hardcode_libdir_flag_spec is actually meaningless, as there is
+       # no search path for DLLs.
+       case $cc_basename in
+-      cl* | icl*)
++      cl* | icl* | ifort* | icx* | ifx*)
+ 	# Native MSVC or ICC
+ 	hardcode_libdir_flag_spec=' '
+ 	allow_undefined_flag=unsupported
+@@ -10925,14 +10925,14 @@
+ 	# Tell ltmain to make .dll files, not .so files.
+ 	shrext_cmds=.dll
+ 	# FIXME: Setting linknames here is a bad hack.
+-	archive_cmds='$CC -Fe$output_objdir/$soname $libobjs $compiler_flags $deplibs -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.dll.lib"~linknames='
++	archive_cmds='$CC -Fe$output_objdir/$soname $libobjs $compiler_flags $deplibs -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.lib"~linknames='
+ 	archive_expsym_cmds='if   test DEF = "`$SED -n     -e '\''s/^[	 ]*//'\''     -e '\''/^\(;.*\)*$/d'\''     -e '\''s/^\(EXPORTS\|LIBRARY\)\([	 ].*\)*$/DEF/p'\''     -e q     $export_symbols`" ; then
+             cp "$export_symbols" "$output_objdir/$soname.def";
+             echo "$tool_output_objdir$soname.def" > "$output_objdir/$soname.exp";
+           else
+             $SED -e '\''s/^/-link -EXPORT:/'\'' < $export_symbols > $output_objdir/$soname.exp;
+           fi~
+-          $CC -Fe$tool_output_objdir$soname $libobjs $compiler_flags $deplibs "@$tool_output_objdir$soname.exp" -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.dll.lib"~
++          $CC -Fe$tool_output_objdir$soname $libobjs $compiler_flags $deplibs "@$tool_output_objdir$soname.exp" -Wl,-DLL,-IMPLIB:"$tool_output_objdir$libname.lib"~
+           linknames='
+ 	# The linker will not automatically build a static lib if we build a DLL.
+ 	# _LT_TAGVAR(old_archive_from_new_cmds, )='true'
+@@ -11799,7 +11799,7 @@
+   sys_lib_search_path_spec="/lib /usr/lib /usr/local/lib"
+ fi
+ library_names_spec=
+-libname_spec='lib$name'
++libname_spec='$name'
+ soname_spec=
+ shrext_cmds=.so
+ postinstall_cmds=
+@@ -12017,11 +12017,11 @@
+     dynamic_linker='Win32 ld.exe'
+     ;;
+ 
+-  *,cl* | *,icl*)
++  *,cl* | *,icl* | *,ifort* | *,icx* | *,ifx*)
+     # Native MSVC or ICC
+     libname_spec='$name'
+     soname_spec='$libname`echo $release | $SED -e 's/[.]/-/g'`$versuffix$shared_ext'
+-    library_names_spec='$libname.dll.lib'
++    library_names_spec='$libname.lib'
+ 
+     case $build_os in
+     mingw* | windows*)

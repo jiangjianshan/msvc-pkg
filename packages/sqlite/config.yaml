@@ -2,11 +2,10 @@ name: sqlite
 version: 3.48.0
 url: https://github.com/sqlite/sqlite/archive/refs/tags/version-3.48.0.tar.gz
 sha256: e764585b074d837a949f0dbb683f53350f95df099f70061710329181477c6fe0
-steps:
-  a:
-    dependencies:
-      - icu4c
-      - tcl
-      - tk
-      - zlib
-    run: build.bat
+dependencies:
+  required:
+    - icu4c
+    - tcl
+    - tk
+    - zlib
+run: build.bat

@@ -2,18 +2,17 @@ name: pango
 version: 1.56.1
 url: https://download.gnome.org/sources/pango/1.56/pango-1.56.1.tar.xz
 sha256: 426be66460c98b8378573e7f6b0b2ab450f6bb6d2ec7cecc33ae81178f246480
-steps:
-  a:
-    dependencies:
-      - pkg-config
-      - cairo
-      - gobject-introspection:a
-      - glib:b
-      - fontconfig
-      - freetype
-      - fribidi
-      - harfbuzz:b
-      - help2man
-      - libpng
-      - libthai
-    run: build.bat
+dependencies:
+  required:
+    - pkg-config
+    - cairo
+    - gobject-introspection
+    - glib
+    - fontconfig
+    - freetype
+    - fribidi
+    - harfbuzz
+    - help2man
+    - libpng
+    - libthai
+run: build.bat

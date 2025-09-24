@@ -2,7 +2,5 @@ name: tree-sitter-c
 version: 0.24.1
 url: https://github.com/tree-sitter/tree-sitter-c/archive/v0.24.1.tar.gz
 sha256: 25dd4bb3dec770769a407e0fc803f424ce02c494a56ce95fedc525316dcf9b48
-steps:
-  a:
-    dependencies:
-    run: build.bat
+dependencies:
+run: build.bat
