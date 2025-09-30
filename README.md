@@ -1,39 +1,50 @@
 <div align="center">
   <h1>✨🚀 MSVC-PKG 🚀✨</h1>
-  <p><strong>🛠️ A Lightweight Build Dependency & Source Compilation Solution for Windows C/C++/Fortran Developers 🛠️</strong></p>
+  <p><strong>🛠️ A Professional Build Framework for Native Windows Development</strong></p>
+  <p><strong>with MSVC, LLVM, Intel, and NVIDIA Toolchains</strong></p>
 </div>
 
 <br>
 
 <div align="center">
-  <p>🎯 <em>Streamline your Windows development workflow with effortless dependency management</em> 🎯</p>
+  <p>🎯 <em>Stop wrestling with build environments and dependency hell</em></p>
+  <p>🎯 <em>This framework automates it all, letting you focus on what you build</em></p>
+  <p>🎯 <em>Not on how it builds</em></p>
 </div>
 
 ## 📖 Overview
 
-MSVC-PKG is a specialized build automation tool 🛠️ designed for Windows C/C++/Fortran development. It provides a streamlined solution for compiling open-source libraries from source code, generating native Windows libraries (.lib and .dll) without requiring complex environment setups. 
+MSVC-PKG is a lightweight framework designed for building native Windows libraries from source code, supporting C/C++/Fortran open-source projects. 🛠️ Each library acts like a plugin residing in the `packages/<library-name>` directory, containing the 📄 config.yaml configuration file, 🩹 optional .diff patch files (zero or more), ⚡ an optional prerun.sh preprocessing script, and the 🛠️ build.bat or build.sh build script. Through its flexible plugin architecture, the framework does not bind to specific 🔧 compilers or 🏗️ build systems, allowing each library to customize its compilation process. It provides 🧠 automated dependency resolution, 🎨 full-color output logs, 🌳 dependency tree generation, and 📊 topological sorting, simplifying the management and building of numerous libraries. msvc-pkg offers many more powerful features—clone the repository to experience its full potential firsthand. 🚀
 
-By leveraging a minimal dependency environment (Git for Windows + essential MSYS2 components), MSVC-PKG eliminates the need for full Cygwin/MSYS2 installations. Its plugin-style architecture 🧩 supports multiple build systems and ensures each library builds in complete isolation with independent environment settings, preventing conflicts and ensuring reproducible builds across x86 and x64 architectures. 🚀
+---
 
 ## ✨ Core Features
 
-- ⚡ **Lightweight & Efficient**: Requires only Git for Windows and ~20-30MB of MSYS2 components — no full Cygwin/MSYS2 needed. Complete builds directly within Git Bash. 🌟
-- 🧠 **Smart Dependency Management**: Automatically resolves dependency trees, visually renders them, and generates optimal compilation orders. Supports both required and optional dependencies for bootstrap builds. 📊
-- 🏗️ **Native Windows Builds**: Specialized for Windows native compilation, generating .lib and .dll files. Supports both x86 and x64 architecture targets. 🔧
-- 🛡️ **Isolated Build Environments**: Each library compiles in an independent process with isolated environment settings, ensuring no conflicts between different library builds. ✅
-- 🔌 **Extensible & Flexible**: Plugin-style design simplifies adding new libraries. Supports Git repos (with submodule management), various archive formats, and extra resources. 🧩
-- 🛠️ **Build System Agnostic**: Works with autotools, CMake, Meson, MSBuild, GNU Make, NMake, and more. ✅
-- 🔧 **Multi-Compiler Support**: Compatible with MSVC, Intel oneAPI, Clang/LLVM, and CUDA toolchains. Auto-configures environment variables per build. 💪
-- 📦 **Unified Library Management**: One-click install for 339+ (and growing) C/C++/Fortran open-source libraries. 🎉
-- 🔄 **Smart Build Optimization**: Conditionally rebuilds on changes, supports incremental compilation, and saves significant development time. ⏱️
-- 🎨 **Rich Visual Experience**: Real-time colorized tables, panels, and detailed logs enhance usability and simplify debugging. ✨
-- 🧹 **Easy Maintenance**: One-command cleanup removes temporary files, archives, and logs to free disk space. 🗑
+- ⚡ **Minimal Environment**: Only requires Git for Windows and core MSYS2 components (~30MB) - no full Cygwin/MSYS2 needed.
+- 🧠 **Smart Dependency Resolution**: Automatically resolves library dependencies including complex bootstrap scenarios with visual trees and optimal build order.
+- 🛠️ **MSVC-Compliant Output**: Patched libtool ensures proper Windows naming (lib{name}.lib for static, {name}.lib for dynamic).
+- 🛡️ **Isolated Build Environments**: Each library builds in separate processes with dedicated environment variables.
+- 🔌 **Flexible Plugin Architecture**: YAML configs and custom scripts allow each library to integrate as independent plugin.
+- 🏗️ **Build System Agnostic**: Supports Autotools, CMake, Meson, MSBuild - each library chooses its own build system.
+- 🔧 **Multi-Compiler Support**: Works with MSVC, Intel, LLVM, and NVIDIA CUDA with automatic environment configuration.
+- 📦 **Unified Management**: Single command manages 339+ C/C++/Fortran libraries (and growing).
+- 🔄 **Incremental Builds**: Detects changes and rebuilds only what's necessary for maximum efficiency.
+- 🎨 **Rich Terminal Experience**: Full colorized output throughout entire operation with highlighting in both terminal and log files.
+- 🧹 **Easy Cleanup**: One-click removal of temporary files, downloaded archives, and logs.
+- 📂 **Advanced Archive Handling**: Supports all major archive formats with pattern-based file filtering.
+- 🔍 **Git Integrity Management**: Automatically detects and repairs damaged repositories including submodules.
+- 🔄 **Runtime Dependency Handling**: Auto-detects and installs system-level runtime dependencies.
+- 🩹 **Patch Application**: Supports custom patch application during build for source code modifications.
+- 📊 **Version Tracking**: Maintains detailed records of installed versions and build history.
 
 ## 🏆 Why Choose MSVC-PKG?
 
-- ⏱️ **Massive Time Savings**: Already solves build issues for numerous complex libraries, saving hours, days, or even months of debugging time. 🎯
-- 🎯 **Reduced Errors**: Automated processes eliminate manual configuration mistakes. ✅
-- 📚 **Easy to Learn**: Provides numerous example configurations; adding new libraries often requires just minor adjustments based on existing examples. 🎓
+- ⏱️ **Time Savings**: Resolves complex build issues, saves days of debugging
+- 🎯 **MSVC Compliance**: Proper Windows library naming, no Unix compatibility issues
+- 📚 **Easy Learning**: Extensive examples in `packages/<library-name>` directory
+- 🧩 **Flexible Architecture**: Easy library addition/removal as independent plugins
+- 🔧 **Toolchain Transparency**: Core doesn't bind to compilers, libraries choose their own
+- 🌱 **Maintainable Design**: Clear plugin structure, independent build processes
 
 ## 🚀 Quick Start
 
@@ -42,56 +53,30 @@ By leveraging a minimal dependency environment (Git for Windows + essential MSYS
 git clone https://github.com/jiangjianshan/msvc-pkg.git
 
 cd msvc-pkg
-# View full command support (Format: mpt [options] [libraries])
+# View full command support
 mpt --help
 
-# Install all source libraries (Uses --install and --arch x64 options by default)
+# Install all libraries (default: --install --arch x64)
 mpt
 ```
 
-## 💼 Ideal Use Cases
+## 📖 Basic Commands
 
-- 🔧 **Native Windows Development**: C/C++/Fortran project development. 🏗️
-- 🎮 **Game Development**: Game engine building and dependency management. 🕹️
-- 📊 **Scientific Computing**: Numerical analysis and scientific computing libraries. 🔬
-- 🤖 **Machine Learning**: AI and machine learning frameworks. 🧠
-- 🌐 **Network Services**: Backend services and network application development. 🌍
-- 🔬 **Academic Research**: Academic research and prototyping. 📚
+| Command | Emoji | Description |
+|---------|-------|-------------|
+| `mpt <library>` | 📥 | Install specific library |
+| `mpt --install` | 🔧 | Install specified/all libraries (default) |
+| `mpt --uninstall` | 🗑️ | Uninstall specified/all libraries |
+| `mpt --list` | 📋 | List installation status |
+| `mpt --dependency` | 🌳 | Show dependency trees |
+| `mpt --fetch` | ⬇️ | Download source code |
+| `mpt --clean` | 🧹 | Clean build artifacts |
 
-## 📖 Detailed Usage
-
-### Basic Commands
-
-```bash
-# Install a specific library
-mpt <library-name>
-
-# Install specified libraries or all libraries if none specified, this is default option
-mpt --install
-
-# Uninstall specified libraries or all libraries if none specified
-mpt --uninstall
-
-# List installation status of specified libraries or all libraries if none specified
-mpt --list
-
-# Show dependency tree for specified libraries or all libraries if none specified
-mpt --dependency
-
-# Fetch source code for specified libraries or all libraries if none specified
-mpt --fetch
-
-# Clean build artifacts for specified libraries or all libraries if none specified
-mpt --clean
-```
-
-## 🏗️ Configuration Template Explained
-
-MSVC-PKG uses YAML configuration files. Here's the full field specification:
+## 🏗️ Configuration Template <a id="configuration-template"></a>
 
 ```yaml
 # Basic Information
-name: Library Name (Must match the packages/<library-name> directory name)
+name: Library Name (Must match the `packages/<library-name>` directory name)
 version: Library Version
 url: Source download/clone URL
 
@@ -127,12 +112,12 @@ dependencies:
     - ...
 
 # Build Script, maybe empty if only no need to install
-run: build.bat or build.sh # Located in the packages/<library-name>/ directory
+run: build.bat or build.sh # Located in the `packages/<library-name>` directory
 ```
 
-## 📋 Configuration Examples
+## 📋 Configuration Examples <a id="configuration-examples"></a>
 
-### Basic Git Repo (No Submodules)
+### 🔗 Basic Git Repository (No Submodules)
 ```yaml
 name: CoinUtils
 version: master
@@ -147,7 +132,7 @@ dependencies:
 run: build.sh
 ```
 
-### Git Repo (With Submodule URL Update)
+### 🔗 Git with Submodules
 ```yaml
 name: libjxl
 version: v0.11.1
@@ -165,7 +150,7 @@ dependencies:
 run: build.bat
 ```
 
-### Archive Source
+### 📦 Archive Source
 ```yaml
 name: pcre
 version: 8.45
@@ -178,80 +163,54 @@ dependencies:
 run: build.bat
 ```
 
-### Complex Dependencies
-```yaml
-name: libheif
-version: 1.20.2
-url: https://github.com/strukturag/libheif/archive/refs/tags/v1.20.2.tar.gz
-sha256: b70340395d84184bb8dfc833dd51c95ae049435f7ff9abc7b505a08b5ee2bd2a
-dependencies:
-  required:
-    - dav1d
-    - ffmpeg
-    - libde265
-    - libjpeg-turbo
-  optional:
-    - graphviz:required   # bootstrap build: libheif (only with required dependencies) -> graphviz(only with required dependencies) -> libheif 
-run: build.bat
-```
-
 See the `packages` directory for more detailed examples. 🔍
 
-## 🤝 Contributing Guide
+## 🤝 Contributing
 
-We warmly welcome and appreciate all forms of community contributions! 🎉 Here's how you can help make MSVC-PKG even better:
+We welcome contributions! 🎉 Here's how you can help:
 
 ### 🐛 Reporting Issues
-- **🔍 Bug Reports**: Found a problem? Please open an issue with detailed steps to reproduce, expected vs actual behavior, and relevant logs. 📝
-- **💡 Feature Requests**: Have an idea to improve MSVC-PKG? Share your suggestions with clear use cases and benefits. 🌟
+- **Bug Reports**: Detailed steps, expected vs actual behavior, logs
+- **Feature Requests**: Clear use cases and benefits
 
 ### 📦 Adding New Libraries
-- **🛠️ Library Contributions**: Want to add support for a new library? Follow our configuration templates and examples in the `packages` directory. 🎯
-  
-  **Detailed Steps for Adding a New Library:**
-  
-  1. **🔍 Determine Library Type**
-     - Git repository (with or without submodules) 📂
-     - Archive source (tar.gz, tar.bz2, zip, etc.) 📦
-     - Needs extra resources? 🎯
 
-  2. **📝 Create Configuration File**
-     - Create `config.yaml` in `packages/<library-name>/` 📄
-     - Refer to existing templates and examples in the `packages` directory. 🔍
+**Detailed Steps:**
 
-  3. **🛠️ Write Build Scripts**
-     - Based on build system (autotools, CMake, Meson, etc.) ⚙️
-     - Refer to examples of similar build systems in the `packages` directory. 📚
-     - Add `prerun.sh` if special preprocessing is needed. 🎯
+1. **📝 Create Configuration File**
+   - Create `config.yaml` in `packages/<library-name>/`
+   - Refer to the *[Configuration Template](#configuration-template)* and [Configuration Examples](#configuration-examples) sections above for detailed syntax and examples
 
-  4. **🧪 Test and Submit**
-     ```bash
-     mpt <library-name> # Test installation
-     # Check build logs and generated files
-     ```
-     - Fork the repository, create a feature branch, submit your changes, and open a Pull Request. 🔄
+2. **🩹 Create Patch Files (If Needed)**
+   - Create `.diff` files for Windows-specific fixes required to successfully compile the library
+   - Patch files are optional and should be created based on the specific library's requirements
 
-- **🧪 Testing**: Ensure your library builds correctly on both x86 and x64 architectures before submitting. ✅
+3. **⚙️ Write prerun.sh Script**
+   - Create `prerun.sh` for source code preprocessing before building
+   - Handles tasks like running `autoreconf -ifv` or applying patches via `sed` commands
+   - Provides more robust alternative to `.diff` files when library versions change frequently
+
+4. **🛠️ Write Build Scripts**
+   - Create `build.bat` or `build.sh` based on the library's build system
+   - Refer to examples of similar build systems in existing packages
+
+5. **🧪 Test and Submit**
+   ```bash
+   mpt <library-name> # Test installation
+   ```
+   - Check build logs and generated files
+   - Fork repository, create feature branch, submit Pull Request
 
 ### 🔧 Development Process
-1. **🎯 Fork the Repository**: Create your own fork of the MSVC-PKG project. 🔄
-2. **🌿 Create a Feature Branch**: Use descriptive branch names related to your contribution. 📋
-3. **💻 Make Your Changes**: Follow the existing code style and patterns. 🛠️
-4. **🧪 Test Thoroughly**: Verify your changes work as expected. ✅
-5. **📤 Submit a Pull Request**: Provide a clear description of your changes and their benefits. 🚀
-
-### 📋 Code Standards
-- **🎨 Consistent Formatting**: Follow the existing code style and formatting conventions. ✨
-- **📝 Clear Comments**: Document complex logic and non-obvious decisions. 🔍
-
-### 🌟 Recognition
-All significant contributions will be acknowledged in our contributors list! 🏆 Your help makes the Windows C/C++/Fortran development ecosystem better for everyone. 💖
-
-Thank you for considering contributing to MSVC-PKG! Together, we can build an amazing development toolchain. 🤝🚀
+1. **Fork Repository**
+2. **Create Feature Branch**
+3. **Make Changes** following code style
+4. **Test Thoroughly**
+5. **Submit Pull Request** with clear description
 
 ---
 
 <div align="center">
-  <h3>💻✨ Say goodbye to dependency hell and experience a modernized Windows C/C++/Fortran development workflow! ✨💻</h3>
-  <p>🎯 <strong>MSVC-PKG lets you focus on coding, not environment configuration!</strong> 🎯</p>
+  <h3>💻✨ Modernized Windows C/C++/Fortran Development</h3>
+  <p><strong>🎯 Focus on coding, not environment configuration!</strong></p>
 </div>
