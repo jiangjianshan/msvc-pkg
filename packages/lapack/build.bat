@@ -21,8 +21,7 @@ if "%ROOT_DIR%"=="" (
     goto :end
 )
 call "%ROOT_DIR%\compiler.bat" %ARCH% oneapi
-set RELS_DIR=%ROOT_DIR%\releases
-set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
+set SRC_DIR=%ROOT_DIR%\releases\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
 set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX -DLAPACK_COMPLEX_STRUCTURE
@@ -91,10 +90,12 @@ mklink "%PREFIX%\lib\lapacke.lib" "%PREFIX%\lib\lapacke64.lib"
 rem tmglib64.lib -> tmglib.lib
 if exist "%PREFIX%\lib\tmglib.lib" del /q "%PREFIX%\lib\tmglib.lib"
 mklink "%PREFIX%\lib\tmglib.lib" "%PREFIX%\lib\tmglib64.lib"
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/lapack64.pc"
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/blas64.pc"
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/cblas64.pc"
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/lapacke64.pc"
+pushd "%PREFIX%\lib\pkgconfig"
+sed -e "s#\([=]\|-[IL]\|^\)\([A-Za-z]\):[\\/]#\1/\L\2/#g" -i lapack64.pc
+sed -e "s#\([=]\|-[IL]\|^\)\([A-Za-z]\):[\\/]#\1/\L\2/#g" -i blas64.pc
+sed -e "s#\([=]\|-[IL]\|^\)\([A-Za-z]\):[\\/]#\1/\L\2/#g" -i cblas64.pc
+sed -e "s#\([=]\|-[IL]\|^\)\([A-Za-z]\):[\\/]#\1/\L\2/#g" -i lapacke64.pc
+popd
 call :clean_build
 exit /b 0
 

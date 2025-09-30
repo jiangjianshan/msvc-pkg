@@ -49,92 +49,93 @@ class PatchHandler:
             bool: True if all patches were applied successfully or no patches were found,
                   False if any patch application failed or critical errors occurred
         """
-        try:
-            # Validate source directory exists
-            if not source_dir.exists():
-                Logger.error(f"Source directory not found: [bold red]{source_dir}[/bold red]")
-                return False
+        # Validate source directory exists
+        if not source_dir.exists():
+            Logger.error(f"Source directory not found: [bold red]{source_dir}[/bold red]")
+            return False
 
-            # Determine patch files to apply based on provided parameters
-            patches = []
-            if patch_files:
-                patches = [p for p in patch_files if p.exists()]
-                Logger.debug(f"Using explicitly provided patch files: [bold cyan]{len(patches)}[/bold cyan] files found")
-            elif config and 'name' in config:
-                patch_dir = ROOT_DIR / 'packages' / config['name']
-                if patch_dir.exists():
-                    patches = sorted(patch_dir.glob('*.diff'))
-                    Logger.debug(f"Found patches from config: [bold cyan]{len(patches)}[/bold cyan] files in [bold cyan]{patch_dir}[/bold cyan]")
-            elif patch_dir and patch_dir.exists():
+        # Determine patch files to apply based on provided parameters
+        patches = []
+        if patch_files:
+            patches = [p for p in patch_files if p.exists()]
+            Logger.debug(f"Using explicitly provided patch files: [bold cyan]{len(patches)}[/bold cyan] files found")
+        elif config and 'name' in config:
+            patch_dir = ROOT_DIR / 'packages' / config['name']
+            if patch_dir.exists():
                 patches = sorted(patch_dir.glob('*.diff'))
-                Logger.debug(f"Found patches from patch directory: [bold cyan]{len(patches)}[/bold cyan] files in [bold cyan]{patch_dir}[/bold cyan]")
+                Logger.debug(f"Found patches from config: [bold cyan]{len(patches)}[/bold cyan] files in [bold cyan]{patch_dir}[/bold cyan]")
+        elif patch_dir and patch_dir.exists():
+            patches = sorted(patch_dir.glob('*.diff'))
+            Logger.debug(f"Found patches from patch directory: [bold cyan]{len(patches)}[/bold cyan] files in [bold cyan]{patch_dir}[/bold cyan]")
 
-            if not patches:
-                return True
+        if not patches:
+            return True
 
-            # Find bash executable for patch application
-            bash_path = BashUtils.find_bash()
-            if not bash_path:
-                Logger.error("Bash not found, cannot apply patches")
-                return False
-            Logger.debug(f"Using bash executable: [bold cyan]{bash_path}[/bold cyan]")
+        # Find bash executable for patch application
+        bash_path = BashUtils.find_bash()
+        if not bash_path:
+            Logger.error("Bash not found, cannot apply patches")
+            return False
+        Logger.debug(f"Using bash executable: [bold cyan]{bash_path}[/bold cyan]")
 
-            # Apply patches one by one
-            patch_status = True
-            successful_patches = 0
-            original_dir = Path.cwd()
-            Logger.debug(f"Original working directory: [bold cyan]{original_dir}[/bold cyan]")
+        # Apply patches one by one
+        patch_status = True
+        successful_patches = 0
+        original_dir = Path.cwd()
+        Logger.debug(f"Original working directory: [bold cyan]{original_dir}[/bold cyan]")
 
-            try:
-                # Change to source directory for patch application
-                os.chdir(source_dir)
-                for idx, patch in enumerate(patches, start=1):
-                    try:
-                        Logger.info(f"Applying patch ([bold cyan]{idx}[/bold cyan]/[bold cyan]{len(patches)}[/bold cyan]): [bold cyan]{patch.name}[/bold cyan]")
-                        # Convert Windows path to Unix path for compatibility
-                        unix_patch_path = PathUtils.win_to_unix(patch)
-                        if not Path(patch).exists():
-                            Logger.error(f"Patch file not found: [bold red]{patch}[/bold red]")
-                            patch_status = False
-                            continue
-                        # Build patch command
-                        cmd = f"patch -Np1 -i \"{unix_patch_path}\""
-                        Logger.debug(f"Executing patch command: [bold cyan]{cmd}[/bold cyan]")
-                        # Execute patch command
-                        result = subprocess.run(
-                            [bash_path, "-c", cmd],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            text=True
-                        )
-                        if result.returncode == 0:
-                            successful_patches += 1
-                            Logger.debug(f"Successfully applied patch: [bold cyan]{patch.name}[/bold cyan]")
-                        else:
-                            error_msg = result.stderr.strip() if result.stderr else "Unknown error"
-                            Logger.error(f"Patch application failed: [bold red]{patch.name}[/bold red] - [bold red]{error_msg}[/bold red]")
-                            Logger.debug(f"Command used: [bold cyan]{cmd}[/bold cyan]")
-                            Logger.debug(f"Working directory: [bold cyan]{os.getcwd()}[/bold cyan]")
-                            Logger.debug(f"Patch path: [bold cyan]{unix_patch_path}[/bold cyan]")
-                            patch_status = False
-                    except Exception as e:
-                        Logger.exception(f"Unexpected error applying patch {patch.name}: [bold red]{e}[/bold red]")
+        try:
+            # Change to source directory for patch application
+            os.chdir(source_dir)
+            for idx, patch in enumerate(patches, start=1):
+                try:
+                    Logger.info(f"Applying patch ([bold cyan]{idx}[/bold cyan]/[bold cyan]{len(patches)}[/bold cyan]): [bold cyan]{patch.name}[/bold cyan]")
+                    # Convert Windows path to Unix path for compatibility
+                    unix_patch_path = PathUtils.win_to_unix(patch)
+                    if not Path(patch).exists():
+                        Logger.error(f"Patch file not found: [bold red]{patch}[/bold red]")
                         patch_status = False
+                        continue
+                    # Build patch command
+                    cmd = f"patch -Np1 -i \"{unix_patch_path}\""
+                    Logger.debug(f"Executing patch command: [bold cyan]{cmd}[/bold cyan]")
+                    # Execute patch command
+                    p = subprocess.Popen(
+                        [bash_path, "-c", cmd],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT
+                    )
+                    # Process output in real-time
+                    for line in iter(p.stdout.readline, b''):
+                        decoded_line = line.decode('utf-8', errors='ignore').rstrip()
+                        Logger.info(decoded_line, markup=False)
+                        if p.poll() is not None:
+                            break
+                    # Wait for process completion
+                    exit_code = p.wait()
+                    if exit_code == 0:
+                        successful_patches += 1
+                        Logger.debug(f"Successfully applied patch: [bold cyan]{patch.name}[/bold cyan]")
+                    else:
+                        Logger.error(f"Patch application failed: [bold red]{patch.name}[/bold red]")
+                        Logger.debug(f"Command used: [bold cyan]{cmd}[/bold cyan]")
+                        Logger.debug(f"Working directory: [bold cyan]{os.getcwd()}[/bold cyan]")
+                        Logger.debug(f"Patch path: [bold cyan]{unix_patch_path}[/bold cyan]")
+                        patch_status = False
+                except Exception as e:
+                    Logger.exception(f"Unexpected error applying patch {patch.name}: [bold red]{e}[/bold red]")
+                    patch_status = False
 
-                # Display patch application summary
-                PatchHandler._show_patch_summary(len(patches), successful_patches)
-                return patch_status
-
-            except Exception as e:
-                Logger.exception(f"Unexpected error during patch application: [bold red]{e}[/bold red]")
-                return False
-            finally:
-                os.chdir(original_dir)
-                Logger.debug(f"Restored original working directory: [bold cyan]{original_dir}[/bold cyan]")
+            # Display patch application summary
+            PatchHandler._show_patch_summary(len(patches), successful_patches)
+            return patch_status
 
         except Exception as e:
-            Logger.exception(f"Unexpected error in apply_patches: [bold red]{e}[/bold red]")
+            Logger.exception(f"Unexpected error during patch application: [bold red]{e}[/bold red]")
             return False
+        finally:
+            os.chdir(original_dir)
+            Logger.debug(f"Restored original working directory: [bold cyan]{original_dir}[/bold cyan]")
 
     @staticmethod
     def _show_patch_summary(total: int, successful: int):
@@ -149,19 +150,16 @@ class PatchHandler:
             total (int): Total number of patch files attempted during the application process
             successful (int): Number of patches that were successfully applied without errors
         """
-        try:
-            failed = total - successful
+        failed = total - successful
 
-            summary_text = Text.from_markup(
-                f"Total Patches: [bold yellow]{total}[/bold yellow]"
-                f" | Applied: [bold green]{successful}[/bold green]"
-                f" | Failed: [bold red]{failed}[/bold red]",
-                justify="center"
-            )
+        summary_text = Text.from_markup(
+            f"Total Patches: [bold yellow]{total}[/bold yellow]"
+            f" | Applied: [bold green]{successful}[/bold green]"
+            f" | Failed: [bold red]{failed}[/bold red]",
+            justify="center"
+        )
 
-            RichPanel.summary(
-                content=summary_text,
-                title="Patch Application Summary"
-            )
-        except Exception as e:
-            Logger.exception(f"Unexpected error in _show_patch_summary: [bold red]{e}[/bold red]")
+        RichPanel.summary(
+            content=summary_text,
+            title="Patch Application Summary"
+        )

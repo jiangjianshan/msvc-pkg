@@ -22,8 +22,7 @@ fi
 ROOT_DIR=$(cygpath -u "$ROOT_DIR")
 . $ROOT_DIR/compiler.sh $ARCH oneapi
 PREFIX=$(cygpath -u "$PREFIX")
-RELS_DIR=$ROOT_DIR/releases
-SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
+SRC_DIR=$ROOT_DIR/releases/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
 # NOTE: Use '-Qopenmp -Qopenmp-simd' here will cause 'icx-cl: error: clang frontend command failed due to signal' when compile NumericSubtree.cxx.
 #       There are two solutions:

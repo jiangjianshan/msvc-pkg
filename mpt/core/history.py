@@ -7,8 +7,9 @@ Copyright (c) 2024 Jianshan Jiang
 """
 
 import yaml
-from pathlib import Path
+
 from datetime import datetime
+from pathlib import Path
 
 from mpt import ROOT_DIR
 from mpt.core.log import Logger
@@ -282,3 +283,20 @@ class HistoryManager:
         except Exception as e:
             Logger.exception(f"Error getting library info for {node_name} on {arch}: {e}")
             return None
+
+    @classmethod
+    def get_arch_records(cls, arch: str) -> dict:
+        """Get all records for a specific architecture.
+
+        Args:
+            arch: Target architecture identifier
+
+        Returns:
+            dict: Dictionary of library records for the architecture, or empty dict if none
+        """
+        try:
+            records = cls._load_records()
+            return records.get(arch, {})
+        except Exception as e:
+            Logger.exception(f"Error getting records for arch {arch}: {e}")
+            return {}

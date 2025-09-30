@@ -113,43 +113,39 @@ class SourceManager:
             return False
 
     @staticmethod
-    def fetch_source(config: dict) -> (Optional[Path], bool):
+    def fetch_source(config: dict) -> Optional[Path]:
         """
         Execute the complete source acquisition and processing pipeline with comprehensive error handling.
 
         Coordinates the full source management workflow including:
         - Primary source processing (Git cloning or archive extraction)
         - Extra source processing for additional components
-        - Synchronization requirement detection
         - Error recovery and detailed status reporting
 
         Args:
             config: Source configuration dictionary containing URL, version, and processing options
 
         Returns:
-            tuple: (source_path, needs_sync) where:
-                   - source_path: Path to the processed source directory, or None on failure
-                   - needs_sync: Boolean indicating if synchronization scripts need to be run
+            Path: Path to the processed source directory, or None on failure
         """
         try:
-            needs_sync = False
-            source_dir, needs_sync = SourceManager._process_source(config)
+            source_dir = SourceManager._process_source(config)
             if not source_dir:
                 Logger.error(f"Source fetch failed for [bold cyan]{config['name']}[/bold cyan]")
-                return None, False
+                return None
             if 'extras' in config:
                 for extra in config['extras']:
-                    extra_path, _ = SourceManager._process_source(extra, base_dir=source_dir)
+                    extra_path = SourceManager._process_source(extra, base_dir=source_dir)
                     if not extra_path:
                         Logger.warning(f"Failed to process extra source: [bold cyan]{extra['name']}[/bold cyan]")
-            return source_dir, needs_sync
+            return source_dir
         except Exception as e:
             Logger.exception(f"Exception in fetch_source: {str(e)}")
-            return None, False
+            return None
 
     @staticmethod
     def _process_source(source_config: dict,
-                       base_dir: Optional[Path] = None) -> (Optional[Path], bool):
+                       base_dir: Optional[Path] = None) -> Optional[Path]:
         """
         Process an individual source component with support for both main and extra sources.
 
@@ -164,12 +160,9 @@ class SourceManager:
             base_dir: Optional base directory for extra source processing
 
         Returns:
-            tuple: (source_path, needs_sync) where:
-                   - source_path: Path to the processed source directory, or None on failure
-                   - needs_sync: Boolean indicating if synchronization is required
+            Path: Path to the processed source directory, or None on failure
         """
         try:
-            needs_sync = False
             url = source_config['url']
             name = source_config['name']
             version = source_config.get('version', 'unknown')
@@ -197,18 +190,16 @@ class SourceManager:
                 else:
                     target_dir = ROOT_DIR / 'releases' / f"{name}-{version}"
             if target_dir.exists():
-                result, needs_sync = SourceManager._handle_existing_source(source_config, target_dir, force_extract)
-                return result, needs_sync
+                return SourceManager._handle_existing_source(source_config, target_dir, force_extract)
             else:
                 Logger.debug(f"Target directory does not exist: [bold green]{target_dir}[/bold green]")
-                result, needs_sync = SourceManager._fetch_new_source(source_config, target_dir, force_extract)
-                return result, needs_sync
+                return SourceManager._fetch_new_source(source_config, target_dir, force_extract)
         except Exception as e:
             Logger.exception(f"Exception in _process_source: {str(e)}")
-            return None, False
+            return None
 
     @staticmethod
-    def _handle_existing_source(config: dict, source_dir: Path, force_extract: bool) -> (Optional[Path], bool):
+    def _handle_existing_source(config: dict, source_dir: Path, force_extract: bool) -> Optional[Path]:
         """
         Manage existing source directories with appropriate update or re-extraction strategies.
 
@@ -223,9 +214,7 @@ class SourceManager:
             force_extract: Boolean forcing re-extraction even if source exists
 
         Returns:
-            tuple: (source_path, needs_sync) where:
-                   - source_path: Path to the processed source directory, or None on failure
-                   - needs_sync: Boolean indicating if synchronization is required
+            Path: Path to the processed source directory, or None on failure
         """
         try:
             if SourceManager.is_git_url(config['url']):
@@ -234,10 +223,10 @@ class SourceManager:
                 return SourceManager._process_archive_source(config, source_dir, force_extract)
         except Exception as e:
             Logger.exception(f"Exception in _handle_existing_source: {str(e)}")
-            return None, False
+            return None
 
     @staticmethod
-    def _fetch_new_source(config: dict, source_dir: Path, force_extract: bool) -> (Optional[Path], bool):
+    def _fetch_new_source(config: dict, source_dir: Path, force_extract: bool) -> Optional[Path]:
         """
         Acquire and process new sources that don't currently exist in the local environment.
 
@@ -252,9 +241,7 @@ class SourceManager:
             force_extract: Boolean forcing extraction even if not typically required
 
         Returns:
-            tuple: (source_path, needs_sync) where:
-                   - source_path: Path to the processed source directory, or None on failure
-                   - needs_sync: Boolean indicating if synchronization is required
+            Path: Path to the processed source directory, or None on failure
         """
         try:
             if SourceManager.is_git_url(config['url']):
@@ -262,15 +249,16 @@ class SourceManager:
                 success = GitHandler.clone_repository(config, source_dir)
                 if not success:
                     Logger.error(f"Failed to clone repository: [bold cyan]{config['url']}[/bold cyan]")
-                return source_dir if success else None, success
+                    return None
+                return source_dir
             else:
                 return SourceManager._process_archive_source(config, source_dir, force_extract)
         except Exception as e:
             Logger.exception(f"Exception in _fetch_new_source: {str(e)}")
-            return None, False
+            return None
 
     @staticmethod
-    def _process_archive_source(config: dict, source_dir: Path, force_extract: bool) -> (Optional[Path], bool):
+    def _process_archive_source(config: dict, source_dir: Path, force_extract: bool) -> Optional[Path]:
         """
         Handle archive-based source processing with download, verification, and extraction.
 
@@ -286,27 +274,22 @@ class SourceManager:
             force_extract: Boolean forcing extraction even if target directory exists
 
         Returns:
-            tuple: (source_path, needs_sync) where:
-                   - source_path: Path to the processed source directory, or None on failure
-                   - needs_sync: Boolean indicating if synchronization is required
+            Path: Path to the processed source directory, or None on failure
         """
         try:
-            needs_sync = False
             archive_path = SourceManager._ensure_archive_exists(config)
             if not archive_path:
                 Logger.error(f"Archive not available for [bold cyan]{config['name']}[/bold cyan]")
-                return None, False
+                return None
             if not source_dir.exists():
                 source_dir.mkdir(parents=True, exist_ok=True)
             if force_extract or not any(source_dir.iterdir()):
-                if SourceManager._extract_and_patch(archive_path, source_dir, config):
-                    needs_sync = True
-                else:
-                    return None, False
-            return source_dir, needs_sync
+                if not SourceManager._extract_and_patch(archive_path, source_dir, config):
+                    return None
+            return source_dir
         except Exception as e:
             Logger.exception(f"Exception in _process_archive_source: {str(e)}")
-            return None, False
+            return None
 
     @staticmethod
     def _ensure_archive_exists(config: dict) -> Optional[Path]:
@@ -359,7 +342,7 @@ class SourceManager:
             return None
 
     @staticmethod
-    def _update_git_repository(config: dict, source_dir: Path) -> (Optional[Path], bool):
+    def _update_git_repository(config: dict, source_dir: Path) -> Optional[Path]:
         """
         Update existing Git repositories with robust error recovery and integrity checking.
 
@@ -374,9 +357,7 @@ class SourceManager:
             source_dir: Path to the existing Git repository
 
         Returns:
-            tuple: (source_path, needs_sync) where:
-                   - source_path: Path to the updated repository, or None on failure
-                   - needs_sync: Boolean indicating if synchronization is required
+            Path: Path to the updated repository, or None on failure
         """
         try:
             Logger.info(f"Updating Git repository: [bold cyan]{config['name']}[/bold cyan]")
@@ -384,27 +365,27 @@ class SourceManager:
                 Logger.warning(f"Repository integrity issue detected: [bold cyan]{source_dir}[/bold cyan]")
                 if GitHandler.repair_repository(source_dir, config):
                     Logger.info(f"Repository repaired successfully: [bold cyan]{source_dir}[/bold cyan]")
-                    return source_dir, True
+                    return source_dir
                 Logger.error(f"Repository repair failed: [bold cyan]{source_dir}[/bold cyan]")
-                return None, False
+                return None
 
             updated = GitHandler.update_repository(source_dir, config)
             if not updated:
                 Logger.warning(f"Update failed - attempting repair: [bold cyan]{source_dir}[/bold cyan]")
                 if GitHandler.repair_repository(source_dir, config):
                     Logger.info(f"Repository repaired after update failure: [bold cyan]{source_dir}[/bold cyan]")
-                    return source_dir, True
-                return None, False
+                    return source_dir
+                return None
 
             Logger.info(f"Repository updated successfully: [bold cyan]{source_dir}[/bold cyan]")
-            return source_dir, True
+            return source_dir
         except Exception as e:
             Logger.exception(f"Exception in _update_git_repository: {str(e)}")
             Logger.warning(f"Exception during update - attempting repair: [bold cyan]{source_dir}[/bold cyan]")
             if GitHandler.repair_repository(source_dir, config):
                 Logger.info(f"Repository repaired after exception: [bold cyan]{source_dir}[/bold cyan]")
-                return source_dir, True
-            return None, False
+                return source_dir
+            return None
 
     @staticmethod
     def _extract_and_patch(archive_path: Path, source_dir: Path, config: dict) -> bool:

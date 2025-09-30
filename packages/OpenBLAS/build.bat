@@ -21,8 +21,7 @@ if "%ROOT_DIR%"=="" (
     goto :end
 )
 call "%ROOT_DIR%\compiler.bat" %ARCH% oneapi
-set RELS_DIR=%ROOT_DIR%\releases
-set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
+set SRC_DIR=%ROOT_DIR%\releases\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
 set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -Qopenmp -Qopenmp-simd -Wno-implicit-function-declaration -Wno-pointer-sign -Xclang -O2 -fms-extensions -fms-hotpatch -fms-compatibility -fms-compatibility-version=%MSC_VER%
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
@@ -71,7 +70,9 @@ rem ============================================================================
 :install_stage
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%\lib\pkgconfig\openblas.pc"
+pushd "%PREFIX%\lib\pkgconfig"
+sed -e "s#\([=]\|-[IL]\|^\)\([A-Za-z]\):[\\/]#\1/\L\2/#g" -i openblas.pc
+popd
 call :clean_build
 exit /b 0
 

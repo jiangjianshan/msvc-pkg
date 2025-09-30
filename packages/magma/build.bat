@@ -21,8 +21,7 @@ if "%ROOT_DIR%"=="" (
     goto :end
 )
 call "%ROOT_DIR%\compiler.bat" %ARCH% oneapi
-set RELS_DIR=%ROOT_DIR%\releases
-set SRC_DIR=%RELS_DIR%\%PKG_NAME%-%PKG_VER%
+set SRC_DIR=%ROOT_DIR%\releases\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
 set C_OPTS=-nologo -MD -diagnostics:column -wd4100 -wd4101 -wd4127 -wd4244 -wd4305 -wd4324 -wd4390 -wd4457 -wd4700 -wd4701 -wd4702 -wd4703 -wd4723 -wd4805 -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX -DBLAS_FORTRAN_ADD_ -DNDEBUG -DADD_
@@ -73,7 +72,9 @@ rem ============================================================================
 :install_stage
 echo "Installing %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && ninja install || exit 1
-sed -E "s#([A-Za-z]):[\\/]#/\L\1/#gI" -i "%PREFIX%/lib/pkgconfig/magma.pc"
+pushd "%PREFIX%\lib\pkgconfig"
+sed -e "s#\([=]\|-[IL]\|^\)\([A-Za-z]\):[\\/]#\1/\L\2/#g" -i magma.pc
+popd
 call :clean_build
 exit /b 0
 

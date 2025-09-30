@@ -77,7 +77,7 @@ class Logger:
         console_handler = RichHandler(
             console=console,
             markup=False,
-            show_level=False,
+            show_level=True,
             show_path=False,
             show_time=False,
             rich_tracebacks=True,

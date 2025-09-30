@@ -2,9 +2,12 @@
 #
 #  Copyright (c) 2024 Jianshan Jiang
 #
+
 import os
 import sys
+
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -18,13 +21,13 @@ from rich.text import Text
 from textwrap import shorten
 
 from mpt import ROOT_DIR
+from mpt.config.loader import PackageConfig
 from mpt.core.build import BuildManager
 from mpt.core.clean import CleanManager
 from mpt.core.console import console
 from mpt.core.dependency import DependencyResolver
 from mpt.core.git import GitHandler
 from mpt.core.history import HistoryManager
-from mpt.config.loader import PackageConfig
 from mpt.core.log import Logger
 from mpt.core.run import Runner
 from mpt.core.source import SourceManager
@@ -285,6 +288,8 @@ class ActionHandler:
         Returns:
             bool: Always returns True (operation doesn't fail on display)
         """
+        arch_records = HistoryManager.get_arch_records(self.arch)
+
         list_table = self._create_summary_table()
         RichTable.add_column(list_table, "📁 Library", style="cyan", header_style="bold cyan", justify="left")
         RichTable.add_column(list_table, "📝 Status", style="green", header_style="bold green", justify="center")
@@ -294,88 +299,80 @@ class ActionHandler:
         installed_count = 0
         not_installed_count = 0
         update_available_count = 0
-        error_count = 0
+        ignore_count = 0
 
         for lib in self.libraries:
-            try:
-                # Add debug information with colored variables
-                Logger.debug(f"Checking library: [cyan]{lib}[/cyan], architecture: [yellow]{self.arch}[/yellow]")
+            config = PackageConfig.load(lib)
 
-                config = PackageConfig.load(lib)
-                status_display = "[bold yellow]Error[/bold yellow]"
-                version = "N/A"
-                last_built = "N/A"
-                installed = HistoryManager.check_installed(self.arch, lib)
-
-                # Add debug information with colored variables
-                Logger.debug(f"Library [cyan]{lib}[/cyan] installation status: [yellow]{installed}[/yellow]")
-
-                if not installed:
-                    not_installed_count += 1
-                    status_display = "[bold red]Not Installed[/bold red]"
-                    version = f"[bold yellow]{config.get('version', 'unknown')}[/bold yellow]"
-                else:
-                    installed_count += 1
-                    lib_info = HistoryManager.get_library_info(self.arch, lib)
-
-                    # Add debug information with colored variables
-                    Logger.debug(f"Library [cyan]{lib}[/cyan] information: [yellow]{lib_info}[/yellow]")
-
-                    lib_ver = lib_info.get('version') if lib_info else None
-                    lib_built = lib_info.get('built') if lib_info else None
-
-                    # Check for updates with additional debug info
-                    if SourceManager.is_git_url(config.get('url', '')):
-                        source_path = ROOT_DIR / 'releases' / config['name']
-                        if HistoryManager.check_for_update(self.arch, lib, config):
-                            update_available_count += 1
-                            status_display = "[bold yellow]Update Available[/bold yellow]"
-                        else:
-                            status_display = "[bold green]Installed[/bold green]"
-                    else:
-                        if HistoryManager.check_for_update(self.arch, lib, config):
-                            update_available_count += 1
-                            status_display = "[bold yellow]Update Available[/bold yellow]"
-                        else:
-                            status_display = "[bold green]Installed[/bold green]"
-
-                    # Format version
-                    if lib_ver:
-                        version = f"[bold yellow]{lib_ver}[/bold yellow]"
-                    else:
-                        version = "[bold yellow]N/A[/bold yellow]"
-
-                    # Format build time
-                    if lib_built:
-                        last_built = lib_built.strftime("%Y-%m-%d %H:%M")
-                    else:
-                        last_built = "[bold yellow]Unknown[/bold yellow]"
-
-                # Add row to the table
+            if not config.get('run'):
+                ignore_count += 1
                 RichTable.add_row(list_table,
                     f"[bold cyan]{lib}[/bold cyan]",
-                    status_display,
-                    version,
-                    last_built
-                )
-            except Exception as e:
-                Logger.exception(f"Error processing library {lib} in list operation")
-                error_count += 1
-                # Add error row to the table
-                RichTable.add_row(list_table,
-                    f"[bold cyan]{lib}[/bold cyan]",
-                    "[bold red]Error[/bold red]",
-                    "N/A",
+                    "[bold blue]Ignore[/bold blue]",
+                    f"[bold yellow]{config.get('version', 'unknown')}[/bold yellow]",
                     "N/A"
                 )
+                continue
 
-        # Update stats with new status
+            installed = lib in arch_records
+            Logger.debug(f"Library [cyan]{lib}[/cyan] installation status: [yellow]{installed}[/yellow]")
+
+            status_display = "[bold yellow]Error[/bold yellow]"
+            version = "N/A"
+            last_built = "N/A"
+
+            if not installed:
+                not_installed_count += 1
+                status_display = "[bold red]Not Installed[/bold red]"
+                version = f"[bold yellow]{config.get('version', 'unknown')}[/bold yellow]"
+            else:
+                installed_count += 1
+                lib_info = arch_records[lib]
+
+                time_val = lib_info.get('built')
+                if isinstance(time_val, datetime):
+                    built_time = time_val
+                elif isinstance(time_val, str):
+                    try:
+                        built_time = datetime.fromisoformat(time_val)
+                    except ValueError:
+                        built_time = None
+                else:
+                    built_time = None
+
+                lib_ver = lib_info.get('version')
+                lib_built = built_time
+
+                current_version = config.get('version', 'unknown')
+                if current_version != lib_ver:
+                    update_available_count += 1
+                    status_display = "[bold yellow]Update Available[/bold yellow]"
+                else:
+                    status_display = "[bold green]Installed[/bold green]"
+
+                if lib_ver is not None:
+                    version = f"[bold yellow]{lib_ver}[/bold yellow]"
+                else:
+                    version = "[bold yellow]N/A[/bold yellow]"
+
+                if lib_built:
+                    last_built = lib_built.strftime("%Y-%m-%d %H:%M")
+                else:
+                    last_built = "[bold yellow]Unknown[/bold yellow]"
+
+            RichTable.add_row(list_table,
+                f"[bold cyan]{lib}[/bold cyan]",
+                status_display,
+                version,
+                last_built
+            )
+
         stats_text = Text.from_markup(
             f"📋 Total Libraries: [bold yellow]{len(self.libraries)}[/bold yellow] | "
             f"✅ Installed: [bold green]{installed_count}[/bold green] | "
             f"🔄 Update Available: [bold yellow]{update_available_count}[/bold yellow] | "
             f"❌ Not Installed: [bold red]{not_installed_count}[/bold red] | "
-            f"🚨 Errors: [bold yellow]{error_count}[/bold yellow]",
+            f"🙈 Ignores: [bold blue]{ignore_count}[/bold blue]",
             justify="center"
         )
 
@@ -415,8 +412,7 @@ class ActionHandler:
     def fetch(self) -> bool:
         """Fetch library source code from repositories or archives.
 
-        Retrieves source code for specified libraries, optionally running
-        sync scripts, and displays fetch operation summary.
+        Retrieves source code for specified libraries,  and displays fetch operation summary.
 
         Returns:
             bool: True if all fetch operations succeeded, False otherwise
@@ -444,17 +440,11 @@ class ActionHandler:
                     continue
 
                 # Prepare environment variables and fetch source
-                env = BuildManager.prepare_envvars(self.arch, lib)
-                source_path, needs_sync = SourceManager.fetch_source(config)
+                Runner.prepare_envvars(self.arch, lib)
+                source_path = SourceManager.fetch_source(config)
                 if not source_path or not source_path.exists():
                     Logger.error(f"Source acquisition failed for library [cyan]{lib}[/cyan]")
                     return False
-
-                # Run sync script if needed
-                if needs_sync:
-                    sync_script_path = ROOT_DIR / 'packages' / lib / "sync.sh"
-                    if sync_script_path.exists():
-                        Runner.run_script(env, sync_script_path)
 
                 # Check if source fetching was successful
                 if not source_path:

@@ -22,8 +22,7 @@ fi
 ROOT_DIR=$(cygpath -u "$ROOT_DIR")
 . $ROOT_DIR/compiler.sh $ARCH
 PREFIX=$(cygpath -u "$PREFIX")
-RELS_DIR=$ROOT_DIR/releases
-SRC_DIR=$RELS_DIR/$PKG_NAME-$PKG_VER
+SRC_DIR=$ROOT_DIR/releases/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
 C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics'
 # NOTE: MSVC don't have '__MINGW32__' but it is safety to defined here to reduce the numbers of patch

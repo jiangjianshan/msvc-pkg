@@ -1,7 +1,12 @@
 name: libjxl
-version: 0.11.1
-url: https://github.com/libjxl/libjxl/archive/refs/tags/v0.11.1.tar.gz
-sha256: 1492dfef8dd6c3036446ac3b340005d92ab92f7d48ee3271b5dac1d36945d3d9
+version: v0.11.1
+url: https://github.com/libjxl/libjxl.git
+recursive: true
+depth: 1
+submodules:
+  third_party/skcms:
+    url: https://github.com/google/skcms
+    branch: mirror
 dependencies:
   required:
     - pkg-config

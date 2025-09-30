@@ -9,12 +9,15 @@ import subprocess
 import sys
 
 from pathlib import Path
+from typing import Dict, Any, Optional, Union, List
 from rich.text import Text
 
-from mpt.utils.bash import BashUtils
+from mpt import ROOT_DIR
+from mpt.config.loader import PackageConfig, UserConfig
 from mpt.core.console import console
 from mpt.core.log import Logger
 from mpt.core.view import RichPanel
+from mpt.utils.bash import BashUtils
 
 class Runner:
     """
@@ -26,11 +29,73 @@ class Runner:
     interpreter selection.
     """
 
-    # Class variable to store original console mode
+    # Class variables
     _saved_console_mode = None
+    _proc_env = None  # Process environment variables
 
-    @staticmethod
-    def _save_console_mode():
+    @classmethod
+    def prepare_envvars(cls, arch: str, lib: str) -> None:
+        """
+        Prepare and configure environment variables for build processes.
+
+        Constructs a comprehensive environment setup including:
+        - Architecture-specific build settings
+        - Library-specific configuration values
+        - Prefix path configurations from user settings
+        - Dependency library prefix references
+        - PATH updates for dependency binaries
+
+        Args:
+            arch: Target architecture specification for environment tuning
+            lib: Library name for package-specific configuration loading
+        """
+        # Create fresh environment copy to ensure isolation
+        cls._proc_env = os.environ.copy()
+
+        # Set basic environment variables
+        cls._proc_env['ARCH'] = arch
+        cls._proc_env['ROOT_DIR'] = str(ROOT_DIR)
+
+        # Load package configuration and set package-specific variables
+        config = PackageConfig.load(lib)
+        cls._proc_env['PKG_NAME'] = config.get('name')
+        cls._proc_env['PKG_VER'] = str(config.get('version'))
+
+        # Set prefix paths
+        prefix = ROOT_DIR / arch
+        cls._proc_env['_PREFIX'] = str(prefix)
+
+        prefix_paths = [str(prefix)]
+        user_settings = UserConfig.load()
+        prefix_config = user_settings.get('prefix', {}) or {}
+
+        # Process architecture-specific prefix configurations
+        if arch in prefix_config:
+            for lib_name, lib_prefix in prefix_config[arch].items():
+                # Create environment variable name from library name
+                prefix_env = lib_name.replace('-', '_').upper() + '_PREFIX'
+                cls._proc_env[prefix_env] = lib_prefix
+
+                # Update prefix if this is the current library
+                if lib_name == lib:
+                    prefix = lib_prefix
+
+                # Add binary directory to PATH if it exists
+                bin_dir = Path(lib_prefix) / 'bin'
+                if bin_dir.exists():
+                    current_path = cls._proc_env.get('PATH', '')
+                    if str(bin_dir) not in current_path:
+                        cls._proc_env['PATH'] = f"{str(bin_dir)}{os.pathsep}{current_path}"
+
+                # Add to prefix paths
+                prefix_paths.append(lib_prefix)
+
+        # Set final environment variables
+        cls._proc_env['PREFIX_PATH'] = os.pathsep.join(prefix_paths)
+        cls._proc_env['PREFIX'] = str(prefix)
+
+    @classmethod
+    def _save_console_mode(cls):
         """
         Preserve the current console mode configuration on Windows systems.
 
@@ -53,13 +118,13 @@ class Runner:
 
             mode = wintypes.DWORD()
             if ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
-                Runner._saved_console_mode = mode.value
-                Logger.debug(f"Saved console mode: {Runner._saved_console_mode:#x}")
+                cls._saved_console_mode = mode.value
+                Logger.debug(f"Saved console mode: {cls._saved_console_mode:#x}")
         except Exception as e:
             Logger.exception(f"Save console mode error: {e}")
 
-    @staticmethod
-    def _restore_console_mode():
+    @classmethod
+    def _restore_console_mode(cls):
         """
         Restore previously saved console mode configuration on Windows systems.
 
@@ -70,7 +135,7 @@ class Runner:
         Note:
             Only executes on Windows when console mode was previously saved
         """
-        if sys.platform != 'win32' or Runner._saved_console_mode is None:
+        if sys.platform != 'win32' or cls._saved_console_mode is None:
             return
 
         try:
@@ -86,14 +151,14 @@ class Runner:
                 return
 
             # Restore only if changed
-            if current_mode.value != Runner._saved_console_mode:
-                if ctypes.windll.kernel32.SetConsoleMode(handle, Runner._saved_console_mode):
-                    Logger.debug(f"Restored console mode: {Runner._saved_console_mode:#x}")
+            if current_mode.value != cls._saved_console_mode:
+                if ctypes.windll.kernel32.SetConsoleMode(handle, cls._saved_console_mode):
+                    Logger.debug(f"Restored console mode: {cls._saved_console_mode:#x}")
         except Exception as e:
             Logger.exception(f"Restore console mode error: {e}")
 
-    @staticmethod
-    def execute(env, cmds, shell=False, log_file=None):
+    @classmethod
+    def execute(cls, cmds: Union[List[str], str], shell: bool = False, log_file: Optional[Union[str, Path]] = None) -> int:
         """
         Execute system commands with real-time output processing and error detection.
 
@@ -105,7 +170,6 @@ class Runner:
         - Proper environment variable handling for build processes
 
         Args:
-            env: Dictionary of environment variables to set for the subprocess
             cmds: Command specification as either a list of arguments or a single string
             shell: Boolean indicating whether to execute through system shell
             log_file: Optional path for capturing process output to a log file
@@ -116,21 +180,21 @@ class Runner:
         Raises:
             Preserves subprocess exceptions but handles them internally with logging
         """
-        error_pattern = re.compile(r'\b[Ee]rror\b\s+:?')
-        warning_pattern = re.compile(r'\b[Ww]arning\b\s+:?')
+        error_pattern = re.compile(r'(?i)(?:^|\s)(?:error\s*[#:]\s*\d+|error\s+[A-Z]+\d+|\berror\b\s*:\s*[^\\/]|\berror\b\s+\d+|CMake Error|fatal[^:]*:|ERROR:|(?:configure|ninja|NMAKE)\s*:\s*(?:fatal\s+)?error|make.*(?:Error \d+|Stop\.|Segmentation fault)|MSB\d+\s*error)')
+        warning_pattern = re.compile(r'(?i)(?:^|\s)(?:warning\s*[#:]\s*\d+|warning\s+[A-Z]+\d+|\bwarning\b\s*:\s*[^\\/]|CMake Warning|WARNING:|(?:configure|ninja|NMAKE)\s*:\s*warning|MSB\d+\s*warning)')
         exit_code = -1
         error_count = 0
         warning_count = 0
 
         try:
             # Save console mode before execution
-            Runner._save_console_mode()
+            cls._save_console_mode()
             if log_file:
                 Logger.add_file_logging(log_file)
             p = subprocess.Popen(
                 cmds,
                 shell=shell,
-                env=env,
+                env=cls._proc_env,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT
             )
@@ -159,9 +223,9 @@ class Runner:
             if log_file:
                 Logger.remove_file_logging()
             # CRITICAL: Restore console mode immediately after process exits
-            Runner._restore_console_mode()
+            cls._restore_console_mode()
             Logger.debug(f"Process exit code: {exit_code}")
-            status = "✅ Success" if exit_code == 0 else "❌ Failed"
+            status = "✅ Success" if exit_code == 0 else "❌❌ Failed"
             summary_text = Text.from_markup(
                 f"📊 Status: [bold green]{status}[/bold green] | "
                 f"🔢 Exit Code: [bold cyan]{exit_code}[/bold cyan] | "
@@ -174,8 +238,8 @@ class Runner:
                 title="Execution Summary"
             )
 
-    @staticmethod
-    def run_script(env, script_file, log_file=None):
+    @classmethod
+    def run_script(cls, script_file: Union[str, Path], log_file: Optional[Union[str, Path]] = None) -> bool:
         """
         Execute script files with automatic interpreter selection and environment setup.
 
@@ -185,7 +249,6 @@ class Runner:
         for reproducible script execution.
 
         Args:
-            env: Dictionary of environment variables for script execution
             script_file: Path to the script file to execute
             log_file: Optional path for capturing script output to a log file
 
@@ -205,10 +268,37 @@ class Runner:
                     Logger.critical("Bash not found")
                     return False
                 cmds = [bash_path, script_file.name]
-            exit_code = Runner.execute(env, cmds, log_file=log_file)
+            exit_code = cls.execute(cmds, log_file=log_file)
             return exit_code == 0
         except Exception as e:
             Logger.exception(f"Failed to execute script: {e}")
             return False
         finally:
             os.chdir(orig_dir)
+
+    @classmethod
+    def prerun(cls, config: Dict[str, Any]) -> bool:
+        """
+        Execute the prerun.sh script for a library if it exists, with config-based flexibility.
+
+        This method checks for the existence of a prerun.sh script in the library's
+        package directory and executes it if found. The script runs with the provided
+        environment variables and is intended for pre-build setup tasks.
+
+        Args:
+            config: Library configuration dictionary containing name and other metadata
+
+        Returns:
+            bool: True if script executed successfully or doesn't exist, False on execution failure
+        """
+        lib_name = config.get('name')
+        if not lib_name:
+            Logger.error("Library name not found in configuration")
+            return False
+
+        prerun_script = ROOT_DIR / 'packages' / lib_name / 'prerun.sh'
+        if not prerun_script.exists():
+            return True
+
+        Logger.info(f"Running prerun script for [bold cyan]{lib_name}[/bold cyan]")
+        return cls.run_script(prerun_script)

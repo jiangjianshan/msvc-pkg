@@ -47,6 +47,10 @@ class DownloadHandler:
     READ_TIMEOUT = 60     # Seconds for server response
     CHUNK_SIZE = 8192 * 10  # 80KB chunks for efficient streaming
 
+    # Class variables to track download state across retries
+    _expected_size = None
+    _supports_partial = None
+
     @classmethod
     def _log_request_and_response(cls, response):
         """
@@ -59,30 +63,27 @@ class DownloadHandler:
         Args:
             response: HTTP response object containing request and response metadata
         """
-        try:
-            cls._print_headers_table("Actual Request Headers", response.request.headers)
-            cls._print_headers_table("Server Response Headers", response.headers)
-            Logger.debug(f"HTTP version: [bold cyan]{response.raw.version}[/bold cyan], "
-                         f"Status code: [bold cyan]{response.status_code}[/bold cyan], "
-                         f"Reason: [bold cyan]{response.reason}[/bold cyan]")
+        cls._print_headers_table("Actual Request Headers", response.request.headers)
+        cls._print_headers_table("Server Response Headers", response.headers)
+        Logger.debug(f"HTTP version: [bold cyan]{response.raw.version}[/bold cyan], "
+                     f"Status code: [bold cyan]{response.status_code}[/bold cyan], "
+                     f"Reason: [bold cyan]{response.reason}[/bold cyan]")
 
-            # Log redirect history if any
-            if response.history:
-                Logger.info(f"Found [bold cyan]{len(response.history)}[/bold cyan] redirects")
-                redirect_table = RichTable.create(title="[bold]Redirect History[/bold]")
-                redirect_table.add_column("Step", style="dim", width=5)
-                redirect_table.add_column("Status", style="bold", width=10)
-                redirect_table.add_column("URL", style="bold cyan")
-                for i, redirect in enumerate(response.history):
-                    redirect_table.add_row(
-                        str(i + 1),
-                        str(redirect.status_code),
-                        redirect.url
-                    )
-                RichTable.render(redirect_table)
-            Logger.info(f"Final URL: [bold cyan]{response.url}[/bold cyan]")
-        except Exception as e:
-            Logger.exception(f"Error logging request and response: {str(e)}")
+        # Log redirect history if any
+        if response.history:
+            Logger.info(f"Found [bold cyan]{len(response.history)}[/bold cyan] redirects")
+            redirect_table = RichTable.create(title="[bold]Redirect History[/bold]")
+            redirect_table.add_column("Step", style="dim", width=5)
+            redirect_table.add_column("Status", style="bold", width=10)
+            redirect_table.add_column("URL", style="bold cyan")
+            for i, redirect in enumerate(response.history):
+                redirect_table.add_row(
+                    str(i + 1),
+                    str(redirect.status_code),
+                    redirect.url
+                )
+            RichTable.render(redirect_table)
+        Logger.info(f"Final URL: [bold cyan]{response.url}[/bold cyan]")
 
     @classmethod
     def _print_headers_table(cls, title, headers):
@@ -97,17 +98,14 @@ class DownloadHandler:
             title: Descriptive title for the headers table
             headers: Dictionary of HTTP headers to display
         """
-        try:
-            table = RichTable.create(title=f"[bold]{title}[/]")
-            table.add_column("Header", style="bold cyan", no_wrap=True)
-            table.add_column("Value", style="green")
+        table = RichTable.create(title=f"[bold]{title}[/]")
+        table.add_column("Header", style="bold cyan", no_wrap=True)
+        table.add_column("Value", style="green")
 
-            for key, value in headers.items():
-                display_value = value if len(value) < 80 else value[:77] + "..."
-                table.add_row(key, display_value)
-            RichTable.render(table)
-        except Exception as e:
-            Logger.exception(f"Error printing headers table: {str(e)}")
+        for key, value in headers.items():
+            display_value = value if len(value) < 80 else value[:77] + "..."
+            table.add_row(key, display_value)
+        RichTable.render(table)
 
     @classmethod
     def download_file(cls, url, file_path, verify_ssl=False):
@@ -135,228 +133,221 @@ class DownloadHandler:
         6. Validate downloaded file size against expected content length
         7. Implement retry mechanism with increasing wait times between attempts
         """
-        try:
-            # Ensure parent directory exists
-            file_path.parent.mkdir(parents=True, exist_ok=True)
-            success = False
-            retry_count = 0
+        # Ensure parent directory exists
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        success = False
+        retry_count = 0
 
-            # Configure retry strategy
-            retry_strategy = Retry(
-                total=cls.MAX_RETRIES,
-                backoff_factor=cls.BACKOFF_FACTOR,
-                status_forcelist=cls.STATUS_FORCELIST,
-                allowed_methods=["GET", "HEAD"],
-                respect_retry_after_header=True
-            )
+        # Configure retry strategy
+        retry_strategy = Retry(
+            total=cls.MAX_RETRIES,
+            backoff_factor=cls.BACKOFF_FACTOR,
+            status_forcelist=cls.STATUS_FORCELIST,
+            allowed_methods=["GET", "HEAD"],
+            respect_retry_after_header=True
+        )
 
-            # Create HTTP adapter with retry strategy
-            adapter = HTTPAdapter(max_retries=retry_strategy)
+        # Create HTTP adapter with retry strategy
+        adapter = HTTPAdapter(max_retries=retry_strategy)
 
-            with requests.Session() as session:
-                # Mount adapters for both HTTP and HTTPS
-                session.mount('http://', adapter)
-                session.mount('https://', adapter)
-                headers = cls._get_wget_headers()
+        with requests.Session() as session:
+            # Mount adapters for both HTTP and HTTPS
+            session.mount('http://', adapter)
+            session.mount('https://', adapter)
 
-                # Retry loop
-                while retry_count <= cls.MAX_RETRIES and not success:
-                    progress = None
-                    task = None
-                    Logger.debug(f"Attempt [bold cyan]{retry_count + 1}[/bold cyan] of "
-                                 f"[bold cyan]{cls.MAX_RETRIES + 1}[/bold cyan]")
+            # Reset class variables for new download
+            cls._expected_size = None
+            cls._supports_partial = None
 
-                    try:
-                        # Get current downloaded size before making request
-                        downloaded_size = cls._get_download_size(file_path)
+            # Retry loop
+            while retry_count <= cls.MAX_RETRIES and not success:
+                progress = None
+                task = None
+                Logger.debug(f"Attempt [bold cyan]{retry_count + 1}[/bold cyan] of "
+                             f"[bold cyan]{cls.MAX_RETRIES + 1}[/bold cyan]")
 
-                        # Make HTTP GET request with streaming
-                        with session.get(
-                            url,
-                            headers=headers,
-                            stream=True,
-                            timeout=(cls.CONNECT_TIMEOUT, cls.READ_TIMEOUT),
-                            allow_redirects=True,
-                            verify=verify_ssl
-                        ) as response:
-                            # Log request/response details
-                            cls._log_request_and_response(response)
-                            response.raise_for_status()
-                            """
-                            100: continue
-                            101: switching_protocols
-                            102: processing
-                            103: checkpoint
-                            122: uri_too_long, request_uri_too_long
-                            200: ok, okay, all_ok, all_okay, all_good
-                            201: created
-                            202: accepted
-                            203: non_authoritative_info, non_authoritative_information
-                            204: no_content
-                            205: reset_content, reset
-                            206: partial_content, partial
-                            207: multi_status, multiple_status, multi_stati, multiple_stati
-                            208: already_reported
-                            226: im_used
-                            300: multiple_choices
-                            301: moved_permanently, moved
-                            302: found
-                            303: see_other, other
-                            304: not_modified
-                            305: use_proxy
-                            306: switch_proxy
-                            307: temporary_redirect, temporary_moved, temporary
-                            308: permanent_redirect, resume_incomplete, resume
-                            400: bad_request, bad
-                            401: unauthorized
-                            402: payment_required, payment
-                            403: forbidden
-                            404: not_found
-                            405: method_not_allowed, not_allowed
-                            406: not_acceptable
-                            407: proxy_authentication_required, proxy_auth, proxy_authentication
-                            408: request_timeout, timeout
-                            409: conflict
-                            410: gone
-                            411: length_required
-                            412: precondition_failed, precondition
-                            413: request_entity_too_large
-                            414: request_uri_too_large
-                            415: unsupported_media_type, unsupported_media, media_type
-                            416: requested_range_not_satisfiable, requested_range, range_not_satisfiable
-                            417: expectation_failed
-                            418: im_a_teapot, teapot, i_am_a_teapot
-                            421: misdirected_request
-                            422: unprocessable_entity, unprocessable
-                            423: locked
-                            424: failed_dependency, dependency
-                            425: unordered_collection, unordered
-                            428: precondition_required, precondition
-                            431: header_fields_too_large, fields_too_large
-                            449: retry_with, retry
-                            451: unavailable_for_legal_reasons, legal_reasons
-                            500: internal_server_error, server_error
-                            502: bad_gateway
-                            504: gateway_timeout
-                            506: variant_also_negotiates
-                            509: bandwidth_limit_exceeded, bandwidth
-                            511: network_authentication_required, network_auth, network_authentication
-                            """
-                            # Get expected file size
-                            expected_size = cls._get_expected_size(response)
-                            if expected_size:
-                                Logger.debug(f"Expected file size: "
-                                             f"[bold cyan]{cls._format_bytes(expected_size, plain=True)}[/bold cyan]")
+                try:
+                    # Get current downloaded size before making request
+                    downloaded_size = cls._get_download_size(file_path)
 
-                            # Determine file mode based on response status
-                            file_mode = 'wb'
-                            if response.status_code == requests.codes.ok:
-                                if downloaded_size > 0:
-                                    Logger.debug(f"Restarting download from beginning. "
-                                                 f"Existing file size: [bold cyan]{downloaded_size}[/bold cyan] bytes")
-                                    FileUtils.force_delete_file(file_path)
-                                    # Reset downloaded size after deletion
-                                    downloaded_size = 0
-                            elif response.status_code == requests.codes.partial_content:
-                                Logger.debug(f"Resuming download from position: "
-                                             f"[bold cyan]{downloaded_size}[/bold cyan] bytes")
-                                file_mode = 'ab'
-                            else:
-                                Logger.warning(f"Unexpected status code: "
-                                               f"[bold cyan]{response.status_code}[/bold cyan]")
+                    # Set up headers for request
+                    headers = cls._get_wget_headers()
+
+                    # Add Range header if we have partial content and server supports resume
+                    if downloaded_size > 0 and cls._supports_partial:
+                        headers["Range"] = f"bytes={downloaded_size}-"
+                        if cls._expected_size:
+                            headers["Range"] = f"bytes={downloaded_size}-{cls._expected_size}"
+                        Logger.debug(f"Setting Range header: [bold cyan]{headers['Range']}[/bold cyan]")
+
+                    # Make HTTP GET request with streaming
+                    with session.get(
+                        url,
+                        headers=headers,
+                        stream=True,
+                        timeout=(cls.CONNECT_TIMEOUT, cls.READ_TIMEOUT),
+                        allow_redirects=True,
+                        verify=verify_ssl
+                    ) as response:
+                        # Log request/response details
+                        cls._log_request_and_response(response)
+
+                        # Update class variables with response information
+                        cls._expected_size = cls._get_expected_size(response)
+                        cls._supports_partial = cls._is_partial(response)
+
+                        response.raise_for_status()
+                        """
+                        100: continue
+                        101: switching_protocols
+                        102: processing
+                        103: checkpoint
+                        122: uri_too_long, request_uri_too_long
+                        200: ok, okay, all_ok, all_okay, all_good
+                        201: created
+                        202: accepted
+                        203: non_authoritative_info, non_authoritative_information
+                        204: no_content
+                        205: reset_content, reset
+                        206: partial_content, partial
+                        207: multi_status, multiple_status, multi_stati, multiple_stati
+                        208: already_reported
+                        226: im_used
+                        300: multiple_choices
+                        301: moved_permanently, moved
+                        302: found
+                        303: see_other, other
+                        304: not_modified
+                        305: use_proxy
+                        306: switch_proxy
+                        307: temporary_redirect, temporary_moved, temporary
+                        308: permanent_redirect, resume_incomplete, resume
+                        400: bad_request, bad
+                        401: unauthorized
+                        402: payment_required, payment
+                        403: forbidden
+                        404: not_found
+                        405: method_not_allowed, not_allowed
+                        406: not_acceptable
+                        407: proxy_authentication_required, proxy_auth, proxy_authentication
+                        408: request_timeout, timeout
+                        409: conflict
+                        410: gone
+                        411: length_required
+                        412: precondition_failed, precondition
+                        413: request_entity_too_large
+                        414: request_uri_too_large
+                        415: unsupported_media_type, unsupported_media, media_type
+                        416: requested_range_not_satisfiable, requested_range, range_not_satisfiable
+                        417: expectation_failed
+                        418: im_a_teapot, teapot, i_am_a_teapot
+                        421: misdirected_request
+                        422: unprocessable_entity, unprocessable
+                        423: locked
+                        424: failed_dependency, dependency
+                        425: unordered_collection, unordered
+                        428: precondition_required, precondition
+                        431: header_fields_too_large, fields_too_large
+                        449: retry_with, retry
+                        451: unavailable_for_legal_reasons, legal_reasons
+                        500: internal_server_error, server_error
+                        502: bad_gateway
+                        504: gateway_timeout
+                        506: variant_also_negotiates
+                        509: bandwidth_limit_exceeded, bandwidth
+                        511: network_authentication_required, network_auth, network_authentication
+                        """
+                        # Get expected file size
+                        if cls._expected_size:
+                            Logger.debug(f"Expected file size: "
+                                         f"[bold cyan]{cls._format_bytes(cls._expected_size, plain=True)}[/bold cyan]")
+
+                        # Determine file mode based on response status
+                        file_mode = 'wb'
+                        if response.status_code == requests.codes.ok:
+                            if downloaded_size > 0:
+                                Logger.debug(f"Restarting download from beginning. "
+                                             f"Existing file size: [bold cyan]{downloaded_size}[/bold cyan] bytes")
+                                FileUtils.force_delete_file(file_path)
+                                # Reset downloaded size after deletion
+                                downloaded_size = 0
+                        elif response.status_code == requests.codes.partial_content:
+                            Logger.debug(f"Resuming download from position: "
+                                         f"[bold cyan]{downloaded_size}[/bold cyan] bytes")
+                            file_mode = 'ab'
+                        else:
+                            Logger.warning(f"Unexpected status code: "
+                                           f"[bold cyan]{response.status_code}[/bold cyan]")
+                            retry_count += 1
+                            continue
+
+                        # Create progress bar with accurate starting position
+                        progress = cls._create_progress_bar()
+                        task = progress.add_task(
+                            f"[bold blue]Downloading[/bold blue] [cyan]{Path(url).name}[/cyan]",
+                            total=cls._expected_size,
+                            completed=downloaded_size  # Start from current downloaded position
+                        )
+                        progress.start()
+
+                        # Download content with progress tracking
+                        success = cls._get_content(
+                            response,
+                            file_path,
+                            file_mode,
+                            progress,
+                            task,
+                            downloaded_size,
+                            cls._expected_size
+                        )
+
+                        # Verify download size
+                        final_size = cls._get_download_size(file_path)
+                        if success:
+                            if cls._expected_size and final_size != cls._expected_size:
+                                Logger.warning(f"Download incomplete: expected "
+                                               f"[bold cyan]{cls._expected_size}[/bold cyan], "
+                                               f"got [bold cyan]{final_size}[/bold cyan]")
+                                success = False
                                 retry_count += 1
-                                continue
-
-                            # Create progress bar with accurate starting position
-                            progress = cls._create_progress_bar()
-                            task = progress.add_task(
-                                f"[bold blue]Downloading[/bold blue] [cyan]{Path(url).name}[/cyan]",
-                                total=expected_size,
-                                completed=downloaded_size  # Start from current downloaded position
-                            )
-                            progress.start()
-
-                            # Download content with progress tracking
-                            success = cls._get_content(
-                                response,
-                                file_path,
-                                file_mode,
-                                progress,
-                                task,
-                                downloaded_size,
-                                expected_size
-                            )
-
-                            # Verify download size
-                            final_size = cls._get_download_size(file_path)
-                            if success:
-                                if expected_size and final_size != expected_size:
-                                    Logger.warning(f"Download incomplete: expected "
-                                                   f"[bold cyan]{expected_size}[/bold cyan], "
-                                                   f"got [bold cyan]{final_size}[/bold cyan]")
-                                    success = False
-                                    retry_count += 1
-                                else:
-                                    Logger.info("Download completed successfully")
-                                    break
                             else:
-                                if cls._is_partial(response):
-                                    # see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Range
-                                    if expected_size:
-                                        if final_size < expected_size:
-                                            headers["Range"] = f"bytes={final_size}-{expected_size}"
-                                            Logger.debug(f"Setting Range header: "
-                                                         f"[bold cyan]{headers['Range']}[/bold cyan]")
-                                        else:
-                                            Logger.warning("Download size equals expected size, "
-                                                           "but SHA256 may not match")
-                                            if "Range" in headers:
-                                                del headers["Range"]
-                                    else:
-                                        headers["Range"] = f"bytes={final_size}-"
-                                        Logger.debug(f"Setting Range header: "
-                                                     f"[bold cyan]{headers['Range']}[/bold cyan]")
-                                else:
-                                    Logger.debug("Server does not support partial content. "
-                                                "Deleting incomplete file")
-                                    FileUtils.force_delete_file(file_path)
-                                retry_count += 1
+                                Logger.info("Download completed successfully")
+                                break
+                        else:
+                            retry_count += 1
 
-                    except requests.exceptions.HTTPError as e:
-                        Logger.warning(f"HTTP Error: [bold cyan]{str(e)}[/bold cyan]")
-                        retry_count += 1
-                    except requests.exceptions.ConnectTimeout as e:
-                        Logger.warning(f"Connect Timeout Error: [bold cyan]{str(e)}[/bold cyan]")
-                        retry_count += 1
-                    except requests.exceptions.ConnectionError as e:
-                        Logger.warning(f"Connection Error: [bold cyan]{str(e)}[/bold cyan]")
-                        retry_count += 1
-                    except requests.exceptions.Timeout as e:
-                        Logger.warning(f"Timeout Error: [bold cyan]{str(e)}[/bold cyan]")
-                        retry_count += 1
-                    except requests.exceptions.RequestException as e:
-                        Logger.warning(f"Request Exception: [bold cyan]{str(e)}[/bold cyan]")
-                        retry_count += 1
-                    except Exception as e:
-                        Logger.error(f"Unexpected error during download attempt: {str(e)}")
-                        retry_count += 1
-                    finally:
-                        # Ensure progress bar is stopped after each attempt
-                        if progress:
-                            progress.stop()
+                except requests.exceptions.HTTPError as e:
+                    Logger.warning(f"HTTP Error: [bold cyan]{str(e)}[/bold cyan]")
+                    retry_count += 1
+                except requests.exceptions.ConnectTimeout as e:
+                    Logger.warning(f"Connect Timeout Error: [bold cyan]{str(e)}[/bold cyan]")
+                    retry_count += 1
+                except requests.exceptions.ConnectionError as e:
+                    Logger.warning(f"Connection Error: [bold cyan]{str(e)}[/bold cyan]")
+                    retry_count += 1
+                except requests.exceptions.Timeout as e:
+                    Logger.warning(f"Timeout Error: [bold cyan]{str(e)}[/bold cyan]")
+                    retry_count += 1
+                except requests.exceptions.RequestException as e:
+                    Logger.warning(f"Request Exception: [bold cyan]{str(e)}[/bold cyan]")
+                    retry_count += 1
+                except Exception as e:
+                    Logger.error(f"Unexpected error during download attempt: {str(e)}")
+                    retry_count += 1
+                finally:
+                    # Ensure progress bar is stopped after each attempt
+                    if progress:
+                        progress.stop()
 
-                    # Add wait time before next retry
-                    if retry_count <= cls.MAX_RETRIES and not success:
-                        wait_time = random.randint(2, 6)
-                        Logger.info(f"Retrying in [bold cyan]{wait_time}[/bold cyan] seconds "
-                                    f"(attempt [bold cyan]{retry_count}[/bold cyan]/"
-                                    f"[bold cyan]{cls.MAX_RETRIES}[/bold cyan])")
-                        time.sleep(wait_time)
+                # Add wait time before next retry
+                if retry_count <= cls.MAX_RETRIES and not success:
+                    wait_time = random.randint(2, 6)
+                    Logger.info(f"Retrying in [bold cyan]{wait_time}[/bold cyan] seconds "
+                                f"(attempt [bold cyan]{retry_count}[/bold cyan]/"
+                                f"[bold cyan]{cls.MAX_RETRIES}[/bold cyan])")
+                    time.sleep(wait_time)
 
-            return success
-        except Exception as e:
-            Logger.exception(f"Error in download_file: {str(e)}")
-            return False
+        return success
 
     @classmethod
     def _get_expected_size(cls, response):
@@ -374,53 +365,49 @@ class DownloadHandler:
         Returns:
             int: Expected file size in bytes, or None if size information is unavailable
         """
-        try:
-            # Try to get size from Content-Range if available
-            if 'Content-Range' in response.headers:
-                # see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Range
-                # syntax:
-                #  Content-Range: <unit> <range-start>-<range-end>/<size>
-                #  Content-Range: <unit> <range-start>-<range-end>/*
-                #  Content-Range: <unit> */<size>
-                # e.g. Content-Range: bytes 14204624-31962046/31962047
-                try:
-                    content_range = response.headers['Content-Range']
-                    Logger.debug(f"Found Content-Range header: [bold cyan]{content_range}[/bold cyan]")
-                    # Format: bytes 0-999/1000
-                    if '/' in content_range:
-                        total_size = content_range.split('/')[-1]
-                        if total_size != '*':
-                            size = int(total_size)
-                            Logger.debug(f"Parsed size from Content-Range: "
-                                         f"[bold cyan]{size}[/bold cyan] bytes")
-                            return size
-                except (ValueError, TypeError, IndexError) as e:
-                    Logger.debug(f"Failed to parse Content-Range: [bold cyan]{e}[/bold cyan]")
+        # Try to get size from Content-Range if available
+        if 'Content-Range' in response.headers:
+            # see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Range
+            # syntax:
+            #  Content-Range: <unit> <range-start>-<range-end>/<size>
+            #  Content-Range: <unit> <range-start>-<range-end>/*
+            #  Content-Range: <unit> */<size>
+            # e.g. Content-Range: bytes 14204624-31962046/31962047
+            try:
+                content_range = response.headers['Content-Range']
+                Logger.debug(f"Found Content-Range header: [bold cyan]{content_range}[/bold cyan]")
+                # Format: bytes 0-999/1000
+                if '/' in content_range:
+                    total_size = content_range.split('/')[-1]
+                    if total_size != '*':
+                        size = int(total_size)
+                        Logger.debug(f"Parsed size from Content-Range: "
+                                     f"[bold cyan]{size}[/bold cyan] bytes")
+                        return size
+            except (ValueError, TypeError, IndexError) as e:
+                Logger.debug(f"Failed to parse Content-Range: [bold cyan]{e}[/bold cyan]")
 
-            # Try to get Content-Length
-            if 'Content-Length' in response.headers:
+        # Try to get Content-Length
+        if 'Content-Length' in response.headers:
+            try:
+                size = int(response.headers['Content-Length'])
+                Logger.debug(f"Found Content-Length header: [bold cyan]{size}[/bold cyan] bytes")
+                return size
+            except (ValueError, TypeError) as e:
+                Logger.debug(f"Failed to parse Content-Length: [bold cyan]{e}[/bold cyan]")
+
+        # Try alternative headers
+        for header in ['X-Goog-Stored-Content-Length', 'x-amz-meta-size']:
+            if header in response.headers:
                 try:
-                    size = int(response.headers['Content-Length'])
-                    Logger.debug(f"Found Content-Length header: [bold cyan]{size}[/bold cyan] bytes")
+                    size = int(response.headers[header])
+                    Logger.debug(f"Found {header} header: [bold cyan]{size}[/bold cyan] bytes")
                     return size
                 except (ValueError, TypeError) as e:
-                    Logger.debug(f"Failed to parse Content-Length: [bold cyan]{e}[/bold cyan]")
+                    Logger.debug(f"Failed to parse {header}: [bold cyan]{e}[/bold cyan]")
 
-            # Try alternative headers
-            for header in ['X-Goog-Stored-Content-Length', 'x-amz-meta-size']:
-                if header in response.headers:
-                    try:
-                        size = int(response.headers[header])
-                        Logger.debug(f"Found {header} header: [bold cyan]{size}[/bold cyan] bytes")
-                        return size
-                    except (ValueError, TypeError) as e:
-                        Logger.debug(f"Failed to parse {header}: [bold cyan]{e}[/bold cyan]")
-
-            Logger.debug("No file size information found in response headers")
-            return None
-        except Exception as e:
-            Logger.exception(f"Error in _get_expected_size: {str(e)}")
-            return None
+        Logger.debug("No file size information found in response headers")
+        return None
 
     @classmethod
     def _is_partial(cls, response):
@@ -436,14 +423,10 @@ class DownloadHandler:
         Returns:
             bool: True if server supports partial content, False otherwise
         """
-        try:
-            supports_partial = ("Accept-Ranges" in response.headers and
-                                response.headers.get('Accept-Ranges') == "bytes")
-            Logger.debug(f"Server supports partial content: [bold cyan]{supports_partial}[/bold cyan]")
-            return supports_partial
-        except Exception as e:
-            Logger.exception(f"Error in _is_partial: {str(e)}")
-            return False
+        supports_partial = ("Accept-Ranges" in response.headers and
+                            response.headers.get('Accept-Ranges') == "bytes")
+        Logger.debug(f"Server supports partial content: [bold cyan]{supports_partial}[/bold cyan]")
+        return supports_partial
 
     @classmethod
     def _get_download_size(cls, file_path):
@@ -459,16 +442,12 @@ class DownloadHandler:
         Returns:
             int: File size in bytes (0 if file doesn't exist)
         """
-        try:
-            if file_path.exists():
-                size = file_path.stat().st_size
-                Logger.debug(f"Existing file size: [bold cyan]{size}[/bold cyan] bytes")
-                return size
-            Logger.debug("File does not exist, starting from 0 bytes")
-            return 0
-        except Exception as e:
-            Logger.exception(f"Error in _get_download_size: {str(e)}")
-            return 0
+        if file_path.exists():
+            size = file_path.stat().st_size
+            Logger.debug(f"Existing file size: [bold cyan]{size}[/bold cyan] bytes")
+            return size
+        Logger.debug("File does not exist, starting from 0 bytes")
+        return 0
 
     @classmethod
     def _get_content(cls, response, file_path, file_mode, progress, task, resume_position, expected_size):
@@ -491,25 +470,21 @@ class DownloadHandler:
         Returns:
             bool: True if content was successfully downloaded and saved, False otherwise
         """
-        try:
-            downloaded = 0
-            with open(file_path, file_mode) as file:
-                # Use raw stream to avoid automatic decompression
-                for chunk in response.raw.stream(cls.CHUNK_SIZE, decode_content=False):
-                    if chunk:
-                        file.write(chunk)
-                        downloaded += len(chunk)
-                        # Update progress bar with accurate position
-                        current_position = resume_position + downloaded
-                        progress.update(task, completed=current_position)
+        downloaded = 0
+        with open(file_path, file_mode) as file:
+            # Use raw stream to avoid automatic decompression
+            for chunk in response.raw.stream(cls.CHUNK_SIZE, decode_content=False):
+                if chunk:
+                    file.write(chunk)
+                    downloaded += len(chunk)
+                    # Update progress bar with accurate position
+                    current_position = resume_position + downloaded
+                    progress.update(task, completed=current_position)
 
-            # Ensure progress bar reaches 100% when download completes
-            if expected_size is not None:
-                progress.update(task, completed=expected_size)
-            return True
-        except Exception as e:
-            Logger.exception(f"Error in _get_content: {str(e)}")
-            return False
+        # Ensure progress bar reaches 100% when download completes
+        if expected_size is not None:
+            progress.update(task, completed=expected_size)
+        return True
 
     @classmethod
     def _get_wget_headers(cls):
@@ -523,17 +498,13 @@ class DownloadHandler:
         Returns:
             dict: Dictionary of HTTP headers mimicking wget's request pattern
         """
-        try:
-            headers = {
-                'User-Agent': "Wget/1.21.4",
-                'Accept': "*/*",
-                'Accept-Encoding': "identity",
-                'Connection': "Keep-Alive",
-            }
-            return headers
-        except Exception as e:
-            Logger.exception(f"Error in _get_wget_headers: {str(e)}")
-            return {}
+        headers = {
+            'User-Agent': "Wget/1.21.4",
+            'Accept': "*/*",
+            'Accept-Encoding': "identity",
+            'Connection': "Keep-Alive",
+        }
+        return headers
 
     @classmethod
     def _create_progress_bar(cls):
@@ -547,26 +518,21 @@ class DownloadHandler:
         Returns:
             Progress: Configured Rich Progress object with download-specific columns
         """
-        try:
-            return Progress(
-                "[progress.percentage]{task.percentage:>3.0f}%",
-                BarColumn(
-                    bar_width=None,  # Use full available width
-                    style="bright_black on bright_black",  # Set both foreground and background to same color
-                    complete_style="bold bright_green on bright_green",  # Solid green for completed part
-                    finished_style="bold bright_green on bright_green"   # Solid green for finished
-                ),
-                "•",
-                DownloadColumn(),
-                "•",
-                TransferSpeedColumn(),
-                expand=True,
-                transient=True
-            )
-        except Exception as e:
-            Logger.exception(f"Error in _create_progress_bar: {str(e)}")
-            # Return a basic progress bar as fallback
-            return Progress()
+        return Progress(
+            "[progress.percentage]{task.percentage:>3.0f}%",
+            BarColumn(
+                bar_width=None,  # Use full available width
+                style="bright_black on bright_black",  # Set both foreground and background to same color
+                complete_style="bold bright_green on bright_green",  # Solid green for completed part
+                finished_style="bold bright_green on bright_green"   # Solid green for finished
+            ),
+            "•",
+            DownloadColumn(),
+            "•",
+            TransferSpeedColumn(),
+            expand=True,
+            transient=True
+        )
 
     @classmethod
     def _format_bytes(cls, size, plain=False):
@@ -583,24 +549,20 @@ class DownloadHandler:
         Returns:
             str: Human-readable representation of the byte count
         """
-        try:
-            if size is None or size <= 0:
-                return "0B"
-            units = ['B', 'KB', 'MB', 'GB', 'TB']
-            i = 0
-            while size >= 1024 and i < len(units) - 1:
-                size /= 1024
-                i += 1
-
-            # Fix the display issue by rounding to 1 decimal place for KB
-            if i == 1:  # KB unit
-                formatted_size = f"{size:.1f}"
-            else:
-                formatted_size = f"{size:.2f}"
-
-            if plain:
-                return f"{formatted_size} {units[i]}"
-            return f"[bold yellow]{formatted_size}[/bold yellow] [bold]{units[i]}[/bold]"
-        except Exception as e:
-            Logger.exception(f"Error in _format_bytes: {str(e)}")
+        if size is None or size <= 0:
             return "0B"
+        units = ['B', 'KB', 'MB', 'GB', 'TB']
+        i = 0
+        while size >= 1024 and i < len(units) - 1:
+            size /= 1024
+            i += 1
+
+        # Fix the display issue by rounding to 1 decimal place for KB
+        if i == 1:  # KB unit
+            formatted_size = f"{size:.1f}"
+        else:
+            formatted_size = f"{size:.2f}"
+
+        if plain:
+            return f"{formatted_size} {units[i]}"
+        return f"[bold yellow]{formatted_size}[/bold yellow] [bold]{units[i]}[/bold]"
