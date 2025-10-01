@@ -119,10 +119,13 @@ class BashUtils:
             result = subprocess.run(
                 ["where", "git.exe"],
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=False,
-                check=True
+                stderr=subprocess.PIPE
             )
+
+            if result.returncode != 0:
+                Logger.error("Git not found in system PATH")
+                return None
+
             paths = []
             for path in result.stdout.splitlines():
                 if path:
