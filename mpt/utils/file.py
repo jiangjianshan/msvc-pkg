@@ -14,8 +14,7 @@ import winreg
 from pathlib import Path
 from typing import Optional
 
-from mpt.core.log import Logger
-from mpt.core.console import console
+from mpt.core.log import RichLogger
 
 class FileUtils:
     """
@@ -55,22 +54,22 @@ class FileUtils:
                 try:
                     os.chmod(file_path, stat.S_IWRITE)
                 except Exception as e:
-                    Logger.exception(f"Failed to change file permissions: {file_path}")
+                    RichLogger.exception(f"Failed to change file permissions: {file_path}")
                     raise
 
                 try:
                     os.remove(file_path)
                 except Exception as e:
-                    Logger.exception(f"Failed to remove file: {file_path}")
+                    RichLogger.exception(f"Failed to remove file: {file_path}")
                     raise
 
                 # Verify file is actually deleted
                 if os.path.exists(file_path):
-                    Logger.error(f"File still exists after deletion attempt: [bold red]{file_path}[/bold red]")
+                    RichLogger.error(f"File still exists after deletion attempt: [bold red]{file_path}[/bold red]")
                     raise Exception(f"File still exists after deletion: {file_path}")
             return True
         except Exception as e:
-            Logger.exception(f"Failed to delete file [bold red]{file_path}[/bold red]")
+            RichLogger.exception(f"Failed to delete file [bold red]{file_path}[/bold red]")
             raise
 
     @staticmethod
@@ -102,14 +101,14 @@ class FileUtils:
                             os.chmod(name, stat.S_IWRITE)
                             action(name)
                         except Exception as e:
-                            Logger.exception(f"Failed to make writable and remove: {name}")
+                            RichLogger.exception(f"Failed to make writable and remove: {name}")
                             raise
 
                     if directory.exists():
                         try:
                             shutil.rmtree(directory, onerror=make_writable)
                         except Exception as e:
-                            Logger.exception(f"Failed to remove directory tree: {directory}")
+                            RichLogger.exception(f"Failed to remove directory tree: {directory}")
                             raise
 
                         # Verify deletion
@@ -120,17 +119,17 @@ class FileUtils:
                         success = True
                         break
                 except Exception as e:
-                    Logger.exception(f"Deletion error on attempt [bold red]{attempt}[/bold red]: {directory}")
+                    RichLogger.exception(f"Deletion error on attempt [bold red]{attempt}[/bold red]: {directory}")
 
                 # Delay before next attempt
                 if attempt < max_retries and not success:
                     time.sleep(retry_delay)
 
             if not success:
-                Logger.error(f"Failed to delete directory after [bold red]{max_retries}[/bold red] attempts: [bold red]{directory}[/bold red]")
+                RichLogger.error(f"Failed to delete directory after [bold red]{max_retries}[/bold red] attempts: [bold red]{directory}[/bold red]")
             return success
         except Exception as e:
-            Logger.exception(f"Critical error during directory deletion: [bold red]{directory}[/bold red]")
+            RichLogger.exception(f"Critical error during directory deletion: [bold red]{directory}[/bold red]")
             return False
 
     @staticmethod
@@ -155,10 +154,10 @@ class FileUtils:
                 os.chmod(path, stat.S_IWRITE)
                 return True
             except Exception as e:
-                Logger.exception(f"Failed to change permissions: {path}")
+                RichLogger.exception(f"Failed to change permissions: {path}")
                 return False
         except Exception as e:
-            Logger.exception(f"Failed to make path writable: [bold red]{path}[/bold red]")
+            RichLogger.exception(f"Failed to make path writable: [bold red]{path}[/bold red]")
             return False
 
     @staticmethod
@@ -189,16 +188,16 @@ class FileUtils:
                     file.unlink()
                     return True
                 except Exception as e:
-                    Logger.exception(f"Failed to unlink file: {file}")
+                    RichLogger.exception(f"Failed to unlink file: {file}")
                     return False
             except Exception as e:
-                Logger.exception(f"Failed during permission check: {file}")
+                RichLogger.exception(f"Failed during permission check: {file}")
                 return False
         except PermissionError as pe:
-            Logger.exception(f"Permission denied when deleting file [bold red]{file}[/bold red]")
+            RichLogger.exception(f"Permission denied when deleting file [bold red]{file}[/bold red]")
             return False
         except Exception as e:
-            Logger.exception(f"File deletion failed: [bold red]{file}[/bold red]")
+            RichLogger.exception(f"File deletion failed: [bold red]{file}[/bold red]")
             return False
 
     @staticmethod
@@ -221,5 +220,5 @@ class FileUtils:
                 return True
             return False
         except Exception as e:
-            Logger.exception(f"Failed to check write permissions: {path}")
+            RichLogger.exception(f"Failed to check write permissions: {path}")
             return False

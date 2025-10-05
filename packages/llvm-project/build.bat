@@ -26,10 +26,30 @@ set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
 set C_OPTS=-nologo -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
 set C_DEFS=-DWIN32 -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -D_SILENCE_NONFLOATING_COMPLEX_DEPRECATION_WARNING
 
+call :prepare_stage
 call :configure_stage
 call :build_stage
 call :install_stage
 goto :end
+
+rem ==============================================================================
+rem  Prepare package before configure or build
+rem ==============================================================================
+:prepare_stage
+echo "Patching package %PKG_NAME% %PKG_VER%"
+cd "%SRC_DIR%"
+rem Fix system_libs of llvm-config has wrongly link to zstd.dll.lib but not zstd.lib
+pushd llvm\lib\Support
+sed                                                                                                                  ^
+  -e "s|\${zstd_target} PROPERTY LOCATION_\${build_type}|${zstd_target} PROPERTY IMPORTED_IMPLIB_${build_type}|g"    ^
+  -e "s|\${zstd_target} PROPERTY LOCATION|${zstd_target} PROPERTY IMPORTED_IMPLIB|g"                                 ^
+  -i CMakeLists.txt
+popd
+rem Fix SyntaxWarning invalid escape sequence if use python 3.12
+pushd llvm\utils
+sed -e "s/re.match(\"/re.match(r\"/g" -i extract_symbols.py
+popd
+exit /b 0
 
 rem ==============================================================================
 rem  Configure package and ready to build

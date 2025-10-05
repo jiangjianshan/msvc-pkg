@@ -34,6 +34,27 @@ clean_build()
   cd "$SRC_DIR" && [[ -d "$BUILD_DIR" ]] && rm -rf "$BUILD_DIR"
 }
 
+prepare_stage()
+{
+  echo "Patching package $PKG_NAME $PKG_VER"
+  cd "$ROOT_DIR/releases/BuildTools" || exit 1
+  echo "Patching run_autotools in $ROOT_DIR/releases/BuildTools"
+  sed                                                                          \
+    -e '/patch -p1 < BuildTools\/libtool-icl.patch/d'                          \
+    -e 's/automake || exit 1/automake --add-missing || exit 1/g'               \
+    -i run_autotools
+  export COIN_AUTOTOOLS_DIR=/usr
+  WANT_AUTOCONF='2.72' WANT_AUTOMAKE='1.17' ./run_autotools $SRC_DIR
+  cd "$SRC_DIR" || exit 1
+  if [ ! -f "scopy.f" ]; then
+    # NOTE: The archive from 'www.netlib.org/blas/blas.tgz' can't be compile successfully, but
+    #       the one from 'coin-or-tools.github.io/ThirdParty-Blas' can.
+    ./get.Blas
+  fi
+  rm -rfv autom4te.cache
+  find . -name "*~" -type f -print -exec rm -rfv {} \;
+}
+
 configure_stage()
 {
   echo "Configuring $PKG_NAME $PKG_VER"
@@ -122,6 +143,7 @@ install_stage()
   clean_build
 }
 
+prepare_stage
 configure_stage
 patch_stage
 build_stage

@@ -13,12 +13,11 @@ from rich.prompt import Confirm, IntPrompt
 from mpt import ROOT_DIR
 from mpt.core.archive import ArchiveHandler
 from mpt.core.download import DownloadHandler
-from mpt.core.console import console
-from mpt.core.log import Logger
+from mpt.core.log import RichLogger
 from mpt.core.patch import PatchHandler
 from mpt.core.view import RichTable, RichPanel
 from mpt.utils.bash import BashUtils
-from mpt.config.loader import RequirementsConfig
+from mpt.config.requirements import RequirementsConfig
 
 class RuntimeManager:
     """
@@ -48,7 +47,7 @@ class RuntimeManager:
         """
         requirements = RequirementsConfig.load()
         if not requirements:
-            Logger.info("No dependencies found in requirements.yaml")
+            RichLogger.info("No dependencies found in requirements.yaml")
             return True
 
         git_root = BashUtils.find_git_root()
@@ -68,7 +67,7 @@ class RuntimeManager:
 
                 # Handle interactive variant selection
                 if variants and interactive:
-                    console.print(f"Dependency [bold cyan]{dep_name}[/bold cyan] has multiple variants:")
+                    RichLogger.print(f"Dependency [bold cyan]{dep_name}[/bold cyan] has multiple variants:")
                     variant_names = [v.get('name', 'Unknown') for v in variants]
                     installed_variants = []
 
@@ -92,16 +91,16 @@ class RuntimeManager:
 
                     # Show already installed variants
                     if installed_variants:
-                        console.print("Already installed variants:")
+                        RichLogger.print("Already installed variants:")
                         for idx in installed_variants:
-                            console.print(f"{idx}. {variant_names[idx-1]} [green]✓[/green]")
+                            RichLogger.print(f"{idx}. {variant_names[idx-1]} [green]✓[/green]")
 
                     # Show available variants for installation
                     uninstalled_variants = [i+1 for i in range(len(variants)) if i+1 not in installed_variants]
                     if uninstalled_variants:
-                        console.print("Available variants to install:")
+                        RichLogger.print("Available variants to install:")
                         for idx in uninstalled_variants:
-                            console.print(f"{idx}. {variant_names[idx-1]}")
+                            RichLogger.print(f"{idx}. {variant_names[idx-1]}")
 
                         try:
                             choice = IntPrompt.ask(
@@ -127,13 +126,13 @@ class RuntimeManager:
                                         if extensions:
                                             cls._process_extensions(extensions, git_root)
                                 else:
-                                    Logger.error(f"Failed to install variant: [bold cyan]{selected_variant['name']}[/bold cyan]")
+                                    RichLogger.error(f"Failed to install variant: [bold cyan]{selected_variant['name']}[/bold cyan]")
                                     all_success = False
                         except Exception as e:
-                            Logger.error(f"Error during variant selection: {str(e)}")
+                            RichLogger.error(f"Error during variant selection: {str(e)}")
                             all_success = False
                     else:
-                        Logger.info(f"All variants of [bold cyan]{dep_name}[/bold cyan] are already installed")
+                        RichLogger.info(f"All variants of [bold cyan]{dep_name}[/bold cyan] are already installed")
                 else:
                     # Non-interactive installation or no variants
                     if 'install' in dep or 'target' in dep:
@@ -143,21 +142,21 @@ class RuntimeManager:
                                 if extensions:
                                     cls._process_extensions(extensions, git_root)
                         else:
-                            Logger.error(f"Failed to install dependency: [bold cyan]{dep_name}[/bold cyan]")
+                            RichLogger.error(f"Failed to install dependency: [bold cyan]{dep_name}[/bold cyan]")
                             all_success = False
                     else:
-                        Logger.error(f"No installation method for dependency: [bold cyan]{dep_name}[/bold cyan]")
+                        RichLogger.error(f"No installation method for dependency: [bold cyan]{dep_name}[/bold cyan]")
                         all_success = False
 
         if cls.restart_pending:
-            Logger.warning("System restart is required to complete installation")
-            console.print("\n[bold yellow]System Restart Required[/bold yellow]")
-            console.print("Some components require a system restart to function properly")
+            RichLogger.warning("System restart is required to complete installation")
+            RichLogger.print("\n[bold yellow]System Restart Required[/bold yellow]")
+            RichLogger.print("Some components require a system restart to function properly")
             if Confirm.ask("Do you want to restart now?", default=True):
-                Logger.info("Initiating system restart...")
+                RichLogger.info("Initiating system restart...")
                 os.system("shutdown /r /t 0")
             else:
-                Logger.warning("Please restart your computer when convenient")
+                RichLogger.warning("Please restart your computer when convenient")
                 return False
 
         return all_success
@@ -237,7 +236,7 @@ class RuntimeManager:
                             all_variants_installed = False
                             break
                     except Exception as e:
-                        Logger.debug(f"Error checking variant {variant.get('name', 'Unknown')}: {str(e)}")
+                        RichLogger.debug(f"Error checking variant {variant.get('name', 'Unknown')}: {str(e)}")
                         all_variants_installed = False
                         break
             return all_variants_installed
@@ -257,7 +256,7 @@ class RuntimeManager:
             )
             return result.returncode == 0
         except Exception as e:
-            Logger.exception(f"Error checking dependency [bold cyan]{dep_name}[/bold cyan]: {str(e)}")
+            RichLogger.exception(f"Error checking dependency [bold cyan]{dep_name}[/bold cyan]: {str(e)}")
             return False
 
     @classmethod
@@ -284,7 +283,7 @@ class RuntimeManager:
         elif install_cmd:
             return cls._process_install(dep, git_root)
         else:
-            Logger.error(f"No installation method specified for dependency: [bold cyan]{dep_name}[/bold cyan]")
+            RichLogger.error(f"No installation method specified for dependency: [bold cyan]{dep_name}[/bold cyan]")
             return False
 
     @classmethod
@@ -308,7 +307,7 @@ class RuntimeManager:
         requires_restart = dep.get('restart', False)
 
         if not url:
-            Logger.error(f"No URL provided for dependency with target: [bold cyan]{dep_name}[/bold cyan]")
+            RichLogger.error(f"No URL provided for dependency with target: [bold cyan]{dep_name}[/bold cyan]")
             return False
 
         try:
@@ -324,22 +323,22 @@ class RuntimeManager:
             # Download and verify file
             if installer_path.exists():
                 if sha256 and ArchiveHandler.verify_hash(installer_path, sha256):
-                    Logger.info(f"Using verified installer for [bold cyan]{dep_name}[/bold cyan]")
+                    RichLogger.info(f"Using verified installer for [bold cyan]{dep_name}[/bold cyan]")
                 else:
-                    Logger.warning(f"Installer hash mismatch or missing, redownloading [bold cyan]{dep_name}[/bold cyan]")
+                    RichLogger.warning(f"Installer hash mismatch or missing, redownloading [bold cyan]{dep_name}[/bold cyan]")
                     installer_path.unlink(missing_ok=True)
-                    Logger.info(f"Downloading installer for [bold cyan]{dep_name}[/bold cyan]")
+                    RichLogger.info(f"Downloading installer for [bold cyan]{dep_name}[/bold cyan]")
                     if not DownloadHandler.download_file(url, installer_path, verify_ssl=False):
-                        Logger.error(f"Failed to download installer for dependency: [bold cyan]{dep_name}[/bold cyan]")
+                        RichLogger.error(f"Failed to download installer for dependency: [bold cyan]{dep_name}[/bold cyan]")
                         return False
             else:
-                Logger.debug(f"Downloading installer for [bold cyan]{dep_name}[/bold cyan]")
+                RichLogger.debug(f"Downloading installer for [bold cyan]{dep_name}[/bold cyan]")
                 if not DownloadHandler.download_file(url, installer_path, verify_ssl=False):
-                    Logger.error(f"Failed to download installer for dependency: [bold cyan]{dep_name}[/bold cyan]")
+                    RichLogger.error(f"Failed to download installer for dependency: [bold cyan]{dep_name}[/bold cyan]")
                     return False
 
             if sha256 and not ArchiveHandler.verify_hash(installer_path, sha256):
-                Logger.error(f"Installer hash verification failed for dependency: [bold cyan]{dep_name}[/bold cyan]")
+                RichLogger.error(f"Installer hash verification failed for dependency: [bold cyan]{dep_name}[/bold cyan]")
                 return False
 
             # Check if the file is an archive
@@ -348,17 +347,17 @@ class RuntimeManager:
             if installer_path.suffix.lower() in archive_extensions:
                 # Extract archive to target directory
                 if not target_path.is_dir():
-                    Logger.error(f"Target must be a directory for archive files: [bold cyan]{dep_name}[/bold cyan]")
+                    RichLogger.error(f"Target must be a directory for archive files: [bold cyan]{dep_name}[/bold cyan]")
                     return False
 
-                Logger.info(f"Extracting archive for [bold cyan]{dep_name}[/bold cyan] to [bold cyan]{target_path}[/bold cyan]")
+                RichLogger.info(f"Extracting archive for [bold cyan]{dep_name}[/bold cyan] to [bold cyan]{target_path}[/bold cyan]")
                 if ArchiveHandler.extract(installer_path, target_path):
-                    Logger.info(f"Extracted [bold cyan]{installer_path.name}[/bold cyan] to [bold cyan]{target_path}[/bold cyan]")
+                    RichLogger.info(f"Extracted [bold cyan]{installer_path.name}[/bold cyan] to [bold cyan]{target_path}[/bold cyan]")
                     if requires_restart:
                         cls.restart_pending = True
                     return True
                 else:
-                    Logger.error(f"Failed to extract archive for dependency: [bold cyan]{dep_name}[/bold cyan]")
+                    RichLogger.error(f"Failed to extract archive for dependency: [bold cyan]{dep_name}[/bold cyan]")
                     return False
             else:
                 # Copy regular file to target location
@@ -367,18 +366,18 @@ class RuntimeManager:
                     target_path.mkdir(parents=True, exist_ok=True)
                     dest_path = target_path / installer_path.name
                     shutil.copy2(installer_path, dest_path)
-                    Logger.info(f"Copied [bold cyan]{installer_path.name}[/bold cyan] to [bold cyan]{target_path}[/bold cyan]")
+                    RichLogger.info(f"Copied [bold cyan]{installer_path.name}[/bold cyan] to [bold cyan]{target_path}[/bold cyan]")
                 else:
                     # Target is a file, copy and rename
                     target_path.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(installer_path, target_path)
-                    Logger.info(f"Copied [bold cyan]{installer_path.name}[/bold cyan] to [bold cyan]{target_path}[/bold cyan]")
+                    RichLogger.info(f"Copied [bold cyan]{installer_path.name}[/bold cyan] to [bold cyan]{target_path}[/bold cyan]")
                 if requires_restart:
                     cls.restart_pending = True
                 return True
 
         except Exception as e:
-            Logger.exception(f"Error processing target for dependency [bold cyan]{dep_name}[/bold cyan]: {str(e)}")
+            RichLogger.exception(f"Error processing target for dependency [bold cyan]{dep_name}[/bold cyan]: {str(e)}")
             return False
 
     @classmethod
@@ -402,7 +401,7 @@ class RuntimeManager:
         requires_restart = dep.get('restart', False)
 
         if not install_cmd:
-            Logger.error(f"No installation command for dependency: [bold cyan]{dep_name}[/bold cyan]")
+            RichLogger.error(f"No installation command for dependency: [bold cyan]{dep_name}[/bold cyan]")
             return False
 
         p = None
@@ -419,25 +418,25 @@ class RuntimeManager:
                 # Download and verify file
                 if installer_path.exists():
                     if sha256 and ArchiveHandler.verify_hash(installer_path, sha256):
-                        Logger.info(f"Using verified installer for [bold cyan]{dep_name}[/bold cyan]")
+                        RichLogger.info(f"Using verified installer for [bold cyan]{dep_name}[/bold cyan]")
                     else:
-                        Logger.warning(f"Installer hash mismatch or missing, redownloading [bold cyan]{dep_name}[/bold cyan]")
+                        RichLogger.warning(f"Installer hash mismatch or missing, redownloading [bold cyan]{dep_name}[/bold cyan]")
                         installer_path.unlink(missing_ok=True)
-                        Logger.info(f"Downloading installer for [bold cyan]{dep_name}[/bold cyan]")
+                        RichLogger.info(f"Downloading installer for [bold cyan]{dep_name}[/bold cyan]")
                         if not DownloadHandler.download_file(url, installer_path, verify_ssl=False):
-                            Logger.error(f"Failed to download installer for dependency: [bold cyan]{dep_name}[/bold cyan]")
+                            RichLogger.error(f"Failed to download installer for dependency: [bold cyan]{dep_name}[/bold cyan]")
                             return False
                 else:
-                    Logger.info(f"Downloading installer for [bold cyan]{dep_name}[/bold cyan]")
+                    RichLogger.info(f"Downloading installer for [bold cyan]{dep_name}[/bold cyan]")
                     if not DownloadHandler.download_file(url, installer_path, verify_ssl=False):
-                        Logger.error(f"Failed to download installer for dependency: [bold cyan]{dep_name}[/bold cyan]")
+                        RichLogger.error(f"Failed to download installer for dependency: [bold cyan]{dep_name}[/bold cyan]")
                         return False
 
                 if sha256 and not ArchiveHandler.verify_hash(installer_path, sha256):
-                    Logger.error(f"Installer hash verification failed for dependency: [bold cyan]{dep_name}[/bold cyan]")
+                    RichLogger.error(f"Installer hash verification failed for dependency: [bold cyan]{dep_name}[/bold cyan]")
                     return False
             else:
-                Logger.info(f"Installing dependency without installer download: [bold cyan]{dep_name}[/bold cyan]")
+                RichLogger.info(f"Installing dependency without installer download: [bold cyan]{dep_name}[/bold cyan]")
 
             if '\n' in install_cmd:
                 install_cmd = ' && '.join(
@@ -449,9 +448,9 @@ class RuntimeManager:
                 install_cmd = install_cmd.strip()
             install_cmd = cls._expand_envvars(install_cmd)
             install_cmd = cls._expand_placeholders(install_cmd, git_root)
-            Logger.debug(f"Installing [bold cyan]{dep_name}[/bold cyan]...")
-            Logger.debug(f"Executing command: {install_cmd}")
-            Logger.debug(f"Working directory: {installer_path.parent if url else git_root}")
+            RichLogger.debug(f"Installing [bold cyan]{dep_name}[/bold cyan]...")
+            RichLogger.debug(f"Executing command: {install_cmd}")
+            RichLogger.debug(f"Working directory: {installer_path.parent if url else git_root}")
             p = subprocess.Popen(
                 install_cmd,
                 shell=True,
@@ -462,23 +461,23 @@ class RuntimeManager:
             # Process output in real-time
             for line in iter(p.stdout.readline, b''):
                 decoded_line = line.decode('utf-8', errors='ignore').rstrip()
-                Logger.info(decoded_line, markup=False)
+                RichLogger.info(decoded_line, markup=False)
                 if p.poll() is not None:
                     break
             # Wait for process completion
             exit_code = p.wait()
             if exit_code == 0:
-                Logger.info(f"Installation completed for [bold cyan]{dep_name}[/bold cyan]")
+                RichLogger.info(f"Installation completed for [bold cyan]{dep_name}[/bold cyan]")
                 if requires_restart:
-                    Logger.warning(f"{dep_name} requires system restart")
+                    RichLogger.warning(f"{dep_name} requires system restart")
                     cls.restart_pending = True
                 success = True
             else:
-                Logger.error(f"Installation failed for dependency [bold cyan]{dep_name}[/bold cyan] with exit code: {exit_code}")
+                RichLogger.error(f"Installation failed for dependency [bold cyan]{dep_name}[/bold cyan] with exit code: {exit_code}")
                 success = False
 
         except Exception as e:
-            Logger.exception(f"Error installing dependency [bold cyan]{dep_name}[/bold cyan]: {str(e)}")
+            RichLogger.exception(f"Error installing dependency [bold cyan]{dep_name}[/bold cyan]: {str(e)}")
             success = False
         finally:
             if p and p.poll() is None:
@@ -520,7 +519,7 @@ class RuntimeManager:
             )
             return result.returncode == 0
         except Exception as e:
-            Logger.error(f"Error checking extension: {str(e)}")
+            RichLogger.error(f"Error checking extension: {str(e)}")
             return False
 
     @classmethod
@@ -548,7 +547,7 @@ class RuntimeManager:
                 if cls._install_extension(ext, git_root):
                     installed_list.append(ext_name)
             except Exception as e:
-                Logger.exception(f"Error processing extension {ext.get('name', 'Unknown')}: {str(e)}")
+                RichLogger.exception(f"Error processing extension {ext.get('name', 'Unknown')}: {str(e)}")
 
         return installed_list
 
@@ -575,7 +574,7 @@ class RuntimeManager:
         patch_config = ext.get('patch')
 
         if not url or not target:
-            Logger.error(f"Missing URL or target for extension: [bold cyan]{ext_name}[/bold cyan]")
+            RichLogger.error(f"Missing URL or target for extension: [bold cyan]{ext_name}[/bold cyan]")
             return False
 
         try:
@@ -590,24 +589,24 @@ class RuntimeManager:
 
             if download_path.exists():
                 if sha256 and ArchiveHandler.verify_hash(download_path, sha256):
-                    Logger.info(f"Using cached archive for [bold cyan]{ext_name}[/bold cyan]")
+                    RichLogger.info(f"Using cached archive for [bold cyan]{ext_name}[/bold cyan]")
                 else:
                     download_path.unlink(missing_ok=True)
-                    Logger.info(f"Downloading extension: [bold cyan]{ext_name}[/bold cyan]")
+                    RichLogger.info(f"Downloading extension: [bold cyan]{ext_name}[/bold cyan]")
                     if not DownloadHandler.download_file(url, download_path, verify_ssl=False):
-                        Logger.error(f"Download failed for extension: [bold cyan]{ext_name}[/bold cyan]")
+                        RichLogger.error(f"Download failed for extension: [bold cyan]{ext_name}[/bold cyan]")
                         return False
             else:
-                Logger.info(f"Downloading extension: [bold cyan]{ext_name}[/bold cyan]")
+                RichLogger.info(f"Downloading extension: [bold cyan]{ext_name}[/bold cyan]")
                 if not DownloadHandler.download_file(url, download_path, verify_ssl=False):
-                    Logger.error(f"Download failed for extension: [bold cyan]{ext_name}[/bold cyan]")
+                    RichLogger.error(f"Download failed for extension: [bold cyan]{ext_name}[/bold cyan]")
                     return False
 
             if sha256 and not ArchiveHandler.verify_hash(download_path, sha256):
-                Logger.error(f"Hash verification failed for extension: [bold cyan]{ext_name}[/bold cyan]")
+                RichLogger.error(f"Hash verification failed for extension: [bold cyan]{ext_name}[/bold cyan]")
                 return False
 
-            Logger.info(f"Installing extension: [bold cyan]{ext_name}[/bold cyan]")
+            RichLogger.info(f"Installing extension: [bold cyan]{ext_name}[/bold cyan]")
             if not ArchiveHandler.extract(
                 archive_path=download_path,
                 target_dir=target_path,
@@ -615,16 +614,16 @@ class RuntimeManager:
                 include=include,
                 remove_archive=False
             ):
-                Logger.error(f"Extraction failed for extension: [bold cyan]{ext_name}[/bold cyan]")
+                RichLogger.error(f"Extraction failed for extension: [bold cyan]{ext_name}[/bold cyan]")
                 return False
 
             if patch_config:
                 patch_files = []
                 for patch_name in patch_config:
                     patch_file = ROOT_DIR / 'mpt' / 'config' / patch_name
-                    Logger.debug(f"Looking for patch at: {patch_file.resolve()}")
+                    RichLogger.debug(f"Looking for patch at: {patch_file.resolve()}")
                     if not patch_file.exists():
-                        Logger.error(f"Patch file not found: [bold red]{patch_file}[/bold red]")
+                        RichLogger.error(f"Patch file not found: [bold red]{patch_file}[/bold red]")
                         return False
                     patch_files.append(patch_file.resolve())
 
@@ -632,13 +631,13 @@ class RuntimeManager:
                     source_dir=target_path,
                     patch_files=patch_files
                 ):
-                    Logger.info(f"Applied {len(patch_files)} patches for [bold cyan]{ext_name}[/bold cyan]")
+                    RichLogger.info(f"Applied {len(patch_files)} patches for [bold cyan]{ext_name}[/bold cyan]")
                 else:
-                    Logger.error(f"Failed to apply patches for extension: [bold cyan]{ext_name}[/bold cyan]")
+                    RichLogger.error(f"Failed to apply patches for extension: [bold cyan]{ext_name}[/bold cyan]")
                     return False
 
             return True
 
         except Exception as e:
-            Logger.exception(f"Error installing extension [bold cyan]{ext_name}[/bold cyan]: {str(e)}")
+            RichLogger.exception(f"Error installing extension [bold cyan]{ext_name}[/bold cyan]: {str(e)}")
             return False

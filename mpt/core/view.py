@@ -14,8 +14,7 @@ from rich.console import Group
 from rich.text import Text
 from rich.align import Align
 
-from mpt.core.console import console
-from mpt.core.log import Logger
+from mpt.core.log import RichLogger
 
 
 class RichTable:
@@ -56,7 +55,7 @@ class RichTable:
                 title=title
             )
         except Exception as e:
-            Logger.exception("Failed to create Rich table")
+            RichLogger.exception("Failed to create Rich table")
             raise
 
     @staticmethod
@@ -91,7 +90,7 @@ class RichTable:
                 width=width
             )
         except Exception as e:
-            Logger.exception("Failed to add column to table")
+            RichLogger.exception("Failed to add column to table")
             raise
 
     @staticmethod
@@ -111,7 +110,7 @@ class RichTable:
         try:
             table.add_row(*args, style=style)
         except Exception as e:
-            Logger.exception("Failed to add row to table")
+            RichLogger.exception("Failed to add row to table")
             raise
 
     @staticmethod
@@ -131,13 +130,13 @@ class RichTable:
         try:
             if align_center:
                 if not width:
-                    width = console.width
+                    width = RichLogger.get_console_width()
                 aligned_table = Align.center(table, width=width)
-                console.print(aligned_table)
+                RichLogger.print(aligned_table)
             else:
-                console.print(table)
+                RichLogger.print(table)
         except Exception as e:
-            Logger.exception("Failed to render table")
+            RichLogger.exception("Failed to render table")
             raise
 
 class RichPanel:
@@ -174,7 +173,9 @@ class RichPanel:
         """
         try:
             if width is None:
-                width = console.width - 4
+                width = RichLogger.get_console_width() - 4
+
+            # Create content group with table if provided
             if table is not None:
                 elements = [
                     Align.center(table, width=width),
@@ -184,6 +185,7 @@ class RichPanel:
                 panel_content = Group(*elements)
             else:
                 panel_content = content
+
             panel = Panel(
                 panel_content,
                 title=title,
@@ -194,7 +196,7 @@ class RichPanel:
                 width=width,
                 expand=expand
             )
-            console.print(panel)
+            RichLogger.print(panel)
         except Exception as e:
-            Logger.exception("Failed to create and render summary panel")
+            RichLogger.exception("Failed to create and render summary panel")
             raise

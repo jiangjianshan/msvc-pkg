@@ -9,9 +9,8 @@ from pathlib import Path
 from rich.tree import Tree
 from rich.text import Text
 
-from mpt.config.loader import PackageConfig
-from mpt.core.console import console
-from mpt.core.log import Logger
+from mpt.config.package import PackageConfig
+from mpt.core.log import RichLogger
 from mpt.core.view import RichTable, RichPanel
 
 
@@ -45,7 +44,7 @@ class DependencyResolver:
                 return lib_name.strip(), dep_type.strip()
             return dep_name, None
         except Exception as e:
-            Logger.exception(f"Failed to parse dependency name '{dep_name}': {str(e)}")
+            RichLogger.exception(f"Failed to parse dependency name '{dep_name}': {str(e)}")
             raise
 
     @staticmethod
@@ -66,7 +65,7 @@ class DependencyResolver:
         try:
             config = PackageConfig.load(lib_name)
             if not config:
-                Logger.error(f"[[bold cyan]{lib_name}[/bold cyan]] Failed to load library configuration")
+                RichLogger.error(f"[[bold cyan]{lib_name}[/bold cyan]] Failed to load library configuration")
                 return []
 
             deps = config.get('dependencies', {}) or {}
@@ -80,7 +79,7 @@ class DependencyResolver:
                 # Return dependencies for the specific type
                 return deps.get(dep_type, []) or []
         except Exception as e:
-            Logger.exception(f"Failed to get dependencies for library '{lib_name}' with type '{dep_type}': {str(e)}")
+            RichLogger.exception(f"Failed to get dependencies for library '{lib_name}' with type '{dep_type}': {str(e)}")
             return []
 
     @staticmethod
@@ -119,7 +118,7 @@ class DependencyResolver:
                     if dep not in visited:
                         queue.append(dep)
         except Exception as e:
-            Logger.exception(f"Failed to build dependency tree for root '{root}': {str(e)}")
+            RichLogger.exception(f"Failed to build dependency tree for root '{root}': {str(e)}")
             raise
 
         return graph
@@ -143,7 +142,7 @@ class DependencyResolver:
         Raises:
             CycleError: If a circular dependency is detected in the graph
         """
-        Logger.info(f"[[bold cyan]{root}[/bold cyan]] Starting topological sort on graph with [bold cyan]{len(graph)}[/bold cyan] nodes")
+        RichLogger.info(f"[[bold cyan]{root}[/bold cyan]] Starting topological sort on graph with [bold cyan]{len(graph)}[/bold cyan] nodes")
 
         try:
             ts = TopologicalSorter(graph)
@@ -167,10 +166,10 @@ class DependencyResolver:
 
             return order
         except CycleError as e:
-            Logger.exception(f"[[bold cyan]{root}[/bold cyan]] Cycle detected: {str(e)}")
+            RichLogger.exception(f"[[bold cyan]{root}[/bold cyan]] Cycle detected: {str(e)}")
             raise
         except Exception as e:
-            Logger.exception(f"Failed to perform topological sort for root '{root}': {str(e)}")
+            RichLogger.exception(f"Failed to perform topological sort for root '{root}': {str(e)}")
             raise
 
     @staticmethod
@@ -186,7 +185,7 @@ class DependencyResolver:
             root (str): Root library name for tree labeling
             graph (dict): Dependency graph to visualize
         """
-        Logger.info(f"[[bold cyan]{root}[/bold cyan]] Rendering dependency tree with [bold yellow]{len(graph)}[/bold yellow] nodes")
+        RichLogger.info(f"[[bold cyan]{root}[/bold cyan]] Rendering dependency tree with [bold yellow]{len(graph)}[/bold yellow] nodes")
 
         try:
             # Create tree structure
@@ -206,7 +205,7 @@ class DependencyResolver:
                     has_children = dep_node in graph and graph[dep_node] and dep_node not in visited
 
                     # Choose icon
-                    icon = "🌿" if has_children else "🍁"
+                    icon = "🌿" if has_children else "🍃"
 
                     # Parse node name
                     lib_name, dep_type = DependencyResolver.parse_dependency_name(dep_node)
@@ -223,9 +222,9 @@ class DependencyResolver:
                     if has_children:
                         queue.append((dep_node, node, depth + 1))
 
-            console.print(tree)
+            RichLogger.print(tree)
         except Exception as e:
-            Logger.exception(f"Failed to render dependency tree for root '{root}': {str(e)}")
+            RichLogger.exception(f"Failed to render dependency tree for root '{root}': {str(e)}")
 
     @staticmethod
     def resolve(root, arch, build=False):
@@ -256,19 +255,19 @@ class DependencyResolver:
                     lib_name, dep_type = DependencyResolver.parse_dependency_name(node_name)
                     config = PackageConfig.load(lib_name)
                     if not config:
-                        Logger.error(f"[[bold cyan]{root}[/bold cyan]] Failed to load configuration for [bold cyan]{lib_name}[/bold cyan]")
+                        RichLogger.error(f"[[bold cyan]{root}[/bold cyan]] Failed to load configuration for [bold cyan]{lib_name}[/bold cyan]")
                         return False
 
                     from mpt.core.build import BuildManager
                     success = BuildManager.build_library(node_name, arch, config)
                     if not success:
-                        Logger.error(f"[[bold cyan]{root}[/bold cyan]] Build failed for [bold cyan]{node_name}[/bold cyan]")
+                        RichLogger.error(f"[[bold cyan]{root}[/bold cyan]] Build failed for [bold cyan]{node_name}[/bold cyan]")
                         return False
 
             return True
         except CycleError as e:
-            Logger.exception(f"[[bold cyan]{root}[/bold cyan]] Cycle detected during resolution: {str(e)}")
+            RichLogger.exception(f"[[bold cyan]{root}[/bold cyan]] Cycle detected during resolution: {str(e)}")
             return False
         except Exception as e:
-            Logger.exception(f"[[bold cyan]{root}[/bold cyan]] Dependency resolution failed: {str(e)}")
+            RichLogger.exception(f"[[bold cyan]{root}[/bold cyan]] Dependency resolution failed: {str(e)}")
             return False

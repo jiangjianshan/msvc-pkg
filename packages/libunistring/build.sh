@@ -33,6 +33,27 @@ clean_build()
   cd "$SRC_DIR" && [[ -d "$BUILD_DIR" ]] && rm -rf "$BUILD_DIR"
 }
 
+prepare_stage()
+{
+  echo "Patching package $PKG_NAME $PKG_VER"
+  cd "$SRC_DIR" || exit 1
+  # XXX: libtool don't have options can set the naming style of static and
+  #      shared library. Here is only a workaround.
+  echo "Patching ltmain.sh in build-aux"
+  pushd build-aux || exit 1
+  sed                                                                                    \
+    -e 's|old_library=$libname\.$libext|old_library=lib$libname\.$libext|g'              \
+    -e 's|$output_objdir/$libname\.$libext|$output_objdir/lib$libname\.$libext|g'        \
+    -i ltmain.sh
+  popd || exit 1
+
+  echo "Patching configure in top level"
+  sed                                                                                    \
+    -e 's|\.dll\.lib|\.lib|g'                                                            \
+    -i configure
+  chmod +x configure
+}
+
 configure_stage()
 {
   echo "Configuring $PKG_NAME $PKG_VER"
@@ -129,6 +150,7 @@ install_stage()
   clean_build
 }
 
+prepare_stage
 configure_stage
 patch_stage
 build_stage

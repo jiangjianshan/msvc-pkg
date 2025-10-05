@@ -21,8 +21,7 @@ from urllib.parse import urlparse
 from urllib3.util.retry import Retry
 from urllib3.exceptions import InsecureRequestWarning
 
-from mpt.core.console import console
-from mpt.core.log import Logger
+from mpt.core.log import RichLogger
 from mpt.core.view import RichPanel, RichTable
 from mpt.utils.file import FileUtils
 
@@ -65,13 +64,13 @@ class DownloadHandler:
         """
         cls._print_headers_table("Actual Request Headers", response.request.headers)
         cls._print_headers_table("Server Response Headers", response.headers)
-        Logger.debug(f"HTTP version: [bold cyan]{response.raw.version}[/bold cyan], "
+        RichLogger.debug(f"HTTP version: [bold cyan]{response.raw.version}[/bold cyan], "
                      f"Status code: [bold cyan]{response.status_code}[/bold cyan], "
                      f"Reason: [bold cyan]{response.reason}[/bold cyan]")
 
         # Log redirect history if any
         if response.history:
-            Logger.info(f"Found [bold cyan]{len(response.history)}[/bold cyan] redirects")
+            RichLogger.info(f"Found [bold cyan]{len(response.history)}[/bold cyan] redirects")
             redirect_table = RichTable.create(title="[bold]Redirect History[/bold]")
             redirect_table.add_column("Step", style="dim", width=5)
             redirect_table.add_column("Status", style="bold", width=10)
@@ -83,7 +82,7 @@ class DownloadHandler:
                     redirect.url
                 )
             RichTable.render(redirect_table)
-        Logger.info(f"Final URL: [bold cyan]{response.url}[/bold cyan]")
+        RichLogger.info(f"Final URL: [bold cyan]{response.url}[/bold cyan]")
 
     @classmethod
     def _print_headers_table(cls, title, headers):
@@ -163,7 +162,7 @@ class DownloadHandler:
             while retry_count <= cls.MAX_RETRIES and not success:
                 progress = None
                 task = None
-                Logger.debug(f"Attempt [bold cyan]{retry_count + 1}[/bold cyan] of "
+                RichLogger.debug(f"Attempt [bold cyan]{retry_count + 1}[/bold cyan] of "
                              f"[bold cyan]{cls.MAX_RETRIES + 1}[/bold cyan]")
 
                 try:
@@ -178,7 +177,7 @@ class DownloadHandler:
                         headers["Range"] = f"bytes={downloaded_size}-"
                         if cls._expected_size:
                             headers["Range"] = f"bytes={downloaded_size}-{cls._expected_size}"
-                        Logger.debug(f"Setting Range header: [bold cyan]{headers['Range']}[/bold cyan]")
+                        RichLogger.debug(f"Setting Range header: [bold cyan]{headers['Range']}[/bold cyan]")
 
                     # Make HTTP GET request with streaming
                     with session.get(
@@ -259,24 +258,24 @@ class DownloadHandler:
                         """
                         # Get expected file size
                         if cls._expected_size:
-                            Logger.debug(f"Expected file size: "
+                            RichLogger.debug(f"Expected file size: "
                                          f"[bold cyan]{cls._format_bytes(cls._expected_size, plain=True)}[/bold cyan]")
 
                         # Determine file mode based on response status
                         file_mode = 'wb'
                         if response.status_code == requests.codes.ok:
                             if downloaded_size > 0:
-                                Logger.debug(f"Restarting download from beginning. "
+                                RichLogger.debug(f"Restarting download from beginning. "
                                              f"Existing file size: [bold cyan]{downloaded_size}[/bold cyan] bytes")
                                 FileUtils.force_delete_file(file_path)
                                 # Reset downloaded size after deletion
                                 downloaded_size = 0
                         elif response.status_code == requests.codes.partial_content:
-                            Logger.debug(f"Resuming download from position: "
+                            RichLogger.debug(f"Resuming download from position: "
                                          f"[bold cyan]{downloaded_size}[/bold cyan] bytes")
                             file_mode = 'ab'
                         else:
-                            Logger.warning(f"Unexpected status code: "
+                            RichLogger.warning(f"Unexpected status code: "
                                            f"[bold cyan]{response.status_code}[/bold cyan]")
                             retry_count += 1
                             continue
@@ -305,34 +304,34 @@ class DownloadHandler:
                         final_size = cls._get_download_size(file_path)
                         if success:
                             if cls._expected_size and final_size != cls._expected_size:
-                                Logger.warning(f"Download incomplete: expected "
+                                RichLogger.warning(f"Download incomplete: expected "
                                                f"[bold cyan]{cls._expected_size}[/bold cyan], "
                                                f"got [bold cyan]{final_size}[/bold cyan]")
                                 success = False
                                 retry_count += 1
                             else:
-                                Logger.info("Download completed successfully")
+                                RichLogger.info("Download completed successfully")
                                 break
                         else:
                             retry_count += 1
 
                 except requests.exceptions.HTTPError as e:
-                    Logger.warning(f"HTTP Error: [bold cyan]{str(e)}[/bold cyan]")
+                    RichLogger.warning(f"HTTP Error: [bold cyan]{str(e)}[/bold cyan]")
                     retry_count += 1
                 except requests.exceptions.ConnectTimeout as e:
-                    Logger.warning(f"Connect Timeout Error: [bold cyan]{str(e)}[/bold cyan]")
+                    RichLogger.warning(f"Connect Timeout Error: [bold cyan]{str(e)}[/bold cyan]")
                     retry_count += 1
                 except requests.exceptions.ConnectionError as e:
-                    Logger.warning(f"Connection Error: [bold cyan]{str(e)}[/bold cyan]")
+                    RichLogger.warning(f"Connection Error: [bold cyan]{str(e)}[/bold cyan]")
                     retry_count += 1
                 except requests.exceptions.Timeout as e:
-                    Logger.warning(f"Timeout Error: [bold cyan]{str(e)}[/bold cyan]")
+                    RichLogger.warning(f"Timeout Error: [bold cyan]{str(e)}[/bold cyan]")
                     retry_count += 1
                 except requests.exceptions.RequestException as e:
-                    Logger.warning(f"Request Exception: [bold cyan]{str(e)}[/bold cyan]")
+                    RichLogger.warning(f"Request Exception: [bold cyan]{str(e)}[/bold cyan]")
                     retry_count += 1
                 except Exception as e:
-                    Logger.error(f"Unexpected error during download attempt: {str(e)}")
+                    RichLogger.error(f"Unexpected error during download attempt: {str(e)}")
                     retry_count += 1
                 finally:
                     # Ensure progress bar is stopped after each attempt
@@ -342,7 +341,7 @@ class DownloadHandler:
                 # Add wait time before next retry
                 if retry_count <= cls.MAX_RETRIES and not success:
                     wait_time = random.randint(2, 6)
-                    Logger.info(f"Retrying in [bold cyan]{wait_time}[/bold cyan] seconds "
+                    RichLogger.info(f"Retrying in [bold cyan]{wait_time}[/bold cyan] seconds "
                                 f"(attempt [bold cyan]{retry_count}[/bold cyan]/"
                                 f"[bold cyan]{cls.MAX_RETRIES}[/bold cyan])")
                     time.sleep(wait_time)
@@ -375,38 +374,38 @@ class DownloadHandler:
             # e.g. Content-Range: bytes 14204624-31962046/31962047
             try:
                 content_range = response.headers['Content-Range']
-                Logger.debug(f"Found Content-Range header: [bold cyan]{content_range}[/bold cyan]")
+                RichLogger.debug(f"Found Content-Range header: [bold cyan]{content_range}[/bold cyan]")
                 # Format: bytes 0-999/1000
                 if '/' in content_range:
                     total_size = content_range.split('/')[-1]
                     if total_size != '*':
                         size = int(total_size)
-                        Logger.debug(f"Parsed size from Content-Range: "
+                        RichLogger.debug(f"Parsed size from Content-Range: "
                                      f"[bold cyan]{size}[/bold cyan] bytes")
                         return size
             except (ValueError, TypeError, IndexError) as e:
-                Logger.debug(f"Failed to parse Content-Range: [bold cyan]{e}[/bold cyan]")
+                RichLogger.debug(f"Failed to parse Content-Range: [bold cyan]{e}[/bold cyan]")
 
         # Try to get Content-Length
         if 'Content-Length' in response.headers:
             try:
                 size = int(response.headers['Content-Length'])
-                Logger.debug(f"Found Content-Length header: [bold cyan]{size}[/bold cyan] bytes")
+                RichLogger.debug(f"Found Content-Length header: [bold cyan]{size}[/bold cyan] bytes")
                 return size
             except (ValueError, TypeError) as e:
-                Logger.debug(f"Failed to parse Content-Length: [bold cyan]{e}[/bold cyan]")
+                RichLogger.debug(f"Failed to parse Content-Length: [bold cyan]{e}[/bold cyan]")
 
         # Try alternative headers
         for header in ['X-Goog-Stored-Content-Length', 'x-amz-meta-size']:
             if header in response.headers:
                 try:
                     size = int(response.headers[header])
-                    Logger.debug(f"Found {header} header: [bold cyan]{size}[/bold cyan] bytes")
+                    RichLogger.debug(f"Found {header} header: [bold cyan]{size}[/bold cyan] bytes")
                     return size
                 except (ValueError, TypeError) as e:
-                    Logger.debug(f"Failed to parse {header}: [bold cyan]{e}[/bold cyan]")
+                    RichLogger.debug(f"Failed to parse {header}: [bold cyan]{e}[/bold cyan]")
 
-        Logger.debug("No file size information found in response headers")
+        RichLogger.debug("No file size information found in response headers")
         return None
 
     @classmethod
@@ -425,7 +424,7 @@ class DownloadHandler:
         """
         supports_partial = ("Accept-Ranges" in response.headers and
                             response.headers.get('Accept-Ranges') == "bytes")
-        Logger.debug(f"Server supports partial content: [bold cyan]{supports_partial}[/bold cyan]")
+        RichLogger.debug(f"Server supports partial content: [bold cyan]{supports_partial}[/bold cyan]")
         return supports_partial
 
     @classmethod
@@ -444,9 +443,9 @@ class DownloadHandler:
         """
         if file_path.exists():
             size = file_path.stat().st_size
-            Logger.debug(f"Existing file size: [bold cyan]{size}[/bold cyan] bytes")
+            RichLogger.debug(f"Existing file size: [bold cyan]{size}[/bold cyan] bytes")
             return size
-        Logger.debug("File does not exist, starting from 0 bytes")
+        RichLogger.debug("File does not exist, starting from 0 bytes")
         return 0
 
     @classmethod

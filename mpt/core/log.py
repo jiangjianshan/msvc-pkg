@@ -12,12 +12,12 @@ import os
 
 from pathlib import Path
 
+from rich.console import Console
 from rich.logging import RichHandler
 from rich.traceback import install
 
-from mpt.core.console import console
 
-class Logger:
+class RichLogger:
     """
     Centralized logging utility for MPT application with rich text formatting support.
 
@@ -29,6 +29,13 @@ class Logger:
     # Class variables for logging state
     _initialized = False
     _logger = logging.getLogger("mpt")
+    # Initialize and configure the console instance with Rich formatting.
+    _console = Console(
+        force_terminal=True,      # Ensure rich formatting in all terminal environments
+        color_system="truecolor", # Enable 24-bit color support for vibrant output
+        highlight=True,           # Apply syntax highlighting to code and structured text
+        log_path=False            # Disable automatic logging to file for clean console output
+    )
     _formatter = None
     _file_handler = None
 
@@ -49,7 +56,7 @@ class Logger:
             return
 
         # Import here to avoid circular dependencies
-        from mpt.config.loader import UserConfig
+        from mpt.config.user import UserConfig
 
         # Load user configuration for logging settings
         user_settings = UserConfig.load()
@@ -75,9 +82,9 @@ class Logger:
 
         # Create RichHandler for enhanced console output with markup disabled
         console_handler = RichHandler(
-            console=console,
+            console=cls._console,
             markup=False,
-            show_level=True,
+            show_level=False,
             show_path=False,
             show_time=False,
             rich_tracebacks=True,
@@ -90,7 +97,7 @@ class Logger:
         cls._logger.addHandler(console_handler)
 
         # Install rich traceback handler for better exception reporting
-        install(console=console, show_locals=True)
+        install(console=cls._console, show_locals=True)
 
         # Mark logger as initialized
         cls._initialized = True
@@ -255,3 +262,32 @@ class Logger:
         if markup:
             kwargs['extra'] = {"markup": True}
         cls._logger.exception(msg, *args, **kwargs)
+
+    @classmethod
+    def print(cls, *args, **kwargs):
+        """
+        Print content to the console with rich text formatting.
+
+        Provides a convenience method for printing styled content using the
+        pre-configured console instance. Supports all Rich formatting options
+        and markup syntax for consistent output styling.
+
+        Args:
+            *args: Content to print with rich formatting
+            **kwargs: Additional formatting options passed to the console
+        """
+        cls._console.print(*args, **kwargs)
+
+    @classmethod
+    def get_console_width(cls):
+        """
+        Retrieve the current width of the console terminal.
+
+        Provides access to the console width property for layout and formatting
+        purposes in other modules. This ensures consistent terminal-aware rendering
+        throughout the application.
+
+        Returns:
+            int: Current width of the console terminal in characters
+        """
+        return cls._console.width

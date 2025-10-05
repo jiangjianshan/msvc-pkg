@@ -14,8 +14,7 @@ import winreg
 from pathlib import Path
 from typing import Optional
 
-from mpt.core.log import Logger
-from mpt.core.console import console
+from mpt.core.log import RichLogger
 from mpt.utils.bash import BashUtils
 
 class PathUtils:
@@ -52,11 +51,11 @@ class PathUtils:
                 path = Path(path)
 
             if not path.exists():
-                Logger.warning(f"Path does not exist: [bold yellow]{path}[/bold yellow]")
+                RichLogger.warning(f"Path does not exist: [bold yellow]{path}[/bold yellow]")
 
             bash_path = BashUtils.find_bash()
             if not bash_path:
-                Logger.error("Bash not found, cannot convert path")
+                RichLogger.error("Bash not found, cannot convert path")
                 return str(path)
 
             cmd = f"cygpath -u \"{str(path)}\""
@@ -70,5 +69,49 @@ class PathUtils:
             unix_path = result.stdout.strip()
             return unix_path
         except Exception as e:
-            Logger.exception(f"Exception occurred during path conversion: {e}")
+            RichLogger.exception(f"Exception occurred during path conversion: {e}")
             return str(path)
+
+    @staticmethod
+    def unix_to_win(path):
+        """
+        Convert Unix/Linux file paths to Windows-native format using Cygwin's path conversion.
+
+        This method leverages the Cygwin environment's path conversion capabilities to
+        transform Unix-style paths (e.g., '/c/Users/name') to Windows-style paths
+        (e.g., "C:\\Users\\name"). Essential for interoperability between
+        Unix-based tools and Windows applications.
+
+        Args:
+            path: Unix path to convert, either as a Path object or string representation
+
+        Returns:
+            str: Windows-formatted path string, or original path if conversion fails
+
+        Note:
+            Requires Git for Windows installation and proper bash environment setup.
+            Falls back to returning the original path if conversion is not possible.
+        """
+        try:
+            # Convert to string if it's a Path object
+            path_str = str(path) if isinstance(path, Path) else path
+
+            bash_path = BashUtils.find_bash()
+            if not bash_path:
+                RichLogger.error("Bash not found, cannot convert path")
+                return path_str
+
+            cmd = f"cygpath -w \"{path_str}\""
+            result = subprocess.run(
+                [bash_path, "-c", cmd],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+            win_path = result.stdout.strip()
+            return win_path
+        except Exception as e:
+            RichLogger.exception(f"Exception occurred during path conversion: {e}")
+            return str(path) if isinstance(path, Path) else path
+

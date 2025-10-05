@@ -38,6 +38,21 @@ clean_build()
   cd "$SRC_DIR" && [[ -d "$BUILD_DIR" ]] && rm -rf "$BUILD_DIR"
 }
 
+prepare_stage()
+{
+  echo "Patching package $PKG_NAME $PKG_VER"
+  cd "$SRC_DIR" || exit 1
+  if [ ! -f "AUTHORS" ]; then
+    touch ./AUTHORS
+  fi
+  if [ ! -f "NEWS" ]; then
+    touch ./NEWS
+  fi
+  WANT_AUTOCONF='2.69' WANT_AUTOMAKE='1.16' autoreconf -ifv
+  rm -rfv autom4te.cache
+  find . -name "*~" -type f -print -exec rm -rfv {} \;
+}
+
 configure_stage()
 {
   echo "Configuring $PKG_NAME $PKG_VER"
@@ -135,6 +150,7 @@ install_stage()
   clean_build
 }
 
+prepare_stage
 configure_stage
 patch_stage
 build_stage

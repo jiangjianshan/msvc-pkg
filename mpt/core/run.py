@@ -13,9 +13,9 @@ from typing import Dict, Any, Optional, Union, List
 from rich.text import Text
 
 from mpt import ROOT_DIR
-from mpt.config.loader import PackageConfig, UserConfig
-from mpt.core.console import console
-from mpt.core.log import Logger
+from mpt.config.package import PackageConfig
+from mpt.config.user import UserConfig
+from mpt.core.log import RichLogger
 from mpt.core.view import RichPanel
 from mpt.utils.bash import BashUtils
 
@@ -119,9 +119,9 @@ class Runner:
             mode = wintypes.DWORD()
             if ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
                 cls._saved_console_mode = mode.value
-                Logger.debug(f"Saved console mode: {cls._saved_console_mode:#x}")
+                RichLogger.debug(f"Saved console mode: {cls._saved_console_mode:#x}")
         except Exception as e:
-            Logger.exception(f"Save console mode error: {e}")
+            RichLogger.exception(f"Save console mode error: {e}")
 
     @classmethod
     def _restore_console_mode(cls):
@@ -153,9 +153,9 @@ class Runner:
             # Restore only if changed
             if current_mode.value != cls._saved_console_mode:
                 if ctypes.windll.kernel32.SetConsoleMode(handle, cls._saved_console_mode):
-                    Logger.debug(f"Restored console mode: {cls._saved_console_mode:#x}")
+                    RichLogger.debug(f"Restored console mode: {cls._saved_console_mode:#x}")
         except Exception as e:
-            Logger.exception(f"Restore console mode error: {e}")
+            RichLogger.exception(f"Restore console mode error: {e}")
 
     @classmethod
     def execute(cls, cmds: Union[List[str], str], shell: bool = False, log_file: Optional[Union[str, Path]] = None) -> int:
@@ -190,7 +190,7 @@ class Runner:
             # Save console mode before execution
             cls._save_console_mode()
             if log_file:
-                Logger.add_file_logging(log_file)
+                RichLogger.add_file_logging(log_file)
             p = subprocess.Popen(
                 cmds,
                 shell=shell,
@@ -202,13 +202,13 @@ class Runner:
             for line in iter(p.stdout.readline, b''):
                 decoded_line = line.decode('utf-8', errors='ignore').rstrip()
                 if error_pattern.search(decoded_line):
-                    Logger.error(decoded_line, markup=False)
+                    RichLogger.error(decoded_line, markup=False)
                     error_count += 1
                 elif warning_pattern.search(decoded_line):
-                    Logger.warning(decoded_line, markup=False)
+                    RichLogger.warning(decoded_line, markup=False)
                     warning_count += 1
                 else:
-                    Logger.info(decoded_line, markup=False)
+                    RichLogger.info(decoded_line, markup=False)
                 if p.poll() is not None:
                     break
             # Wait for process completion
@@ -216,15 +216,15 @@ class Runner:
             return exit_code
 
         except Exception as e:
-            Logger.exception(f"Unhandled execution error: [bold red]{str(e)}[/bold red]")
+            RichLogger.exception(f"Unhandled execution error: [bold red]{str(e)}[/bold red]")
             return -1
 
         finally:
             if log_file:
-                Logger.remove_file_logging()
+                RichLogger.remove_file_logging()
             # CRITICAL: Restore console mode immediately after process exits
             cls._restore_console_mode()
-            Logger.debug(f"Process exit code: {exit_code}")
+            RichLogger.debug(f"Process exit code: {exit_code}")
             status = "✅ Success" if exit_code == 0 else "❌❌ Failed"
             summary_text = Text.from_markup(
                 f"📊 Status: [bold green]{status}[/bold green] | "
@@ -265,40 +265,13 @@ class Runner:
             else:
                 bash_path = BashUtils.find_bash()
                 if not bash_path:
-                    Logger.critical("Bash not found")
+                    RichLogger.critical("Bash not found")
                     return False
                 cmds = [bash_path, script_file.name]
             exit_code = cls.execute(cmds, log_file=log_file)
             return exit_code == 0
         except Exception as e:
-            Logger.exception(f"Failed to execute script: {e}")
+            RichLogger.exception(f"Failed to execute script: {e}")
             return False
         finally:
             os.chdir(orig_dir)
-
-    @classmethod
-    def prerun(cls, config: Dict[str, Any]) -> bool:
-        """
-        Execute the prerun.sh script for a library if it exists, with config-based flexibility.
-
-        This method checks for the existence of a prerun.sh script in the library's
-        package directory and executes it if found. The script runs with the provided
-        environment variables and is intended for pre-build setup tasks.
-
-        Args:
-            config: Library configuration dictionary containing name and other metadata
-
-        Returns:
-            bool: True if script executed successfully or doesn't exist, False on execution failure
-        """
-        lib_name = config.get('name')
-        if not lib_name:
-            Logger.error("Library name not found in configuration")
-            return False
-
-        prerun_script = ROOT_DIR / 'packages' / lib_name / 'prerun.sh'
-        if not prerun_script.exists():
-            return True
-
-        Logger.info(f"Running prerun script for [bold cyan]{lib_name}[/bold cyan]")
-        return cls.run_script(prerun_script)

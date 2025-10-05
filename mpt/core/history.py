@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 from mpt import ROOT_DIR
-from mpt.core.log import Logger
+from mpt.core.log import RichLogger
 
 
 class HistoryManager:
@@ -38,7 +38,7 @@ class HistoryManager:
         try:
             return cls.RECORD_FILE
         except Exception as e:
-            Logger.exception(f"Error getting record path: {e}")
+            RichLogger.exception(f"Error getting record path: {e}")
             raise
 
     @classmethod
@@ -64,10 +64,10 @@ class HistoryManager:
                     records = yaml.safe_load(f) or {}
                     return records
             except Exception as e:
-                Logger.exception(f"Failed to load records from [bold cyan]{record_path}[/bold cyan]: [red]{e}[/red]")
+                RichLogger.exception(f"Failed to load records from [bold cyan]{record_path}[/bold cyan]: [red]{e}[/red]")
                 return {}
         except Exception as e:
-            Logger.exception(f"Error in _load_records: {e}")
+            RichLogger.exception(f"Error in _load_records: {e}")
             return {}
 
     @classmethod
@@ -91,18 +91,18 @@ class HistoryManager:
                 try:
                     record_path.parent.mkdir(parents=True, exist_ok=True)
                 except Exception as e:
-                    Logger.exception(f"Failed to create directory {record_path.parent}: {e}")
+                    RichLogger.exception(f"Failed to create directory {record_path.parent}: {e}")
                     return False
 
             try:
                 with open(record_path, 'w', encoding='utf-8') as f:
-                    yaml.safe_dump(records, f, sort_keys=False, allow_unicode=True)
+                    yaml.safe_dump(records, f, sort_keys=True, allow_unicode=True)
                 return True
             except Exception as e:
-                Logger.exception(f"Failed to save records to [bold cyan]{record_path}[/bold cyan]: [red]{e}[/red]")
+                RichLogger.exception(f"Failed to save records to [bold cyan]{record_path}[/bold cyan]: [red]{e}[/red]")
                 return False
         except Exception as e:
-            Logger.exception(f"Error in _save_records: {e}")
+            RichLogger.exception(f"Error in _save_records: {e}")
             return False
 
     @classmethod
@@ -141,10 +141,10 @@ class HistoryManager:
 
             success = cls._save_records(records)
             if not success:
-                Logger.error(f"[[bold red]{node_name}[/bold red]] Failed to add record for library on arch [magenta]{arch}[/magenta]")
+                RichLogger.error(f"[[bold red]{node_name}[/bold red]] Failed to add record for library on arch [magenta]{arch}[/magenta]")
             return success
         except Exception as e:
-            Logger.exception(f"Error adding record for {node_name} on {arch}: {e}")
+            RichLogger.exception(f"Error adding record for {node_name} on {arch}: {e}")
             return False
 
     @classmethod
@@ -178,7 +178,7 @@ class HistoryManager:
                 return cls._save_records(records)
             return True
         except Exception as e:
-            Logger.exception(f"Error removing record for {node_name} on {arch}: {e}")
+            RichLogger.exception(f"Error removing record for {node_name} on {arch}: {e}")
             return False
 
     @classmethod
@@ -202,7 +202,7 @@ class HistoryManager:
             records = cls._load_records()
             return arch in records and node_name in records[arch]
         except Exception as e:
-            Logger.exception(f"Error checking installation status for {node_name} on {arch}: {e}")
+            RichLogger.exception(f"Error checking installation status for {node_name} on {arch}: {e}")
             return False
 
     @classmethod
@@ -241,7 +241,7 @@ class HistoryManager:
 
             return False
         except Exception as e:
-            Logger.exception(f"Error checking for update for {node_name} on {arch}: {e}")
+            RichLogger.exception(f"Error checking for update for {node_name} on {arch}: {e}")
             return True
 
     @classmethod
@@ -281,7 +281,7 @@ class HistoryManager:
 
             return result
         except Exception as e:
-            Logger.exception(f"Error getting library info for {node_name} on {arch}: {e}")
+            RichLogger.exception(f"Error getting library info for {node_name} on {arch}: {e}")
             return None
 
     @classmethod
@@ -298,5 +298,5 @@ class HistoryManager:
             records = cls._load_records()
             return records.get(arch, {})
         except Exception as e:
-            Logger.exception(f"Error getting records for arch {arch}: {e}")
+            RichLogger.exception(f"Error getting records for arch {arch}: {e}")
             return {}

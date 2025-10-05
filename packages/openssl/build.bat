@@ -27,10 +27,23 @@ set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:l
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
 set CL=-MP %C_OPTS% %C_DEFS%
 
+call :prepare_stage
 call :configure_stage
 call :build_stage
 call :install_stage
 goto :end
+
+rem ==============================================================================
+rem  Prepare package before configure or build
+rem ==============================================================================
+:prepare_stage
+echo "Patching package %PKG_NAME% %PKG_VER%"
+cd "%SRC_DIR%"
+echo "Patching windows-makefile.tmpl in Configurations"
+pushd Configurations
+sed -e "s|$(INSTALLTOP)\\html\\|$(INSTALLTOP)\\share\\man\\|g" -i windows-makefile.tmpl
+popd
+exit /b 0
 
 rem ==============================================================================
 rem  Configure package and ready to build

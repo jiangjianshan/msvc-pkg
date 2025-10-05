@@ -5,6 +5,7 @@ recursive: false
 depth: 1
 dependencies:
   required:
+    - BuildTools
     - dlfcn-win32
     - gmp
 run: build.sh

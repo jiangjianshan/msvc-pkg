@@ -33,6 +33,17 @@ clean_build()
   cd "$SRC_DIR" && [[ -d "$BUILD_DIR" ]] && rm -rf "$BUILD_DIR"
 }
 
+prepare_stage()
+{
+  echo "Patching package $PKG_NAME $PKG_VER"
+  cd "$SRC_DIR" || exit 1
+  # NOTE: In order to msvc can build shared library, configure and ltmain.sh files
+  #       need to be updated.
+  WANT_AUTOCONF='2.69' WANT_AUTOMAKE='1.16' autoreconf -ifv
+  rm -rfv autom4te.cache
+  find . -name "*~" -type f -print -exec rm -rfv {} \;
+}
+
 configure_stage()
 {
   echo "Configuring $PKG_NAME $PKG_VER"
@@ -111,6 +122,7 @@ install_stage()
   clean_build
 }
 
+prepare_stage
 configure_stage
 patch_stage
 build_stage

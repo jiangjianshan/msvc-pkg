@@ -33,6 +33,18 @@ clean_build()
   cd "$SRC_DIR" && [[ -d "$BUILD_DIR" ]] && rm -rf "$BUILD_DIR"
 }
 
+prepare_stage()
+{
+  echo "Patching package $PKG_NAME $PKG_VER"
+  cd "$SRC_DIR" || exit 1
+  echo "Patching configure in top level"
+  sed                                                                            \
+    -e 's|IMPLIBNAME=libx264\.dll\.lib|IMPLIBNAME=x264.lib|g'                    \
+    -e 's|SONAME=libx264-$API\.dll|SONAME=x264-$API.dll|g'                       \
+    -i configure
+  chmod +x configure
+}
+
 configure_stage()
 {
   echo "Configuring $PKG_NAME $PKG_VER"
@@ -69,6 +81,7 @@ install_stage()
   clean_build
 }
 
+prepare_stage
 configure_stage
 patch_stage
 build_stage

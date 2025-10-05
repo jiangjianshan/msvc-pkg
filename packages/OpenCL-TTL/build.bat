@@ -26,10 +26,21 @@ set BUILD_DIR=%SRC_DIR%\build%ARCH:x=%
 set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
 
+call :prepare_stage
 call :configure_stage
 call :build_stage
 call :install_stage
 goto :end
+
+rem ==============================================================================
+rem  Prepare package before configure or build
+rem ==============================================================================
+:prepare_stage
+echo "Patching package %PKG_NAME% %PKG_VER%"
+cd "%SRC_DIR%"
+rem NOTE: to avoid delete the whole include folder of $PREFIX
+sed "/file (REMOVE_RECURSE ${install_directory})/d" -i CMakeLists.txt
+exit /b 0
 
 rem ==============================================================================
 rem  Configure package and ready to build

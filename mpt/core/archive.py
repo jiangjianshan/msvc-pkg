@@ -15,7 +15,7 @@ import io
 from pathlib import Path
 from typing import Optional, Union, List
 
-from mpt.core.log import Logger
+from mpt.core.log import RichLogger
 
 class ArchiveHandler:
     """Provides comprehensive utilities for archive handling, extraction, and hash verification"""
@@ -49,7 +49,7 @@ class ArchiveHandler:
                     return True
             return False
         except Exception as e:
-            Logger.exception(f"Error in _should_exclude for file {file_path}: {str(e)}")
+            RichLogger.exception(f"Error in _should_exclude for file {file_path}: {str(e)}")
             return False
 
     @staticmethod
@@ -74,7 +74,7 @@ class ArchiveHandler:
                 return True
 
             if not file_path.exists():
-                Logger.error(f"File not found: {file_path}")
+                RichLogger.error(f"File not found: {file_path}")
                 return False
 
             hash_func = hashlib.sha256()
@@ -90,12 +90,12 @@ class ArchiveHandler:
             if actual_hash == expected_hash:
                 return True
             else:
-                Logger.error(f"Hash mismatch for file: {file_path}")
-                Logger.error(f"Expected: {expected_hash}")
-                Logger.error(f"Actual: {actual_hash}")
+                RichLogger.error(f"Hash mismatch for file: {file_path}")
+                RichLogger.error(f"Expected: {expected_hash}")
+                RichLogger.error(f"Actual: {actual_hash}")
                 return False
         except Exception as e:
-            Logger.exception(f"Hash verification failed for {file_path}: {str(e)}")
+            RichLogger.exception(f"Hash verification failed for {file_path}: {str(e)}")
             return False
 
     @staticmethod
@@ -127,14 +127,14 @@ class ArchiveHandler:
         """
         try:
             if not archive_path.exists():
-                Logger.error(f"Archive not found: {archive_path}")
+                RichLogger.error(f"Archive not found: {archive_path}")
                 return False
 
             if not target_dir.exists():
                 try:
                     target_dir.mkdir(parents=True, exist_ok=True)
                 except Exception as e:
-                    Logger.exception(f"Failed to create target directory {target_dir}: {str(e)}")
+                    RichLogger.exception(f"Failed to create target directory {target_dir}: {str(e)}")
                     return False
 
             archive_ext = archive_path.suffix.lower()
@@ -149,11 +149,11 @@ class ArchiveHandler:
                 try:
                     archive_path.unlink()
                 except Exception as e:
-                    Logger.exception(f"Failed to remove archive {archive_path}: {str(e)}")
+                    RichLogger.exception(f"Failed to remove archive {archive_path}: {str(e)}")
 
             return success
         except Exception as e:
-            Logger.exception(f"Archive extraction failed for {archive_path}: {str(e)}")
+            RichLogger.exception(f"Archive extraction failed for {archive_path}: {str(e)}")
             return False
 
     @staticmethod
@@ -228,18 +228,18 @@ class ArchiveHandler:
                             tar.extract(member, path=str(target_dir))
                             extracted_count += 1
                         except Exception as e:
-                            Logger.exception(f"Failed to extract member {member.name}: {str(e)}")
+                            RichLogger.exception(f"Failed to extract member {member.name}: {str(e)}")
                             continue
                     return extracted_count > 0
 
         except zstd.ZstdError as e:
-            Logger.exception(f"ZST decompression failed: {str(e)}")
+            RichLogger.exception(f"ZST decompression failed: {str(e)}")
             return False
         except tarfile.TarError as e:
-            Logger.exception(f"Tar extraction failed: {str(e)}")
+            RichLogger.exception(f"Tar extraction failed: {str(e)}")
             return False
         except Exception as e:
-            Logger.exception(f"Unexpected error during ZSTD extraction: {str(e)}")
+            RichLogger.exception(f"Unexpected error during ZSTD extraction: {str(e)}")
             return False
 
     @staticmethod
@@ -305,12 +305,12 @@ class ArchiveHandler:
                         zip_ref.extract(member, path=str(target_dir))
                         extracted_count += 1
                     except Exception as e:
-                        Logger.exception(f"Failed to extract member {member.filename}: {str(e)}")
+                        RichLogger.exception(f"Failed to extract member {member.filename}: {str(e)}")
                         continue
                 return extracted_count > 0
 
         except Exception as e:
-            Logger.exception(f"Failed to extract ZIP archive {archive_path}: {str(e)}")
+            RichLogger.exception(f"Failed to extract ZIP archive {archive_path}: {str(e)}")
             return False
 
     @staticmethod
@@ -380,12 +380,12 @@ class ArchiveHandler:
                         tar_ref.extract(member, path=str(target_dir))
                         extracted_count += 1
                     except Exception as e:
-                        Logger.exception(f"Failed to extract member {member.name}: {str(e)}")
+                        RichLogger.exception(f"Failed to extract member {member.name}: {str(e)}")
                         continue
                 return extracted_count > 0
 
         except Exception as e:
-            Logger.exception(f"Failed to extract TAR archive {archive_path}: {str(e)}")
+            RichLogger.exception(f"Failed to extract TAR archive {archive_path}: {str(e)}")
             return False
 
     @staticmethod
@@ -417,7 +417,7 @@ class ArchiveHandler:
                 return True
             return False
         except Exception as e:
-            Logger.exception(f"Error in _is_unsafe_path for path {path}: {str(e)}")
+            RichLogger.exception(f"Error in _is_unsafe_path for path {path}: {str(e)}")
             return True
 
     @staticmethod
@@ -442,7 +442,7 @@ class ArchiveHandler:
                 return ""
             return normalized_path
         except Exception as e:
-            Logger.exception(f"Error in _normalize_path for path {original_path}: {str(e)}")
+            RichLogger.exception(f"Error in _normalize_path for path {original_path}: {str(e)}")
             return ""
 
     @staticmethod
@@ -474,7 +474,7 @@ class ArchiveHandler:
 
                 matching_items = [item for item in all_items if item.replace('\\', '/').startswith(normalized_path)]
                 if not matching_items:
-                    Logger.warning(f"No items in archive match extract path: {normalized_path}")
+                    RichLogger.warning(f"No items in archive match extract path: {normalized_path}")
                 return normalized_path
 
             if isinstance(archive, zipfile.ZipFile):
@@ -512,5 +512,5 @@ class ArchiveHandler:
 
             return ""
         except Exception as e:
-            Logger.exception(f"Error in _determine_base_path: {str(e)}")
+            RichLogger.exception(f"Error in _determine_base_path: {str(e)}")
             return ""

@@ -12,17 +12,16 @@ from rich.table import Table
 from rich import box
 
 from mpt import ROOT_DIR
-from mpt.core.console import console
-from mpt.config.loader import PackageConfig
-from mpt.core.log import Logger
+from mpt.config.package import PackageConfig
+from mpt.core.log import RichLogger
 from mpt.core.view import RichPanel
 
 
 class CommandLineParser:
-    """Command line interface parser for MSVC-PKG build system.
+    """Command line interface parser for MSVC Package Tool.
 
     Provides comprehensive argument parsing, validation, and help display for
-    the MSVC-PKG package management system. Supports multiple actions, architecture
+    the MSVC Package Tool. Supports multiple actions, architecture
     selection, prefix configuration, and library-specific settings with rich
     formatted output and detailed error reporting.
     """
@@ -35,7 +34,7 @@ class CommandLineParser:
     @staticmethod
     def parse_arguments() -> Tuple[str, str, List[str], str, Dict[str, str]]:
         """
-        Parse and validate command line arguments for the MSVC-PKG build system.
+        Parse and validate command line arguments for the MSVC Package Tool.
 
         Processes command line inputs including actions, target architecture,
         library selection, prefix configuration, and library-specific settings.
@@ -71,10 +70,10 @@ class CommandLineParser:
 
         except SystemExit as e:
             if e.code != 0:
-                Logger.error(f"Argument parsing failed with exit code: {e.code}")
+                RichLogger.error(f"Argument parsing failed with exit code: {e.code}")
             sys.exit(e.code)
         except Exception as e:
-            Logger.exception(f"Unexpected error during argument parsing: {str(e)}")
+            RichLogger.exception(f"Unexpected error during argument parsing: {str(e)}")
             sys.exit(1)
 
     @staticmethod
@@ -93,7 +92,7 @@ class CommandLineParser:
         try:
             parser = argparse.ArgumentParser(
                 prog='mpt',
-                description="MSVC-PKG Build System",
+                description="MSVC Package Tool",
                 formatter_class=argparse.RawTextHelpFormatter,
                 add_help=False,
                 epilog="Default behavior: Install all libraries for x64 architecture"
@@ -141,7 +140,7 @@ class CommandLineParser:
 
             return parser
         except Exception as e:
-            Logger.exception(f"Failed to create argument parser: {str(e)}")
+            RichLogger.exception(f"Failed to create argument parser: {str(e)}")
             raise
 
     @staticmethod
@@ -179,17 +178,17 @@ class CommandLineParser:
                         i += 2
                         continue
                     else:
-                        Logger.error(f"Missing path for argument: {arg}")
+                        RichLogger.error(f"Missing path for argument: {arg}")
                         sys.exit(1)
                 else:
-                    Logger.error(f"Unrecognized argument: {arg}")
+                    RichLogger.error(f"Unrecognized argument: {arg}")
                     sys.exit(1)
 
                 i += 1
 
             return lib_prefixes
         except Exception as e:
-            Logger.exception(f"Error processing unknown arguments: {str(e)}")
+            RichLogger.exception(f"Error processing unknown arguments: {str(e)}")
             sys.exit(1)
 
     @staticmethod
@@ -223,7 +222,7 @@ class CommandLineParser:
 
             return 'install'
         except Exception as e:
-            Logger.exception(f"Error determining action: {str(e)}")
+            RichLogger.exception(f"Error determining action: {str(e)}")
             sys.exit(1)
 
     @staticmethod
@@ -275,7 +274,7 @@ class CommandLineParser:
 
             return libraries
         except Exception as e:
-            Logger.exception(f"Error validating libraries: {str(e)}")
+            RichLogger.exception(f"Error validating libraries: {str(e)}")
             sys.exit(1)
 
     @staticmethod
@@ -290,25 +289,25 @@ class CommandLineParser:
         try:
             usage_text = Text("📝 Usage:\n", style="bold")
             usage_text.append("     mpt [OPTIONS] [LIBRARIES...]\n", style="bold green")
-            console.print(usage_text)
+            RichLogger.print(usage_text)
 
-            console.print("⚙️️ Options:", style="bold")
+            RichLogger.print("⚙️️ Options:", style="bold")
             CommandLineParser._print_options_table()
 
-            console.print("🚀 Examples:", style="bold")
+            RichLogger.print("🚀 Examples:", style="bold")
             CommandLineParser._print_examples_table()
 
-            console.print(
+            RichLogger.print(
                 "Default behavior: Install all libraries for x64 architecture",
                 style="italic"
             )
 
-            console.print(
+            RichLogger.print(
                 "For more information, visit: https://github.com/msvc-pkg",
                 style="dim"
             )
         except Exception as e:
-            Logger.exception(f"Error printing help: {str(e)}")
+            RichLogger.exception(f"Error printing help: {str(e)}")
             sys.exit(1)
 
     @staticmethod
@@ -348,9 +347,9 @@ class CommandLineParser:
             for option, description in option_rows:
                 options_table.add_row(option, description)
 
-            console.print(options_table)
+            RichLogger.print(options_table)
         except Exception as e:
-            Logger.exception(f"Error printing options table: {str(e)}")
+            RichLogger.exception(f"Error printing options table: {str(e)}")
             raise
 
     @staticmethod
@@ -399,7 +398,7 @@ class CommandLineParser:
             for command, description in example_rows:
                 examples_table.add_row(command, description)
 
-            console.print(examples_table)
+            RichLogger.print(examples_table)
         except Exception as e:
-            Logger.exception(f"Error printing examples table: {str(e)}")
+            RichLogger.exception(f"Error printing examples table: {str(e)}")
             raise

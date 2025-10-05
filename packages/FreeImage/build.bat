@@ -27,9 +27,21 @@ set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:l
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
 set CL=-MP
 
+call :prepare_stage
 call :build_stage
 call :install_stage
 goto :end
+
+rem ==============================================================================
+rem  Prepare package before configure or build
+rem ==============================================================================
+:prepare_stage
+echo "Patching package %PKG_NAME% %PKG_VER%"
+cd "%SRC_DIR%"
+for /f "delims=" %%f in ('dir /b /s *.vcxproj') do (
+    sed -i "/10.0.16299.0/d" "%%f"
+)
+exit /b 0
 
 rem ==============================================================================
 rem  Build package

@@ -34,6 +34,32 @@ clean_build()
   cd "$SRC_DIR" && [[ -d "$BUILD_DIR" ]] && rm -rf "$BUILD_DIR"
 }
 
+prepare_stage()
+{
+  echo "Patching package $PKG_NAME $PKG_VER"
+  cd "$SRC_DIR" || exit 1
+  WANT_AUTOCONF='2.69' WANT_AUTOMAKE='1.16' autoreconf -ifv
+  rm -rfv autom4te.cache
+  find . -name "*~" -type f -print -exec rm -rfv {} \;
+
+  # ifort          gfortran         Commentary
+  # -----------------------------------------------------------------------
+  # -Vaxlib                         Enables old VAX library compatibility
+  #                                 (should not be necessary with gfortran
+  #                                 and newer ifort versions)
+  #
+  # -Vaxlib is an older option for the version 9.0 and older compilers and no longer exists
+  echo "Patching configure in top level"
+  # NOTE: Changed '*,cl* | *,icl*)' to '*,cl| *,icl* | *,ifort*)'
+  #       can solved following issues:
+  #       1) The library_names_spec is not correct because it contains .dll name. This will also cause
+  #          the shared library will be converted to symbolic link as .dll file.
+  sed                                                                                                \
+    -e "s|-mp -Vaxlib|-MP:$(nproc)|g"                                                                \
+    -i configure
+  chmod +x configure
+}
+
 configure_stage()
 {
   echo "Configuring $PKG_NAME $PKG_VER"
@@ -125,6 +151,7 @@ install_stage()
   clean_build
 }
 
+prepare_stage
 configure_stage
 patch_stage
 build_stage

@@ -1,20 +1,10 @@
 <div align="center">
   <h1>✨🚀 MSVC-PKG 🚀✨</h1>
-  <p><strong>🛠️ A Professional Build Framework for Native Windows Development</strong></p>
-  <p><strong>with MSVC, LLVM, Intel, and NVIDIA Toolchains</strong></p>
-</div>
-
-<br>
-
-<div align="center">
-  <p>🎯 <em>Stop wrestling with build environments and dependency hell</em></p>
-  <p>🎯 <em>This framework automates it all, letting you focus on what you build</em></p>
-  <p>🎯 <em>Not on how it builds</em></p>
 </div>
 
 ## 📖 Overview
 
-MSVC-PKG is a lightweight framework designed for building native Windows libraries from source code, supporting C/C++/Fortran open-source projects. 🛠️ Each library acts like a plugin residing in the `packages/<library-name>` directory, containing the 📄 config.yaml configuration file, 🩹 optional .diff patch files (zero or more), ⚡ an optional prerun.sh preprocessing script, and the 🛠️ build.bat or build.sh build script. Through its flexible plugin architecture, the framework does not bind to specific 🔧 compilers or 🏗️ build systems, allowing each library to customize its compilation process. It provides 🧠 automated dependency resolution, 🎨 full-color output logs, 🌳 dependency tree generation, and 📊 topological sorting, simplifying the management and building of numerous libraries. msvc-pkg offers many more powerful features—clone the repository to experience its full potential firsthand. 🚀
+MSVC-PKG is a lightweight framework designed for building native Windows libraries from source code, supporting C/C++/Fortran open-source projects. 🛠️ Each library acts like a plugin residing in the `packages/<library-name>` directory, containing the 📄 config.yaml configuration file, 🩹 optional .diff patch files (zero or more), and the 🛠️ build.bat or build.sh build script. Through its flexible plugin architecture, the framework does not bind to specific 🔧 compilers or 🏗️ build systems, allowing each library to customize its compilation process. It provides 🧠 automated dependency resolution, 🎨 full-color output logs, 🌳 dependency tree generation, and 📊 topological sorting, simplifying the management and building of numerous libraries. msvc-pkg offers many more powerful features—clone the repository to experience its full potential firsthand. 🚀
 
 ---
 
@@ -36,15 +26,6 @@ MSVC-PKG is a lightweight framework designed for building native Windows librari
 - 🔄 **Runtime Dependency Handling**: Auto-detects and installs system-level runtime dependencies.
 - 🩹 **Patch Application**: Supports custom patch application during build for source code modifications.
 - 📊 **Version Tracking**: Maintains detailed records of installed versions and build history.
-
-## 🏆 Why Choose MSVC-PKG?
-
-- ⏱️ **Time Savings**: Resolves complex build issues, saves days of debugging
-- 🎯 **MSVC Compliance**: Proper Windows library naming, no Unix compatibility issues
-- 📚 **Easy Learning**: Extensive examples in `packages/<library-name>` directory
-- 🧩 **Flexible Architecture**: Easy library addition/removal as independent plugins
-- 🔧 **Toolchain Transparency**: Core doesn't bind to compilers, libraries choose their own
-- 🌱 **Maintainable Design**: Clear plugin structure, independent build processes
 
 ## 🚀 Quick Start
 
@@ -185,16 +166,11 @@ We welcome contributions! 🎉 Here's how you can help:
    - Create `.diff` files for Windows-specific fixes required to successfully compile the library
    - Patch files are optional and should be created based on the specific library's requirements
 
-3. **⚙️ Write prerun.sh Script**
-   - Create `prerun.sh` for source code preprocessing before building
-   - Handles tasks like running `autoreconf -ifv` or applying patches via `sed` commands
-   - Provides more robust alternative to `.diff` files when library versions change frequently
-
-4. **🛠️ Write Build Scripts**
+3. **🛠️ Write Build Scripts**
    - Create `build.bat` or `build.sh` based on the library's build system
    - Refer to examples of similar build systems in existing packages
 
-5. **🧪 Test and Submit**
+4. **🧪 Test and Submit**
    ```bash
    mpt <library-name> # Test installation
    ```
@@ -204,13 +180,6 @@ We welcome contributions! 🎉 Here's how you can help:
 ### 🔧 Development Process
 1. **Fork Repository**
 2. **Create Feature Branch**
-3. **Make Changes** following code style
+3. **Make Changes**
 4. **Test Thoroughly**
-5. **Submit Pull Request** with clear description
-
----
-
-<div align="center">
-  <h3>💻✨ Modernized Windows C/C++/Fortran Development</h3>
-  <p><strong>🎯 Focus on coding, not environment configuration!</strong></p>
-</div>
+5. **Submit Pull Request**

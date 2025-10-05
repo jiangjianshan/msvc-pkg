@@ -11,7 +11,7 @@ import time
 
 from pathlib import Path
 
-from mpt.core.log import Logger
+from mpt.core.log import RichLogger
 
 class GitHandler:
     """
@@ -139,7 +139,7 @@ class GitHandler:
         if target_dir.exists():
             # Check if directory contains only a .git folder (incomplete clone)
             if GitHandler._is_only_git_directory(target_dir):
-                Logger.warning(f"Directory contains only .git folder, removing: {target_dir}")
+                RichLogger.warning(f"Directory contains only .git folder, removing: {target_dir}")
                 if not GitHandler._force_delete_directory(target_dir):
                     return False
             elif GitHandler._is_empty_directory(target_dir):
@@ -180,7 +180,7 @@ class GitHandler:
         # For recursive clones, ensure submodules are properly initialized
         if recursive:
             if not GitHandler._update_submodules(target_dir, depth, override_submodules):
-                Logger.error("Submodule initialization failed during clone")
+                RichLogger.error("Submodule initialization failed during clone")
                 return False
 
         return True
@@ -206,7 +206,7 @@ class GitHandler:
         """
         # First check if repository is valid
         if not GitHandler.is_valid_repository(repo_dir):
-            Logger.warning(f"Repository is invalid, attempting repair: {repo_dir}")
+            RichLogger.warning(f"Repository is invalid, attempting repair: {repo_dir}")
             return GitHandler.repair_repository(repo_dir, config)
 
         # Check if directory is empty
@@ -255,7 +255,7 @@ class GitHandler:
         # Update submodules if recursive is enabled
         if recursive:
             if not GitHandler._update_submodules(repo_dir, depth, override_submodules):
-                Logger.error("Submodule update failed during repository update")
+                RichLogger.error("Submodule update failed during repository update")
                 return False
 
         return True
@@ -356,24 +356,24 @@ class GitHandler:
                 cmd = ['git', 'config', '-f', '.gitmodules', f'submodule.{submodule_path}.url', new_url]
                 success = GitHandler._run_git_command(cmd, repo_dir)
                 if not success:
-                    Logger.warning(f"Failed to set URL override for submodule {submodule_path}")
+                    RichLogger.warning(f"Failed to set URL override for submodule {submodule_path}")
                 else:
-                    Logger.info(f"Successfully overrode URL for submodule {submodule_path}")
+                    RichLogger.info(f"Successfully overrode URL for submodule {submodule_path}")
 
             if new_branch:
                 # Set submodule branch override
                 cmd = ['git', 'config', '-f', '.gitmodules', f'submodule.{submodule_path}.branch', new_branch]
                 success = GitHandler._run_git_command(cmd, repo_dir)
                 if not success:
-                    Logger.warning(f"Failed to set branch override for submodule {submodule_path}")
+                    RichLogger.warning(f"Failed to set branch override for submodule {submodule_path}")
                 else:
-                    Logger.info(f"Successfully overrode branch for submodule {submodule_path}")
+                    RichLogger.info(f"Successfully overrode branch for submodule {submodule_path}")
 
         # Sync submodules to apply any URL changes
         if override_submodules:
             success = GitHandler._run_git_command(['git', 'submodule', 'sync'], repo_dir)
             if not success:
-                Logger.warning("Submodule sync failed after applying overrides")
+                RichLogger.warning("Submodule sync failed after applying overrides")
 
         # Build submodule update command
         update_cmd = ['git', 'submodule', 'update', '--init', '--recursive', '--force', '--checkout']
@@ -387,7 +387,7 @@ class GitHandler:
         if success:
             success = GitHandler._verify_submodules(repo_dir)
         else:
-            Logger.error("Submodule update command failed")
+            RichLogger.error("Submodule update command failed")
 
         return success
 
@@ -414,12 +414,12 @@ class GitHandler:
         """
         # Check basic repository validity
         if not GitHandler.is_valid_repository(repo_dir):
-            Logger.warning(f"Repository is not valid: {repo_dir}")
+            RichLogger.warning(f"Repository is not valid: {repo_dir}")
             return False
 
         # Check if directory is empty
         if GitHandler._is_empty_directory(repo_dir):
-            Logger.warning(f"Repository directory is empty: {repo_dir}")
+            RichLogger.warning(f"Repository directory is empty: {repo_dir}")
             return False
 
         # Check git fsck but allow some warnings (like dangling objects)
@@ -427,17 +427,17 @@ class GitHandler:
         if not success:
             # Check if the failure is due to non-critical warnings
             if "dangling" in output.lower() and "error:" not in output.lower():
-                Logger.warning(f"Repository has dangling objects but may still be valid: {repo_dir}")
+                RichLogger.warning(f"Repository has dangling objects but may still be valid: {repo_dir}")
                 # Continue with other checks despite dangling objects
             else:
-                Logger.error(f"Repository fsck failed with critical errors: {output}")
+                RichLogger.error(f"Repository fsck failed with critical errors: {output}")
                 # Fallback check: use 'git status' to verify if the repository is still usable
                 status_success, status_output = GitHandler._capture_git_command(['git', 'status'], repo_dir)
                 if status_success:
-                    Logger.warning(f"Repository fsck failed but 'git status' succeeded, considering it valid: {repo_dir}")
+                    RichLogger.warning(f"Repository fsck failed but 'git status' succeeded, considering it valid: {repo_dir}")
                     # Continue with other checks since 'git status' worked
                 else:
-                    Logger.error(f"Repository is unusable: {status_output}")
+                    RichLogger.error(f"Repository is unusable: {status_output}")
                     return False
 
         # Check submodule status if recursive is enabled
@@ -447,7 +447,7 @@ class GitHandler:
             # Check submodule status but don't fail on warnings
             success, output = GitHandler._capture_git_command(['git', 'submodule', 'status'], repo_dir)
             if not success:
-                Logger.warning(f"Submodule status check failed but continuing: {output}")
+                RichLogger.warning(f"Submodule status check failed but continuing: {output}")
 
         return True
 
@@ -471,11 +471,11 @@ class GitHandler:
         if not config:
             return False
 
-        Logger.info(f"Attempting to repair repository: {repo_dir}")
+        RichLogger.info(f"Attempting to repair repository: {repo_dir}")
 
         # Check if the failure is submodule-related
         if GitHandler._is_submodule_issue(repo_dir):
-            Logger.warning("Failure appears to be submodule-related, attempting targeted repair...")
+            RichLogger.warning("Failure appears to be submodule-related, attempting targeted repair...")
             return GitHandler._repair_submodules(repo_dir, config)
 
         # Check repository state for debugging purposes
@@ -489,18 +489,18 @@ class GitHandler:
             ['git', 'symbolic-ref', 'HEAD'],
             repo_dir
         )
-        Logger.debug(f"Repository state before repair - Refs: {ref_output}, HEAD: {head_output}")
+        RichLogger.debug(f"Repository state before repair - Refs: {ref_output}, HEAD: {head_output}")
 
         # Attempt to repair the main repository
         if GitHandler._repair_main_repository(repo_dir, config):
-            Logger.info("Main repository repaired successfully")
+            RichLogger.info("Main repository repaired successfully")
             return True
 
-        Logger.info("All repair attempts failed, performing full re-clone...")
+        RichLogger.info("All repair attempts failed, performing full re-clone...")
 
         # Force delete directory (including cases with only .git folder)
         if not GitHandler._force_delete_directory(repo_dir):
-            Logger.error(f"Failed to delete directory: {repo_dir}")
+            RichLogger.error(f"Failed to delete directory: {repo_dir}")
             return False
 
         # Brief delay before re-cloning
@@ -530,47 +530,47 @@ class GitHandler:
         version = config['version']
         depth = config.get('depth')
 
-        Logger.info("Attempting multi-step main repository repair...")
+        RichLogger.info("Attempting multi-step main repository repair...")
 
         # Step 1: Checking and repairing HEAD reference
-        Logger.info("Step 1: Checking and repairing HEAD reference...")
+        RichLogger.info("Step 1: Checking and repairing HEAD reference...")
         head_repaired = GitHandler._repair_head_reference(repo_dir, version)
         if not head_repaired:
-            Logger.warning("HEAD reference repair failed, trying next step...")
+            RichLogger.warning("HEAD reference repair failed, trying next step...")
 
         # Step 2: Re-fetching remote references
-        Logger.info("Step 2: Re-fetching remote references...")
+        RichLogger.info("Step 2: Re-fetching remote references...")
         fetch_success = GitHandler._refetch_remote_references(repo_dir, version, depth)
         if not fetch_success:
-            Logger.warning("Re-fetching remote references failed, trying next step...")
+            RichLogger.warning("Re-fetching remote references failed, trying next step...")
 
         # Step 3: Cleaning and resetting workspace
-        Logger.info("Step 3: Cleaning and resetting workspace...")
+        RichLogger.info("Step 3: Cleaning and resetting workspace...")
         reset_success = GitHandler._clean_and_reset_workspace(repo_dir, version)
         if not reset_success:
-            Logger.warning("Workspace cleanup failed, trying next step...")
+            RichLogger.warning("Workspace cleanup failed, trying next step...")
 
         # Step 4: Rebuilding index and object database
-        Logger.info("Step 4: Rebuilding index and object database...")
+        RichLogger.info("Step 4: Rebuilding index and object database...")
         rebuild_success = GitHandler._rebuild_repository_infrastructure(repo_dir)
         if not rebuild_success:
-            Logger.warning("Repository infrastructure rebuild failed...")
+            RichLogger.warning("Repository infrastructure rebuild failed...")
 
         # Check if repair was successful
         if GitHandler.is_valid_repository(repo_dir):
-            Logger.info("Main repository repair completed successfully")
+            RichLogger.info("Main repository repair completed successfully")
 
             # Verify submodules after main repository repair
             recursive = config.get('recursive', True)
             if recursive:
-                Logger.info("Verifying submodules after main repository repair...")
+                RichLogger.info("Verifying submodules after main repository repair...")
                 if not GitHandler._verify_submodules(repo_dir):
-                    Logger.warning("Submodules need repair after main repository fix")
+                    RichLogger.warning("Submodules need repair after main repository fix")
                     return GitHandler._repair_submodules(repo_dir, config)
 
             return True
 
-        Logger.warning("Multi-step repair did not fully restore repository")
+        RichLogger.warning("Multi-step repair did not fully restore repository")
         return False
 
     @staticmethod
@@ -607,7 +607,7 @@ class GitHandler:
                     break
 
             if target_branch:
-                Logger.info(f"Attempting to reset HEAD to {target_branch}...")
+                RichLogger.info(f"Attempting to reset HEAD to {target_branch}...")
 
                 # Set remote head to the target branch
                 success = GitHandler._run_git_command(
@@ -623,11 +623,11 @@ class GitHandler:
                     )
 
                     if success:
-                        Logger.info(f"Successfully repaired HEAD reference to {target_branch}")
+                        RichLogger.info(f"Successfully repaired HEAD reference to {target_branch}")
                         return True
 
         # Fallback: try to use version as direct commit reference
-        Logger.info("Trying to use version as direct reference...")
+        RichLogger.info("Trying to use version as direct reference...")
         success, output = GitHandler._capture_git_command(
             ['git', 'rev-parse', '--verify', f'{version}^{{commit}}'],
             repo_dir
@@ -635,7 +635,7 @@ class GitHandler:
 
         if success and output.strip():
             commit_hash = output.strip()
-            Logger.info(f"Found valid commit hash: {commit_hash}")
+            RichLogger.info(f"Found valid commit hash: {commit_hash}")
 
             # Update HEAD to point directly to the commit
             success = GitHandler._run_git_command(
@@ -644,10 +644,10 @@ class GitHandler:
             )
 
             if success:
-                Logger.info("Successfully updated HEAD reference to commit")
+                RichLogger.info("Successfully updated HEAD reference to commit")
                 return True
 
-        Logger.warning("HEAD reference repair failed")
+        RichLogger.warning("HEAD reference repair failed")
         return False
 
     @staticmethod
@@ -683,10 +683,10 @@ class GitHandler:
         success = GitHandler._run_git_command(cmd, repo_dir)
 
         if success:
-            Logger.info("Successfully re-fetched remote references")
+            RichLogger.info("Successfully re-fetched remote references")
             return True
         else:
-            Logger.warning("Re-fetching remote references failed")
+            RichLogger.warning("Re-fetching remote references failed")
             return False
 
     @staticmethod
@@ -708,7 +708,7 @@ class GitHandler:
         clean_success = GitHandler._run_git_command(['git', 'clean', '-fd'], repo_dir)
 
         if not clean_success:
-            Logger.warning("Cleaning untracked files failed")
+            RichLogger.warning("Cleaning untracked files failed")
 
         # Determine if the version is a tag
         is_tag = GitHandler._is_tag(repo_dir, version)
@@ -720,10 +720,10 @@ class GitHandler:
             reset_success = GitHandler._run_git_command(['git', 'reset', '--hard', 'FETCH_HEAD'], repo_dir)
 
         if reset_success:
-            Logger.info("Successfully reset workspace")
+            RichLogger.info("Successfully reset workspace")
             return True
         else:
-            Logger.warning("Resetting workspace failed")
+            RichLogger.warning("Resetting workspace failed")
             return False
 
     @staticmethod
@@ -740,23 +740,23 @@ class GitHandler:
         Returns:
             bool: True if repository infrastructure was successfully rebuilt, False otherwise
         """
-        Logger.info("Attempting to rebuild repository infrastructure...")
+        RichLogger.info("Attempting to rebuild repository infrastructure...")
 
         # Re-initialize the git repository
         success = GitHandler._run_git_command(['git', 'init'], repo_dir)
 
         if not success:
-            Logger.warning("Re-initializing git repository failed")
+            RichLogger.warning("Re-initializing git repository failed")
             return False
 
         # Fetch all remote references
         success = GitHandler._run_git_command(['git', 'fetch', '--all'], repo_dir)
 
         if success:
-            Logger.info("Successfully rebuilt repository infrastructure")
+            RichLogger.info("Successfully rebuilt repository infrastructure")
             return True
         else:
-            Logger.warning("Rebuilding repository infrastructure failed")
+            RichLogger.warning("Rebuilding repository infrastructure failed")
             return False
 
     @staticmethod
@@ -777,7 +777,7 @@ class GitHandler:
         """
         for attempt in range(GitHandler.MAX_RETRIES):
             try:
-                Logger.debug(f"Running git command: [bold green]{cmd}[/bold green]")
+                RichLogger.debug(f"Running git command: [bold green]{cmd}[/bold green]")
                 # Execute the command with output capture
                 p = subprocess.Popen(
                     cmd,
@@ -789,7 +789,7 @@ class GitHandler:
                 # Process output in real-time
                 for line in iter(p.stdout.readline, b''):
                     decoded_line = line.decode('utf-8', errors='ignore').rstrip()
-                    Logger.debug(f"{decoded_line}", markup=False)
+                    RichLogger.debug(f"{decoded_line}", markup=False)
                     if p.poll() is not None:
                         break
 
@@ -804,7 +804,7 @@ class GitHandler:
                     else:
                         return False
             except Exception as e:
-                Logger.exception(f"Error executing git command: {e}")
+                RichLogger.exception(f"Error executing git command: {e}")
                 # Retry with delay if attempts remain
                 if attempt < GitHandler.MAX_RETRIES - 1:
                     time.sleep(GitHandler.RETRY_DELAY)
@@ -830,7 +830,7 @@ class GitHandler:
         """
         for attempt in range(GitHandler.MAX_RETRIES):
             try:
-                Logger.debug(f"Running git command: [bold green]{cmd}[/bold green]")
+                RichLogger.debug(f"Running git command: [bold green]{cmd}[/bold green]")
                 # Execute the command with output capture
                 p = subprocess.Popen(
                     cmd,
@@ -854,7 +854,7 @@ class GitHandler:
                     else:
                         return False, output
             except Exception as e:
-                Logger.exception(f"Error executing git command: {e}")
+                RichLogger.exception(f"Error executing git command: {e}")
                 # Retry with delay if attempts remain
                 if attempt < GitHandler.MAX_RETRIES - 1:
                     time.sleep(GitHandler.RETRY_DELAY)
@@ -911,7 +911,7 @@ class GitHandler:
             shutil.rmtree(path, onerror=remove_readonly)
             return True
         except Exception as e:
-            Logger.exception(f"Failed to delete directory: {path} - Error: {e}")
+            RichLogger.exception(f"Failed to delete directory: {path} - Error: {e}")
             return False
 
     @staticmethod
@@ -946,13 +946,13 @@ class GitHandler:
                 if len(parts) < 2:
                     continue
                 submodule_path = parts[1]
-                Logger.info(f"Attempting to repair submodule: {submodule_path}")
+                RichLogger.info(f"Attempting to repair submodule: {submodule_path}")
 
                 # Delete problematic submodule directory
                 full_path = repo_dir / submodule_path
                 if full_path.exists():
                     if not GitHandler._force_delete_directory(full_path):
-                        Logger.error(f"Failed to delete submodule directory: {submodule_path}")
+                        RichLogger.error(f"Failed to delete submodule directory: {submodule_path}")
                         all_repaired = False
                         continue
 
@@ -962,7 +962,7 @@ class GitHandler:
                     init_cmd.extend(['--depth', str(depth)])
                 success = GitHandler._run_git_command(init_cmd, repo_dir)
                 if not success:
-                    Logger.error(f"Failed to reinitialize submodule: {submodule_path}")
+                    RichLogger.error(f"Failed to reinitialize submodule: {submodule_path}")
                     all_repaired = False
 
         # Verify all submodules were repaired successfully
@@ -1020,6 +1020,6 @@ class GitHandler:
         lines = output.splitlines()
         for line in lines:
             if line.startswith('-'):
-                Logger.error(f"Submodule not initialized: {line}")
+                RichLogger.error(f"Submodule not initialized: {line}")
                 return False
         return True

@@ -15,8 +15,7 @@ import locale
 from pathlib import Path
 from typing import Optional
 
-from mpt.core.log import Logger
-from mpt.core.console import console
+from mpt.core.log import RichLogger
 
 class BashUtils:
     """
@@ -62,10 +61,10 @@ class BashUtils:
             if git_dir.exists():
                 cls._git_root = str(git_dir)
                 return cls._git_root
-            Logger.warning(f"Git root directory does not exist: [bold cyan]{git_dir}[/bold cyan]")
+            RichLogger.warning(f"Git root directory does not exist: [bold cyan]{git_dir}[/bold cyan]")
             return None
         except Exception as e:
-            Logger.exception(f"Error resolving Git root: [bold red]{str(e)}[/bold red]")
+            RichLogger.exception(f"Error resolving Git root: [bold red]{str(e)}[/bold red]")
             return None
 
     @classmethod
@@ -86,7 +85,7 @@ class BashUtils:
 
         git_root = cls.find_git_root()
         if not git_root:
-            Logger.warning("Cannot find bash.exe without Git root directory")
+            RichLogger.warning("Cannot find bash.exe without Git root directory")
             return None
 
         try:
@@ -94,10 +93,10 @@ class BashUtils:
             if bash_path.exists():
                 cls._bash_path = str(bash_path)
                 return cls._bash_path
-            Logger.warning(f"bash.exe not found in directory: [bold cyan]{bash_path.parent}[/bold cyan]")
+            RichLogger.warning(f"bash.exe not found in directory: [bold cyan]{bash_path.parent}[/bold cyan]")
             return None
         except Exception as e:
-            Logger.exception(f"Error locating bash.exe: [bold red]{str(e)}[/bold red]")
+            RichLogger.exception(f"Error locating bash.exe: [bold red]{str(e)}[/bold red]")
             return None
 
     @staticmethod
@@ -123,7 +122,7 @@ class BashUtils:
             )
 
             if result.returncode != 0:
-                Logger.error("Git not found in system PATH")
+                RichLogger.error("Git not found in system PATH")
                 return None
 
             paths = []
@@ -134,17 +133,17 @@ class BashUtils:
                         normalized = os.path.normpath(str_path)
                         paths.append(normalized)
                     except UnicodeDecodeError:
-                        Logger.warning(f"Failed to decode path: [bold cyan]{path}[/bold cyan]")
+                        RichLogger.warning(f"Failed to decode path: [bold cyan]{path}[/bold cyan]")
                         continue
 
             for path in paths:
                 if os.path.exists(path):
                     return path
-            Logger.warning("No valid Git installation found in system PATH")
+            RichLogger.warning("No valid Git installation found in system PATH")
             return None
         except subprocess.CalledProcessError as e:
             error_msg = e.stderr.decode(errors='ignore') if e.stderr else "Unknown error"
-            Logger.exception(f"{error_msg}")
+            RichLogger.exception(f"{error_msg}")
         except Exception as e:
-            Logger.exception(f"Unexpected error finding git.exe: [bold red]{str(e)}[/bold red]")
+            RichLogger.exception(f"Unexpected error finding git.exe: [bold red]{str(e)}[/bold red]")
             return None

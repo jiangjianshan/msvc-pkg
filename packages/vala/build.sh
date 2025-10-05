@@ -33,6 +33,26 @@ clean_build()
   cd "$SRC_DIR" && [[ -d "$BUILD_DIR" ]] && rm -rf "$BUILD_DIR"
 }
 
+prepare_stage()
+{
+  echo "Patching package $PKG_NAME $PKG_VER"
+  cd "$SRC_DIR" || exit 1
+  pushd gobject-introspection || exit 1
+  echo "Patching Makefile.am in gobject-introspection"
+  sed                                                                                                \
+    -e 's|pkglibexecdir = $(libdir)/vala@PACKAGE_SUFFIX@|pkglibexecdir = \$(libdir)|g'               \
+    -i Makefile.am
+  echo "Patching Makefile.in in gobject-introspection"
+  sed                                                                                                \
+    -e 's|pkglibexecdir = $(libdir)/vala@PACKAGE_SUFFIX@|pkglibexecdir = \$(libdir)|g'               \
+    -i Makefile.in
+  popd || exit 1
+
+  WANT_AUTOCONF='2.69' WANT_AUTOMAKE='1.16' autoreconf -ifv
+  rm -rfv autom4te.cache
+  find . -name "*~" -type f -print -exec rm -rfv {} \;
+}
+
 configure_stage()
 {
   echo "Configuring $PKG_NAME $PKG_VER"
@@ -110,6 +130,7 @@ install_stage()
   clean_build
 }
 
+prepare_stage
 configure_stage
 patch_stage
 build_stage

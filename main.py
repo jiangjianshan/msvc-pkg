@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-MSVC-PKG Tool Main Entry Point - Comprehensive Package Management System
-
-Provides the primary execution flow for the MSVC-PKG tool, orchestrating
+Provides the primary execution flow for the MSVC Package Tool, orchestrating
 the complete package management lifecycle from initialization to termination.
 Handles command line parsing, dependency management, action dispatching,
 and comprehensive error handling with detailed logging and reporting.
@@ -18,7 +16,7 @@ from yaml import SafeDumper
 from mpt.core.action import ActionHandler
 from mpt.core.cli import CommandLineParser
 from mpt.core.runtime import RuntimeManager
-from mpt.core.log import Logger
+from mpt.core.log import RichLogger
 
 
 def main() -> NoReturn:
@@ -53,8 +51,8 @@ def main() -> NoReturn:
     """
     # Initialize application logging system first to capture all events
     try:
-        Logger.initialize()
-        Logger.debug("Main application logger initialized successfully.")
+        RichLogger.initialize()
+        RichLogger.debug("Main application logger initialized successfully.")
     except Exception as e:
         print("Failed to initialize logger. Exiting.")
         sys.exit(1)
@@ -63,80 +61,80 @@ def main() -> NoReturn:
     try:
         _configure_yaml_output()
     except Exception as e:
-        Logger.exception("Failed to configure YAML output")
+        RichLogger.exception("Failed to configure YAML output")
         sys.exit(1)
 
     exit_code: int = 1  # Default to failure
     try:
         # Check and install required system dependencies
-        Logger.debug("Starting system dependency check and installation process.")
+        RichLogger.debug("Starting system dependency check and installation process.")
         try:
             if not RuntimeManager.check_and_install():
-                Logger.critical("Critical system dependency check failed. Application cannot continue.")
+                RichLogger.critical("Critical system dependency check failed. Application cannot continue.")
                 sys.exit(1)
         except Exception as e:
-            Logger.exception("Failed during system dependency check and installation")
+            RichLogger.exception("Failed during system dependency check and installation")
             sys.exit(1)
 
-        Logger.info("System dependency validation completed successfully.")
+        RichLogger.info("System dependency validation completed successfully.")
 
         # Parse command line arguments to determine execution parameters
-        Logger.debug("Parsing command line arguments.")
+        RichLogger.debug("Parsing command line arguments.")
         try:
             arch, action, libraries, prefix, lib_prefixes = CommandLineParser.parse_arguments()
-            Logger.debug(
+            RichLogger.debug(
                 f"Arguments parsed: arch={arch}, action={action}, "
                 f"libraries={libraries}, prefix={prefix}, "
                 f"lib_prefixes_keys={list(lib_prefixes.keys())}"
             )
         except Exception as e:
-            Logger.exception("Failed to parse command line arguments")
+            RichLogger.exception("Failed to parse command line arguments")
             sys.exit(1)
 
         # Write lib_prefixes to settings.yaml if not empty
         if lib_prefixes:
-            Logger.debug("Writing library prefixes to user configuration")
+            RichLogger.debug("Writing library prefixes to user configuration")
             try:
                 from mpt.config import UserConfig
                 UserConfig.write({"lib_prefixes": lib_prefixes})
             except Exception as e:
-                Logger.exception("Failed to write library prefixes to user configuration")
+                RichLogger.exception("Failed to write library prefixes to user configuration")
                 # Continue execution as this is not critical
 
         # Initialize action handler with parsed parameters
-        Logger.debug(f"Initializing ActionHandler for architecture: {arch}")
+        RichLogger.debug(f"Initializing ActionHandler for architecture: {arch}")
         try:
             handler = ActionHandler(arch, libraries)
         except Exception as e:
-            Logger.exception("Failed to initialize ActionHandler")
+            RichLogger.exception("Failed to initialize ActionHandler")
             sys.exit(1)
 
         # Dispatch to appropriate action based on user request
-        Logger.info(f"Executing action: {action}")
+        RichLogger.info(f"Executing action: {action}")
         try:
             success = _dispatch_action(handler, action)
         except Exception as e:
-            Logger.exception(f"Failed to execute action: {action}")
+            RichLogger.exception(f"Failed to execute action: {action}")
             success = False
 
         # Set final status and exit code
         if success:
-            Logger.info(f"Action '[bold cyan]{action}[/bold cyan]' completed successfully.")
+            RichLogger.info(f"Action '[bold cyan]{action}[/bold cyan]' completed successfully.")
             exit_code = 0
         else:
-            Logger.error(f"Action '[bold cyan]{action}[/bold cyan]' failed.")
+            RichLogger.error(f"Action '[bold cyan]{action}[/bold cyan]' failed.")
             exit_code = 1
 
     except KeyboardInterrupt:
-        Logger.warning("Application execution interrupted by user (Ctrl+C).")
-        Logger.debug("Initiating graceful shutdown after KeyboardInterrupt.")
+        RichLogger.warning("Application execution interrupted by user (Ctrl+C).")
+        RichLogger.debug("Initiating graceful shutdown after KeyboardInterrupt.")
         exit_code = 1
     except Exception as e:
-        Logger.exception(f"An unhandled error occurred during execution: {e}")
-        Logger.debug(f"Exception details - Type: {type(e).__name__}, Message: {str(e)}")
+        RichLogger.exception(f"An unhandled error occurred during execution: {e}")
+        RichLogger.debug(f"Exception details - Type: {type(e).__name__}, Message: {str(e)}")
         exit_code = 1
     finally:
-        Logger.debug(f"Application terminating with exit code: {exit_code}")
+        RichLogger.debug(f"Application terminating with exit code: {exit_code}")
         sys.exit(exit_code)
 
 def _configure_yaml_output() -> None:
@@ -161,9 +159,9 @@ def _configure_yaml_output() -> None:
             type(None),
             lambda dumper, value: dumper.represent_scalar('tag:yaml.org,2002:null', '')
         )
-        Logger.debug("YAML SafeDumper configured for null representation.")
+        RichLogger.debug("YAML SafeDumper configured for null representation.")
     except Exception as e:
-        Logger.exception("Failed to configure YAML SafeDumper")
+        RichLogger.exception("Failed to configure YAML SafeDumper")
         raise
 
 def _dispatch_action(handler: ActionHandler, action: str) -> bool:
@@ -204,13 +202,13 @@ def _dispatch_action(handler: ActionHandler, action: str) -> bool:
 
         action_func = action_methods.get(action)
         if action_func is None:
-            Logger.critical(f"Unsupported action requested: '{action}'. This indicates a logic error in argument parsing or dispatch.")
+            RichLogger.critical(f"Unsupported action requested: '{action}'. This indicates a logic error in argument parsing or dispatch.")
             sys.exit(1)  # This should not happen if CLI parsing is correct
 
-        Logger.debug(f"Dispatching to action handler method: {action_func.__name__}")
+        RichLogger.debug(f"Dispatching to action handler method: {action_func.__name__}")
         return action_func()
     except Exception as e:
-        Logger.exception(f"Exception occurred during action dispatch for '{action}'")
+        RichLogger.exception(f"Exception occurred during action dispatch for '{action}'")
         return False
 
 

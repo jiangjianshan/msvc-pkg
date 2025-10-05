@@ -8,10 +8,9 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from mpt import ROOT_DIR
-from mpt.core.console import console
 from mpt.core.git import GitHandler
 from mpt.core.history import HistoryManager
-from mpt.core.log import Logger
+from mpt.core.log import RichLogger
 from mpt.core.patch import PatchHandler
 from mpt.core.run import Runner
 from mpt.core.source import SourceManager
@@ -52,7 +51,7 @@ class BuildManager:
 
         # Check if rebuild is required
         if not BuildManager._should_build(arch, node_name, config):
-            Logger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build skipped - already up to date")
+            RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build skipped - already up to date")
             return True
 
         # Create log directory if it doesn't exist
@@ -65,11 +64,8 @@ class BuildManager:
         # Fetch source code
         source_path = SourceManager.fetch_source(config)
         if not source_path or not source_path.exists():
-            Logger.critical(f"[[bold cyan]{node_name}[/bold cyan]] Source acquisition failed")
+            RichLogger.critical(f"[[bold cyan]{node_name}[/bold cyan]] Source acquisition failed")
             return False
-
-        # Run prerun.sh if it have
-        Runner.prerun(config)
 
         # Run the main build script
         script_file = config.get('run')
@@ -77,17 +73,17 @@ class BuildManager:
             log_file = ROOT_DIR / "logs" / f"{lib_name}.log"
             script_path = ROOT_DIR / 'packages' / lib_name / script_file
             if not script_path.exists():
-                Logger.error(f"Build script not found: [bold cyan]{script_path}[/bold cyan]")
+                RichLogger.error(f"Build script not found: [bold cyan]{script_path}[/bold cyan]")
                 return False
-            Logger.info(f"[[bold cyan]{node_name}[/bold cyan]] Starting build process on architecture [bold magenta]{arch}[/bold magenta]")
+            RichLogger.info(f"[[bold cyan]{node_name}[/bold cyan]] Starting build process on architecture [bold magenta]{arch}[/bold magenta]")
             if Runner.run_script(script_path, log_file):
                 version = config.get('version', 'unknown')
                 HistoryManager.add_record(arch, node_name, version)
-                Logger.info(f"[[bold cyan]{node_name}[/bold cyan]] Build completed successfully")
+                RichLogger.info(f"[[bold cyan]{node_name}[/bold cyan]] Build completed successfully")
                 return True
             else:
                 HistoryManager.remove_record(arch, node_name)
-                Logger.error(f"[[bold cyan]{node_name}[/bold cyan]] Build failed")
+                RichLogger.error(f"[[bold cyan]{node_name}[/bold cyan]] Build failed")
                 return False
         else:
             return True
@@ -120,24 +116,24 @@ class BuildManager:
 
         # Check if library node is not installed
         if not HistoryManager.check_installed(arch, node_name):
-            Logger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build required: not installed")
+            RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build required: not installed")
             return True
 
         # Check if library node update is available
         if HistoryManager.check_for_update(arch, node_name, config):
-            Logger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build required: update available")
+            RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build required: update available")
             return True
 
         # Get library node information
         lib_info = HistoryManager.get_library_info(arch, node_name)
         if not lib_info:
-            Logger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build required: no library info")
+            RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build required: no library info")
             return True
 
         # Check if library node has no build timestamp
         lib_built = lib_info.get('built')
         if not lib_built:
-            Logger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build required: no build timestamp")
+            RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build required: no build timestamp")
             return True
 
         # Check for any file changes in the package directory
@@ -149,10 +145,10 @@ class BuildManager:
                     if file_path.is_file():
                         file_mtime = file_path.stat().st_mtime
                         if file_mtime > lib_built.timestamp():
-                            Logger.info(f"[[bold cyan]{node_name}[/bold cyan]] Build required: file {file_path.relative_to(pkg_dir)} modified")
+                            RichLogger.info(f"[[bold cyan]{node_name}[/bold cyan]] Build required: file {file_path.relative_to(pkg_dir)} modified")
                             return True
             except OSError as e:
-                Logger.exception(f"Error checking file modification times in [bold cyan]{pkg_dir}[/bold cyan]")
+                RichLogger.exception(f"Error checking file modification times in [bold cyan]{pkg_dir}[/bold cyan]")
                 return True
 
         # Check for source code updates (for git repositories)
@@ -162,35 +158,35 @@ class BuildManager:
                 try:
                     last_commit_time = GitHandler.get_last_commit_time(source_dir)
                     if not last_commit_time:
-                        Logger.info(f"[[bold cyan]{node_name}[/bold cyan]] Build required: Failed to get commit time")
+                        RichLogger.info(f"[[bold cyan]{node_name}[/bold cyan]] Build required: Failed to get commit time")
                         return True
                     elif last_commit_time > lib_built.timestamp():
-                        Logger.info(f"[[bold cyan]{node_name}[/bold cyan]] Build required: source code updated")
+                        RichLogger.info(f"[[bold cyan]{node_name}[/bold cyan]] Build required: source code updated")
                         return True
                 except Exception as e:
-                    Logger.exception(f"Error checking git commit time for {source_dir}")
+                    RichLogger.exception(f"Error checking git commit time for {source_dir}")
                     return True
 
         # Check all dependencies for rebuild requirements
         deps = DependencyResolver.get_dependencies(lib_name, dep_type)
 
         for dep in deps:
-            Logger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Checking dependency: [bold cyan]{dep}[/bold cyan]")
+            RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Checking dependency: [bold cyan]{dep}[/bold cyan]")
 
             # Get dependency information
             dep_info = HistoryManager.get_library_info(arch, dep)
             if not dep_info:
-                Logger.debug(f"[[bold cyan]{node_name}[/bold cyan]] No info for dependency [bold cyan]{dep}[/bold cyan]")
+                RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] No info for dependency [bold cyan]{dep}[/bold cyan]")
                 continue
 
             dep_built = dep_info.get('built')
             if not dep_built:
-                Logger.debug(f"[[bold cyan]{node_name}[/bold cyan]] No build timestamp for dependency [bold cyan]{dep}[/bold cyan]")
+                RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] No build timestamp for dependency [bold cyan]{dep}[/bold cyan]")
                 continue
 
             # Compare build timestamps
             if dep_built > lib_built:
-                Logger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build required: dependency [bold cyan]{dep}[/bold cyan] was updated")
+                RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build required: dependency [bold cyan]{dep}[/bold cyan] was updated")
                 return True
 
         return False

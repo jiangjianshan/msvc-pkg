@@ -16,21 +16,22 @@ from rich.align import Align
 from rich.console import Group
 from rich.padding import Padding
 from rich.panel import Panel
+from rich.prompt import Prompt
 from rich.table import Table
 from rich.text import Text
 from textwrap import shorten
 
 from mpt import ROOT_DIR
-from mpt.config.loader import PackageConfig
+from mpt.config.package import PackageConfig
 from mpt.core.build import BuildManager
 from mpt.core.clean import CleanManager
-from mpt.core.console import console
 from mpt.core.dependency import DependencyResolver
 from mpt.core.git import GitHandler
 from mpt.core.history import HistoryManager
-from mpt.core.log import Logger
+from mpt.core.log import RichLogger
 from mpt.core.run import Runner
 from mpt.core.source import SourceManager
+from mpt.core.uninstall import UninstallManager
 from mpt.core.view import RichTable, RichPanel
 
 
@@ -44,7 +45,7 @@ class ActionHandler:
         """
         self.arch = arch
         self.libraries = libraries
-        self.terminal_width = console.width
+        self.terminal_width = RichLogger.get_console_width()
 
     def _status_icon(self, success: bool) -> str:
         """Generate a rich-formatted status icon based on operation success.
@@ -120,17 +121,47 @@ class ActionHandler:
     def clean(self) -> bool:
         """Clean build artifacts for specified libraries with detailed summary.
 
-        Removes logs, source directories, and archive files for each library.
-        Displays a comprehensive summary table of cleaning operations.
+        Displays interactive options for cleaning operations and removes selected
+        artifacts based on user choice. Shows a comprehensive summary table of
+        cleaning operations.
 
         Returns:
             bool: True if all cleaning operations succeeded, False otherwise
         """
-        clean_table = self._create_summary_table()
+        # Display cleaning options to user
+        clean_options = [
+            "1. Delete only log files for libraries (Uninstall action need and recommend to keep it)",
+            "2. Delete only compressed packages (only for non-Git sources)",
+            "3. Delete only source directories (cloned or extracted)",
+            "4. Delete all: logs, compressed packages, and source directories"
+        ]
+
+        choice_panel = Panel(
+            "\n".join(clean_options),
+            title="🧹 Cleaning Options",
+            border_style="blue",
+            width=self.terminal_width
+        )
+        RichLogger.print(choice_panel)
+
+        # Get user choice
+        choice = Prompt.ask(
+            "Please select an option (1-4)",
+            choices=["1", "2", "3", "4"],
+            default="4"
+        )
+
+        # Create table based on selected option
+        clean_table = RichTable.create()
         RichTable.add_column(clean_table, "📁 Library", style="cyan", header_style="bold cyan", justify="left")
-        RichTable.add_column(clean_table, "📝 Log", style="green", header_style="bold green", justify="center")
-        RichTable.add_column(clean_table, "📂 Source", style="yellow", header_style="bold yellow", justify="center", no_wrap=False)
-        RichTable.add_column(clean_table, "📦 Archive", style="magenta", header_style="bold magenta", justify="center", no_wrap=False)
+
+        if choice in ["1", "4"]:
+            RichTable.add_column(clean_table, "📝 Log", style="green", header_style="bold green", justify="center")
+        if choice in ["2", "4"]:
+            RichTable.add_column(clean_table, "📦 Archive", style="magenta", header_style="bold magenta", justify="center", no_wrap=False)
+        if choice in ["3", "4"]:
+            RichTable.add_column(clean_table, "📂 Source", style="yellow", header_style="bold yellow", justify="center", no_wrap=False)
+
         RichTable.add_column(clean_table, "✅ Status", style="blue", header_style="bold blue", justify="left")
 
         overall_success = True
@@ -138,51 +169,70 @@ class ActionHandler:
         max_path_width = self.terminal_width // 5
 
         for lib in self.libraries:
-            try:
-                # Clean library artifacts
+            config = PackageConfig.load(lib)
+            # Perform cleaning based on user choice
+            if choice == "1":
+                clean_result = CleanManager.clean_logs(lib)
+                log_success, log_path = clean_result
+                source_success, source_path = True, "N/A"
+                archive_success, archive_path = True, "N/A"
+                lib_success = log_success
+            elif choice == "2":
+                clean_result = CleanManager.clean_archives(lib)
+                archive_success, archive_path = clean_result
+                log_success, log_path = True, "N/A"
+                source_success, source_path = True, "N/A"
+                lib_success = archive_success
+            elif choice == "3":
+                clean_result = CleanManager.clean_source(lib, config)
+                source_success, source_path = clean_result
+                log_success, log_path = True, "N/A"
+                archive_success, archive_path = True, "N/A"
+                lib_success = source_success
+            else:  # choice == "4"
                 clean_result = CleanManager.clean_library(lib)
                 log_success, log_path = clean_result['logs']
                 source_success, source_path = clean_result['source']
                 archive_success, archive_path = clean_result['archives']
-
-                # Shorten paths for display
-                log_display = self._shorten_path(log_path, max_path_width)
-                source_display = self._shorten_path(source_path, max_path_width)
-                archive_display = self._shorten_path(archive_path, max_path_width) if not clean_result['is_git'] else "N/A"
-
-                # Check if all cleaning operations were successful
                 lib_success = all([log_success, source_success, archive_success])
-                if lib_success:
-                    success_count += 1
-                else:
-                    overall_success = False
 
-                # Create status text with appropriate color
-                status_text = "[bold green]Success[/bold green]" if lib_success else "[bold red]Failed[/bold red]"
+            # Shorten paths for display
+            log_display = self._shorten_path(log_path, max_path_width) if choice in ["1", "4"] else "N/A"
+            source_display = self._shorten_path(source_path, max_path_width) if choice in ["3", "4"] else "N/A"
+            archive_display = self._shorten_path(archive_path, max_path_width) if choice in ["2", "4"] else "N/A"
 
-                # Add row to the table
-                RichTable.add_row(clean_table,
-                    f"[cyan]{lib}[/cyan]",
-                    log_display if log_path != "N/A" else self._status_icon(log_success),
-                    source_display if source_path != "N/A" else self._status_icon(source_success),
-                    archive_display if archive_path != "N/A" else self._status_icon(archive_success),
-                    status_text
-                )
-            except Exception as e:
-                Logger.exception(f"Error cleaning library {lib}")
+            if lib_success:
+                success_count += 1
+            else:
                 overall_success = False
-                # Add error row to the table
-                RichTable.add_row(clean_table,
-                    f"[cyan]{lib}[/cyan]",
-                    "[red]Error[/red]",
-                    "[red]Error[/red]",
-                    "[red]Error[/red]",
-                    "[bold red]Failed[/bold red]"
-                )
 
-        # Render summary panel
+            # Create status text with appropriate color
+            status_text = "[bold green]Success[/bold green]" if lib_success else "[bold red]Failed[/bold red]"
+
+            # Add row to the table with appropriate columns based on choice
+            row_data = [f"[cyan]{lib}[/cyan]"]
+
+            if choice in ["1", "4"]:
+                row_data.append(log_display if log_path != "N/A" else self._status_icon(log_success))
+            if choice in ["2", "4"]:
+                row_data.append(archive_display if archive_path != "N/A" else self._status_icon(archive_success))
+            if choice in ["3", "4"]:
+                row_data.append(source_display if source_path != "N/A" else self._status_icon(source_success))
+
+            row_data.append(status_text)
+            RichTable.add_row(clean_table, *row_data)
+
+        # Render summary panel with appropriate title based on choice
+        action_name = {
+            "1": "Log Cleaning",
+            "2": "Archive Cleaning",
+            "3": "Source Cleaning",
+            "4": "Complete Cleaning"
+        }[choice]
+
         stats_text = self._get_stats_text(len(self.libraries), success_count, "Cleaned")
-        self._render_summary_panel("🧹 Clean Summary", clean_table, stats_text)
+        self._render_summary_panel(f"🧹 {action_name} Summary", clean_table, stats_text)
+
         return overall_success
 
     def install(self) -> bool:
@@ -194,7 +244,7 @@ class ActionHandler:
         Returns:
             bool: True if all installations succeeded, False otherwise
         """
-        install_table = self._create_summary_table()
+        install_table = RichTable.create()
         RichTable.add_column(install_table, "📁 Library", style="cyan", header_style="bold cyan", justify="left")
         RichTable.add_column(install_table, "📦 Status", style="green", header_style="bold green", justify="center")
 
@@ -209,11 +259,11 @@ class ActionHandler:
                 if not dep_success:
                     status = "[bold red]Failed[/bold red]"
                     overall_success = False
-                    Logger.error(f"Installation failed for library [cyan]{lib}[/cyan]")
+                    RichLogger.error(f"Installation failed for library [cyan]{lib}[/cyan]")
                 else:
                     status = "[bold green]Installed[/bold green]"
                     success_count += 1
-                    Logger.info(f"Successfully installed library [cyan]{lib}[/cyan]")
+                    RichLogger.info(f"Successfully installed library [cyan]{lib}[/cyan]")
 
                 # Add row to the table
                 RichTable.add_row(install_table,
@@ -221,7 +271,7 @@ class ActionHandler:
                     status
                 )
             except Exception as e:
-                Logger.exception(f"Error installing library {lib}")
+                RichLogger.exception(f"Error installing library {lib}")
                 overall_success = False
                 # Add error row to the table
                 RichTable.add_row(install_table,
@@ -236,30 +286,31 @@ class ActionHandler:
         return overall_success
 
     def uninstall(self) -> bool:
-        """Uninstall libraries by removing installation records.
+        """Uninstall libraries by removing installation files and records.
 
-        Removes library records from history and displays uninstallation
-        summary with status for each library.
+        Removes library installation files using UninstallManager and removes
+        library records from history. Displays uninstallation summary with
+        status for each library.
 
         Returns:
             bool: True if all libraries were successfully uninstalled, False otherwise
         """
-        uninstall_table = self._create_summary_table()
+        uninstall_table = RichTable.create()
         RichTable.add_column(uninstall_table, "📁 Library", style="cyan", header_style="bold cyan", justify="left")
         RichTable.add_column(uninstall_table, "📦 Status", style="green", header_style="bold green", justify="center")
 
         success_count = 0
         for lib in self.libraries:
             try:
-                # Remove library records
-                files_removed = HistoryManager.remove_record(self.arch, lib)
-                if files_removed > 0:
+                # Remove library installation files and records
+                success = UninstallManager.uninstall_library(self.arch, lib)
+                if success:
                     status = "[bold green]Uninstalled[/bold green]"
                     success_count += 1
-                    Logger.info(f"Successfully uninstalled library [cyan]{lib}[/cyan]")
+                    RichLogger.info(f"Successfully uninstalled library [cyan]{lib}[/cyan]")
                 else:
-                    status = "[bold red]Not installed[/bold red]"
-                    Logger.warning(f"Library [cyan]{lib}[/cyan] was not installed")
+                    status = "[bold red]Failed[/bold red]"
+                    RichLogger.error(f"Failed to uninstall library [cyan]{lib}[/cyan]")
 
                 # Add row to the table
                 RichTable.add_row(uninstall_table,
@@ -267,7 +318,7 @@ class ActionHandler:
                     status
                 )
             except Exception as e:
-                Logger.exception(f"Error uninstalling library {lib}")
+                RichLogger.exception(f"Error uninstalling library {lib}")
                 # Add error row to the table
                 RichTable.add_row(uninstall_table,
                     f"[cyan]{lib}[/cyan]",
@@ -290,7 +341,7 @@ class ActionHandler:
         """
         arch_records = HistoryManager.get_arch_records(self.arch)
 
-        list_table = self._create_summary_table()
+        list_table = RichTable.create()
         RichTable.add_column(list_table, "📁 Library", style="cyan", header_style="bold cyan", justify="left")
         RichTable.add_column(list_table, "📝 Status", style="green", header_style="bold green", justify="center")
         RichTable.add_column(list_table, "📦 Version", style="yellow", header_style="bold yellow", justify="center", no_wrap=False)
@@ -315,7 +366,7 @@ class ActionHandler:
                 continue
 
             installed = lib in arch_records
-            Logger.debug(f"Library [cyan]{lib}[/cyan] installation status: [yellow]{installed}[/yellow]")
+            RichLogger.debug(f"Library [cyan]{lib}[/cyan] installation status: [yellow]{installed}[/yellow]")
 
             status_display = "[bold yellow]Error[/bold yellow]"
             version = "N/A"
@@ -405,7 +456,7 @@ class ActionHandler:
                 if not success:
                     overall_success = False
             except Exception as e:
-                Logger.exception(f"Error resolving dependencies for library {lib}")
+                RichLogger.exception(f"Error resolving dependencies for library {lib}")
                 overall_success = False
         return overall_success
 
@@ -417,7 +468,7 @@ class ActionHandler:
         Returns:
             bool: True if all fetch operations succeeded, False otherwise
         """
-        fetch_table = self._create_summary_table()
+        fetch_table = RichTable.create()
         RichTable.add_column(fetch_table, "📁 Library", style="cyan", header_style="bold cyan", justify="left")
         RichTable.add_column(fetch_table, "📂 Source", style="yellow", header_style="bold yellow", justify="center", no_wrap=False)
         RichTable.add_column(fetch_table, "📦 Status", style="green", header_style="bold green", justify="center")
@@ -431,7 +482,7 @@ class ActionHandler:
                 # Load library configuration
                 config = PackageConfig.load(lib)
                 if not config:
-                    Logger.error(f"Failed to load config for library [cyan]{lib}[/cyan]")
+                    RichLogger.error(f"Failed to load config for library [cyan]{lib}[/cyan]")
                     RichTable.add_row(fetch_table,
                         f"[bold cyan]{lib}[/bold cyan]",
                         "N/A",
@@ -443,17 +494,17 @@ class ActionHandler:
                 Runner.prepare_envvars(self.arch, lib)
                 source_path = SourceManager.fetch_source(config)
                 if not source_path or not source_path.exists():
-                    Logger.error(f"Source acquisition failed for library [cyan]{lib}[/cyan]")
+                    RichLogger.error(f"Source acquisition failed for library [cyan]{lib}[/cyan]")
                     return False
 
                 # Check if source fetching was successful
                 if not source_path:
-                    Logger.error(f"Failed to fetch source for library [cyan]{lib}[/cyan]")
+                    RichLogger.error(f"Failed to fetch source for library [cyan]{lib}[/cyan]")
                     status = "[bold red]Failed[/bold red]"
                 else:
                     status = "[bold green]Success[/bold green]"
                     success_count += 1
-                    Logger.info(f"Successfully fetched source for library [cyan]{lib}[/cyan]")
+                    RichLogger.info(f"Successfully fetched source for library [cyan]{lib}[/cyan]")
 
                 # Add row to the table
                 RichTable.add_row(fetch_table,
@@ -462,7 +513,7 @@ class ActionHandler:
                     status
                 )
             except Exception as e:
-                Logger.exception(f"Error fetching source for library {lib}")
+                RichLogger.exception(f"Error fetching source for library {lib}")
                 # Add error row to the table
                 RichTable.add_row(fetch_table,
                     f"[bold cyan]{lib}[/bold cyan]",
