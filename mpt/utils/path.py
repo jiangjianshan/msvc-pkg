@@ -27,6 +27,38 @@ class PathUtils:
     """
 
     @staticmethod
+    def is_windows_path(path):
+        """
+        Check if the given path follows Windows path format.
+
+        This method examines the path string to determine if it conforms to Windows
+        path conventions, such as starting with a drive letter (e.g., C:\\) or using
+        backslashes as directory separators.
+
+        Args:
+            path: Path string to evaluate
+
+        Returns:
+            bool: True if the path appears to be a Windows path, False otherwise
+        """
+        # Convert to string if it's a Path object
+        path_str = str(path) if isinstance(path, Path) else path
+
+        # Check for Windows drive letter pattern (e.g., C:\ or C:/)
+        if re.match(r'^[A-Za-z]:[\\/]', path_str):
+            return True
+
+        # Check for UNC path pattern (e.g., \\server\share)
+        if re.match(r'^\\\\\\\\[^\\\\/]+[\\\\/]+[^\\\\/]+', path_str):
+            return True
+
+        # Check for predominant use of backslashes as separators
+        if '\\' in path_str and (path_str.count('\\') > path_str.count('/')):
+            return True
+
+        return False
+
+    @staticmethod
     def win_to_unix(path):
         """
         Convert Windows-native file paths to Unix/Linux format using Cygwin's path conversion.
@@ -62,11 +94,11 @@ class PathUtils:
             result = subprocess.run(
                 [bash_path, "-c", cmd],
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
+                stderr=subprocess.PIPE
             )
 
-            unix_path = result.stdout.strip()
+            unix_path = result.stdout.decode('utf-8').strip()
+            RichLogger.debug(f"Converted {path} to {unix_path}")
             return unix_path
         except Exception as e:
             RichLogger.exception(f"Exception occurred during path conversion: {e}")
@@ -105,13 +137,12 @@ class PathUtils:
             result = subprocess.run(
                 [bash_path, "-c", cmd],
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
+                stderr=subprocess.PIPE
             )
 
-            win_path = result.stdout.strip()
+            win_path = result.stdout.decode('utf-8').strip()
+            RichLogger.debug(f"Converted {path_str} to {win_path}")
             return win_path
         except Exception as e:
             RichLogger.exception(f"Exception occurred during path conversion: {e}")
             return str(path) if isinstance(path, Path) else path
-

@@ -49,7 +49,7 @@ call :clean_build
 echo "Building %PKG_NAME% %PKG_VER%"
 cd "%BUILD_DIR%" && msbuild guetzli.sln /p:Configuration=Release               ^
   /p:Platform=%ARCH% /p:PlatformToolset=v143 /p:UseEnv=true                    ^
-  /p:SkipUWP=true || exit 1
+  /p:SkipUWP=true
 exit /b 0
 
 rem ==============================================================================

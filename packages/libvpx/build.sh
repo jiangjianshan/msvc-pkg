@@ -84,11 +84,12 @@ install_stage()
 {
   echo "Installing $PKG_NAME $PKG_VER"
   cd "$BUILD_DIR" || exit 1
-  if ! make install; then
-    exit 1
-  fi
+  cp -rv *.h $PREFIX/include
+  pushd x64/Release
+  cp -rv *.lib $PREFIX/lib
+  popd
   if [[ ! -f "$PREFIX/lib/vpx.lib" ]]; then
-    ln -sv "$PREFIX/lib/x64/vpxmd.lib" "$PREFIX/lib/vpx.lib"
+    ln -sv "$PREFIX/lib/vpxmd.lib" "$PREFIX/lib/vpx.lib"
   fi
   clean_build
 }

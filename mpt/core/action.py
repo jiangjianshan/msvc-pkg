@@ -290,44 +290,50 @@ class ActionHandler:
 
         Removes library installation files using UninstallManager and removes
         library records from history. Displays uninstallation summary with
-        status for each library.
+        status and deleted file count for each library.
 
         Returns:
             bool: True if all libraries were successfully uninstalled, False otherwise
         """
         uninstall_table = RichTable.create()
         RichTable.add_column(uninstall_table, "📁 Library", style="cyan", header_style="bold cyan", justify="left")
+        RichTable.add_column(uninstall_table, "🚮 Files Removed", style="magenta", header_style="bold magenta", justify="center")
         RichTable.add_column(uninstall_table, "📦 Status", style="green", header_style="bold green", justify="center")
 
         success_count = 0
-        for lib in self.libraries:
-            try:
-                # Remove library installation files and records
-                success = UninstallManager.uninstall_library(self.arch, lib)
-                if success:
-                    status = "[bold green]Uninstalled[/bold green]"
-                    success_count += 1
-                    RichLogger.info(f"Successfully uninstalled library [cyan]{lib}[/cyan]")
-                else:
-                    status = "[bold red]Failed[/bold red]"
-                    RichLogger.error(f"Failed to uninstall library [cyan]{lib}[/cyan]")
+        total_removed = 0
 
-                # Add row to the table
-                RichTable.add_row(uninstall_table,
-                    f"[cyan]{lib}[/cyan]",
-                    status
-                )
-            except Exception as e:
-                RichLogger.exception(f"Error uninstalling library {lib}")
-                # Add error row to the table
-                RichTable.add_row(uninstall_table,
-                    f"[cyan]{lib}[/cyan]",
-                    "[bold red]Failed[/bold red]"
-                )
+        for lib in self.libraries:
+            # Remove library installation files and records
+            removed_count = UninstallManager.uninstall_library(self.arch, lib)
+            if removed_count > 0:
+                status = "[bold green]Success[/bold green]"
+                success_count += 1
+                total_removed += removed_count
+                RichLogger.info(f"Successfully uninstalled library [cyan]{lib}[/cyan], removed {removed_count} files")
+            else:
+                status = "[bold red]Failed[/bold red]"
+                removed_count = 0
+                RichLogger.error(f"Failed to uninstall library [cyan]{lib}[/cyan]")
+
+            # Add row to the table
+            RichTable.add_row(uninstall_table,
+                f"[cyan]{lib}[/cyan]",
+                f"[magenta]{removed_count}[/magenta]",
+                status
+            )
+
+        # Create statistics text with total removed files
+        stats_text = Text.from_markup(
+            f"📋 Total Libraries: [bold yellow]{len(self.libraries)}[/bold yellow]"
+            f" | ✅ Uninstalled: [bold green]{success_count}[/bold green]"
+            f" | ❌ Failed: [bold red]{len(self.libraries) - success_count}[/bold red]"
+            f" | 🚮 Total Files Removed: [bold magenta]{total_removed}[/bold magenta]",
+            justify="center"
+        )
 
         # Render summary panel
-        stats_text = self._get_stats_text(len(self.libraries), success_count, "Uninstalled")
-        self._render_summary_panel("🗑️ Uninstallation Summary", uninstall_table, stats_text)
+        self._render_summary_panel("🚮 Uninstallation Summary", uninstall_table, stats_text)
         return success_count == len(self.libraries)
 
     def list(self) -> bool:
