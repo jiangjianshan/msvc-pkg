@@ -116,19 +116,6 @@ dependencies:
         sha256: 7c722c4a25a26f7179027b1323ed8e291c48365c6f87345e61ee8d5ebd2e5ba0
         target: "{ROOT_DIR}\\x64\\bin\\wget.exe"
 
-  - name: yq
-    check: "where yq"
-    interactive: true
-    variants:
-      - name: yq x64 variant
-        url: https://github.com/mikefarah/yq/releases/download/v4.47.2/yq_windows_amd64.exe
-        sha256: f9b1962fc1cf4a1fca36b5d634aa1a2a541cb9a4aabb8536f43cb95fab9a904e
-        target: "{ROOT_DIR}\\x64\\bin\\yq.exe"
-      - name: yq x86 variant
-        url: https://github.com/mikefarah/yq/releases/download/v4.47.2/yq_windows_386.exe
-        sha256: 173097e26d2b089219cb7572d98833cd9216643dc3ecbf04979d7e7403898929
-        target: "{ROOT_DIR}\\x64\\bin\\yq.exe"
-
   - name: rust
     check: "where rustc"
     interactive: true

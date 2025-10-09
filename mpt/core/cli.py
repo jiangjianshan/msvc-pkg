@@ -13,6 +13,7 @@ from rich import box
 
 from mpt import ROOT_DIR
 from mpt.config.package import PackageConfig
+from mpt.core.help import CommandLineHelp
 from mpt.core.log import RichLogger
 from mpt.core.view import RichPanel
 
@@ -25,11 +26,6 @@ class CommandLineParser:
     selection, prefix configuration, and library-specific settings with rich
     formatted output and detailed error reporting.
     """
-
-    # Constants for table formatting
-    OPTION_WIDTH = 20
-    DESCRIPTION_WIDTH = 60
-    EXAMPLES_WIDTH = 40
 
     @staticmethod
     def parse_arguments() -> Tuple[str, str, List[str], str, Dict[str, str]]:
@@ -53,28 +49,15 @@ class CommandLineParser:
             SystemExit: Terminates application with appropriate exit code on
                        validation errors or help requests
         """
-        try:
-            parser = CommandLineParser._create_parser()
-            args, unknown_args = parser.parse_known_args()
-
-            lib_prefixes = CommandLineParser._process_unknown_args(unknown_args)
-
-            if args.help:
-                CommandLineParser.print_rich_help()
-                sys.exit(0)
-
-            action = CommandLineParser._determine_action(args)
-            libraries = CommandLineParser._validate_libraries(args.libraries)
-
-            return args.arch, action, libraries, args.prefix, lib_prefixes
-
-        except SystemExit as e:
-            if e.code != 0:
-                RichLogger.error(f"Argument parsing failed with exit code: {e.code}")
-            sys.exit(e.code)
-        except Exception as e:
-            RichLogger.exception(f"Unexpected error during argument parsing: {str(e)}")
-            sys.exit(1)
+        parser = CommandLineParser._create_parser()
+        args, unknown_args = parser.parse_known_args()
+        lib_prefixes = CommandLineParser._process_unknown_args(unknown_args)
+        if args.help:
+            CommandLineHelp.display_help()
+            sys.exit(0)
+        action = CommandLineParser._determine_action(args)
+        libraries = CommandLineParser._validate_libraries(args.libraries)
+        return args.arch, action, libraries, args.prefix, lib_prefixes
 
     @staticmethod
     def _create_parser() -> argparse.ArgumentParser:
@@ -276,129 +259,3 @@ class CommandLineParser:
         except Exception as e:
             RichLogger.exception(f"Error validating libraries: {str(e)}")
             sys.exit(1)
-
-    @staticmethod
-    def print_rich_help():
-        """
-        Display beautifully formatted help information with rich styling.
-
-        Generates a comprehensive help display with formatted tables for
-        options and examples. Uses color coding, icons, and aligned columns
-        for improved readability and user experience.
-        """
-        try:
-            usage_text = Text("📝 Usage:\n", style="bold")
-            usage_text.append("     mpt [OPTIONS] [LIBRARIES...]\n", style="bold green")
-            RichLogger.print(usage_text)
-
-            RichLogger.print("⚙️️ Options:", style="bold")
-            CommandLineParser._print_options_table()
-
-            RichLogger.print("🚀 Examples:", style="bold")
-            CommandLineParser._print_examples_table()
-
-            RichLogger.print(
-                "Default behavior: Install all libraries for x64 architecture",
-                style="italic"
-            )
-
-            RichLogger.print(
-                "For more information, visit: https://github.com/msvc-pkg",
-                style="dim"
-            )
-        except Exception as e:
-            RichLogger.exception(f"Error printing help: {str(e)}")
-            sys.exit(1)
-
-    @staticmethod
-    def _print_options_table():
-        """
-        Generate and display formatted table of command line options.
-
-        Creates a rich-formatted table with aligned columns displaying all
-        available command line options, their descriptions, and visual icons
-        for improved user guidance.
-        """
-        try:
-            options_table = Table(
-                show_header=False,
-                box=box.SIMPLE,
-                min_width=80,
-                show_lines=False
-            )
-
-            options_table.add_column("Option", style="bold cyan", no_wrap=True, width=CommandLineParser.OPTION_WIDTH)
-            options_table.add_column("Description", style="dim", justify="left", min_width=CommandLineParser.DESCRIPTION_WIDTH)
-
-            option_rows = [
-                ("--install", "🛠️ Install specified libraries or all libraries"),
-                ("--uninstall", "🚮 Uninstall specified libraries or all libraries"),
-                ("--list", "📋 List installation status of libraries"),
-                ("--dependency", "🧩 Show dependency tree for libraries"),
-                ("--clean", "🧹 Clean build artifacts for libraries"),
-                ("--fetch", "📥 Download source archives for libraries"),
-                ("--prefix PATH", "🌍 Set global installation prefix"),
-                ("--<lib>-prefix PATH", "📚 Set libraries prefixes for library"),
-                ("--arch ARCH", "🎯 Specify target architecture (x64 or x86)"),
-                ("-h, --help", "💡 Show this help message and exit"),
-                ("[LIBRARIES]", "📚 List of libraries to process (optional)")
-            ]
-
-            for option, description in option_rows:
-                options_table.add_row(option, description)
-
-            RichLogger.print(options_table)
-        except Exception as e:
-            RichLogger.exception(f"Error printing options table: {str(e)}")
-            raise
-
-    @staticmethod
-    def _print_examples_table():
-        """
-        Generate and display formatted table of usage examples.
-
-        Creates a comprehensive table of common usage scenarios with
-        example commands and their descriptions. Uses visual icons and
-        consistent formatting for improved readability.
-        """
-        try:
-            examples_table = Table(
-                show_header=False,
-                box=box.SIMPLE,
-                min_width=80,
-                show_lines=False,
-                padding=(0, 1)
-            )
-
-            examples_table.add_column("Command", style="bold green", no_wrap=True, width=CommandLineParser.EXAMPLES_WIDTH)
-            examples_table.add_column("Description", style="italic", justify="left", min_width=CommandLineParser.DESCRIPTION_WIDTH)
-
-            example_rows = [
-                ("mpt", "🔄 Install all libraries for x64 (default behavior)"),
-                ("mpt --arch x86", "🔧 Install all libraries for x86 architecture"),
-                ("mpt --install gmp fftw", "🔧 Install specific libraries for x64"),
-                ("mpt --install gmp fftw --arch x86", "🔧 Install specific libraries for x86"),
-                ("mpt --uninstall", "🚮 Uninstall all libraries for x64"),
-                ("mpt --arch x86 --uninstall gmp fftw", "🚮 Uninstall specific libraries for x86"),
-                ("mpt --list", "📋 List status of all libraries for x64"),
-                ("mpt --list gmp fftw", "📋 List status of specific libraries"),
-                ("mpt --dependency", "🌳 Show dependency tree for all libraries"),
-                ("mpt --dependency gmp fftw", "🌿 Show dependency tree for specific libraries"),
-                ("mpt --clean", "🧹 Clean artifacts for all libraries"),
-                ("mpt --clean gmp fftw", "🧹 Clean artifacts for specific libraries"),
-                ("mpt --fetch", "📥 Download sources for all libraries"),
-                ("mpt --fetch gmp fftw", "📥 Download sources for specific libraries"),
-                ("mpt --help", "📘 Display this help information"),
-                ("mpt --prefix E:\\Githubs\\msvc-pkg\\x64", "🌍 Set global installation prefix"),
-                ("mpt --llvm-project-prefix D:\\LLVM", "📚 Set libraries prefixes for LLVM"),
-                ("mpt --install --perl-prefix D:\\Perl", "📚 Install Perl with libraries prefixes"),
-                ("mpt --install zlib --prefix C:\\Common", "📦 Install zlib with global prefix")
-            ]
-
-            for command, description in example_rows:
-                examples_table.add_row(command, description)
-
-            RichLogger.print(examples_table)
-        except Exception as e:
-            RichLogger.exception(f"Error printing examples table: {str(e)}")
-            raise

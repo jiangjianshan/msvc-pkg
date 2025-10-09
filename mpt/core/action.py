@@ -497,7 +497,7 @@ class ActionHandler:
                     continue
 
                 # Prepare environment variables and fetch source
-                Runner.prepare_envvars(self.arch, lib)
+                Runner.setup_environment(self.arch, lib)
                 source_path = SourceManager.fetch_source(config)
                 if not source_path or not source_path.exists():
                     RichLogger.error(f"Source acquisition failed for library [cyan]{lib}[/cyan]")

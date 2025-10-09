@@ -1,28 +1,30 @@
 #!/bin/bash
 #
-#  Build script for the current library, it should not be called directly from the
-#  command line, but should be called from mpt.bat.
+# Build script for the current library.
 #
-#  The values of these environment variables come from mpt.bat:
-#  ARCH            - x64 or x86
-#  PKG_NAME        - name of library
-#  PKG_VER         - version of library
-#  ROOT_DIR        - root location of msvc-pkg
-#  PREFIX          - install location of current library
-#  PREFIX_PATH     - install location of third party libraries
-#  _PREFIX         - default install location if not list in settings.yaml
+# This script is designed to be invoked by `mpt.bat` using the command `mpt <library_name>`.
+# It relies on specific environment variables set by the `mpt` process to function correctly.
 #
+# Environment Variables Provided by `mpt` (in addition to system variables):
+#   ARCH          - Target architecture to build for. Valid values: `x64` or `x86`.
+#   PKG_NAME      - Name of the current library being built.
+#   PKG_VER       - Version of the current library being built.
+#   ROOT_DIR      - Root directory of the msvc-pkg project.
+#   SRC_DIR       - Source code directory of the current library.
+#   PREFIX        - **Actual installation path prefix** for the *current* library after successful build.
+#                   This path is where the built artifacts for *this specific library* will be installed.
+#                   It usually equals `_PREFIX`, but **may differ** if a non-default installation path
+#                   was explicitly specified for this library (e.g., `D:\LLVM` for `llvm-project`).
+#   PREFIX_PATH   - List of installation directory prefixes for third-party dependencies.
+#   _PREFIX       - **Default installation path prefix** for all built libraries.
+#                   This is the root directory where libraries are installed **unless overridden**
+#                   by a specific `PREFIX` setting for an individual library.
+#
+#   For each direct dependency `{Dependency}` of the current library:
+#     {Dependency}_SRC - Source code directory of the dependency `{Dependency}`.
+#     {Dependency}_VER - Version of the dependency `{Dependency}`.
 
-if [ -z "$ROOT_DIR" ]; then
-    echo "Don't directly run $0 from command line."
-    echo "To build $PKG_NAME and its dependencies, please go to the root location of msvc-pkg, and then press"
-    echo "mpt $PKG_NAME"
-    exit 0
-fi
-ROOT_DIR=$(cygpath -u "$ROOT_DIR")
 . $ROOT_DIR/compiler.sh $ARCH
-PREFIX=$(cygpath -u "$PREFIX")
-SRC_DIR=$ROOT_DIR/releases/$PKG_NAME-$PKG_VER
 BUILD_DIR=$SRC_DIR/build${ARCH//x/}
 C_OPTS='-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics'
 # NOTE:

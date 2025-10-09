@@ -15,14 +15,7 @@ rem  PREFIX_PATH     - install location of third party libraries
 rem  _PREFIX         - default install location if not list in settings.yaml
 rem
 
-if "%ROOT_DIR%"=="" (
-    echo Don't directly run %~nx0 from command line.
-    echo To build !PKG_NAME! and its dependencies, please go to the root location of msvc-pkg, and then press
-    echo mpt !PKG_NAME!
-    goto :end
-)
 call "%ROOT_DIR%\compiler.bat" %ARCH%
-set SRC_DIR=%ROOT_DIR%\releases\%PKG_NAME%-%PKG_VER%
 set BUILD_DIR=%SRC_DIR%
 set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX

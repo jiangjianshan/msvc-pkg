@@ -59,7 +59,7 @@ class BuildManager:
         log_dir.mkdir(parents=True, exist_ok=True)
 
         # Prepare environment variables
-        Runner.prepare_envvars(arch, lib_name)
+        Runner.setup_environment(arch, lib_name)
 
         # Fetch source code
         source_path = SourceManager.fetch_source(config)
