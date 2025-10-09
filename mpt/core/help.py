@@ -88,6 +88,7 @@ class CommandLineHelp:
                 ("--<lib>-prefix PATH", "📚 Set library-specific installation prefix"),
                 ("--arch ARCH", "🎯 Specify target architecture (x64 or x86)"),
                 ("--add", "➕ Add and configure a new library with build system detection"),
+                ("--remove", "➖ Remove library configuration files"),
                 ("-h, --help", "💡 Show this help message and exit"),
                 ("[LIBRARIES]", "📦 List of libraries to process (optional)")
             ]
@@ -124,6 +125,10 @@ class CommandLineHelp:
             example_rows = [
                 ("mpt", "🔄 Install all libraries for x64 (default behavior)"),
                 ("mpt --arch x86", "🔧 Install all libraries for x86 architecture"),
+                ("mpt --add libjxl", "➕ Add and configure specific library with auto-detection"),
+                ("mpt --add gmp fftw", "➕ Add multiple library configurations"),
+                ("mpt --remove libjxl", "➖ Remove specific library configuration"),
+                ("mpt --remove gmp fftw", "➖ Remove multiple library configurations"),
                 ("mpt --install gmp fftw", "🧮 Install math libraries (GMP, FFTW) for x64"),
                 ("mpt --install boost eigen", "📚 Install C++ libraries (Boost, Eigen) for x64"),
                 ("mpt --install opencv vtk", "📷 Install computer vision libraries (OpenCV, VTK) for x64"),

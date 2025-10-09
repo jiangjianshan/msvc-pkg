@@ -22,7 +22,8 @@ from rich.text import Text
 from textwrap import shorten
 
 from mpt import ROOT_DIR
-from mpt.config.package import PackageConfig
+from mpt.core.config import PackageConfig
+from mpt.core.package import PackageManager
 from mpt.core.build import BuildManager
 from mpt.core.clean import CleanManager
 from mpt.core.dependency import DependencyResolver
@@ -531,3 +532,112 @@ class ActionHandler:
         stats_text = self._get_stats_text(len(self.libraries), success_count, "Fetched")
         self._render_summary_panel("📥 Fetch Summary", fetch_table, stats_text)
         return success_count == len(self.libraries)
+
+    def add(self) -> bool:
+        """Interactively create new library configurations.
+
+        Guides the user through creating config.yaml files for new libraries
+        with detailed prompts for each configuration option.
+
+        Returns:
+            bool: True if all libraries were successfully configured, False otherwise
+        """
+        add_table = RichTable.create()
+        RichTable.add_column(add_table, "📁 Library", style="cyan", header_style="bold cyan", justify="left")
+        RichTable.add_column(add_table, "📝 Status", style="green", header_style="bold green", justify="center")
+
+        success_count = 0
+
+        for lib in self.libraries:
+            try:
+                # Check if library already exists
+                lib_dir = ROOT_DIR / 'packages' / lib
+                if lib_dir.exists() and (lib_dir / "config.yaml").exists():
+                    RichLogger.warning(f"Library [cyan]{lib}[/cyan] already exists. Skipping creation.")
+                    RichTable.add_row(add_table,
+                        f"[cyan]{lib}[/cyan]",
+                        "[bold yellow]Skipped (Exists)[/bold yellow]"
+                    )
+                    continue
+
+                # Use PackageManager to interactively create config
+                PackageManager.add_library(lib)
+                success_count += 1
+                RichLogger.info(f"Successfully created configuration for library [cyan]{lib}[/cyan]")
+
+                # Add success row to the table
+                RichTable.add_row(add_table,
+                    f"[cyan]{lib}[/cyan]",
+                    "[bold green]Created[/bold green]"
+                )
+
+            except Exception as e:
+                RichLogger.exception(f"Error creating configuration for library {lib}")
+                # Add error row to the table
+                RichTable.add_row(add_table,
+                    f"[cyan]{lib}[/cyan]",
+                    "[bold red]Failed[/bold red]"
+                )
+
+        # Render summary panel
+        stats_text = self._get_stats_text(len(self.libraries), success_count, "Created")
+        self._render_summary_panel("➕ Library Creation Summary", add_table, stats_text)
+
+        # Display helpful tip if no libraries were created
+        if success_count == 0:
+            tip_text = Text.from_markup("💡 Use `mpt --add <library-name>` to create a new library configuration.")
+            RichPanel.summary(
+                content=tip_text,
+                title="Tip",
+                border_style="blue",
+                width=self.terminal_width
+            )
+
+        return success_count > 0
+
+    def remove(self) -> bool:
+        """Remove library configurations with interactive confirmation.
+
+        Guides the user through removing library configurations with
+        detailed prompts for confirmation.
+
+        Returns:
+            bool: True if all libraries were successfully removed, False otherwise
+        """
+        remove_table = RichTable.create()
+        RichTable.add_column(remove_table, "📁 Library", style="cyan", header_style="bold cyan", justify="left")
+        RichTable.add_column(remove_table, "📝 Status", style="green", header_style="bold green", justify="center")
+
+        success_count = 0
+
+        for lib in self.libraries:
+            try:
+                # Use PackageManager to remove library config
+                if PackageManager.remove_library(lib):
+                    success_count += 1
+                    RichLogger.info(f"Successfully removed configuration for library [cyan]{lib}[/cyan]")
+                    # Add success row to the table
+                    RichTable.add_row(remove_table,
+                        f"[cyan]{lib}[/cyan]",
+                        "[bold green]Removed[/bold green]"
+                    )
+                else:
+                    # Add failure row to the table
+                    RichTable.add_row(remove_table,
+                        f"[cyan]{lib}[/cyan]",
+                        "[bold red]Failed[/bold red]"
+                    )
+
+            except Exception as e:
+                RichLogger.exception(f"Error removing configuration for library {lib}")
+                # Add error row to the table
+                RichTable.add_row(remove_table,
+                    f"[cyan]{lib}[/cyan]",
+                    "[bold red]Failed[/bold red]"
+                )
+
+        # Render summary panel
+        stats_text = self._get_stats_text(len(self.libraries), success_count, "Removed")
+        self._render_summary_panel("➖ Library Removal Summary", remove_table, stats_text)
+
+        return success_count > 0

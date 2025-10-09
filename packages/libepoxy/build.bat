@@ -51,8 +51,6 @@ meson setup "%BUILD_DIR%"                                                      ^
   -Dc_args="%C_OPTS% %C_DEFS%"                                                 ^
   -Dcpp_std=c++17                                                              ^
   -Dcpp_args="-EHsc %C_OPTS% %C_DEFS%"                                         ^
-  -Ddefault_both_libraries=shared                                              ^
-  -Ddefault_both_libraries=shared                                              ^
   -Ddefault_library=shared                                                     ^
   -Dx11=false                                                                  ^
   -Dtests=false || exit 1

@@ -66,7 +66,7 @@ def main() -> NoReturn:
     if lib_prefixes:
         RichLogger.debug("Writing library prefixes to user configuration")
         try:
-            from mpt.config import UserConfig
+            from mpt.core.config import UserConfig
             UserConfig.write({"lib_prefixes": lib_prefixes})
         except Exception as e:
             RichLogger.exception("Failed to write library prefixes to user configuration")
@@ -145,7 +145,9 @@ def _dispatch_action(handler: ActionHandler, action: str) -> bool:
             'list': handler.list,
             'dependency': handler.dependency,
             'fetch': handler.fetch,
-            'clean': handler.clean
+            'clean': handler.clean,
+            'add': handler.add,
+            'remove': handler.remove
         }
 
         action_func = action_methods.get(action)

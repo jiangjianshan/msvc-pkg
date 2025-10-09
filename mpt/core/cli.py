@@ -12,7 +12,7 @@ from rich.table import Table
 from rich import box
 
 from mpt import ROOT_DIR
-from mpt.config.package import PackageConfig
+from mpt.core.config import PackageConfig
 from mpt.core.help import CommandLineHelp
 from mpt.core.log import RichLogger
 from mpt.core.view import RichPanel
@@ -56,7 +56,11 @@ class CommandLineParser:
             CommandLineHelp.display_help()
             sys.exit(0)
         action = CommandLineParser._determine_action(args)
-        libraries = CommandLineParser._validate_libraries(args.libraries)
+        # Skip library validation for 'add' action
+        if action == 'add' or action == 'remove':
+            libraries = args.libraries
+        else:
+            libraries = CommandLineParser._validate_libraries(args.libraries)
         return args.arch, action, libraries, args.prefix, lib_prefixes
 
     @staticmethod
@@ -89,7 +93,9 @@ class CommandLineParser:
                 ('--list', 'List installation status of specified libraries or all libraries if none specified'),
                 ('--dependency', 'Show dependency tree for specified libraries or all libraries if none specified'),
                 ('--fetch', 'Fetch source code for specified libraries or all libraries if none specified'),
-                ('--clean', 'Clean build artifacts for specified libraries or all libraries if none specified')
+                ('--clean', 'Clean build artifacts for specified libraries or all libraries if none specified'),
+                ('--add', 'Add and configure a new library with automatic build system detection'),
+                ('--remove', 'Remove library configuration files')
             ]
 
             for arg, help_text in actions:
@@ -196,7 +202,9 @@ class CommandLineParser:
                 'list': args.list,
                 'dependency': args.dependency,
                 'fetch': args.fetch,
-                'clean': args.clean
+                'clean': args.clean,
+                'add': args.add,
+                'remove': args.remove
             }
 
             for action, flag in action_mapping.items():

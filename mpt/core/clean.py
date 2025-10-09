@@ -9,7 +9,7 @@ from typing import Dict, Tuple, List, Optional
 
 from mpt import ROOT_DIR
 from mpt.utils.file import FileUtils
-from mpt.config.package import PackageConfig
+from mpt.core.config import PackageConfig
 from mpt.core.log import RichLogger
 from mpt.core.source import SourceManager
 

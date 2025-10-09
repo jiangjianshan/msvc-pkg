@@ -13,8 +13,8 @@ from typing import Dict, Any, Optional, Union, List
 from rich.text import Text
 
 from mpt import ROOT_DIR
-from mpt.config.package import PackageConfig
-from mpt.config.user import UserConfig
+from mpt.core.config import PackageConfig
+from mpt.core.config import UserConfig
 from mpt.core.dependency import DependencyResolver
 from mpt.core.log import RichLogger
 from mpt.core.source import SourceManager
@@ -130,8 +130,8 @@ class Runner:
         """
         deps = DependencyResolver.get_dependencies(lib)
         for dep in deps:
-            dep_config = PackageConfig.load(dep)
-            dep_name = dep_config.get('name')
+            dep_name, dep_type = DependencyResolver.parse_dependency_name(dep)
+            dep_config = PackageConfig.load(dep_name)
             dep_ver = dep_config.get('version')
             dep_url = dep_config.get('url')
 

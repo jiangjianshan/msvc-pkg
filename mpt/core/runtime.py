@@ -12,12 +12,12 @@ from rich.prompt import Confirm, IntPrompt
 
 from mpt import ROOT_DIR
 from mpt.core.archive import ArchiveHandler
+from mpt.core.config import RequirementsConfig
 from mpt.core.download import DownloadHandler
 from mpt.core.log import RichLogger
 from mpt.core.patch import PatchHandler
 from mpt.core.view import RichTable, RichPanel
 from mpt.utils.bash import BashUtils
-from mpt.config.requirements import RequirementsConfig
 
 class RuntimeManager:
     """

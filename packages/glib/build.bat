@@ -53,7 +53,6 @@ meson setup "%BUILD_DIR%"                                                      ^
   -Dcpp_args="-EHsc %C_OPTS% %C_DEFS%"                                         ^
   -Dc_winlibs="Advapi32.lib,Ole32.lib,Shell32.lib,User32.lib,ffi.lib"          ^
   -Dcpp_winlibs="Advapi32.lib,Ole32.lib,Shell32.lib,User32.lib,ffi.lib"        ^
-  -Ddefault_both_libraries=shared                                              ^
   -Ddefault_library=shared                                                     ^
   -Dtests=false || exit 1
 exit /b 0

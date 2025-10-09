@@ -9,7 +9,7 @@ from pathlib import Path
 from rich.tree import Tree
 from rich.text import Text
 
-from mpt.config.package import PackageConfig
+from mpt.core.config import PackageConfig
 from mpt.core.log import RichLogger
 from mpt.core.view import RichTable, RichPanel
 

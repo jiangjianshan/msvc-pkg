@@ -56,7 +56,7 @@ class RichLogger:
             return
 
         # Import here to avoid circular dependencies
-        from mpt.config.user import UserConfig
+        from mpt.core.config import UserConfig
 
         # Load user configuration for logging settings
         user_settings = UserConfig.load()
