@@ -60,9 +60,10 @@ class Runner:
         lib_script = lib_config.get('run')
         lib_rootdir = str(ROOT_DIR)
 
-        if Path(lib_script).name.endswith('.sh'):
-            lib_rootdir = PathUtils.win_to_unix(lib_rootdir)
-            lib_srcdir = PathUtils.win_to_unix(lib_srcdir)
+        if lib_script:
+            if Path(lib_script).name.endswith('.sh'):
+                lib_rootdir = PathUtils.win_to_unix(lib_rootdir)
+                lib_srcdir = PathUtils.win_to_unix(lib_srcdir)
 
         cls._proc_env['ROOT_DIR'] = lib_rootdir
         cls._proc_env['SRC_DIR'] = lib_srcdir
@@ -114,8 +115,9 @@ class Runner:
         cls._proc_env['PREFIX_PATH'] = os.pathsep.join(prefix_paths)
 
         lib_script = lib_config.get('run')
-        if Path(lib_script).name.endswith('.sh'):
-            prefix = PathUtils.win_to_unix(prefix)
+        if lib_script:
+            if Path(lib_script).name.endswith('.sh'):
+                prefix = PathUtils.win_to_unix(prefix)
 
         cls._proc_env['PREFIX'] = prefix
         return prefix
