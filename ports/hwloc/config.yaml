@@ -1,0 +1,12 @@
+name: hwloc
+version: 2.11.2
+url: https://github.com/open-mpi/hwloc/archive/refs/tags/hwloc-2.11.2.tar.gz
+sha256: a9cd3505db8f44d14aba17652d183c7180f01755c02b1b2c4f3950bd7ff5b5d3
+dependencies:
+  required:
+    - dlfcn-win32
+    - dirent
+    - level-zero
+    - libxml2
+    - cairo
+script: build.sh

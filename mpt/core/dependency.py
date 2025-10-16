@@ -9,7 +9,7 @@ from pathlib import Path
 from rich.tree import Tree
 from rich.text import Text
 
-from mpt.core.config import PackageConfig
+from mpt.core.config import LibraryConfig
 from mpt.core.log import RichLogger
 from mpt.core.view import RichTable, RichPanel
 
@@ -63,7 +63,7 @@ class DependencyResolver:
             list: List of dependency specifications (e.g., ["dirent", "pcre:required"])
         """
         try:
-            config = PackageConfig.load(lib_name)
+            config = LibraryConfig.load(lib_name)
             if not config:
                 RichLogger.error(f"[[bold cyan]{lib_name}[/bold cyan]] Failed to load library configuration")
                 return []
@@ -142,8 +142,6 @@ class DependencyResolver:
         Raises:
             CycleError: If a circular dependency is detected in the graph
         """
-        RichLogger.info(f"[[bold cyan]{root}[/bold cyan]] Starting topological sort on graph with [bold cyan]{len(graph)}[/bold cyan] nodes")
-
         try:
             ts = TopologicalSorter(graph)
             order = list(ts.static_order())
@@ -253,7 +251,7 @@ class DependencyResolver:
             if build:
                 for node_name in order:
                     lib_name, dep_type = DependencyResolver.parse_dependency_name(node_name)
-                    config = PackageConfig.load(lib_name)
+                    config = LibraryConfig.load(lib_name)
                     if not config:
                         RichLogger.error(f"[[bold cyan]{root}[/bold cyan]] Failed to load configuration for [bold cyan]{lib_name}[/bold cyan]")
                         return False

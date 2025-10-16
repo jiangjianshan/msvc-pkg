@@ -1,0 +1,6 @@
+name: tree-sitter-query
+version: 0.6.2
+url: https://github.com/tree-sitter-grammars/tree-sitter-query/archive/v0.6.2.tar.gz
+sha256: 90682e128d048fbf2a2a17edca947db71e326fa0b3dba4136e041e096538b4eb
+dependencies:
+script: build.bat

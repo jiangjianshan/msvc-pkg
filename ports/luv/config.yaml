@@ -1,0 +1,10 @@
+name: luv
+version: master
+url: https://github.com/luvit/luv.git
+recursive: true
+depth: 1
+dependencies:
+  required:
+    - libuv
+    - lua
+script: build.bat

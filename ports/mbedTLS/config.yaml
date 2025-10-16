@@ -1,0 +1,7 @@
+name: mbedTLS
+version: v3.6.4
+url: https://github.com/Mbed-TLS/mbedtls.git
+recursive: true
+depth: 1
+dependencies:
+script: build.bat

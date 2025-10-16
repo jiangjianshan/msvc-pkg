@@ -1,0 +1,8 @@
+name: bc
+version: 1.08.1
+url: https://ftp.gnu.org/gnu/bc/bc-1.08.1.tar.xz
+sha256: 515430115b3334c636317503460a0950dff79940aa3259ce2c1aa67c2881d023
+dependencies:
+  required:
+    - readline
+script: build.sh

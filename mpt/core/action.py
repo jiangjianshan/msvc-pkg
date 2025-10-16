@@ -22,15 +22,14 @@ from rich.text import Text
 from textwrap import shorten
 
 from mpt import ROOT_DIR
-from mpt.core.config import PackageConfig
-from mpt.core.package import PackageManager
+from mpt.core.config import LibraryConfig
+from mpt.core.library import LibraryManager
 from mpt.core.build import BuildManager
 from mpt.core.clean import CleanManager
 from mpt.core.dependency import DependencyResolver
 from mpt.core.git import GitHandler
 from mpt.core.history import HistoryManager
 from mpt.core.log import RichLogger
-from mpt.core.run import Runner
 from mpt.core.source import SourceManager
 from mpt.core.uninstall import UninstallManager
 from mpt.core.view import RichTable, RichPanel
@@ -132,9 +131,9 @@ class ActionHandler:
         # Display cleaning options to user
         clean_options = [
             "1. Delete only log files for libraries (Uninstall action need and recommend to keep it)",
-            "2. Delete only compressed packages (only for non-Git sources)",
+            "2. Delete only compressed libraries (only for non-Git sources)",
             "3. Delete only source directories (cloned or extracted)",
-            "4. Delete all: logs, compressed packages, and source directories"
+            "4. Delete all: logs, compressed libraries, and source directories"
         ]
 
         choice_panel = Panel(
@@ -170,7 +169,7 @@ class ActionHandler:
         max_path_width = self.terminal_width // 5
 
         for lib in self.libraries:
-            config = PackageConfig.load(lib)
+            config = LibraryConfig.load(lib)
             # Perform cleaning based on user choice
             if choice == "1":
                 clean_result = CleanManager.clean_logs(lib)
@@ -256,16 +255,12 @@ class ActionHandler:
             try:
                 # Resolve dependencies and build library
                 dep_success = DependencyResolver.resolve(lib, self.arch, build=True)
-
                 if not dep_success:
                     status = "[bold red]Failed[/bold red]"
                     overall_success = False
-                    RichLogger.error(f"Installation failed for library [cyan]{lib}[/cyan]")
                 else:
                     status = "[bold green]Installed[/bold green]"
                     success_count += 1
-                    RichLogger.info(f"Successfully installed library [cyan]{lib}[/cyan]")
-
                 # Add row to the table
                 RichTable.add_row(install_table,
                     f"[cyan]{lib}[/cyan]",
@@ -360,9 +355,9 @@ class ActionHandler:
         ignore_count = 0
 
         for lib in self.libraries:
-            config = PackageConfig.load(lib)
+            config = LibraryConfig.load(lib)
 
-            if not config.get('run'):
+            if not config.get('script'):
                 ignore_count += 1
                 RichTable.add_row(list_table,
                     f"[bold cyan]{lib}[/bold cyan]",
@@ -373,8 +368,6 @@ class ActionHandler:
                 continue
 
             installed = lib in arch_records
-            RichLogger.debug(f"Library [cyan]{lib}[/cyan] installation status: [yellow]{installed}[/yellow]")
-
             status_display = "[bold yellow]Error[/bold yellow]"
             version = "N/A"
             last_built = "N/A"
@@ -487,7 +480,7 @@ class ActionHandler:
                 status = "[bold red]Failed[/bold red]"
 
                 # Load library configuration
-                config = PackageConfig.load(lib)
+                config = LibraryConfig.load(lib)
                 if not config:
                     RichLogger.error(f"Failed to load config for library [cyan]{lib}[/cyan]")
                     RichTable.add_row(fetch_table,
@@ -497,8 +490,6 @@ class ActionHandler:
                     )
                     continue
 
-                # Prepare environment variables and fetch source
-                Runner.setup_environment(self.arch, lib)
                 source_path = SourceManager.fetch_source(config)
                 if not source_path or not source_path.exists():
                     RichLogger.error(f"Source acquisition failed for library [cyan]{lib}[/cyan]")
@@ -551,7 +542,7 @@ class ActionHandler:
         for lib in self.libraries:
             try:
                 # Check if library already exists
-                lib_dir = ROOT_DIR / 'packages' / lib
+                lib_dir = ROOT_DIR / 'ports' / lib
                 if lib_dir.exists() and (lib_dir / "config.yaml").exists():
                     RichLogger.warning(f"Library [cyan]{lib}[/cyan] already exists. Skipping creation.")
                     RichTable.add_row(add_table,
@@ -560,8 +551,8 @@ class ActionHandler:
                     )
                     continue
 
-                # Use PackageManager to interactively create config
-                PackageManager.add_library(lib)
+                # Use LibraryManager to interactively create config
+                LibraryManager.add_library(lib)
                 success_count += 1
                 RichLogger.info(f"Successfully created configuration for library [cyan]{lib}[/cyan]")
 
@@ -612,8 +603,8 @@ class ActionHandler:
 
         for lib in self.libraries:
             try:
-                # Use PackageManager to remove library config
-                if PackageManager.remove_library(lib):
+                # Use LibraryManager to remove library config
+                if LibraryManager.remove_library(lib):
                     success_count += 1
                     RichLogger.info(f"Successfully removed configuration for library [cyan]{lib}[/cyan]")
                     # Add success row to the table

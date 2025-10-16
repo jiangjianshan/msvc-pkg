@@ -267,7 +267,7 @@ class DownloadHandler:
                             if downloaded_size > 0:
                                 RichLogger.debug(f"Restarting download from beginning. "
                                              f"Existing file size: [bold cyan]{downloaded_size}[/bold cyan] bytes")
-                                FileUtils.force_delete_file(file_path)
+                                FileUtils.delete_file(file_path)
                                 # Reset downloaded size after deletion
                                 downloaded_size = 0
                         elif response.status_code == requests.codes.partial_content:

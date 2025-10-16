@@ -1,0 +1,9 @@
+name: libsigsegv
+version: 2.14
+url: https://ftp.gnu.org/pub/gnu/libsigsegv/libsigsegv-2.14.tar.gz
+sha256: cdac3941803364cf81a908499beb79c200ead60b6b5b40cad124fd1e06caa295
+dependencies:
+  required:
+    - dlfcn-win32
+    - libiconv
+script: build.sh

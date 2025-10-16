@@ -1,0 +1,6 @@
+name: pugixml
+version: 1.15
+url: https://github.com/zeux/pugixml/archive/refs/tags/v1.15.tar.gz
+sha256: b39647064d9e28297a34278bfb897092bf33b7c487906ddfc094c9e8868bddcb
+dependencies:
+script: build.bat

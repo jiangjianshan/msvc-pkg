@@ -1,7 +1,0 @@
-name: SPIRV-Headers
-version: main
-url: https://github.com/KhronosGroup/SPIRV-Headers.git
-recursive: false
-depth: 1
-dependencies:
-run: build.bat

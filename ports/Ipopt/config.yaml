@@ -1,0 +1,12 @@
+name: Ipopt
+version: 3.14.17
+url: https://github.com/coin-or/Ipopt/archive/refs/tags/releases/3.14.17.tar.gz
+sha256: 17ab8e9a6059ab11172c184e5947e7a7dda9fed0764764779c27e5b8e46f3d75
+dependencies:
+  required:
+    - lapack
+    - ThirdParty-ASL
+    - ThirdParty-Mumps
+    - ThirdParty-Metis
+    - spral
+script: build.sh

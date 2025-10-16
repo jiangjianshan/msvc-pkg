@@ -1,0 +1,6 @@
+name: mpreal
+version: 3.7.1
+url: https://github.com/advanpix/mpreal/archive/refs/tags/mpfrc++-3.7.1.tar.gz
+sha256: f83b4a850e6f93e7770286fd615a656142d6ca856768e2c43a72df2d077e939b
+dependencies:
+script: build.bat

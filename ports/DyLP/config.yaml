@@ -1,0 +1,12 @@
+name: DyLP
+version: master
+url: https://github.com/coin-or/DyLP.git
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - CoinUtils
+    - Osi
+    - Data-Sample
+    - Data-Netlib
+script: build.sh

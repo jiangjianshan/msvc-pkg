@@ -1,0 +1,6 @@
+name: tree-sitter-markdown
+version: 0.5.0
+url: https://github.com/tree-sitter-grammars/tree-sitter-markdown/archive/v0.5.0.tar.gz
+sha256: 14c2c948ccf0e9b606eec39b09286c59dddf28307849f71b7ce2b1d1ef06937e
+dependencies:
+script: build.bat

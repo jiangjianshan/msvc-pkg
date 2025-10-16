@@ -1,0 +1,6 @@
+name: dirent
+version: 1.25
+url: https://github.com/tronkko/dirent/archive/refs/tags/1.25.tar.gz
+sha256: 1c816c911f911161fc8874a308c15f1819c294dd2f94d618063a878723238a06
+dependencies:
+script: build.bat

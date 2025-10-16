@@ -24,7 +24,7 @@ class RuntimeManager:
     Manages the installation and verification of system dependencies and extensions.
 
     Handles the complete lifecycle including checking existing installations,
-    downloading packages, executing installation commands, applying patches,
+    downloading system dependencies, executing installation commands, applying patches,
     and coordinating system restarts when required.
     """
 
@@ -102,14 +102,21 @@ class RuntimeManager:
                         for idx in uninstalled_variants:
                             RichLogger.print(f"{idx}. {variant_names[idx-1]}")
 
+                        skip_option = len(variants) + 1
+                        RichLogger.print(f"{skip_option}. Skip installation of {dep_name}")
+                        valid_choices = [str(i) for i in uninstalled_variants] + [str(skip_option)]
+
                         try:
                             choice = IntPrompt.ask(
-                                "Select a variant to install",
-                                choices=[str(i) for i in uninstalled_variants],
-                                default=uninstalled_variants[0] if uninstalled_variants else None
+                                f"Select a variant to install or skip {dep_name}",
+                                choices=valid_choices,
+                                default=str(skip_option)
                             )
 
-                            if choice:
+                            if choice == skip_option:
+                                RichLogger.info(f"Skipped installation of [bold cyan]{dep_name}[/bold cyan]")
+                                continue
+                            elif choice:
                                 selected_variant = variants[choice - 1]
                                 variant_dep = {
                                     'name': f"{dep_name} ({selected_variant['name']})",
@@ -316,7 +323,7 @@ class RuntimeManager:
             expanded_target = cls._expand_placeholders(expanded_target, git_root)
             target_path = Path(expanded_target)
 
-            download_dir = ROOT_DIR / 'tags'
+            download_dir = ROOT_DIR / 'downloads'
             download_dir.mkdir(parents=True, exist_ok=True)
             installer_path = download_dir / Path(url).name
 
@@ -411,7 +418,7 @@ class RuntimeManager:
 
         try:
             if url:
-                download_dir = ROOT_DIR / 'tags'
+                download_dir = ROOT_DIR / 'downloads'
                 download_dir.mkdir(parents=True, exist_ok=True)
                 installer_path = download_dir / Path(url).name
 
@@ -583,7 +590,7 @@ class RuntimeManager:
             target_path = Path(expanded_target)
             target_path.mkdir(parents=True, exist_ok=True)
 
-            download_dir = ROOT_DIR / 'tags'
+            download_dir = ROOT_DIR / 'downloads'
             download_dir.mkdir(parents=True, exist_ok=True)
             download_path = download_dir / Path(url).name
 

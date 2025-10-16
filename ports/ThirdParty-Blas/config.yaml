@@ -1,0 +1,8 @@
+name: ThirdParty-Blas
+version: 1.4.9
+url: https://github.com/coin-or-tools/ThirdParty-Blas/archive/refs/tags/releases/1.4.9.tar.gz
+sha256: 7f5f2442c6b17357613c6907bfdfd5e74107cd91dbd86309e829e08a42b182bb
+dependencies:
+  required:
+    - BuildTools
+script: build.sh

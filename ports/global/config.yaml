@@ -1,0 +1,12 @@
+name: global
+version: 6.6.14
+url: https://ftp.gnu.org/pub/gnu/global/global-6.6.14.tar.gz
+sha256: f6e7fd0b68aed292e85bb686616baf6551d5c9424adcddca11d808ba318cb320
+dependencies:
+  required:
+    - ctags
+    - dlfcn-win32
+    - dirent
+    - ncurses
+    - sqlite
+script: build.sh

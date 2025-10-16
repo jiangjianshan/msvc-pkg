@@ -1,0 +1,8 @@
+name: OpenJPH
+version: 0.18.0
+url: https://github.com/aous72/OpenJPH/archive/refs/tags/0.18.0.tar.gz
+sha256: 2484908bf5a171cda957643d9bc85c39d58ef939016e2d1a00122b1cefbbd4f8
+dependencies:
+  required:
+    - libtiff
+script: build.bat

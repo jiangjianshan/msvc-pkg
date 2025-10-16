@@ -1,6 +1,0 @@
-name: mpfun-fort
-version: v24
-url: https://www.davidhbailey.com/dhbsoftware/mpfun-fort-v24.tar.gz
-sha256: de8127410480dcd87338e1ce76747696395c39cc4845d9603e3c0c0825739182
-dependencies:
-run: build.bat

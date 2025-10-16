@@ -1,6 +1,0 @@
-name: GKlib
-version: 5.1.1
-url: https://github.com/KarypisLab/GKlib/archive/refs/tags/METIS-v5.1.1-DistDGL-0.5.tar.gz
-sha256: 52aa0d383d42360f4faa0ae9537ba2ca348eeab4db5f2dfd6343192d0ff4b833
-dependencies:
-run: build.bat

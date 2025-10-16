@@ -1,6 +1,0 @@
-name: Vulkan-Loader
-version: 1.4.312
-url: https://github.com/KhronosGroup/Vulkan-Loader/archive/refs/tags/v1.4.312.tar.gz
-sha256: aff1a255bc32e6500e6a435d0c331fde268b823da3888f549af97ee226fa9530
-dependencies:
-run: build.bat

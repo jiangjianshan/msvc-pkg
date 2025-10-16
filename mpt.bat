@@ -60,26 +60,12 @@ python -c "import importlib.util as i;exit(any(not i.find_spec(m) for m in('pygm
     python -m pip install Pygments PyYAML rich requests zstandard
 )
 
-if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
-  set TARGET_ARCH=x64
-) else (
-  set TARGET_ARCH=x86
-)
-
-rem Initialize root directory structure
-rem Ensures all required directories exist for package management operations
-set "ROOT_DIR=%~dp0"
-if "!ROOT_DIR:~-1!"=="\" set "ROOT_DIR=!ROOT_DIR:~0,-1!"
-
-rem Create essential working directories if they don't exist
-if not exist "%ROOT_DIR%\%TARGET_ARCH%\bin" mkdir "%ROOT_DIR%\%TARGET_ARCH%\bin"
-if not exist "%ROOT_DIR%\tags" mkdir "%ROOT_DIR%\tags"
-if not exist "%ROOT_DIR%\logs" mkdir "%ROOT_DIR%\logs"
-if not exist "%ROOT_DIR%\releases" mkdir "%ROOT_DIR%\releases"
-
 rem  https://docs.python.org/3/using/windows.html#removing-the-max-path-limitation
 reg query HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled >nul 2>&1 || (
   reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /t reg_DWORD /d 1
 )
 
+set "ORIG_PATH=%PATH%"
+set "PATH=%~dp0installed\x64\bin;%~dp0installed\x86\bin;%PATH%"
 python main.py %*
+set "PATH=%ORIG_PATH%"

@@ -1,7 +1,0 @@
-name: OpenCL-TTL
-version: main
-url: https://github.com/KhronosGroup/OpenCL-TTL.git
-recursive: false
-depth: 1
-dependencies:
-run: build.bat

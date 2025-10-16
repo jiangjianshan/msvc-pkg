@@ -1,0 +1,10 @@
+name: dav1d
+version: master
+url: https://code.videolan.org/videolan/dav1d.git
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - pkg-config
+    - winpthreads
+script: build.bat

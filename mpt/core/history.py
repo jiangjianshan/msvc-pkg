@@ -6,13 +6,12 @@ Copyright (c) 2024 Jianshan Jiang
 
 """
 
-import yaml
-
 from datetime import datetime
 from pathlib import Path
 
 from mpt import ROOT_DIR
 from mpt.core.log import RichLogger
+from mpt.utils.yaml import YamlUtils
 
 
 class HistoryManager:
@@ -22,7 +21,7 @@ class HistoryManager:
     including version information, build timestamps, and dependency type support. Maintains
     persistent records in YAML format for reliable state management across sessions.
     """
-    RECORD_FILE = ROOT_DIR / "installed.yaml"
+    RECORD_FILE = ROOT_DIR / 'installed' / 'msvc-pkg' / 'status.yaml'
 
     @classmethod
     def _get_record_path(cls) -> Path:
@@ -54,21 +53,11 @@ class HistoryManager:
             dict: Nested dictionary structure containing installation records,
                   or empty dictionary if file doesn't exist or errors occur
         """
-        try:
-            record_path = cls._get_record_path()
-            if not record_path.exists():
-                return {}
-
-            try:
-                with open(record_path, 'r', encoding='utf-8') as f:
-                    records = yaml.safe_load(f) or {}
-                    return records
-            except Exception as e:
-                RichLogger.exception(f"Failed to load records from [bold cyan]{record_path}[/bold cyan]: [red]{e}[/red]")
-                return {}
-        except Exception as e:
-            RichLogger.exception(f"Error in _load_records: {e}")
+        record_path = cls._get_record_path()
+        if not record_path.exists():
             return {}
+        records = YamlUtils.load(record_path, "installed.yaml") or {}
+        return records
 
     @classmethod
     def _save_records(cls, records: dict) -> bool:
@@ -85,25 +74,9 @@ class HistoryManager:
         Returns:
             bool: True if records were successfully written to disk, False on any error
         """
-        try:
-            record_path = cls._get_record_path()
-            if not record_path.parent.exists():
-                try:
-                    record_path.parent.mkdir(parents=True, exist_ok=True)
-                except Exception as e:
-                    RichLogger.exception(f"Failed to create directory {record_path.parent}: {e}")
-                    return False
-
-            try:
-                with open(record_path, 'w', encoding='utf-8') as f:
-                    yaml.safe_dump(records, f, sort_keys=True, allow_unicode=True)
-                return True
-            except Exception as e:
-                RichLogger.exception(f"Failed to save records to [bold cyan]{record_path}[/bold cyan]: [red]{e}[/red]")
-                return False
-        except Exception as e:
-            RichLogger.exception(f"Error in _save_records: {e}")
-            return False
+        record_path = cls._get_record_path()
+        record_path.parent.mkdir(parents=True, exist_ok=True)
+        return YamlUtils.dump(record_path, records, "installed.yaml", sort_keys=True)
 
     @classmethod
     def add_record(cls, arch: str, node_name: str, version: str) -> bool:

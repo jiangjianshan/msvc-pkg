@@ -1,8 +1,0 @@
-name: cpp-httplib
-version: 0.16.0
-url: https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.16.0.tar.gz
-sha256: c125022eb85eaa12235518dc4638be93b62c3216d0f87b655af7b17b71b38851
-dependencies:
-  required:
-    - winpthreads
-run: build.bat

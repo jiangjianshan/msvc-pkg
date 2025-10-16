@@ -1,0 +1,8 @@
+name: glslang
+version: 15.2.0
+url: https://github.com/KhronosGroup/glslang/archive/refs/tags/15.2.0.tar.gz
+sha256: 45e3920d264d5c2cc3bfaec0e5dbb66cffd549255e0aaaf38cd283918e35c8ba
+dependencies:
+  required:
+    - SPIRV-Tools
+script: build.bat

@@ -46,11 +46,6 @@ class FileUtils:
     scenarios with comprehensive logging and error recovery.
     """
 
-    MAX_RETRIES = 5
-    RETRY_DELAY = 1.0
-    MAX_DELETE_RETRIES = 5
-    DELETE_RETRY_DELAY = 1.0
-
     @staticmethod
     def _move_to_recycle_bin(path):
         """
@@ -106,130 +101,93 @@ class FileUtils:
             return False
 
     @staticmethod
-    def force_delete_file(file_path):
+    def delete_file(file_path, permanent=True):
         """
-        Safely move a file to Windows Recycle Bin with comprehensive permission handling and verification.
+        Delete a file either permanently or by moving it to the recycle bin.
 
-        Implements a robust file deletion strategy that moves files to recycle bin instead of
-        permanent deletion. Handles read-only attributes, permission issues, and provides
-        verification of successful operation. Specifically designed for Windows systems.
+        Provides a straightforward file deletion method with options for permanent deletion
+        or moving to recycle bin. Handles permission issues and provides verification of 
+        successful operation.
 
         Args:
-            file_path: Path object or string representing the file to be moved to recycle bin
+            file_path: Path object or string representing the file to be deleted
+            permanent: Boolean flag indicating whether to permanently delete (True) or 
+                      move to recycle bin (False). Defaults to True.
 
         Returns:
-            bool: True if file was successfully moved to recycle bin, False otherwise
+            bool: True if file was successfully deleted, False otherwise
 
         Raises:
-            Exception: If file operation fails after all attempts, indicating a critical failure
+            Exception: If file operation fails
         """
         try:
-            if os.path.exists(file_path):
-                # Remove read-only attribute on Windows to allow movement to recycle bin
-                try:
-                    os.chmod(file_path, stat.S_IWRITE)
-                except Exception as e:
-                    RichLogger.exception(f"Failed to change file permissions: {file_path}")
-                    # Don't raise here, just log and continue
+            if not os.path.exists(file_path):
+                return True
 
-                # Move file to recycle bin instead of permanent deletion
+            # Remove read-only attribute on Windows to allow deletion
+            try:
+                os.chmod(file_path, stat.S_IWRITE)
+            except Exception as e:
+                RichLogger.exception(f"Failed to change file permissions: {file_path}")
+
+            if permanent:
+                # Permanently delete the file
+                os.remove(file_path)
+                RichLogger.info(f"Permanently deleted file: [bold yellow]{file_path}[/bold yellow]")
+            else:
+                # Move file to recycle bin
                 success = FileUtils._move_to_recycle_bin(file_path)
-
                 if not success:
                     RichLogger.error(f"Failed to move file to recycle bin: [bold red]{file_path}[/bold red]")
-                    # Instead of raising an exception, fall back to permanent deletion
-                    try:
-                        os.remove(file_path)
-                        RichLogger.info(f"Fallback: Permanently deleted file: [bold yellow]{file_path}[/bold yellow]")
-                        return True
-                    except Exception as e:
-                        RichLogger.exception(f"Fallback deletion also failed: [bold red]{file_path}[/bold red]")
-                        raise Exception(f"Failed to delete file: {file_path}")
+                    return False
 
-                # Verify file is no longer in original location
-                if os.path.exists(file_path):
-                    RichLogger.warning(f"File still exists after recycle bin operation: [bold yellow]{file_path}[/bold yellow]")
-                    # Fallback to traditional delete if recycle bin operation failed
-                    try:
-                        os.remove(file_path)
-                        RichLogger.info(f"Fallback: Permanently deleted file: [bold yellow]{file_path}[/bold yellow]")
-                    except Exception as e:
-                        RichLogger.exception(f"Fallback deletion also failed: [bold red]{file_path}[/bold red]")
-                        raise
             return True
         except Exception as e:
             RichLogger.exception(f"Failed to process file [bold red]{file_path}[/bold red]")
             raise
 
     @staticmethod
-    def force_delete_directory(directory, max_retries=MAX_RETRIES, retry_delay=RETRY_DELAY):
+    def delete_directory(directory, permanent=True):
         """
-        Recursively move a directory and all contents to Windows Recycle Bin with robust retry mechanism.
+        Delete a directory and all contents either permanently or by moving to the recycle bin.
 
-        Implements a comprehensive directory removal strategy with:
-        - Movement of entire directory structure to recycle bin
-        - Permission handling for read-only files and directories
-        - Configurable retry mechanism with exponential backoff
-        - Verification of successful operation after completion
+        Provides a straightforward directory deletion method with options for permanent deletion
+        or moving to recycle bin. Handles permission issues for contained files and directories.
 
         Args:
-            directory: Path object representing the directory to move to recycle bin
-            max_retries: Maximum number of retry attempts before giving up
-            retry_delay: Delay in seconds between retry attempts
+            directory: Path object representing the directory to delete
+            permanent: Boolean flag indicating whether to permanently delete (True) or 
+                      move to recycle bin (False). Defaults to True.
 
         Returns:
-            bool: True if directory was successfully moved to recycle bin, False if all attempts failed
+            bool: True if directory was successfully deleted, False otherwise
         """
         try:
-            success = False
-            for attempt in range(1, max_retries + 1):
+            if not directory.exists():
+                return True
+
+            # Ensure directory and contents are writable to allow deletion
+            def make_writable(action, name, exc):
                 try:
-                    # Ensure directory is writable to allow movement to recycle bin
-                    def make_writable(action, name, exc):
-                        try:
-                            os.chmod(name, stat.S_IWRITE)
-                            if action:
-                                action(name)
-                        except Exception as e:
-                            RichLogger.exception(f"Failed to make writable: {name}")
-                            raise
-
-                    if directory.exists():
-                        # First try to move entire directory to recycle bin
-                        success = FileUtils._move_to_recycle_bin(directory)
-
-                        if success:
-                            # Verify deletion from original location
-                            if not directory.exists():
-                                break
-                            else:
-                                RichLogger.warning(f"Directory still exists after recycle bin operation: [bold yellow]{directory}[/bold yellow]")
-                                success = False
-
-                        # If recycle bin operation failed, fallback to traditional delete
-                        if not success and attempt == max_retries:
-                            RichLogger.warning(f"Recycle bin operation failed, attempting traditional delete: [bold yellow]{directory}[/bold yellow]")
-                            try:
-                                shutil.rmtree(directory, onerror=make_writable)
-                                RichLogger.info(f"Fallback: Permanently deleted directory: [bold yellow]{directory}[/bold yellow]")
-                                success = True
-                                break
-                            except Exception as e:
-                                RichLogger.exception(f"Fallback deletion also failed: [bold red]{directory}[/bold red]")
-                                raise
-                    else:
-                        success = True
-                        break
+                    os.chmod(name, stat.S_IWRITE)
+                    if action:
+                        action(name)
                 except Exception as e:
-                    RichLogger.exception(f"Deletion error on attempt [bold red]{attempt}[/bold red]: {directory}")
+                    RichLogger.exception(f"Failed to make writable: {name}")
+                    raise
 
-                # Delay before next attempt
-                if attempt < max_retries and not success:
-                    time.sleep(retry_delay)
+            if permanent:
+                # Permanently delete the directory
+                shutil.rmtree(directory, onerror=make_writable)
+                RichLogger.info(f"Permanently deleted directory: [bold yellow]{directory}[/bold yellow]")
+            else:
+                # Move directory to recycle bin
+                success = FileUtils._move_to_recycle_bin(directory)
+                if not success:
+                    RichLogger.error(f"Failed to move directory to recycle bin: [bold red]{directory}[/bold red]")
+                    return False
 
-            if not success:
-                RichLogger.error(f"Failed to process directory after [bold red]{max_retries}[/bold red] attempts: [bold red]{directory}[/bold red]")
-            return success
+            return True
         except Exception as e:
             RichLogger.exception(f"Critical error during directory processing: [bold red]{directory}[/bold red]")
             return False
@@ -263,22 +221,20 @@ class FileUtils:
             return False
 
     @staticmethod
-    def safe_unlink(file):
+    def safe_delete(file, permanent=True):
         """
-        Safely move a file to Windows Recycle Bin with comprehensive permission checking and error handling.
+        Safely delete a file with comprehensive permission checking and error handling.
 
-        Implements a safe file deletion workflow that includes:
-        - Existence verification before attempting operation
-        - Permission assessment and automatic correction
-        - Movement to recycle bin instead of permanent deletion
-        - Detailed error logging for troubleshooting
-        - Graceful handling of permission errors and other exceptions
+        Provides a safe file deletion method with options for permanent deletion
+        or moving to recycle bin. Includes existence verification and permission assessment.
 
         Args:
-            file: Path object representing the file to move to recycle bin
+            file: Path object representing the file to delete
+            permanent: Boolean flag indicating whether to permanently delete (True) or 
+                      move to recycle bin (False). Defaults to True.
 
         Returns:
-            bool: True if file was successfully moved to recycle bin or didn't exist, False on critical errors
+            bool: True if file was successfully deleted or didn't exist, False on critical errors
         """
         try:
             if not file.exists():
@@ -287,18 +243,15 @@ class FileUtils:
                 if not FileUtils._is_writable(file):
                     FileUtils.make_writable(file)
 
-                # Move to recycle bin instead of permanent deletion
-                success = FileUtils._move_to_recycle_bin(file)
-
-                if not success:
-                    RichLogger.error(f"Failed to move file to recycle bin: {file}")
-                    # Fallback to permanent deletion
-                    try:
-                        file.unlink()
-                        RichLogger.info(f"Fallback: Permanently deleted file: [bold yellow]{file}[/bold yellow]")
-                        return True
-                    except Exception as e:
-                        RichLogger.exception(f"Fallback deletion also failed: {file}")
+                if permanent:
+                    # Permanently delete the file
+                    file.unlink()
+                    RichLogger.info(f"Permanently deleted file: [bold yellow]{file}[/bold yellow]")
+                else:
+                    # Move to recycle bin
+                    success = FileUtils._move_to_recycle_bin(file)
+                    if not success:
+                        RichLogger.error(f"Failed to move file to recycle bin: {file}")
                         return False
 
                 return True

@@ -1,0 +1,6 @@
+name: 4th
+version: 3.64.1
+url: https://downloads.sourceforge.net/sourceforge/forth-4th/4th-3.64.1-x86_64.tar.gz
+sha256: ba29b5cef482e58060287d67700ef25365372a6dbf2a3f878003654f24a40e04
+dependencies:
+script: build.bat

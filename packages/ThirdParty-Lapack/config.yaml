@@ -1,9 +1,0 @@
-name: ThirdParty-Lapack
-version: 1.6.3
-url: https://github.com/coin-or-tools/ThirdParty-Lapack/archive/refs/tags/releases/1.6.3.tar.gz
-sha256: 5a8df30bea5e41b2b9926e448b339c833bddbf0ed61bd443f30571b923df01d3
-dependencies:
-  required:
-    - BuildTools
-    - ThirdParty-Blas
-run: build.sh

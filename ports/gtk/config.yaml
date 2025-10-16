@@ -1,0 +1,15 @@
+name: gtk
+version: 4.18.3
+url: https://gitlab.gnome.org/GNOME/gtk/-/archive/4.18.3/gtk-4.18.3.tar.bz2
+sha256: 9964e62ef27e3e5e03d5840664568590bec6575b036d85da4fe1e079db98b62f
+dependencies:
+  required:
+    - pkg-config
+    - libepoxy
+    - glib
+    - gobject-introspection
+    - graphene
+    - gstreamer
+    - cairo
+    - pango
+script: build.bat

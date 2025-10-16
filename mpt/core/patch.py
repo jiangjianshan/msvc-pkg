@@ -43,7 +43,7 @@ class PatchHandler:
             source_dir (Path): Target directory where source code is located and patches should be applied
             patch_dir (Optional[Path]): Directory containing patch files to discover and apply
             patch_files (Optional[List[Path]]): Explicit list of patch files to apply, bypassing discovery
-            config (Optional[dict]): Package configuration dictionary used for package-specific patch discovery
+            config (Optional[dict]): Library configuration dictionary used for library-specific patch discovery
 
         Returns:
             bool: True if all patches were applied successfully or no patches were found,
@@ -60,7 +60,7 @@ class PatchHandler:
             patches = [p for p in patch_files if p.exists()]
             RichLogger.debug(f"Using explicitly provided patch files: [bold cyan]{len(patches)}[/bold cyan] files found")
         elif config and 'name' in config:
-            patch_dir = ROOT_DIR / 'packages' / config['name']
+            patch_dir = ROOT_DIR / 'ports' / config['name']
             if patch_dir.exists():
                 patches = sorted(patch_dir.glob('*.diff'))
                 RichLogger.debug(f"Found patches from config: [bold cyan]{len(patches)}[/bold cyan] files in [bold cyan]{patch_dir}[/bold cyan]")

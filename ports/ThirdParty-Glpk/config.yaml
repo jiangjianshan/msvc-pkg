@@ -1,0 +1,11 @@
+name: ThirdParty-Glpk
+version: master
+url: https://github.com/coin-or-tools/ThirdParty-Glpk.git
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - BuildTools
+    - dlfcn-win32
+    - gmp
+script: build.sh

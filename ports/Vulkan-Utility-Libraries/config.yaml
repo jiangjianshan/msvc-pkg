@@ -1,0 +1,9 @@
+name: Vulkan-Utility-Libraries
+version: main
+url: https://github.com/KhronosGroup/Vulkan-Utility-Libraries.git
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - Vulkan-Headers
+script: build.bat

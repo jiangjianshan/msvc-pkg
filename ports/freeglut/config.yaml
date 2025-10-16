@@ -1,0 +1,6 @@
+name: freeglut
+version: 3.6.0
+url: https://github.com/freeglut/freeglut/archive/refs/tags/v3.6.0.tar.gz
+sha256: 16de4f51dc1efd663a1a58ba5552e54f8783b77478289c95dca474a4d39ddd02
+dependencies:
+script: build.bat

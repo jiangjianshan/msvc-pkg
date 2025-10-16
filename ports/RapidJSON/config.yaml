@@ -1,0 +1,7 @@
+name: RapidJSON
+version: master
+url: https://github.com/Tencent/rapidjson.git
+recursive: true
+depth: 1
+dependencies:
+script: build.bat

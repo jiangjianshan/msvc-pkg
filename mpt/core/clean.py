@@ -9,7 +9,7 @@ from typing import Dict, Tuple, List, Optional
 
 from mpt import ROOT_DIR
 from mpt.utils.file import FileUtils
-from mpt.core.config import PackageConfig
+from mpt.core.config import LibraryConfig
 from mpt.core.log import RichLogger
 from mpt.core.source import SourceManager
 
@@ -24,7 +24,7 @@ class CleanManager:
     """
 
     @staticmethod
-    def clean_library(lib: str) -> Dict[str, Tuple[bool, str] | bool]:
+    def clean_library(lib: str, arch: str) -> Dict[str, Tuple[bool, str] | bool]:
         """
         Execute comprehensive cleanup of all artifacts for a specific library.
 
@@ -34,6 +34,7 @@ class CleanManager:
 
         Args:
             lib: Name of the library to clean, used to identify related artifacts
+            arch: Architecture identifier used for log file naming
 
         Returns:
             Dictionary containing cleanup results for each category with:
@@ -44,12 +45,12 @@ class CleanManager:
         """
         RichLogger.info(f"[[bold cyan]{lib}[/bold cyan]] Starting clean process")
         try:
-            config = PackageConfig.load(lib)
+            config = LibraryConfig.load(lib)
             if not config:
                 RichLogger.error(f"[[bold cyan]{lib}[/bold cyan]] Failed to load config")
                 return CleanManager._create_error_result("Config error")
 
-            log_result = CleanManager.clean_logs(lib)
+            log_result = CleanManager.clean_logs(arch, lib)
             source_result = CleanManager.clean_source(lib, config)
             archive_result = CleanManager.clean_archives(lib)
             is_git = config and config.get('url') and SourceManager.is_git_url(config.get('url', ''))
@@ -89,14 +90,15 @@ class CleanManager:
         }
 
     @staticmethod
-    def clean_logs(lib: str) -> Tuple[bool, str]:
+    def clean_logs(arch: str, lib: str) -> Tuple[bool, str]:
         """
-        Remove build log files associated with a specific library.
+        Remove build log files associated with a specific library and architecture.
 
-        Deletes the primary log file for the library build process while
+        Deletes the architecture-specific log file for the library build process while
         providing appropriate logging and error handling for the operation.
 
         Args:
+            arch: Architecture identifier used for log file naming
             lib: Library name used to identify the corresponding log file
 
         Returns:
@@ -104,7 +106,7 @@ class CleanManager:
             - Boolean indicating overall success of log cleanup operation
             - String with path of deleted log file or "N/A" if no log found
         """
-        log_file = ROOT_DIR / "logs" / f"{lib}.txt"
+        log_file = ROOT_DIR / 'buildtrees' / 'logs' / f"{lib}_{arch}.log"
         if log_file.exists():
             try:
                 RichLogger.info(f"Removing log file: [bold green]{log_file}[/bold green]")
@@ -114,11 +116,11 @@ class CleanManager:
             except Exception as e:
                 RichLogger.exception(f"Failed to remove log file [bold green]{log_file}[/bold green]")
                 return False, f"Failed to remove {log_file.relative_to(ROOT_DIR)}"
-        RichLogger.info(f"No log file found for library: [bold cyan]{lib}[/bold cyan]")
+        RichLogger.info(f"No log file found for library: [bold cyan]{lib}[/bold cyan] with architecture: [bold cyan]{arch}[/bold cyan]")
         return True, "N/A"
 
     @staticmethod
-    def clean_source(lib: str, config: PackageConfig) -> Tuple[bool, str]:
+    def clean_source(lib: str, config: LibraryConfig) -> Tuple[bool, str]:
         """
         Remove all source directories and build artifacts for a library.
 
@@ -143,11 +145,11 @@ class CleanManager:
         RichLogger.info(f"Cleaning source directories for library: [bold cyan]{lib}[/bold cyan]")
 
         # Clean main source directory
-        source_dir = ROOT_DIR / "releases" / lib
+        source_dir = ROOT_DIR / "buildtrees" / "sources" / lib
         if source_dir.exists() and source_dir.is_dir():
             RichLogger.info(f"Removing source directory: [bold green]{source_dir}[/bold green]")
             try:
-                if FileUtils.force_delete_directory(source_dir):
+                if FileUtils.delete_directory(source_dir):
                     cleaned_paths.append(str(source_dir.relative_to(ROOT_DIR)))
                     RichLogger.info(f"Successfully removed source directory: [bold green]{source_dir.relative_to(ROOT_DIR)}[/bold green]")
                 else:
@@ -160,11 +162,11 @@ class CleanManager:
         # Clean versioned directory for non-git sources
         if not SourceManager.is_git_url(config.get('url', '')):
             version = config.get('version', 'unknown')
-            versioned_dir = ROOT_DIR / "releases" / f"{lib}-{version}"
+            versioned_dir = ROOT_DIR / "buildtrees" / "sources" / f"{lib}-{version}"
             if versioned_dir.exists() and versioned_dir.is_dir():
                 RichLogger.info(f"Removing versioned source directory: [bold green]{versioned_dir}[/bold green]")
                 try:
-                    if FileUtils.force_delete_directory(versioned_dir):
+                    if FileUtils.delete_directory(versioned_dir):
                         cleaned_paths.append(str(versioned_dir.relative_to(ROOT_DIR)))
                         RichLogger.info(f"Successfully removed versioned source directory: [bold green]{versioned_dir.relative_to(ROOT_DIR)}[/bold green]")
                     else:
@@ -176,7 +178,7 @@ class CleanManager:
 
         # Clean additional patterns
         additional_patterns = [
-            ROOT_DIR / "releases" / f"{lib}-*"
+            ROOT_DIR / "buildtrees" / "sources" / f"{lib}-*"
         ]
 
         for pattern in additional_patterns:
@@ -186,7 +188,7 @@ class CleanManager:
                     if path.exists():
                         RichLogger.info(f"Removing path: [bold green]{path}[/bold green]")
                         try:
-                            if FileUtils.force_delete_directory(path):
+                            if FileUtils.delete_directory(path):
                                 cleaned_paths.append(str(path.relative_to(ROOT_DIR)))
                                 RichLogger.info(f"Successfully removed path: [bold green]{path.relative_to(ROOT_DIR)}[/bold green]")
                             else:
@@ -211,7 +213,7 @@ class CleanManager:
         Remove downloaded archive files for a specific library.
 
         Deletes archive files matching common patterns and extensions from the
-        tags directory, including various compression formats and naming conventions.
+        downloads directory, including various compression formats and naming conventions.
 
         Args:
             lib: Library name used to generate archive file patterns
@@ -223,7 +225,7 @@ class CleanManager:
         """
         cleaned_paths = []
         all_success = True
-        tags_dir = ROOT_DIR / "tags"
+        downloads_dir = ROOT_DIR / "downloads"
 
         RichLogger.info(f"Cleaning archive files for library: [bold cyan]{lib}[/bold cyan]")
 
@@ -238,11 +240,11 @@ class CleanManager:
         for pattern in archive_patterns:
             RichLogger.info(f"Processing archive pattern: [bold yellow]{pattern}[/bold yellow]")
             try:
-                for archive in tags_dir.glob(pattern):
+                for archive in downloads_dir.glob(pattern):
                     if archive.is_file():
                         RichLogger.info(f"Removing archive: [bold green]{archive}[/bold green]")
                         try:
-                            if FileUtils.safe_unlink(archive):
+                            if FileUtils.safe_delete(archive):
                                 cleaned_paths.append(str(archive.relative_to(ROOT_DIR)))
                                 RichLogger.info(f"Successfully removed archive: [bold green]{archive.relative_to(ROOT_DIR)}[/bold green]")
                             else:

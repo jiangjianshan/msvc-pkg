@@ -12,6 +12,8 @@ import time
 from pathlib import Path
 
 from mpt.core.log import RichLogger
+from mpt.utils.file import FileUtils
+
 
 class GitHandler:
     """
@@ -140,13 +142,13 @@ class GitHandler:
             # Check if directory contains only a .git folder (incomplete clone)
             if GitHandler._is_only_git_directory(target_dir):
                 RichLogger.warning(f"Directory contains only .git folder, removing: {target_dir}")
-                if not GitHandler._force_delete_directory(target_dir):
+                if not FileUtils.delete_directory(target_dir):
                     return False
             elif GitHandler._is_empty_directory(target_dir):
-                if not GitHandler._force_delete_directory(target_dir):
+                if not FileUtils.delete_directory(target_dir):
                     return False
             elif not GitHandler.is_valid_repository(target_dir):
-                if not GitHandler._force_delete_directory(target_dir):
+                if not FileUtils.delete_directory(target_dir):
                     return False
             else:
                 # Valid repository exists, try to update instead of clone
@@ -167,12 +169,12 @@ class GitHandler:
         if not success:
             # Clean up incomplete clone
             if GitHandler._is_only_git_directory(target_dir):
-                GitHandler._force_delete_directory(target_dir)
+                FileUtils.delete_directory(target_dir)
             return False
 
         # Verify the clone was successful and complete
         if GitHandler._is_empty_directory(target_dir):
-            GitHandler._force_delete_directory(target_dir)
+            FileUtils.delete_directory(target_dir)
             return False
 
         override_submodules = config.get('submodules', {})
@@ -499,7 +501,7 @@ class GitHandler:
         RichLogger.info("All repair attempts failed, performing full re-clone...")
 
         # Force delete directory (including cases with only .git folder)
-        if not GitHandler._force_delete_directory(repo_dir):
+        if not FileUtils.delete_directory(repo_dir):
             RichLogger.error(f"Failed to delete directory: {repo_dir}")
             return False
 
@@ -777,7 +779,8 @@ class GitHandler:
         """
         for attempt in range(GitHandler.MAX_RETRIES):
             try:
-                RichLogger.debug(f"Running git command: [bold green]{cmd}[/bold green]")
+                cmd_str = ' '.join(cmd)
+                RichLogger.debug(f"[bold green]{cmd_str}[/bold green]")
                 # Execute the command with output capture
                 p = subprocess.Popen(
                     cmd,
@@ -830,7 +833,8 @@ class GitHandler:
         """
         for attempt in range(GitHandler.MAX_RETRIES):
             try:
-                RichLogger.debug(f"Running git command: [bold green]{cmd}[/bold green]")
+                cmd_str = ' '.join(cmd)
+                RichLogger.debug(f"[bold green]{cmd_str}[/bold green]")
                 # Execute the command with output capture
                 p = subprocess.Popen(
                     cmd,
@@ -884,37 +888,6 @@ class GitHandler:
             return 0
 
     @staticmethod
-    def _force_delete_directory(path: Path) -> bool:
-        """
-        Forcefully delete a directory including read-only files with error handling.
-
-        This method deletes a directory and all its contents, including files with
-        read-only attributes. It uses a custom error handler to change file permissions
-        before deletion if necessary.
-
-        Args:
-            path (Path): Directory path to delete
-
-        Returns:
-            bool: True if directory was successfully deleted, False otherwise
-        """
-        try:
-            if not path.exists():
-                return True
-
-            # Define error handler for read-only files
-            def remove_readonly(func, filepath, _):
-                os.chmod(filepath, stat.S_IWRITE)
-                func(filepath)
-
-            # Recursively delete the directory
-            shutil.rmtree(path, onerror=remove_readonly)
-            return True
-        except Exception as e:
-            RichLogger.exception(f"Failed to delete directory: {path} - Error: {e}")
-            return False
-
-    @staticmethod
     def _repair_submodules(repo_dir, config):
         """
         Repair submodules by reinitializing failed or uninitialized submodules.
@@ -951,7 +924,7 @@ class GitHandler:
                 # Delete problematic submodule directory
                 full_path = repo_dir / submodule_path
                 if full_path.exists():
-                    if not GitHandler._force_delete_directory(full_path):
+                    if not FileUtils.delete_directory(full_path):
                         RichLogger.error(f"Failed to delete submodule directory: {submodule_path}")
                         all_repaired = False
                         continue

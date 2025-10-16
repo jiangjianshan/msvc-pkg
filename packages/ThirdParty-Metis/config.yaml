@@ -1,8 +1,0 @@
-name: ThirdParty-Metis
-version: 2.0.1
-url: https://github.com/coin-or-tools/ThirdParty-Metis/archive/refs/tags/releases/2.0.1.tar.gz
-sha256: 3b1025e6202b87095407f50a01e644d520f6ba6231c64a3aeaca30692007ff12
-dependencies:
-  required:
-    - dlfcn-win32
-run: build.sh

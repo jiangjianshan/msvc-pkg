@@ -1,0 +1,8 @@
+name: blaspp
+version: 2024.10.26
+url: https://github.com/icl-utk-edu/blaspp/archive/refs/tags/v2024.10.26.tar.gz
+sha256: 00668457cee1a91de997b142b31191f09e7c3e0a9966de67b2ad4ae708ef9161
+dependencies:
+  required:
+    - OpenBLAS
+script: build.bat

@@ -1,0 +1,18 @@
+name: Cbc
+version: master
+url: https://github.com/coin-or/Cbc.git
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - CoinUtils
+    - ThirdParty-ASL
+    - ThirdParty-Glpk
+    - ThirdParty-Mumps
+    - Data-Sample
+    - Data-Netlib
+    - Data-miplib3
+    - Osi
+    - Clp
+    - Cgl
+script: build.sh

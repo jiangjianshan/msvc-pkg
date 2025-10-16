@@ -1,0 +1,37 @@
+name: ffmpeg
+version: 7.1.1
+url: https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.xz
+sha256: 733984395e0dbbe5c046abda2dc49a5544e7e0e1e2366bba849222ae9e3a03b1
+dependencies:
+  required:
+    - AviSynthPlus
+    - chromaprint
+    - dav1d
+    - fdk-aac
+    - fontconfig
+    - freetype
+    - fribidi
+    - gmp
+    - harfbuzz
+    - lcms2
+    - libaom
+    - libass
+    - libjxl
+    - librsvg
+    - libvpx
+    - libwebp
+    - libxml2
+    - libzmq
+    - nasm
+    - nv-codec-headers
+    - openh264
+    - openjpeg
+    - openssl
+    - opus
+    - SVT-AV1
+    - vmaf
+    - VVenC
+    - x264
+    - x265
+    - zlib
+script: build.sh

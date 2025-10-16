@@ -1,6 +1,0 @@
-name: VVenC
-version: 1.12.1
-url: https://github.com/fraunhoferhhi/vvenc/archive/refs/tags/v1.12.1.tar.gz
-sha256: ba353363779e8f835200f319c801b052a97d592ebc817b52c41bdce093fa2fe2
-dependencies:
-run: build.bat

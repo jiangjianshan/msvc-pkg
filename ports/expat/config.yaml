@@ -1,0 +1,8 @@
+name: expat
+version: 2.7.1
+url: https://github.com/libexpat/libexpat/archive/refs/tags/R_2_7_1.tar.gz
+sha256: 85372797ff0673a8fc4a6be16466bb5a0ca28c0dcf3c6f7ac1686b4a3ba2aabb
+dependencies:
+  required:
+    - dlfcn-win32
+script: build.bat

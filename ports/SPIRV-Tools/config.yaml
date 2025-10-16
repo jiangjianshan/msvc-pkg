@@ -1,0 +1,9 @@
+name: SPIRV-Tools
+version: main
+url: https://github.com/KhronosGroup/SPIRV-Tools.git
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - winpthreads
+script: build.bat

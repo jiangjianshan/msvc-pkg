@@ -10,116 +10,10 @@ from typing import Dict, List, Optional, Any, Union
 
 from mpt import ROOT_DIR
 from mpt.core.log import RichLogger
+from mpt.utils.yaml import YamlUtils
 
 
-class BaseConfig:
-    """
-    Base configuration management class providing core YAML file handling capabilities.
-
-    Implements the fundamental operations for loading and saving YAML configuration files
-    with comprehensive error handling, encoding support, and validation. Serves as the
-    foundation for all specialized configuration managers in the system.
-    """
-
-    @staticmethod
-    def _load_yaml_config(config_path: Path, config_name: str) -> Optional[Dict[str, Any]]:
-        """
-        Load and parse YAML configuration file with robust error handling and validation.
-
-        Provides a secure and reliable method for reading YAML configuration files with
-        comprehensive error detection and reporting. Handles file existence checks,
-        format validation, encoding issues, and parsing errors with detailed logging.
-
-        Args:
-            config_path: Absolute filesystem path to the YAML configuration file
-            config_name: Descriptive name of the configuration for logging and error reporting
-
-        Returns:
-            Dictionary containing parsed configuration data, or None if loading fails
-
-        Raises:
-            FileNotFoundError: When the specified configuration file does not exist
-            yaml.YAMLError: When YAML parsing fails due to malformed syntax
-            UnicodeDecodeError: When file encoding issues prevent proper reading
-            Exception: For any other unexpected errors during file operations
-        """
-        if not config_path.exists():
-            RichLogger.error(f"Configuration file not found: [bold red]{config_path}[/bold red]")
-            return None
-
-        if not config_path.is_file():
-            RichLogger.error(f"Configuration path is not a file: [bold red]{config_path}[/bold red]")
-            return None
-        try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                config = yaml.safe_load(f) or {}
-                return config
-        except yaml.YAMLError as e:
-            RichLogger.exception(
-                f"YAML parsing error in [bold red]{config_name}[/bold red] at [bold red]{config_path}[/bold red]. "
-                f"Error: [bold yellow]{e}[/bold yellow]"
-            )
-        except UnicodeDecodeError as e:
-            RichLogger.exception(
-                f"Encoding error reading [bold red]{config_name}[/bold red] at [bold red]{config_path}[/bold red]. "
-                f"File must be UTF-8 encoded. Error: [bold yellow]{e}[/bold yellow]"
-            )
-        except Exception as e:
-            RichLogger.exception(
-                f"Unexpected error loading [bold red]{config_name}[/bold red] at [bold red]{config_path}[/bold red]. "
-                f"Error: [bold yellow]{e}[/bold yellow]"
-            )
-
-        return None
-
-    @staticmethod
-    def _dump_yaml_config(config_path: Path, config_data: Dict[str, Any], config_name: str) -> bool:
-        """
-        Serialize and write configuration data to YAML file with comprehensive error handling.
-
-        Safely writes configuration dictionaries to YAML files with proper directory
-        creation, encoding handling, and error recovery. Ensures data integrity through
-        atomic write operations and validation.
-
-        Args:
-            config_path: Absolute filesystem path where configuration should be written
-            config_data: Dictionary containing configuration data to serialize
-            config_name: Descriptive name of the configuration for logging purposes
-
-        Returns:
-            Boolean indicating successful write operation (True) or failure (False)
-        """
-        try:
-            # Ensure parent directory exists
-            config_path.parent.mkdir(parents=True, exist_ok=True)
-
-            # Custom YAML dumper class to ensure proper formatting
-            class ConfigDumper(yaml.SafeDumper):
-                def increase_indent(self, flow=False, indentless=False):
-                    # Override to ensure proper indentation for nested structures
-                    return super().increase_indent(flow, False)
-
-            with open(config_path, 'w', encoding='utf-8') as f:
-                # Use custom dumper with appropriate settings
-                yaml.dump(
-                    config_data,
-                    f,
-                    Dumper=ConfigDumper,
-                    default_flow_style=False,
-                    sort_keys=False,
-                    indent=2
-                )
-
-            return True
-        except Exception as e:
-            RichLogger.exception(
-                f"Error writing [bold red]{config_name}[/bold red] to [bold red]{config_path}[/bold red]. "
-                f"Error: [bold yellow]{e}[/bold yellow]"
-            )
-            return False
-
-
-class UserConfig(BaseConfig):
+class UserConfig:
     """
     User-specific configuration management for project-wide settings and preferences.
 
@@ -143,7 +37,7 @@ class UserConfig(BaseConfig):
         """
         try:
             config_path = ROOT_DIR / "settings.yaml"
-            config = BaseConfig._load_yaml_config(config_path, "user settings")
+            config = YamlUtils.load(config_path, "user settings")
             return config or {}
         except Exception as e:
             RichLogger.exception(
@@ -172,30 +66,105 @@ class UserConfig(BaseConfig):
             existing_config = UserConfig.load()
             # Merge new data with existing config
             merged_config = {**existing_config, **config_data}
-            return BaseConfig._dump_yaml_config(config_path, merged_config, "user settings")
+            return YamlUtils.dump(config_path, merged_config, "user settings")
         except Exception as e:
             RichLogger.exception(
                 f"Unexpected error saving user configuration: [bold yellow]{e}[/bold yellow]"
             )
             return False
 
+    @staticmethod
+    def get_prefix(arch: str, lib: str) -> Path:
+        """
+        Retrieve the installation prefix path for a specific library and architecture.
 
-class PackageConfig(BaseConfig):
+        Looks up the configured prefix path for the given library and architecture
+        from the user settings. If no custom prefix is defined in settings.yaml,
+        falls back to the default installation directory within the project.
+
+        Args:
+            arch: Target architecture (e.g., 'x64', 'x86')
+            lib: Name of the library whose prefix path should be retrieved
+
+        Returns:
+            Path object representing the installation directory for the specified
+            library and architecture
+
+        Algorithm:
+            1. Load user configuration from settings.yaml
+            2. Navigate through the prefix configuration hierarchy (prefix -> arch -> lib)
+            3. Return custom prefix if defined in user configuration
+            4. Fall back to default path (ROOT_DIR / 'installed' / arch) if not configured
+        """
+        config = UserConfig.load()
+
+        # Check if prefix configuration exists and has the specified architecture
+        prefix_config = config.get('prefix', {})
+        if arch in prefix_config:
+            arch_prefixes = prefix_config[arch]
+            # Return custom prefix if defined for the specific library
+            if lib in arch_prefixes:
+                custom_prefix = Path(arch_prefixes[lib])
+                return custom_prefix
+
+        # Fall back to default installation directory
+        default_prefix = ROOT_DIR / 'installed' / arch
+        return default_prefix
+
+    @staticmethod
+    def get_prefixs(arch: str) -> Dict[str, Path]:
+        """
+        Retrieve all defined prefix paths for a specific architecture.
+
+        Extracts the complete mapping of library names to their prefix paths
+        for the given architecture from the user configuration. Returns an
+        empty dictionary if no prefixes are defined for the specified architecture.
+
+        Args:
+            arch: Target architecture (e.g., 'x64', 'x86') whose prefix mappings should be retrieved
+
+        Returns:
+            Dictionary mapping library names to their configured Path objects for the specified architecture,
+            or empty dictionary if no prefixes are defined
+
+        Algorithm:
+            1. Load user configuration from settings.yaml
+            2. Extract prefix configuration for the specified architecture
+            3. Convert all string paths to Path objects for consistent interface
+            4. Return complete mapping of library prefixes
+        """
+        config = UserConfig.load()
+
+        # Navigate to the architecture-specific prefix configuration
+        prefix_config = config.get('prefix', {})
+        arch_prefixes = prefix_config.get(arch, {})
+
+        # Convert all string paths to Path objects
+        result = {lib: Path(path) for lib, path in arch_prefixes.items()}
+
+        RichLogger.debug(
+            f"Retrieved [bold cyan]{len(result)}[/bold cyan] prefix mappings "
+            f"for architecture [bold cyan]{arch}[/bold cyan]"
+        )
+        return result
+
+
+class LibraryConfig:
     """
-    Specialized configuration manager for library package definitions and metadata.
+    Specialized configuration manager for library definitions and metadata.
 
     Handles the loading and management of library-specific configuration files
-    located in the packages directory. Supports both individual library configuration
-    access and bulk loading of all available package configurations.
+    located in the ports directory. Supports both individual library configuration
+    access and bulk loading of all available library configurations.
     """
 
     @staticmethod
     def load(lib: str) -> Optional[Dict[str, Any]]:
         """
-        Load configuration for a specific library from its package directory.
+        Load configuration for a specific library from its port directory.
 
         Retrieves and parses the config.yaml file for the specified library, providing
-        access to build instructions, dependency information, and package metadata.
+        access to build instructions, dependency information, and library metadata.
         Handles missing or malformed configuration files with appropriate error logging.
 
         Args:
@@ -205,8 +174,8 @@ class PackageConfig(BaseConfig):
             Dictionary containing library configuration data, or None if not found or invalid
         """
         try:
-            config_path = ROOT_DIR / 'packages' / lib / 'config.yaml'
-            return BaseConfig._load_yaml_config(config_path, f"{lib}")
+            config_path = ROOT_DIR / 'ports' / lib / 'config.yaml'
+            return YamlUtils.load(config_path, f"{lib}")
         except Exception as e:
             RichLogger.exception(
                 f"Unexpected error loading configuration for library [bold red]{lib}[/bold red]. "
@@ -217,9 +186,9 @@ class PackageConfig(BaseConfig):
     @staticmethod
     def load_all() -> Dict[str, Dict[str, Any]]:
         """
-        Discover and load configurations for all available libraries in the packages directory.
+        Discover and load configurations for all available libraries in the ports directory.
 
-        Performs a comprehensive scan of the packages directory, identifying all
+        Performs a comprehensive scan of the ports directory, identifying all
         valid library configurations and loading them into a unified dictionary structure.
         Provides detailed logging of the discovery process and any configuration issues.
 
@@ -228,34 +197,21 @@ class PackageConfig(BaseConfig):
             or an empty dictionary if no valid configurations are found
 
         Algorithm:
-            1. Validate existence and accessibility of packages directory
+            1. Validate existence and accessibility of ports directory
             2. Iterate through all subdirectories representing potential libraries
             3. Attempt to load configuration from each library's config.yaml file
             4. Collect successfully loaded configurations with appropriate error reporting
             5. Return comprehensive mapping of library names to configuration data
         """
         try:
-            pkgs_dir = ROOT_DIR / 'packages'
-            if not pkgs_dir.exists():
-                RichLogger.critical(
-                    f"Packages directory not found: [bold red]{pkgs_dir}[/bold red]. "
-                    f"Please check your installation."
-                )
-                return {}
-            if not pkgs_dir.is_dir():
-                RichLogger.critical(
-                    f"Packages path is not a directory: [bold red]{pkgs_dir}[/bold red]. "
-                    f"Please check your installation."
-                )
-                return {}
-
+            ports_dir = ROOT_DIR / 'ports'
             libs = {}
-            libs_dirs = [d for d in pkgs_dir.iterdir() if d.is_dir()]
+            libs_dirs = [d for d in ports_dir.iterdir() if d.is_dir()]
             RichLogger.debug(f"Found [bold cyan]{len(libs_dirs)}[/bold cyan] potential library directories")
 
             for lib_dir in libs_dirs:
                 lib_name = lib_dir.name
-                config = PackageConfig.load(lib_name)
+                config = LibraryConfig.load(lib_name)
                 if config:
                     libs[lib_name] = config
                 else:
@@ -268,7 +224,7 @@ class PackageConfig(BaseConfig):
             return libs
         except Exception as e:
             RichLogger.exception(
-                f"Unexpected error occurred while loading all package configurations: [bold yellow]{e}[/bold yellow]"
+                f"Unexpected error occurred while loading all library configurations: [bold yellow]{e}[/bold yellow]"
             )
             return {}
 
@@ -287,9 +243,9 @@ class PackageConfig(BaseConfig):
             Boolean indicating successful persistence of configuration changes
         """
         try:
-            config_path = ROOT_DIR / 'packages' / lib / 'config.yaml'
+            config_path = ROOT_DIR / 'ports' / lib / 'config.yaml'
             # Directly write the provided config data without merging
-            return BaseConfig._dump_yaml_config(config_path, config_data, f"{lib} library configuration")
+            return YamlUtils.dump(config_path, config_data, f"{lib} library configuration")
         except Exception as e:
             RichLogger.exception(
                 f"Unexpected error saving configuration for library [bold red]{lib}[/bold red]. "
@@ -298,7 +254,7 @@ class PackageConfig(BaseConfig):
             return False
 
 
-class RequirementsConfig(BaseConfig):
+class RequirementsConfig:
     """
     Dependency requirements configuration manager for embedded system requirements.
 
@@ -331,11 +287,11 @@ class RequirementsConfig(BaseConfig):
         if hasattr(resources, 'files'):
             config_path = resources.files("mpt.resources") / "requirements.yaml"
             with resources.as_file(config_path) as path:
-                config = BaseConfig._load_yaml_config(path, "requirements.yaml")
+                config = YamlUtils.load(path, "requirements.yaml")
         else:
             # Fallback for older Python versions
             with resources.path("mpt.resources", "requirements.yaml") as path:
-                config = BaseConfig._load_yaml_config(path, "requirements.yaml")
+                config = YamlUtils.load(path, "requirements.yaml")
 
         if config:
             deps = config.get('dependencies', [])

@@ -1,9 +1,0 @@
-name: winpthreads
-version: 12.0.0
-url: https://github.com/mingw-w64/mingw-w64/archive/refs/tags/v12.0.0.tar.gz
-sha256: fa41d462041ed72e29a5101049e5991d4aea5c552fd75f7ac0074989fc54ceb7
-extract: mingw-w64-12.0.0/mingw-w64-libraries/winpthreads
-dependencies:
-  required:
-    - dlfcn-win32
-run: build.sh

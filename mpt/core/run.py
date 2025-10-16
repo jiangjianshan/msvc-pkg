@@ -13,12 +13,12 @@ from typing import Dict, Any, Optional, Union, List
 from rich.text import Text
 
 from mpt import ROOT_DIR
-from mpt.core.config import PackageConfig
+from mpt.core.config import LibraryConfig
 from mpt.core.config import UserConfig
 from mpt.core.dependency import DependencyResolver
 from mpt.core.log import RichLogger
+from mpt.core.monitor import Win32FileMonitor
 from mpt.core.source import SourceManager
-from mpt.core.view import RichPanel, RichTable
 from mpt.utils.bash import BashUtils
 from mpt.utils.path import PathUtils
 
@@ -34,6 +34,7 @@ class Runner:
     # Class variables
     _saved_console_mode = None
     _proc_env = None  # Process environment variables
+    _prefix = None
 
     @classmethod
     def _setup_basic_environment(cls, arch: str, lib_config: Dict[str, Any]) -> None:
@@ -47,17 +48,17 @@ class Runner:
         # Set basic environment variables
         cls._proc_env['ARCH'] = arch
 
-        # Set package-specific environment variables
+        # Set library-specific environment variables
         lib_name = lib_config.get('name')
         lib_ver = str(lib_config.get('version'))
         lib_url = lib_config.get('url')
 
         if SourceManager.is_git_url(lib_url):
-            lib_srcdir = str(ROOT_DIR / 'releases' / lib_name)
+            lib_srcdir = str(ROOT_DIR / 'buildtrees' / 'sources' / f"{lib_name}")
         else:
-            lib_srcdir = str(ROOT_DIR / 'releases' / f"{lib_name}-{lib_ver}")
+            lib_srcdir = str(ROOT_DIR / 'buildtrees' / 'sources' / f"{lib_name}-{lib_ver}")
 
-        lib_script = lib_config.get('run')
+        lib_script = lib_config.get('script')
         lib_rootdir = str(ROOT_DIR)
 
         if lib_script:
@@ -77,48 +78,41 @@ class Runner:
 
         Args:
             arch: Target architecture specification
-            lib: Library name for package-specific configuration
+            lib: Library name for library-specific configuration
             lib_config: Library configuration dictionary
 
         Returns:
             str: The primary prefix path for the current library
         """
-        prefix = str(ROOT_DIR / arch)
+        prefix = str(ROOT_DIR / 'installed' / arch)
         cls._proc_env['_PREFIX'] = prefix
         prefix_paths = [prefix]
-
         user_settings = UserConfig.load()
         prefix_config = user_settings.get('prefix', {}) or {}
-
         # Process architecture-specific prefix configurations
         if arch in prefix_config:
             for lib_name, lib_prefix in prefix_config[arch].items():
                 # Create environment variable name from library name
                 prefix_env = lib_name.replace('-', '_').upper() + '_PREFIX'
                 cls._proc_env[prefix_env] = lib_prefix
-
                 # Update prefix if this is the current library
                 if lib_name == lib:
                     prefix = lib_prefix
-
                 # Add binary directory to PATH if it exists
                 bin_dir = Path(lib_prefix) / 'bin'
                 if bin_dir.exists():
                     current_path = cls._proc_env.get('PATH', '')
                     if str(bin_dir) not in current_path:
                         cls._proc_env['PATH'] = f"{str(bin_dir)}{os.pathsep}{current_path}"
-
                 # Add to prefix paths
                 prefix_paths.append(lib_prefix)
-
         # Set final environment variables
         cls._proc_env['PREFIX_PATH'] = os.pathsep.join(prefix_paths)
-
-        lib_script = lib_config.get('run')
+        cls._prefix = prefix
+        lib_script = lib_config.get('script')
         if lib_script:
             if Path(lib_script).name.endswith('.sh'):
                 prefix = PathUtils.win_to_unix(prefix)
-
         cls._proc_env['PREFIX'] = prefix
         return prefix
 
@@ -133,85 +127,21 @@ class Runner:
         deps = DependencyResolver.get_dependencies(lib)
         for dep in deps:
             dep_name, dep_type = DependencyResolver.parse_dependency_name(dep)
-            dep_config = PackageConfig.load(dep_name)
+            dep_config = LibraryConfig.load(dep_name)
             dep_ver = dep_config.get('version')
             dep_url = dep_config.get('url')
 
             dep_src_env = dep_name.replace('-', '_').upper() + '_SRC'
             if SourceManager.is_git_url(dep_url):
-                cls._proc_env[dep_src_env] = str(ROOT_DIR / 'releases' / f"{dep_name}")
+                cls._proc_env[dep_src_env] = str(ROOT_DIR / 'buildtrees' / 'sources' / f"{dep_name}")
             else:
-                cls._proc_env[dep_src_env] = str(ROOT_DIR / 'releases' / f"{dep_name}-{dep_ver}")
+                cls._proc_env[dep_src_env] = str(ROOT_DIR / 'buildtrees' / 'sources' / f"{dep_name}-{dep_ver}")
 
             dep_ver_env = dep_name.replace('-', '_').upper() + '_VER'
             cls._proc_env[dep_ver_env] = str(dep_ver)
 
     @classmethod
-    def _display_environment_summary(cls) -> None:
-        """
-        Display a formatted table of newly configured environment variables.
-
-        Creates a visually appealing table showing environment variables that were
-        set during the environment setup process, excluding common system variables
-        like PATH. Uses appropriate emoji symbols to enhance readability.
-        """
-        # Create table with emoji-enhanced title
-        table = RichTable.create(title="🌍 Environment Variables Setup")
-
-        # Define emoji mapping for environment variables based on their characteristics
-        emoji_mapping = {
-            'ARCH': '🔧',
-            'ROOT_DIR': '📁',
-            'SRC_DIR': '📂',
-            'PKG_NAME': '📚',
-            'PKG_VER': '📜',
-            'PREFIX': '📍',
-            'PREFIX_PATH': '🧭',
-            '_PREFIX': '🔗'
-        }
-
-        # Add columns to table
-        RichTable.add_column(table, "Variable", style="cyan", justify="left")
-        RichTable.add_column(table, "Value", style="green", justify="left")
-
-        # Collect environment variables to display based on their characteristics
-        env_vars_to_display = []
-
-        # 1. Basic environment variables (from _setup_basic_environment)
-        basic_vars = ['ARCH', 'ROOT_DIR', 'SRC_DIR', 'PKG_NAME', 'PKG_VER']
-        env_vars_to_display.extend(basic_vars)
-
-        # 2. Prefix environment variables (from _setup_prefix_environment)
-        prefix_vars = ['PREFIX', 'PREFIX_PATH', '_PREFIX']
-        env_vars_to_display.extend(prefix_vars)
-
-        # 3. Dependency environment variables (from _setup_dependency_environment)
-        # Look for variables ending with _SRC or _VER
-        for key in cls._proc_env:
-            if key.endswith('_SRC') or key.endswith('_VER'):
-                env_vars_to_display.append(key)
-                # Assign appropriate emoji if not already in mapping
-                if key not in emoji_mapping:
-                    emoji_mapping[key] = '📂' if key.endswith('_SRC') else '📜'
-
-        # 4. Library-specific prefix variables (e.g., LIBNAME_PREFIX)
-        for key in cls._proc_env:
-            if key.endswith('_PREFIX') and key != '_PREFIX':
-                env_vars_to_display.append(key)
-                if key not in emoji_mapping:
-                    emoji_mapping[key] = '📌'
-
-        # Display the collected environment variables
-        for key in env_vars_to_display:
-            if key in cls._proc_env and key != 'PATH':  # Skip PATH as requested
-                emoji = emoji_mapping.get(key, '📝')  # Default emoji for unexpected vars
-                RichTable.add_row(table, f"{emoji} {key}", str(cls._proc_env[key]))
-
-        # Render the table
-        RichTable.render(table, align_center=False)
-
-    @classmethod
-    def setup_environment(cls, arch: str, lib: str) -> None:
+    def _setup_environment(cls, arch: str, lib: str) -> None:
         """
         Prepare and configure environment variables for Windows build processes.
 
@@ -225,7 +155,7 @@ class Runner:
 
         Args:
             arch: Target architecture specification (e.g., 'x86_64', 'arm64')
-            lib: Library name for package-specific configuration loading
+            lib: Library name for library-specific configuration loading
 
         Note:
             This method modifies the class-level _proc_env variable which is used
@@ -234,14 +164,13 @@ class Runner:
         # Create fresh environment copy to ensure isolation
         cls._proc_env = os.environ.copy()
 
-        # Load package configuration
-        lib_config = PackageConfig.load(lib)
+        # Load library configuration
+        lib_config = LibraryConfig.load(lib)
 
         # Set up environment in logical stages
         cls._setup_basic_environment(arch, lib_config)
         cls._setup_prefix_environment(arch, lib, lib_config)
         cls._setup_dependency_environment(lib)
-        cls._display_environment_summary()
 
     @classmethod
     def _save_console_mode(cls):
@@ -268,7 +197,6 @@ class Runner:
             mode = wintypes.DWORD()
             if ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
                 cls._saved_console_mode = mode.value
-                RichLogger.debug(f"Saved console mode: {cls._saved_console_mode:#x}")
         except Exception as e:
             RichLogger.exception(f"Save console mode error: {e}")
 
@@ -301,8 +229,7 @@ class Runner:
 
             # Restore only if changed
             if current_mode.value != cls._saved_console_mode:
-                if ctypes.windll.kernel32.SetConsoleMode(handle, cls._saved_console_mode):
-                    RichLogger.debug(f"Restored console mode: {cls._saved_console_mode:#x}")
+                ctypes.windll.kernel32.SetConsoleMode(handle, cls._saved_console_mode)
         except Exception as e:
             RichLogger.exception(f"Restore console mode error: {e}")
 
@@ -330,9 +257,6 @@ class Runner:
         error_pattern = re.compile(r'(?i)(?:^|\s)(?:error\s*[#:]\s*\d+|error\s+[A-Z]+\d+|\berror\b\s*:\s*[^\\/]|\berror\b\s+\d+|CMake Error|fatal[^:]*:|ERROR:|(?:configure|ninja|NMAKE)\s*:\s*(?:fatal\s+)?error|make.*(?:Error \d+|Stop\.|Segmentation fault)|MSB\d+\s*error)')
         warning_pattern = re.compile(r'(?i)(?:^|\s)(?:warning\s*[#:]\s*\d+|warning\s+[A-Z]+\d+|\bwarning\b\s*:\s*[^\\/]|CMake Warning|WARNING:|(?:configure|ninja|NMAKE)\s*:\s*warning|MSB\d+\s*warning)')
         exit_code = -1
-        error_count = 0
-        warning_count = 0
-
         try:
             # Save console mode before execution
             cls._save_console_mode()
@@ -350,10 +274,8 @@ class Runner:
                 decoded_line = line.decode('utf-8', errors='ignore').rstrip()
                 if error_pattern.search(decoded_line):
                     RichLogger.error(decoded_line, markup=False)
-                    error_count += 1
                 elif warning_pattern.search(decoded_line):
                     RichLogger.warning(decoded_line, markup=False)
-                    warning_count += 1
                 else:
                     RichLogger.info(decoded_line, markup=False)
                 if p.poll() is not None:
@@ -372,42 +294,33 @@ class Runner:
             # CRITICAL: Restore console mode immediately after process exits
             cls._restore_console_mode()
             RichLogger.debug(f"Process exit code: {exit_code}")
-            status = "✅ Success" if exit_code == 0 else "❌ Failed"
-            summary_text = Text.from_markup(
-                f"📊 Status: [bold green]{status}[/bold green] | "
-                f"🔢 Exit Code: [bold cyan]{exit_code}[/bold cyan] | "
-                f"❌ Errors: [bold red]{error_count}[/bold red] | "
-                f"🔶 Warnings: [bold yellow]{warning_count}[/bold yellow]",
-                justify="center"
-            )
-            RichPanel.summary(
-                content=summary_text,
-                title="Execution Summary"
-            )
 
     @classmethod
-    def run_script(cls, script_file: Union[str, Path], log_file: Optional[Union[str, Path]] = None) -> bool:
+    def run_script(cls, arch: str, lib: str, script_file: Union[str, Path], log_file: Optional[Union[str, Path]] = None) -> tuple:
         """
-        Execute script files with automatic interpreter selection on Windows.
+        Execute script files with file system monitoring and environment configuration.
 
-        Handles the execution of various script types with appropriate interpreter
-        selection:
-        - .bat files: executed directly
-        - Other scripts: executed using Bash (typically Git Bash on Windows)
-
-        The method automatically changes the working directory to the script's location
-        during execution and restores the original directory afterwards.
+        Enhanced version that automatically configures the build environment and monitors
+        file system changes in the installation prefix directory during script execution.
 
         Args:
+            arch: Target architecture specification for environment configuration
+            lib: Library name for library-specific environment setup
             script_file: Path to the script file to execute
             log_file: Optional path for capturing script output to a log file
 
         Returns:
-            bool: True if script executed successfully (exit code 0), False otherwise
+            tuple: (success, new_files_list) where:
+                - success: Boolean indicating if script executed successfully (exit code 0)
+                - new_files_list: List of relative paths of files created during execution.
         """
+        cls._setup_environment(arch, lib)
         script_file = Path(script_file) if isinstance(script_file, str) else script_file
         script_dir = script_file.parent
         orig_dir = os.getcwd()
+        Path(cls._prefix).mkdir(parents=True, exist_ok=True)
+        file_monitor = Win32FileMonitor(cls._prefix)
+        file_monitor.start_monitoring()
         try:
             os.chdir(script_dir)
             if script_file.name.endswith('.bat'):
@@ -416,12 +329,18 @@ class Runner:
                 bash_path = BashUtils.find_bash()
                 if not bash_path:
                     RichLogger.critical("Bash not found")
-                    return False
+                    return False, []
                 cmds = [bash_path, script_file.name]
+            # Execute the script using original execute method
             exit_code = cls.execute(cmds, log_file=log_file)
-            return exit_code == 0
+            success = exit_code == 0
+            # Collect monitoring results
+            file_monitor.stop_monitoring()
+            new_files = file_monitor.get_new_files()
+            return success, new_files
         except Exception as e:
             RichLogger.exception(f"Failed to execute script: {e}")
-            return False
+            return False, []
         finally:
+            file_monitor.stop_monitoring()
             os.chdir(orig_dir)

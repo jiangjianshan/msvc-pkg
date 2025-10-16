@@ -1,0 +1,8 @@
+name: sentencepiece
+version: 0.2.0
+url: https://github.com/google/sentencepiece/archive/refs/tags/v0.2.0.tar.gz
+sha256: 9970f0a0afee1648890293321665e5b2efa04eaec9f1671fcf8048f456f5bb86
+dependencies:
+  required:
+    - winpthreads
+script: build.bat

@@ -1,0 +1,12 @@
+name: hdf5
+version: 1.14.4.3
+url: https://github.com/HDFGroup/hdf5/archive/refs/tags/hdf5_1.14.4.3.tar.gz
+sha256: 690c1db7ba0fed4ffac61709236675ffd99d95d191e8920ee79c58d7e7ea3361
+dependencies:
+  required:
+    - dlfcn-win32
+    - dirent
+    - libaec
+    - zlib
+    - winpthreads
+script: build.bat

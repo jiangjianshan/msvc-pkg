@@ -1,0 +1,6 @@
+name: c-blosc
+version: 1.21.6
+url: https://github.com/Blosc/c-blosc/archive/refs/tags/v1.21.6.tar.gz
+sha256: 9fcd60301aae28f97f1301b735f966cc19e7c49b6b4321b839b4579a0c156f38
+dependencies:
+script: build.bat

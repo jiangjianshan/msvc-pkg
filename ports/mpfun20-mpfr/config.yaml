@@ -1,0 +1,6 @@
+name: mpfun20-mpfr
+version: v32
+url: https://www.davidhbailey.com/dhbsoftware/mpfun20-mpfr-v32.tar.gz
+sha256: 81d9b9931e51753a1e368803b11ddf2592ce999a91767bd3b0e31fe59b95cd15
+dependencies:
+script: build.bat

@@ -1,9 +1,0 @@
-name: OpenBLAS
-version: 0.3.28
-url: https://github.com/OpenMathLib/OpenBLAS/archive/refs/tags/v0.3.28.tar.gz
-sha256: f1003466ad074e9b0c8d421a204121100b0751c96fc6fcf3d1456bd12f8a00a1
-dependencies:
-  required:
-    - perl
-    - winpthreads
-run: build.bat

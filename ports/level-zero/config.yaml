@@ -1,0 +1,6 @@
+name: level-zero
+version: 1.18.3
+url: https://github.com/oneapi-src/level-zero/archive/refs/tags/v1.18.3.tar.gz
+sha256: a47d3de6647a9a87b204ec22b86b8547918b7f126038ae3402a6d35b2f15b3c8
+dependencies:
+script: build.bat

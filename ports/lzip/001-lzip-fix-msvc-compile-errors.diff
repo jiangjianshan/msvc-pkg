@@ -1,0 +1,410 @@
+diff -urN lzip-1.24.1-orig/configure lzip-1.24.1/configure
+--- lzip-1.24.1-orig/configure	2024-03-02 00:43:12.000000000 +0800
++++ lzip-1.24.1/configure	2024-09-04 18:07:21.913291900 +0800
+@@ -152,8 +152,8 @@
+   objs=$(sed -e :a -e '/\\$/N; s/\\\n//; ta' "${srcdir}/Makefile.in" | \
+          sed -n -e 's/^ *objs *= *//p' | sed -e 's/ \{2,\}/ /g')
+   for ofile in ${objs} ; do
+-    file="${ofile%.o}.cc" ; pver=
+-    [ "${ofile}" = main.o ] && pver=" -DPROGVERSION=\"${pkgversion}\""
++    file="${ofile%.obj}.cc" ; pver=
++    [ "${ofile}" = main.obj ] && pver=" -DPROGVERSION=\"${pkgversion}\""
+     compile_command="${CXX} ${CPPFLAGS} ${CXXFLAGS}${pver} -c -o ${ofile}"
+     echo "${compile_command} ${srcdir}/${file}"
+     ${compile_command} "${srcdir}/${file}"
+diff -urN lzip-1.24.1-orig/decoder.cc lzip-1.24.1/decoder.cc
+--- lzip-1.24.1-orig/decoder.cc	2024-01-17 07:54:38.000000000 +0800
++++ lzip-1.24.1/decoder.cc	2024-09-04 17:37:45.399399100 +0800
+@@ -25,7 +25,11 @@
+ #include <string>
+ #include <vector>
+ #include <stdint.h>
++#ifdef _MSC_VER
++#include <io.h>
++#else
+ #include <unistd.h>
++#endif
+ 
+ #include "lzip.h"
+ #include "decoder.h"
+@@ -40,7 +44,11 @@
+   errno = 0;
+   while( sz < size )
+     {
++#ifdef _MSC_VER
++    const int n = _read( fd, buf + sz, size - sz );
++#else
+     const int n = read( fd, buf + sz, size - sz );
++#endif
+     if( n > 0 ) sz += n;
+     else if( n == 0 ) break;				// EOF
+     else if( errno != EINTR ) break;
+@@ -59,7 +67,11 @@
+   errno = 0;
+   while( sz < size )
+     {
++#ifdef _MSC_VER
++    const int n = _write( fd, buf + sz, size - sz );
++#else
+     const int n = write( fd, buf + sz, size - sz );
++#endif
+     if( n > 0 ) sz += n;
+     else if( n < 0 && errno != EINTR ) break;
+     errno = 0;
+diff -urN lzip-1.24.1-orig/list.cc lzip-1.24.1/list.cc
+--- lzip-1.24.1-orig/list.cc	2024-01-17 07:54:38.000000000 +0800
++++ lzip-1.24.1/list.cc	2024-09-04 17:38:11.178634800 +0800
+@@ -22,7 +22,11 @@
+ #include <string>
+ #include <vector>
+ #include <stdint.h>
++#ifdef _MSC_VER
++#include <io.h>
++#else
+ #include <unistd.h>
++#endif
+ #include <sys/stat.h>
+ 
+ #include "lzip.h"
+@@ -62,12 +66,20 @@
+     const char * const input_filename =
+       from_stdin ? "(stdin)" : filenames[i].c_str();
+     struct stat in_stats;				// not used
++#ifdef _MSC_VER
++    const int infd = from_stdin ? _fileno(stdin) :
++#else
+     const int infd = from_stdin ? STDIN_FILENO :
++#endif
+       open_instream( input_filename, &in_stats, false, true );
+     if( infd < 0 ) { set_retval( retval, 1 ); continue; }
+ 
+     const Lzip_index lzip_index( infd, cl_opts );
++#ifdef _MSC_VER
++    _close( infd );
++#else
+     close( infd );
++#endif
+     if( lzip_index.retval() != 0 )
+       {
+       show_file_error( input_filename, lzip_index.error().c_str() );
+diff -urN lzip-1.24.1-orig/lzip_index.cc lzip-1.24.1/lzip_index.cc
+--- lzip-1.24.1-orig/lzip_index.cc	2024-01-17 07:54:38.000000000 +0800
++++ lzip-1.24.1/lzip_index.cc	2024-09-04 17:38:28.413092800 +0800
+@@ -24,7 +24,11 @@
+ #include <string>
+ #include <vector>
+ #include <stdint.h>
++#ifdef _MSC_VER
++#include <io.h>
++#else
+ #include <unistd.h>
++#endif
+ 
+ #include "lzip.h"
+ #include "lzip_index.h"
+@@ -35,7 +39,11 @@
+ int seek_read( const int fd, uint8_t * const buf, const int size,
+                const long long pos )
+   {
++#ifdef _MSC_VER
++  if( _lseek( fd, pos, SEEK_SET ) == pos )
++#else
+   if( lseek( fd, pos, SEEK_SET ) == pos )
++#endif
+     return readblock( fd, buf, size );
+   return 0;
+   }
+@@ -150,7 +158,11 @@
+ 
+ 
+ Lzip_index::Lzip_index( const int infd, const Cl_options & cl_opts )
++#ifdef _MSC_VER
++  : insize( _lseek( infd, 0, SEEK_END ) ), retval_( 0 ), dictionary_size_( 0 )
++#else
+   : insize( lseek( infd, 0, SEEK_END ) ), retval_( 0 ), dictionary_size_( 0 )
++#endif
+   {
+   if( insize < 0 )
+     { set_errno_error( "Input file is not seekable: " ); return; }
+diff -urN lzip-1.24.1-orig/main.cc lzip-1.24.1/main.cc
+--- lzip-1.24.1-orig/main.cc	2024-02-06 23:04:00.000000000 +0800
++++ lzip-1.24.1/main.cc	2024-09-04 17:56:04.256945800 +0800
+@@ -36,9 +36,72 @@
+ #include <vector>
+ #include <fcntl.h>
+ #include <stdint.h>		// SIZE_MAX
++
++#ifdef _MSC_VER
++#include <io.h>
++#include <sys/utime.h>
++#else
+ #include <unistd.h>
+ #include <utime.h>
++#endif
++
+ #include <sys/stat.h>
++
++#ifdef _MSC_VER
++#include <direct.h>
++#define fchmod(x,y) 0
++#define fchown(x,y,z) 0
++#define mkdir(name,mode) _mkdir(name)
++#define strtoull std::strtoul
++#define SIGHUP SIGTERM
++#define S_ISSOCK(x) 0
++
++typedef unsigned int mode_t;
++
++#define	_S_IFBLK	0x3000
++#define	_S_IRWXU	(_S_IREAD | _S_IWRITE | _S_IEXEC)
++#define	_S_IRUSR	_S_IREAD
++#define	_S_IXUSR	_S_IEXEC
++#define	_S_IWUSR	_S_IWRITE
++
++#define S_IFMT _S_IFMT
++#define S_IFDIR _S_IFDIR
++#define S_IFCHR _S_IFCHR
++#define S_IFREG _S_IFREG
++#define	S_IFIFO		_S_IFIFO
++#define	S_IFBLK		_S_IFBLK
++
++#define	S_IRWXU		_S_IRWXU
++#define	S_IXUSR		_S_IXUSR
++#define	S_IWUSR		_S_IWUSR
++#define	S_IRUSR		_S_IRUSR
++
++/* Windows doesn't have group permissions so set all these to zero. */
++#define	S_IRWXG		0	  /* rwx, group */
++#define	S_IRGRP	  0	  /* read permission, group */
++#define S_IWGRP	  0	  /* write permission, grougroup */
++#define	S_IXGRP	  0	  /* execute/search permission, group */
++
++/* Windows doesn't have others permissions so set all these to zero. */
++#define	S_IRWXO		0	  /* rwx, other */
++#define	S_IROTH	  0	  /* read permission, other */
++#define	S_IWOTH	  0	  /* write permission, other */
++#define	S_IXOTH	  0	  /* execute/search permission, other */
++
++#define O_RDONLY  _O_RDONLY
++#define O_WRONLY  _O_WRONLY
++#define O_CREAT   _O_CREAT
++#define O_TRUNC   _O_TRUNC
++#define O_BINARY  _O_BINARY
++#define O_EXCL    _O_EXCL
++#define S_ISFIFO(m)  (((m) & S_IFMT) == S_IFIFO)
++#define S_ISCHR(m)   (((m) & S_IFMT) == S_IFCHR)
++#define S_ISBLK(m)   (((m) & S_IFMT) == S_IFBLK)
++#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
++#define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR)
++
++#endif
++
+ #if defined __MSVCRT__ || defined __OS2__ || defined __DJGPP__
+ #include <io.h>
+ #if defined __MSVCRT__
+@@ -399,7 +462,11 @@
+ int open_instream( const char * const name, struct stat * const in_statsp,
+                    const bool one_to_one, const bool reg_only )
+   {
++#ifdef _MSC_VER
++  int infd = _open( name, O_RDONLY | O_BINARY );
++#else
+   int infd = open( name, O_RDONLY | O_BINARY );
++#endif
+   if( infd < 0 )
+     show_file_error( name, "Can't open input file", errno );
+   else
+@@ -415,7 +482,11 @@
+         std::fprintf( stderr, "%s: %s: Input file is not a regular file%s.\n",
+                       program_name, name, ( can_read && one_to_one ) ?
+                       ",\n  and neither '-c' nor '-o' were specified" : "" );
++#ifdef _MSC_VER
++      _close( infd );
++#else
+       close( infd );
++#endif
+       infd = -1;
+       }
+     }
+@@ -508,7 +579,11 @@
+     delete_output_on_interrupt = false;
+     show_file_error( output_filename.c_str(),
+                      "Deleting output file, if it exists." );
++#ifdef _MSC_VER
++    if( outfd >= 0 ) { _close( outfd ); outfd = -1; }
++#else
+     if( outfd >= 0 ) { close( outfd ); outfd = -1; }
++#endif
+     if( std::remove( output_filename.c_str() ) != 0 && errno != ENOENT )
+       show_error( "warning: deletion of output file failed", errno );
+     }
+@@ -530,7 +605,11 @@
+       isatty( infd ) )				// for example /dev/tty
+     { show_file_error( input_filename,
+                        "I won't read compressed data from a terminal." );
++#ifdef _MSC_VER
++      _close( infd ); set_retval( retval, 2 );
++#else
+       close( infd ); set_retval( retval, 2 );
++#endif
+       if( program_mode != m_test ) cleanup_and_fail( retval );
+       return false; }
+   return true;
+@@ -562,7 +641,11 @@
+           fchmod( outfd, mode & ~( S_ISUID | S_ISGID | S_ISVTX ) ) != 0 )
+         warning = true;
+     }
++#ifdef _MSC_VER
++  if( _close( outfd ) != 0 )
++#else
+   if( close( outfd ) != 0 )
++#endif
+     { show_file_error( output_filename.c_str(), "Error closing output file",
+                        errno ); cleanup_and_fail( 1 ); }
+   outfd = -1;
+@@ -814,7 +897,11 @@
+   if( !enabled ) return;
+   if( p )					// initialize static vars
+     {
++#ifdef _MSC_VER
++    if( verbosity < 2 || !isatty( _fileno(stderr) ) ) { enabled = false; return; }
++#else
+     if( verbosity < 2 || !isatty( STDERR_FILENO ) ) { enabled = false; return; }
++#endif
+     csize = cfile_size; psize = partial_size; mb = m; pp = p;
+     }
+   if( mb && pp )
+@@ -844,7 +931,11 @@
+   if( !enabled ) return;
+   if( p )					// initialize static vars
+     {
++#ifdef _MSC_VER
++    if( verbosity < 2 || !isatty( _fileno(stderr) ) ) { enabled = false; return; }
++#else
+     if( verbosity < 2 || !isatty( STDERR_FILENO ) ) { enabled = false; return; }
++#endif
+     csize = cfile_size; psize = partial_size; rdec = d; pp = p; counter = 0;
+     }
+   if( rdec && pp && --counter <= 0 )
+@@ -977,6 +1068,9 @@
+ #if defined __MSVCRT__ || defined __OS2__ || defined __DJGPP__
+   setmode( STDIN_FILENO, O_BINARY );
+   setmode( STDOUT_FILENO, O_BINARY );
++#elif defined _MSC_VER
++  setmode( _fileno(stdin), O_BINARY );
++  setmode( _fileno(stdout), O_BINARY );
+ #endif
+ 
+   std::vector< std::string > filenames;
+@@ -1004,7 +1098,11 @@
+   if( program_mode == m_test || to_stdout ) default_output_filename.clear();
+ 
+   if( to_stdout && program_mode != m_test )	// check tty only once
++#ifdef _MSC_VER
++    { outfd = _fileno(stdout); if( !check_tty_out( program_mode ) ) return 1; }
++#else
+     { outfd = STDOUT_FILENO; if( !check_tty_out( program_mode ) ) return 1; }
++#endif
+   else outfd = -1;
+ 
+   const bool to_file = !to_stdout && program_mode != m_test &&
+@@ -1028,9 +1126,17 @@
+     if( filenames[i] == "-" )
+       {
+       if( stdin_used ) continue; else stdin_used = true;
++#ifdef _MSC_VER
++      infd = _fileno(stdin);
++#else
+       infd = STDIN_FILENO;
++#endif
+       if( !check_tty_in( pp.name(), infd, program_mode, retval ) ) continue;
++#ifdef _MSC_VER
++      if( one_to_one ) { outfd = _fileno(stdout); output_filename.clear(); }
++#else
+       if( one_to_one ) { outfd = STDOUT_FILENO; output_filename.clear(); }
++#endif
+       }
+     else
+       {
+@@ -1045,7 +1151,11 @@
+           set_c_outname( input_filename, true, true, volume_size > 0 );
+         else set_d_outname( input_filename, eindex );
+         if( !open_outstream( force, true ) )
++#ifdef _MSC_VER
++          { _close( infd ); set_retval( retval, 1 ); continue; }
++#else
+           { close( infd ); set_retval( retval, 1 ); continue; }
++#endif
+         }
+       }
+ 
+@@ -1079,7 +1189,11 @@
+             "Not enough memory. Try a smaller dictionary size." :
+             "Not enough memory." ); tmp = 1; }
+     catch( Error & e ) { pp(); show_error( e.msg, errno ); tmp = 1; }
++#ifdef _MSC_VER
++    if( _close( infd ) != 0 )
++#else
+     if( close( infd ) != 0 )
++#endif
+       { show_file_error( pp.name(), "Error closing input file", errno );
+         set_retval( tmp, 1 ); }
+     set_retval( retval, tmp );
+@@ -1096,7 +1210,11 @@
+   if( delete_output_on_interrupt )					// -o
+     close_and_set_permissions( ( retval == 0 && !stdin_used &&
+       filenames_given && filenames.size() == 1 ) ? &in_stats : 0 );
++#ifdef _MSC_VER
++  else if( outfd >= 0 && _close( outfd ) != 0 )				// -c
++#else
+   else if( outfd >= 0 && close( outfd ) != 0 )				// -c
++#endif
+     {
+     show_error( "Error closing stdout", errno );
+     set_retval( retval, 1 );
+diff -urN lzip-1.24.1-orig/Makefile.in lzip-1.24.1/Makefile.in
+--- lzip-1.24.1-orig/Makefile.in	2024-03-02 00:42:09.000000000 +0800
++++ lzip-1.24.1/Makefile.in	2024-09-04 18:07:54.694655700 +0800
+@@ -7,8 +7,8 @@
+ SHELL = /bin/sh
+ CAN_RUN_INSTALLINFO = $(SHELL) -c "install-info --version" > /dev/null 2>&1
+ 
+-objs = arg_parser.o lzip_index.o list.o encoder_base.o encoder.o \
+-       fast_encoder.o decoder.o main.o
++objs = arg_parser.obj lzip_index.obj list.obj encoder_base.obj encoder.obj \
++       fast_encoder.obj decoder.obj main.obj
+ 
+ 
+ .PHONY : all install install-bin install-info install-man \
+@@ -22,21 +22,21 @@
+ $(progname) : $(objs)
+ 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(objs)
+ 
+-main.o : main.cc
++main.obj : main.cc
+ 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -DPROGVERSION=\"$(pkgversion)\" -c -o $@ $<
+ 
+-%.o : %.cc
++%.obj : %.cc
+ 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+ 
+ $(objs)        : Makefile
+-arg_parser.o   : arg_parser.h
+-decoder.o      : lzip.h decoder.h
+-encoder_base.o : lzip.h encoder_base.h
+-encoder.o      : lzip.h encoder_base.h encoder.h
+-fast_encoder.o : lzip.h encoder_base.h fast_encoder.h
+-list.o         : lzip.h lzip_index.h
+-lzip_index.o   : lzip.h lzip_index.h
+-main.o         : arg_parser.h lzip.h decoder.h encoder_base.h encoder.h fast_encoder.h
++arg_parser.obj   : arg_parser.h
++decoder.obj      : lzip.h decoder.h
++encoder_base.obj : lzip.h encoder_base.h
++encoder.obj      : lzip.h encoder_base.h encoder.h
++fast_encoder.obj : lzip.h encoder_base.h fast_encoder.h
++list.obj         : lzip.h lzip_index.h
++lzip_index.obj   : lzip.h lzip_index.h
++main.obj         : arg_parser.h lzip.h decoder.h encoder_base.h encoder.h fast_encoder.h
+ 
+ doc : info man
+ 

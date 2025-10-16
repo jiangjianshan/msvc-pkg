@@ -1,7 +1,0 @@
-name: Vulkan-Headers
-version: main
-url: https://github.com/KhronosGroup/Vulkan-Headers.git
-recursive: false
-depth: 1
-dependencies:
-run: build.bat

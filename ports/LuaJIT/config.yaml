@@ -1,0 +1,7 @@
+name: LuaJIT
+version: v2.1
+url: https://github.com/LuaJIT/LuaJIT.git
+recursive: false
+depth: 1
+dependencies:
+script: build.bat

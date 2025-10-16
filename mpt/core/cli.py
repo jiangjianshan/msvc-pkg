@@ -12,7 +12,7 @@ from rich.table import Table
 from rich import box
 
 from mpt import ROOT_DIR
-from mpt.core.config import PackageConfig
+from mpt.core.config import LibraryConfig
 from mpt.core.help import CommandLineHelp
 from mpt.core.log import RichLogger
 from mpt.core.view import RichPanel
@@ -23,17 +23,17 @@ class CommandLineParser:
 
     Provides comprehensive argument parsing, validation, and help display for
     the MSVC Package Tool. Supports multiple actions, architecture
-    selection, prefix configuration, and library-specific settings with rich
-    formatted output and detailed error reporting.
+    selection, and library-specific settings with rich formatted output and
+    detailed error reporting.
     """
 
     @staticmethod
-    def parse_arguments() -> Tuple[str, str, List[str], str, Dict[str, str]]:
+    def parse_arguments() -> Tuple[str, str, List[str], Dict[str, str]]:
         """
         Parse and validate command line arguments for the MSVC Package Tool.
 
         Processes command line inputs including actions, target architecture,
-        library selection, prefix configuration, and library-specific settings.
+        library selection, and library-specific settings.
         Provides comprehensive error handling and validation with user-friendly
         error messages and formatted help output.
 
@@ -42,7 +42,6 @@ class CommandLineParser:
             - architecture: Target architecture specification ('x64' or 'x86')
             - action: Requested operation ('install', 'uninstall', 'list', etc.)
             - libraries: List of library names to process
-            - global_prefix: Global installation prefix path for all libraries
             - lib_prefixes: Dictionary of library-specific prefix paths
 
         Raises:
@@ -61,7 +60,7 @@ class CommandLineParser:
             libraries = args.libraries
         else:
             libraries = CommandLineParser._validate_libraries(args.libraries)
-        return args.arch, action, libraries, args.prefix, lib_prefixes
+        return args.arch, action, libraries, lib_prefixes
 
     @staticmethod
     def _create_parser() -> argparse.ArgumentParser:
@@ -106,12 +105,6 @@ class CommandLineParser:
                 choices=['x64', 'x86'],
                 default='x64',
                 help="Specify target architecture (default: x64)"
-            )
-
-            parser.add_argument(
-                '--prefix',
-                default=f"{ROOT_DIR}\\x64",
-                help="Set global installation prefix for all libraries"
             )
 
             parser.add_argument(
@@ -219,11 +212,11 @@ class CommandLineParser:
     @staticmethod
     def _validate_libraries(requested_libs: List[str]) -> List[str]:
         """
-        Validate requested library names against available packages.
+        Validate requested library names against available libraries.
 
-        Checks if specified libraries exist in the package configuration system.
-        Provides detailed error output with available library listings when
-        invalid library names are detected.
+        Checks if specified libraries exist in the library configuration system.
+        Provides case-insensitive matching and detailed error output with available
+        library listings when invalid library names are detected.
 
         Args:
             requested_libs: List of library names provided by the user
@@ -237,33 +230,36 @@ class CommandLineParser:
                        error message with available options
         """
         try:
-            all_libs = list(PackageConfig.load_all().keys())
+            all_libs = list(LibraryConfig.load_all().keys())
             libraries = requested_libs or all_libs
 
             if not libraries:
                 return all_libs
 
-            invalid_libs = [lib for lib in libraries if lib not in all_libs]
+            # Case-insensitive validation
+            lib_lower_map = {lib.lower(): lib for lib in all_libs}
+            validated_libs = []
+            invalid_libs = []
+
+            for lib in libraries:
+                if (original_case := lib_lower_map.get(lib.lower())):
+                    validated_libs.append(original_case)
+                else:
+                    invalid_libs.append(lib)
 
             if invalid_libs:
                 content = Text()
                 content.append("Invalid libraries:\n", style="red")
                 content.append("   " + " ".join(invalid_libs), style="bold red")
-                content.append("\n\n")
-                content.append("Available libraries:\n", style="bold green")
+                content.append("\n\nAvailable libraries:\n", style="bold green")
 
-                libs_per_line = 8
-                for i in range(0, len(all_libs), libs_per_line):
-                    line_libs = all_libs[i:i + libs_per_line]
-                    content.append("   " + " ".join(line_libs) + "\n", style="cyan")
+                for i in range(0, len(all_libs), 8):
+                    content.append("   " + " ".join(all_libs[i:i+8]) + "\n", style="cyan")
 
-                RichPanel.summary(
-                    content=content,
-                    title="Library Summary"
-                )
+                RichPanel.summary(content=content, title="Library Summary")
                 sys.exit(1)
 
-            return libraries
+            return validated_libs
         except Exception as e:
             RichLogger.exception(f"Error validating libraries: {str(e)}")
             sys.exit(1)

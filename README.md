@@ -1,121 +1,119 @@
 <div align="center">
-  <h1>✨🚀 MSVC-PKG 🚀✨</h1>
-  <p>A lightweight framework for building native Windows libraries from source, designed for C/C++/Fortran projects</p>
+  <h1>✨🚀 msvc-pkg 🚀✨</h1>
 </div>
 
-## 📖 Overview
+# Overview
 
-MSVC-PKG is a lightweight framework focused on building native Windows libraries from source code, supporting C/C++/Fortran open-source projects.
+msvc-pkg is an extremely lightweight library management system. It does not rely on environments like MinGW-w64, Cygwin, or WSL, but instead is built upon native Windows MSVC/MSVC-like command-line toolchains, focusing on compiling Windows native libraries from source code. This project provides developers with a vast collection of pre-configured open-source library definitions that have resolved common build issues, while significantly simplifying the workflow for adding new libraries. This embodies the very purpose and philosophy behind msvc-pkg's creation.
 
-It adopts a flexible plugin architecture where each library acts as an independent plugin located in the `packages/<library-name>` directory, containing configuration files, patch files (as needed), and build scripts. The framework is not bound to specific compilers or build systems, allowing complete customization of the compilation process. It provides automated dependency resolution, full-color output for both console and log files, dependency tree and build order generation, dual build support, and more, significantly simplifying the management and building process for numerous open-source libraries.
+msvc-pkg employs a flexible plugin-based architecture where each library is an independent plugin, allowing for deep customization of the build process. It features rich color output in both the console and log files, facilitating troubleshooting during builds, and is capable of handling complex dependency trees, including full support for scenarios like bootstrap builds.
 
-## 💪 Core Advantages
+This project is continuously evolving, and we welcome your contributions! If a library you need is not yet supported, you can [submit an issue](https://github.com/jiangjianshan/msvc-pkg/issues) or refer to the [Contribution Guide](#contribution-guide) to add the open-source library yourself.
 
-### 🚀 Lightweight and Efficient
-- For libraries built with Autotools, only requires Git for Windows and core MSYS2 components (~30MB)
-- No need for a full Cygwin/MSYS2 environment, enabling rapid deployment
-- Maintains a clean system environment with minimal redundant dependencies
+# Quick Start
 
-### 🔧 Native Development Support
-- Patches GNU libtool to ensure compliance with MSVC naming conventions
-  - Static library: `lib{name}.lib`
-  - Dynamic library: `{name}.lib`
-- Comprehensive support for various compilers including Microsoft Visual C++, LLVM, Intel, and NVIDIA CUDA
-- Automatic configuration of each compiler's environment
-
-### 🧩 Flexible Building
-- No binding architecture, supports mainstream build systems (Autotools, CMake, Meson, MSBuild)
-- Each library uses its native build system, controlled through custom scripts
-- Direct editing and adjustment of build scripts for complete control
-
-### 📊 Intelligent Management
-- Automated dependency resolution and build order generation
-- Visual dependency trees to clearly display complex relationships
-- Handles circular dependencies and bootstrap scenarios
-- Independent process and isolated environment for building
-- Detailed version and build history recording to ensure consistency
-
-### 💡 Enhanced Experience
-- **Incremental Builds**: Intelligently detects changes and only rebuilds necessary components
-- **Colored Logs**: Full-color highlighted output for both terminal and log files, improving readability
-- **Archive Support**: Supports multiple formats for flexible handling of source packages
-- **Patch Application**: Automatically applies custom patches during the build process
-- **Unified Management**: Manages 339+ libraries with a single command (continuously growing)
-
-> If you are developing in C/C++/Fortran on Windows and seek deep control over dependency building, highly customized environments, and seamless compatibility with MSVC/MSVC-like toolchains, msvc-pkg is your ideal choice.
-
-## 🚀 Quick Start
+Getting started with msvc-pkg is straightforward.
 
 ```bash
-# Clone the project
+# 1. Clone the repository
 git clone https://github.com/jiangjianshan/msvc-pkg.git
-
-# Enter the directory
 cd msvc-pkg
 
-# View detailed help
+# 2. View all available commands and options
 mpt --help
 
-# Install all supported libraries (default x64 architecture)
+# 3. Install all supported libraries for x64 architecture (default behavior)
 mpt
+
+# 4. Alternatively, install specific libraries
+mpt --install gmp ffmpeg gettext ncurses readline
 ```
 
-## 🤝 Contributing
+After installation, the libraries are built and ready for use in your projects. You can set a custom installation prefix for each library using the `--<library-name>-prefix` option.
 
-Building libraries is a challenging task. MSVC-PKG has successfully built 339+ open-source libraries and continues to expand support, aiming for the widest coverage among similar projects. We sincerely invite like-minded contributors to join us.
+# Using msvc-pkg
 
-### 📝 Reporting Issues
-- **Bug Reports**: Provide detailed steps, expected vs. actual behavior, and relevant logs
-- **Feature Requests**: Describe specific use cases and expected benefits
+msvc-pkg provides a simple, consistent command-line interface for all operations.
 
-### 📦 Adding New Libraries
+**Managing Libraries:**
+```bash
+# Install libraries (x64 is the default architecture)
+mpt --install gsl opencv llvm-project
+mpt --install --arch x86 gmp  # Specify x86 architecture
 
-#### Complete Process
+# Uninstall libraries
+mpt --uninstall opencv
+mpt --arch x86 --uninstall gmp fftw
 
-1. **Prepare Environment**
-   ```bash
-   # Fork this repository
-   # Create a feature branch
-   ```
+# List the status of all or specific libraries
+mpt --list
+mpt --list gmp fftw grpc libiconv gettext libunistring
+```
 
-2. **Create Configuration**
-   ```bash
-   # Interactively create configuration file
-   mpt --add <library-name>
-   ```
+**Understanding Dependencies:**
+```bash
+# Display a visual dependency tree
+mpt --dependency
+mpt --dependency glib PostgreSQL OpenBLAS
+```
 
-3. **Fetch Source Code**
-   ```bash
-   # Download/clone source code
-   mpt --fetch <library-name>
-   ```
+**Advanced Operations:**
+```bash
+# Download source code without building
+mpt --fetch ffmpeg
 
-4. **Apply Patches** (Optional)
-   - Create `.diff` files for Windows-specific fixes
-   - Resolve build and compilation errors on Windows platform
+# Clean build artifacts to force a fresh build
+mpt --clean
+mpt --clean gmp fftw
 
-5. **Write Scripts**
-   - Create `build.bat` or `build.sh` based on build system type
-   - Refer to examples of similar build systems in existing packages directory
+# Add a new library configuration (for contributors)
+mpt --add <new-library-name>
+```
+For a complete list of commands and examples, run `mpt --help`.
 
-6. **Test and Submit**
-   ```bash
-   # Compile and install (may require returning to steps 4-5 for adjustments)
-   mpt <library-name>
-   
-   # Check build logs and generated files
-   # Submit Pull Request (including packages/<library-name> directory and new files)
-   ```
+# Core Features
 
-### 🔧 Development Process
-1. Fork this repository
-2. Create a feature branch: `git checkout -b feature/new-feature`
-3. Commit changes: `git commit -m 'Add new feature'`
-4. Push to branch: `git push origin feature/new-feature`
-5. Create a Pull Request
+- **Native MSVC Toolchain Support**: Deep integration with MSVC/MSVC-like environments, patching GNU toolchains to conform to Windows library naming conventions.
+- **Flexible Build System Support**: Not bound to any specific build system; supports Autotools, CMake, Meson, MSBuild, Makefile, etc.
+- **Intelligent Dependency Management**: Automatically resolves complex dependency relationships, visualizes dependency trees, and supports circular dependencies and bootstrap scenarios.
+- **Lightweight and Efficient**: Based on native Windows toolchains, requires no additional heavy environments, keeping the system clean.
+- **Enhanced Build Experience**: Provides colored log output, incremental builds, patch application, and other practical features.
+
+# Contribution Guide
+
+msvc-pkg is an open-source project serving the community. It has successfully built a wide variety of open-source libraries and continues to expand. The complete list of supported libraries can be viewed using the `mpt --list `command. We greatly appreciate your contributions.
+
+**Ways you can help:**
+*   [Submit an issue](https://github.com/jiangjianshan/msvc-pkg/issues) to report bugs or request features.
+*   [Add a new library](#adding-a-new-library) or fix existing ones.
+
+### Adding a New Library
+
+1.  **Prepare Configuration:**
+    ```bash
+    mpt --add <library-name>
+    ```
+2.  **Fetch Source Code:**
+    ```bash
+    mpt --fetch <library-name>
+    ```
+3.  **Apply Patches (if needed)**: Create `.diff` files for Windows-specific fixes.
+4.  **Write Build Scripts**: Create `build.bat` or `build.sh` in the `ports/<library-name>` directory, referring to existing examples.
+5.  **Test and Submit:**
+    ```bash
+    mpt <library-name> # Build and test
+    ```
+    Then, submit a Pull Request containing your new `ports/<library-name>` directory.
+
+For more details, please refer to the existing library configurations in the `ports` directory.
+
+# Resources
+
+*   **Source Code & Library Ports:** https://github.com/jiangjianshan/msvc-pkg
+*   **Issues & Discussions:** https://github.com/jiangjianshan/msvc-pkg/issues
 
 ---
 
 <div align="center">
-  <sub>Welcome to Star ⭐ this project to support the development of MSVC-PKG!</sub>
+If you appreciate the work on msvc-pkg, please give it a star ⭐ to encourage and support our continued development!
 </div>

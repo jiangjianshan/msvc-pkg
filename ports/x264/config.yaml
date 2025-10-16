@@ -1,0 +1,11 @@
+name: x264
+version: master
+url: https://code.videolan.org/videolan/x264.git
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - AviSynthPlus
+    - getopt
+    - nasm
+script: build.sh

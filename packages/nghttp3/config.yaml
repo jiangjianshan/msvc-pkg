@@ -1,7 +1,0 @@
-name: nghttp3
-version: main
-url: https://github.com/ngtcp2/nghttp3.git
-recursive: true
-depth: 1
-dependencies:
-run: build.bat

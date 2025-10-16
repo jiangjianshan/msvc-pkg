@@ -1,6 +1,0 @@
-name: qxfun
-version: v01
-url: https://www.davidhbailey.com/dhbsoftware/qxfun-v01.tar.gz
-sha256: 2c75c1386817d17e4b3f1486c24a8dc10c1c30f82679308653b70982ff7b7933
-dependencies:
-run: build.bat

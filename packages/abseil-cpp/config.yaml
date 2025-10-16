@@ -1,8 +1,0 @@
-name: abseil-cpp
-version: 20250512.1
-url: https://github.com/abseil/abseil-cpp/archive/refs/tags/20250512.1.tar.gz
-sha256: 9b7a064305e9fd94d124ffa6cc358592eb42b5da588fb4e07d09254aa40086db
-dependencies:
-  required:
-    - winpthreads
-run: build.bat

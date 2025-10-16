@@ -1,7 +1,0 @@
-name: gnulib
-version: master
-url: https://git.savannah.gnu.org/git/gnulib.git
-recursive: false
-depth: 1
-dependencies:
-run:

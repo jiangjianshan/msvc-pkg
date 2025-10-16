@@ -1,0 +1,17 @@
+name: ThirdParty-SoPlex
+version: 1.7.2
+url: https://github.com/coin-or-tools/ThirdParty-SoPlex/archive/refs/tags/releases/1.7.2.tar.gz
+sha256: 75f8b7dd6b682e5d3e2ffbdf2841662bc7fa4199d95c033d8e25aab2df593e66
+extras:
+  - name: soplex
+    version: 4.0.2
+    url: https://github.com/scipopt/soplex/archive/refs/tags/release-402.tar.gz
+    sha256: 3e22234f2c81c16a9690bdaae9baa5d6871b12012f6adb4c695e92c86ec61b6f
+    target: soplex
+    check: "if not exist \"soplex\" (exit 0) else (exit 1)"
+dependencies:
+  required:
+    - BuildTools
+    - gmp
+    - zlib
+script: build.sh

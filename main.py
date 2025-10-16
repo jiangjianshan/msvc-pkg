@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 #
-#  Copyright (c) 2024 Jianshan Jiang
+# Copyright (c) 2024 Jianshan Jiang
 #
 
 import sys
-from typing import Dict, List, Tuple, NoReturn
+from typing import NoReturn
 
 from yaml import SafeDumper
 
@@ -16,151 +16,134 @@ from mpt.core.log import RichLogger
 
 def main() -> NoReturn:
     """
-    Primary application entry point orchestrating the complete package management workflow.
+    Main entry point for the library management application.
 
-    Executes the full application lifecycle with comprehensive error handling and
-    resource management. Coordinates all major system components including logging
-    initialization, dependency verification, command line parsing, and action execution.
-    Ensures proper cleanup and exit code reporting regardless of execution outcome.
+    Orchestrates the complete application workflow with comprehensive error handling
+    and resource management. The execution flow includes:
 
-    Workflow:
-    1. Initialize structured logging system for execution tracking
-    2. Configure YAML output formatting for consistent null representation
-    3. Validate and install required system dependencies via RuntimeManager
-    4. Parse command line arguments to determine execution parameters
-    5. Write library prefixes to user configuration if provided
-    6. Initialize action handler with parsed parameters
-    7. Dispatch to appropriate action handler based on user request
-    8. Log final execution status
+    1. Logging system initialization
+    2. YAML output configuration
+    3. System dependency validation
+    4. Command line argument parsing
+    5. User configuration updates (if needed)
+    6. Action execution based on user input
+    7. Proper exit code reporting
 
-    Note:
-        This function serves as the central coordination point for all application
-        components and ensures proper error handling and resource cleanup regardless
-        of execution path outcome.
+    This function ensures proper cleanup and consistent behavior across all execution paths.
     """
-    # Initialize application logging system first to capture all events
+    # Initialize logging first to capture all application events
     RichLogger.initialize()
-    RichLogger.debug("Main application logger initialized successfully.")
 
-    # Configure YAML output once at the application level
+    # Configure YAML output for consistent null representation
     _configure_yaml_output()
 
-    # Check and install required system dependencies
-    RichLogger.debug("Starting system dependency check and installation process.")
-    if not RuntimeManager.check_and_install():
-        RichLogger.critical("Critical system dependency check failed. Application cannot continue.")
+    # Validate system dependencies before proceeding
+    if not _check_system_dependencies():
         sys.exit(1)
 
-    RichLogger.info("System dependency validation completed successfully.")
+    # Parse command line arguments
+    arch, action, libraries, lib_prefixes = CommandLineParser.parse_arguments()
 
-    # Parse command line arguments to determine execution parameters
-    RichLogger.debug("Parsing command line arguments.")
-    arch, action, libraries, prefix, lib_prefixes = CommandLineParser.parse_arguments()
-    RichLogger.debug(
-        f"Arguments parsed: arch={arch}, action={action}, "
-        f"libraries={libraries}, prefix={prefix}, "
-        f"lib_prefixes_keys={list(lib_prefixes.keys())}"
-    )
+    # Update user configuration if library prefixes are provided
+    _update_user_configuration(lib_prefixes)
 
-    # Write lib_prefixes to settings.yaml if not empty
-    if lib_prefixes:
-        RichLogger.debug("Writing library prefixes to user configuration")
-        try:
-            from mpt.core.config import UserConfig
-            UserConfig.write({"lib_prefixes": lib_prefixes})
-        except Exception as e:
-            RichLogger.exception("Failed to write library prefixes to user configuration")
-            # Continue execution as this is not critical
+    # Execute the requested action
+    success = _execute_action(arch, action, libraries)
 
-    # Initialize action handler with parsed parameters
-    RichLogger.debug(f"Initializing ActionHandler for architecture: {arch}")
-    handler = ActionHandler(arch, libraries)
+    # Exit with appropriate status code
+    sys.exit(0 if success else 1)
 
-    # Dispatch to appropriate action based on user request
-    RichLogger.info(f"Executing action: {action}")
-    success = _dispatch_action(handler, action)
-    # Set final status and exit code
-    if success:
-        RichLogger.info(f"Action '[bold cyan]{action}[/bold cyan]' completed successfully.")
-    else:
-        RichLogger.error(f"Action '[bold cyan]{action}[/bold cyan]' failed.")
 
 def _configure_yaml_output() -> None:
+    """Configure YAML dumper for consistent null value representation."""
+    SafeDumper.add_representer(
+        type(None),
+        lambda dumper, value: dumper.represent_scalar('tag:yaml.org,2002:null', '')
+    )
+
+
+def _check_system_dependencies() -> bool:
     """
-    Configure YAML serialization behavior for consistent None value representation.
+    Validate and install required system dependencies.
 
-    Modifies the global YAML SafeDumper to represent Python None values as empty
-    strings instead of 'null' literals. This ensures cleaner and more consistent
-    YAML output throughout the application, particularly for configuration files
-    and serialized data structures.
-
-    Side Effects:
-        Modifies the global SafeDumper class behavior for None type representation
-        across all YAML serialization operations within the application
-
-    Implementation:
-        Uses SafeDumper.add_representer() to override the default None serialization
-        behavior, replacing 'null' with empty string representation
+    Returns:
+        bool: True if dependencies are satisfied, False otherwise
     """
+    if not RuntimeManager.check_and_install():
+        RichLogger.critical("System dependency check failed. Application cannot continue.")
+        return False
+    return True
+
+
+def _update_user_configuration(lib_prefixes: dict) -> None:
+    """
+    Update user configuration with library prefixes if provided.
+
+    Args:
+        lib_prefixes: Dictionary of library prefixes to write to configuration
+    """
+    if not lib_prefixes:
+        return
+
+    RichLogger.debug("Writing library prefixes to user configuration")
     try:
-        SafeDumper.add_representer(
-            type(None),
-            lambda dumper, value: dumper.represent_scalar('tag:yaml.org,2002:null', '')
-        )
-        RichLogger.debug("YAML SafeDumper configured for null representation.")
+        from mpt.core.config import UserConfig
+        UserConfig.dump({"lib_prefixes": lib_prefixes})
     except Exception as e:
-        RichLogger.exception("Failed to configure YAML SafeDumper")
-        raise
+        RichLogger.exception("Failed to write library prefixes to user configuration")
+        # Non-critical error - continue execution
+
+
+def _execute_action(arch: str, action: str, libraries: list) -> bool:
+    """
+    Execute the requested action with the given parameters.
+
+    Args:
+        arch: Target architecture
+        action: Action to perform
+        libraries: List of libraries to process
+
+    Returns:
+        bool: True if action completed successfully, False otherwise
+    """
+    handler = ActionHandler(arch, libraries)
+
+    if not _dispatch_action(handler, action):
+        RichLogger.error(f"Action '{action}' failed.")
+        return False
+    return True
+
 
 def _dispatch_action(handler: ActionHandler, action: str) -> bool:
     """
-    Route execution to the appropriate action handler method based on action type.
-
-    Maps action names from command line arguments to corresponding handler methods.
-    Provides validation for supported actions and ensures proper error handling for
-    unsupported action requests.
+    Route to the appropriate action handler method.
 
     Args:
-        handler: Initialized ActionHandler instance with configured architecture and libraries
-        action: Action identifier string determining which handler method to invoke
+        handler: Initialized ActionHandler instance
+        action: Action identifier string
 
     Returns:
-        bool: True if the dispatched action executed successfully, False otherwise
+        bool: True if action executed successfully, False otherwise
 
     Raises:
-        SystemExit: Terminates application with error code if unsupported action is requested
-
-    Supported Actions:
-        - install: Package installation with dependency resolution
-        - uninstall: Package removal and cleanup
-        - list: Package status listing and information display
-        - dependency: Dependency tree visualization and analysis
-        - fetch: Source code acquisition without building
-        - clean: Build artifact removal and cleanup
+        SystemExit: If unsupported action is requested
     """
-    try:
-        action_methods = {
-            'install': handler.install,
-            'uninstall': handler.uninstall,
-            'list': handler.list,
-            'dependency': handler.dependency,
-            'fetch': handler.fetch,
-            'clean': handler.clean,
-            'add': handler.add,
-            'remove': handler.remove
-        }
+    action_mapping = {
+        'install': handler.install,
+        'uninstall': handler.uninstall,
+        'list': handler.list,
+        'dependency': handler.dependency,
+        'fetch': handler.fetch,
+        'clean': handler.clean,
+        'add': handler.add,
+        'remove': handler.remove
+    }
 
-        action_func = action_methods.get(action)
-        if action_func is None:
-            RichLogger.critical(f"Unsupported action requested: '{action}'. This indicates a logic error in argument parsing or dispatch.")
-            sys.exit(1)  # This should not happen if CLI parsing is correct
-
-        RichLogger.debug(f"Dispatching to action handler method: {action_func.__name__}")
-        return action_func()
-    except Exception as e:
-        RichLogger.exception(f"Exception occurred during action dispatch for '{action}'")
+    if action not in action_mapping:
+        RichLogger.error(f"Unsupported action: {action}")
         return False
 
+    return action_mapping[action]()
 
 if __name__ == "__main__":
     main()

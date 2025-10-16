@@ -42,6 +42,9 @@ tags/
 x64/
 x86/
 releases/
+buildtrees/
+downloads/
+installed/
 
 # Vim swap files
 .swp

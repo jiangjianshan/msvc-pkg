@@ -1,0 +1,11 @@
+name: liboggz
+version: 1.0.2
+url: https://downloads.xiph.org/releases/liboggz/liboggz-1.0.2.tar.gz
+sha256: be7deb35ecc25b5d1e6b8dd4dd21194e2bc93ca9c9e055e4289c1dc98f480f08
+dependencies:
+  required:
+    - dlfcn-win32
+    - getopt
+    - libogg
+    - libvorbis
+script: build.sh

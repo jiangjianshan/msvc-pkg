@@ -98,7 +98,6 @@ class PathUtils:
             )
 
             unix_path = result.stdout.decode('utf-8').strip()
-            RichLogger.debug(f"Converted {path} to {unix_path}")
             return unix_path
         except Exception as e:
             RichLogger.exception(f"Exception occurred during path conversion: {e}")
@@ -141,7 +140,6 @@ class PathUtils:
             )
 
             win_path = result.stdout.decode('utf-8').strip()
-            RichLogger.debug(f"Converted {path_str} to {win_path}")
             return win_path
         except Exception as e:
             RichLogger.exception(f"Exception occurred during path conversion: {e}")

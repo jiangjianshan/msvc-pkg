@@ -1,0 +1,15 @@
+name: grpc
+version: v1.73.1
+url: https://github.com/grpc/grpc.git
+recursive: true
+depth: 1
+dependencies:
+  required:
+    - nasm
+    - abseil-cpp
+    - c-ares
+    - protobuf
+    - re2
+    - zlib
+    - winpthreads
+script: build.bat

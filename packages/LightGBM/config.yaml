@@ -1,7 +1,0 @@
-name: LightGBM
-version: v4.6.0
-url: https://github.com/microsoft/LightGBM.git
-recursive: true
-depth: 1
-dependencies:
-run: build.bat

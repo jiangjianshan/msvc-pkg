@@ -1,0 +1,13 @@
+name: rawspeed
+version: 3.6
+url: https://github.com/darktable-org/rawspeed/archive/refs/tags/v3.6.tar.gz
+sha256: 95594575760ffcc048965af9ae1480211d019144d0d06844a6ef292cfc7d4dc1
+dependencies:
+  required:
+    - iwyu
+    - libjpeg-turbo
+    - libxml2
+    - llvm-project
+    - pugixml
+    - zlib
+script: build.bat

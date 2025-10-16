@@ -1,6 +1,0 @@
-name: wasmtime
-version: 35.0.0
-url: https://github.com/bytecodealliance/wasmtime/archive/refs/tags/v35.0.0.tar.gz
-sha256: 5401c32a8b3b23e9279637b9005a46e3e59ba005fc7962220424c13791bb6524
-dependencies:
-run: build.bat

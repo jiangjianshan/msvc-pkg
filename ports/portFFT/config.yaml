@@ -1,0 +1,9 @@
+name: portFFT
+version: main
+url: https://github.com/codeplaysoftware/portFFT.git
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - winpthreads
+script: build.bat

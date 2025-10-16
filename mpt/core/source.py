@@ -185,9 +185,9 @@ class SourceManager:
                         RichLogger.info(f"Check command indicates no processing needed for extra source: [bold cyan]{name}[/bold cyan]")
             else:
                 if SourceManager.is_git_url(url):
-                    target_dir = ROOT_DIR / 'releases' / name
+                    target_dir = ROOT_DIR / 'buildtrees' / 'sources' / f"{name}"
                 else:
-                    target_dir = ROOT_DIR / 'releases' / f"{name}-{version}"
+                    target_dir = ROOT_DIR / 'buildtrees' / 'sources' / f"{name}-{version}"
             if target_dir.exists():
                 return SourceManager._handle_existing_source(source_config, target_dir, force_extract)
             else:
@@ -310,7 +310,7 @@ class SourceManager:
         try:
             url = config['url']
             archive_filename = SourceManager._get_archive_filename(url, config)
-            archive_path = ROOT_DIR / 'tags' / archive_filename
+            archive_path = ROOT_DIR / 'downloads' / archive_filename
             # Case 1: File exists and no hash verification needed
             if archive_path.exists() and 'sha256' not in config:
                 RichLogger.info(f"Using existing archive: [bold cyan]{archive_filename}[/bold cyan]")
@@ -323,7 +323,7 @@ class SourceManager:
                     return archive_path
                 else:
                     RichLogger.warning(f"Archive verification failed - removing invalid file: [bold cyan]{archive_filename}[/bold cyan]")
-                    FileUtils.force_delete_file(archive_path)
+                    FileUtils.delete_file(archive_path)
             # Case 3: File doesn't exist, need to download
             if not DownloadHandler.download_file(url, archive_path):
                 RichLogger.error(f"Archive download failed: [bold cyan]{archive_filename}[/bold cyan]")
@@ -333,7 +333,7 @@ class SourceManager:
                 expected_hash = config['sha256']
                 if not ArchiveHandler.verify_hash(archive_path, expected_hash):
                     RichLogger.error(f"Downloaded archive failed verification: [bold cyan]{archive_filename}[/bold cyan]")
-                    FileUtils.force_delete_file(archive_path)
+                    FileUtils.delete_file(archive_path)
                     return None
             return archive_path
         except Exception as e:

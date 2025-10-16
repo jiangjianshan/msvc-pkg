@@ -1,0 +1,21 @@
+name: Bonmin
+version: master
+url: https://github.com/coin-or/Bonmin.git
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - CoinUtils
+    - ThirdParty-ASL
+    - ThirdParty-Glpk
+    - ThirdParty-Mumps
+    - ThirdParty-Metis
+    - Data-Sample
+    - Bcp
+    - Osi
+    - Clp
+    - Cgl
+    - Cbc
+    - Ipopt
+    - lapack
+script: build.sh

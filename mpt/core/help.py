@@ -84,7 +84,6 @@ class CommandLineHelp:
                 ("--dependency", "🌳 Show dependency tree for specified libraries"),
                 ("--clean", "🧹 Clean build artifacts for specified libraries"),
                 ("--fetch", "📥 Download source archives for specified libraries"),
-                ("--prefix PATH", "📁 Set global installation prefix"),
                 ("--<lib>-prefix PATH", "📚 Set library-specific installation prefix"),
                 ("--arch ARCH", "🎯 Specify target architecture (x64 or x86)"),
                 ("--add", "➕ Add and configure a new library with build system detection"),
@@ -147,10 +146,8 @@ class CommandLineHelp:
                 ("mpt --fetch", "📥 Download sources for all libraries"),
                 ("mpt --fetch gmp fftw", "📥 Download sources for specific libraries"),
                 ("mpt --help", "📘 Display this help information"),
-                ("mpt --prefix E:\\Githubs\\msvc-pkg\\x64", "📁 Set global installation prefix and install all libraries for x64"),
                 ("mpt --llvm-project-prefix D:\\LLVM", "📚 Set library-specific prefix for LLVM"),
                 ("mpt --install --perl-prefix D:\\Perl", "🐪 Install Perl with custom prefix"),
-                ("mpt --install zlib --prefix C:\\Common", "📦 Install zlib with global prefix"),
                 # Advanced examples with complex libraries
                 ("mpt --install llvm-project --arch x64", "🔧 Install LLVM toolchain for x64 (complex build)"),
                 ("mpt --install boost --arch x86", "📚 Install Boost library for x86 (long build process)"),
@@ -222,7 +219,6 @@ class CommandLineHelp:
             tips_table.add_column("Description", style="dim", justify="left", min_width=60)
 
             tip_rows = [
-                ("📁 Custom Prefix", "Set --prefix to install libraries to custom location"),
                 ("📚 Library Prefix", "Use --<lib>-prefix for library-specific installation paths"),
                 ("🌳 Dependency Tree", "Use --dependency to visualize library dependencies"),
                 ("🧹 Clean Builds", "Use --clean to remove build artifacts before rebuilding"),

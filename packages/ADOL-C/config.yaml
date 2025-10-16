@@ -1,9 +1,0 @@
-name: ADOL-C
-version: 2.7.2
-url: https://github.com/coin-or/ADOL-C/archive/refs/tags/releases/2.7.2.tar.gz
-sha256: 701e0856baae91b98397960d5e0a87a549988de9d4002d0e9a56fa08f5455f6e
-dependencies:
-  required:
-    - dlfcn-win32
-    - boost
-run: build.sh

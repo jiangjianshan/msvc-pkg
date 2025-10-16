@@ -1,9 +1,0 @@
-name: lapackpp
-version: 2024.10.26
-url: https://github.com/icl-utk-edu/lapackpp/archive/refs/tags/v2024.10.26.tar.gz
-sha256: 4c6d164b7d91e7c824e1bf0ae0949ead255b436ec4890451e96c95a17cb75cf1
-dependencies:
-  required:
-    - blaspp
-    - OpenBLAS
-run: build.bat

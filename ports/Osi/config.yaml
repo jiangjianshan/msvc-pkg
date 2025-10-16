@@ -1,0 +1,12 @@
+name: Osi
+version: master
+url: https://github.com/coin-or/Osi.git
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - CoinUtils
+    - ThirdParty-Glpk
+    - Data-Sample
+    - Data-Netlib
+script: build.sh

@@ -1,0 +1,6 @@
+name: 3proxy
+version: 0.9.5
+url: https://github.com/z3APA3A/3proxy/archive/0.9.5/3proxy-0.9.5.tar.gz
+sha256: 6f6da51d9bba93231e12acd707bb6cf86a1ab9491dc6dd0c79750cb3641541a3
+dependencies:
+script: build.bat

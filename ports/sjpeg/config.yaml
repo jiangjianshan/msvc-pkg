@@ -1,0 +1,13 @@
+name: sjpeg
+version: main
+url: https://github.com/webmproject/sjpeg.git
+recursive: false
+depth: 1
+dependencies:
+  required:
+    - freeglut
+    - libpng
+    - libjpeg-turbo
+    - winpthreads
+    - zlib
+script: build.bat

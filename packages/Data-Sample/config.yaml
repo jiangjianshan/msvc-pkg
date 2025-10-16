@@ -1,6 +1,0 @@
-name: Data-Sample
-version: 1.2.13
-url: https://github.com/coin-or-tools/Data-Sample/archive/refs/tags/releases/1.2.13.tar.gz
-sha256: cb4c3713b2a2510d0b6387c24a68c88ba5eff27e2c392429653b1bdef50f06c9
-dependencies:
-run: build.sh
