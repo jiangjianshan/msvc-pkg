@@ -1,0 +1,452 @@
+diff -urN woff2-1.0.2-orig/CMakeLists.txt woff2-1.0.2/CMakeLists.txt
+--- woff2-1.0.2-orig/CMakeLists.txt	2017-11-14 02:31:28.000000000 +0800
++++ woff2-1.0.2/CMakeLists.txt	2025-10-17 13:06:44.806912600 +0800
+@@ -96,6 +96,14 @@
+ add_executable(woff2_info src/woff2_info.cc)
+ target_link_libraries(woff2_info woff2common)
+ 
++if(BUILD_SHARED_LIBS)
++  foreach(lib woff2common woff2dec woff2enc)
++    target_compile_definitions(${lib} PUBLIC "WOFF2_SHARED_COMPILATION" )
++    string(TOUPPER "${lib}" LIB)
++    set_target_properties (${lib} PROPERTIES DEFINE_SYMBOL "${LIB}_SHARED_COMPILATION")
++  endforeach()
++endif()
++
+ foreach(lib woff2common woff2dec woff2enc)
+   set_target_properties(${lib} PROPERTIES
+     SOVERSION ${WOFF2_VERSION}
+diff -urN woff2-1.0.2-orig/include/woff2/decode.h woff2-1.0.2/include/woff2/decode.h
+--- woff2-1.0.2-orig/include/woff2/decode.h	2017-11-14 02:31:28.000000000 +0800
++++ woff2-1.0.2/include/woff2/decode.h	2025-10-17 13:06:44.810325200 +0800
+@@ -16,19 +16,19 @@
+ namespace woff2 {
+ 
+ // Compute the size of the final uncompressed font, or 0 on error.
+-size_t ComputeWOFF2FinalSize(const uint8_t *data, size_t length);
++WOFF2_DEC_API size_t ComputeWOFF2FinalSize(const uint8_t *data, size_t length);
+ 
+ // Decompresses the font into the target buffer. The result_length should
+ // be the same as determined by ComputeFinalSize(). Returns true on successful
+ // decompression.
+ // DEPRECATED; please prefer the version that takes a WOFF2Out*
+-bool ConvertWOFF2ToTTF(uint8_t *result, size_t result_length,
++WOFF2_DEC_API bool ConvertWOFF2ToTTF(uint8_t *result, size_t result_length,
+                        const uint8_t *data, size_t length);
+ 
+ // Decompresses the font into out. Returns true on success.
+ // Works even if WOFF2Header totalSfntSize is wrong.
+ // Please prefer this API.
+-bool ConvertWOFF2ToTTF(const uint8_t *data, size_t length,
++WOFF2_DEC_API bool ConvertWOFF2ToTTF(const uint8_t *data, size_t length,
+                        WOFF2Out* out);
+ 
+ } // namespace woff2
+diff -urN woff2-1.0.2-orig/include/woff2/encode.h woff2-1.0.2/include/woff2/encode.h
+--- woff2-1.0.2-orig/include/woff2/encode.h	2017-11-14 02:31:28.000000000 +0800
++++ woff2-1.0.2/include/woff2/encode.h	2025-10-17 13:11:19.478265500 +0800
+@@ -12,6 +12,7 @@
+ #include <stddef.h>
+ #include <inttypes.h>
+ #include <string>
++#include "woff2/port.h"
+ 
+ namespace woff2 {
+ 
+@@ -25,16 +26,16 @@
+ };
+ 
+ // Returns an upper bound on the size of the compressed file.
+-size_t MaxWOFF2CompressedSize(const uint8_t* data, size_t length);
+-size_t MaxWOFF2CompressedSize(const uint8_t* data, size_t length,
++WOFF2_ENC_API size_t MaxWOFF2CompressedSize(const uint8_t* data, size_t length);
++WOFF2_ENC_API size_t MaxWOFF2CompressedSize(const uint8_t* data, size_t length,
+                               const std::string& extended_metadata);
+ 
+ // Compresses the font into the target buffer. *result_length should be at least
+ // the value returned by MaxWOFF2CompressedSize(), upon return, it is set to the
+ // actual compressed size. Returns true on successful compression.
+-bool ConvertTTFToWOFF2(const uint8_t *data, size_t length,
++WOFF2_ENC_API bool ConvertTTFToWOFF2(const uint8_t *data, size_t length,
+                        uint8_t *result, size_t *result_length);
+-bool ConvertTTFToWOFF2(const uint8_t *data, size_t length,
++WOFF2_ENC_API bool ConvertTTFToWOFF2(const uint8_t *data, size_t length,
+                        uint8_t *result, size_t *result_length,
+                        const WOFF2Params& params);
+ 
+diff -urN woff2-1.0.2-orig/include/woff2/output.h woff2-1.0.2/include/woff2/output.h
+--- woff2-1.0.2-orig/include/woff2/output.h	2017-11-14 02:31:28.000000000 +0800
++++ woff2-1.0.2/include/woff2/output.h	2025-10-17 13:12:08.076659800 +0800
+@@ -13,6 +13,7 @@
+ #include <cstring>
+ #include <memory>
+ #include <string>
++#include "woff2/port.h"
+ 
+ namespace woff2 {
+ 
+@@ -46,7 +47,7 @@
+ /**
+  * Expanding memory block for woff2 out. By default limited to kDefaultMaxSize.
+  */
+-class WOFF2StringOut : public WOFF2Out {
++class WOFF2_DEC_API WOFF2StringOut : public WOFF2Out {
+  public:
+   // Create a writer that writes its data to buf.
+   // buf->size() will grow to at most max_size
+@@ -67,7 +68,7 @@
+ /**
+  * Fixed memory block for woff2 out.
+  */
+-class WOFF2MemoryOut : public WOFF2Out {
++class WOFF2_DEC_API WOFF2MemoryOut : public WOFF2Out {
+  public:
+   // Create a writer that writes its data to buf.
+   WOFF2MemoryOut(uint8_t* buf, size_t buf_size);
+diff -urN woff2-1.0.2-orig/include/woff2/port.h woff2-1.0.2/include/woff2/port.h
+--- woff2-1.0.2-orig/include/woff2/port.h	1970-01-01 08:00:00.000000000 +0800
++++ woff2-1.0.2/include/woff2/port.h	2025-10-17 13:06:44.815311700 +0800
+@@ -0,0 +1,94 @@
++/* Copyright 2013 Google Inc. All Rights Reserved.
++
++   Distributed under MIT license.
++   See file LICENSE for detail or copy at https://opensource.org/licenses/MIT
++*/
++
++/* Helper function for bit twiddling and macros for branch prediction. */
++
++#ifndef WOFF2_PORT_H_
++#define WOFF2_PORT_H_
++
++#include <assert.h>
++
++namespace woff2 {
++
++typedef unsigned int       uint32;
++
++inline int Log2Floor(uint32 n) {
++#if defined(__GNUC__)
++  return n == 0 ? -1 : 31 ^ __builtin_clz(n);
++#else
++  if (n == 0)
++    return -1;
++  int log = 0;
++  uint32 value = n;
++  for (int i = 4; i >= 0; --i) {
++    int shift = (1 << i);
++    uint32 x = value >> shift;
++    if (x != 0) {
++      value = x;
++      log += shift;
++    }
++  }
++  assert(value == 1);
++  return log;
++#endif
++}
++
++} // namespace woff2
++
++/* Compatibility with non-clang compilers. */
++#ifndef __has_builtin
++#define __has_builtin(x) 0
++#endif
++
++#if (__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR__ > 95) || \
++    (defined(__llvm__) && __has_builtin(__builtin_expect))
++#define PREDICT_FALSE(x) (__builtin_expect(x, 0))
++#define PREDICT_TRUE(x) (__builtin_expect(!!(x), 1))
++#else
++#define PREDICT_FALSE(x) (x)
++#define PREDICT_TRUE(x) (x)
++#endif
++
++#if (defined(__ARM_ARCH) && (__ARM_ARCH == 7)) || \
++    (defined(M_ARM) && (M_ARM == 7)) || \
++    defined(__aarch64__) || defined(__ARM64_ARCH_8__) || defined(__i386) || \
++    defined(_M_IX86) || defined(__x86_64__) || defined(_M_X64)
++#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
++#define WOFF_LITTLE_ENDIAN
++#elif defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
++#define WOFF_BIG_ENDIAN
++#endif  /* endianness */
++#endif  /* CPU whitelist */
++
++#if defined(WOFF2_SHARED_COMPILATION)
++#if defined(_WIN32)
++#if defined(WOFF2COMMON_SHARED_COMPILATION)
++#define WOFF2_COMMON_API __declspec(dllexport)
++#else
++#define WOFF2_COMMON_API __declspec(dllimport)
++#endif  /* WOFF2COMMON_SHARED_COMPILATION */
++#if defined(WOFF2DEC_SHARED_COMPILATION)
++#define WOFF2_DEC_API __declspec(dllexport)
++#else
++#define WOFF2_DEC_API __declspec(dllimport)
++#endif  /* WOFF2DEC_SHARED_COMPILATION */
++#if defined(WOFF2ENC_SHARED_COMPILATION)
++#define WOFF2_ENC_API __declspec(dllexport)
++#else
++#define WOFF2_ENC_API __declspec(dllimport)
++#endif  /* WOFF2ENC_SHARED_COMPILATION */
++#else  /* _WIN32 */
++#define WOFF2_COMMON_API WOFF2_PUBLIC
++#define WOFF2_DEC_API WOFF2_PUBLIC
++#define WOFF2_ENC_API WOFF2_PUBLIC
++#endif  /* _WIN32 */
++#else  /* WOFF2_SHARED_COMPILATION */
++#define WOFF2_COMMON_API
++#define WOFF2_DEC_API
++#define WOFF2_ENC_API
++#endif
++
++#endif  // WOFF2_PORT_H_
+diff -urN woff2-1.0.2-orig/src/font.cc woff2-1.0.2/src/font.cc
+--- woff2-1.0.2-orig/src/font.cc	2017-11-14 02:31:28.000000000 +0800
++++ woff2-1.0.2/src/font.cc	2025-10-17 13:11:26.970300200 +0800
+@@ -11,7 +11,7 @@
+ #include <algorithm>
+ 
+ #include "./buffer.h"
+-#include "./port.h"
++#include "woff2/port.h"
+ #include "./store_bytes.h"
+ #include "./table_tags.h"
+ #include "./woff2_common.h"
+diff -urN woff2-1.0.2-orig/src/normalize.cc woff2-1.0.2/src/normalize.cc
+--- woff2-1.0.2-orig/src/normalize.cc	2017-11-14 02:31:28.000000000 +0800
++++ woff2-1.0.2/src/normalize.cc	2025-10-17 13:11:26.969300900 +0800
+@@ -12,7 +12,7 @@
+ #include <stddef.h>
+ 
+ #include "./buffer.h"
+-#include "./port.h"
++#include "woff2/port.h"
+ #include "./font.h"
+ #include "./glyph.h"
+ #include "./round.h"
+diff -urN woff2-1.0.2-orig/src/port.h woff2-1.0.2/src/port.h
+--- woff2-1.0.2-orig/src/port.h	2017-11-14 02:31:28.000000000 +0800
++++ woff2-1.0.2/src/port.h	1970-01-01 08:00:00.000000000 +0800
+@@ -1,66 +0,0 @@
+-/* Copyright 2013 Google Inc. All Rights Reserved.
+-
+-   Distributed under MIT license.
+-   See file LICENSE for detail or copy at https://opensource.org/licenses/MIT
+-*/
+-
+-/* Helper function for bit twiddling and macros for branch prediction. */
+-
+-#ifndef WOFF2_PORT_H_
+-#define WOFF2_PORT_H_
+-
+-#include <assert.h>
+-
+-namespace woff2 {
+-
+-typedef unsigned int       uint32;
+-
+-inline int Log2Floor(uint32 n) {
+-#if defined(__GNUC__)
+-  return n == 0 ? -1 : 31 ^ __builtin_clz(n);
+-#else
+-  if (n == 0)
+-    return -1;
+-  int log = 0;
+-  uint32 value = n;
+-  for (int i = 4; i >= 0; --i) {
+-    int shift = (1 << i);
+-    uint32 x = value >> shift;
+-    if (x != 0) {
+-      value = x;
+-      log += shift;
+-    }
+-  }
+-  assert(value == 1);
+-  return log;
+-#endif
+-}
+-
+-} // namespace woff2
+-
+-/* Compatibility with non-clang compilers. */
+-#ifndef __has_builtin
+-#define __has_builtin(x) 0
+-#endif
+-
+-#if (__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR__ > 95) || \
+-    (defined(__llvm__) && __has_builtin(__builtin_expect))
+-#define PREDICT_FALSE(x) (__builtin_expect(x, 0))
+-#define PREDICT_TRUE(x) (__builtin_expect(!!(x), 1))
+-#else
+-#define PREDICT_FALSE(x) (x)
+-#define PREDICT_TRUE(x) (x)
+-#endif
+-
+-#if (defined(__ARM_ARCH) && (__ARM_ARCH == 7)) || \
+-    (defined(M_ARM) && (M_ARM == 7)) || \
+-    defined(__aarch64__) || defined(__ARM64_ARCH_8__) || defined(__i386) || \
+-    defined(_M_IX86) || defined(__x86_64__) || defined(_M_X64)
+-#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+-#define WOFF_LITTLE_ENDIAN
+-#elif defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+-#define WOFF_BIG_ENDIAN
+-#endif  /* endianness */
+-#endif  /* CPU whitelist */
+-
+-#endif  // WOFF2_PORT_H_
+diff -urN woff2-1.0.2-orig/src/store_bytes.h woff2-1.0.2/src/store_bytes.h
+--- woff2-1.0.2-orig/src/store_bytes.h	2017-11-14 02:31:28.000000000 +0800
++++ woff2-1.0.2/src/store_bytes.h	2025-10-17 13:11:26.834489100 +0800
+@@ -14,7 +14,7 @@
+ #include <stddef.h>
+ #include <string.h>
+ 
+-#include "./port.h"
++#include "woff2/port.h"
+ 
+ namespace woff2 {
+ 
+diff -urN woff2-1.0.2-orig/src/table_tags.h woff2-1.0.2/src/table_tags.h
+--- woff2-1.0.2-orig/src/table_tags.h	2017-11-14 02:31:28.000000000 +0800
++++ woff2-1.0.2/src/table_tags.h	2025-10-17 13:11:26.834489100 +0800
+@@ -1,30 +1,31 @@
+-/* Copyright 2014 Google Inc. All Rights Reserved.
+-
+-   Distributed under MIT license.
+-   See file LICENSE for detail or copy at https://opensource.org/licenses/MIT
+-*/
+-
+-/* Font table tags */
+-
+-#ifndef WOFF2_TABLE_TAGS_H_
+-#define WOFF2_TABLE_TAGS_H_
+-
+-#include <inttypes.h>
+-
+-namespace woff2 {
+-
+-// Tags of popular tables.
+-static const uint32_t kGlyfTableTag = 0x676c7966;
+-static const uint32_t kHeadTableTag = 0x68656164;
+-static const uint32_t kLocaTableTag = 0x6c6f6361;
+-static const uint32_t kDsigTableTag = 0x44534947;
+-static const uint32_t kCffTableTag = 0x43464620;
+-static const uint32_t kHmtxTableTag = 0x686d7478;
+-static const uint32_t kHheaTableTag = 0x68686561;
+-static const uint32_t kMaxpTableTag = 0x6d617870;
+-
+-extern const uint32_t kKnownTags[];
+-
+-} // namespace woff2
+-
+-#endif  // WOFF2_TABLE_TAGS_H_
++/* Copyright 2014 Google Inc. All Rights Reserved.
++
++   Distributed under MIT license.
++   See file LICENSE for detail or copy at https://opensource.org/licenses/MIT
++*/
++
++/* Font table tags */
++
++#ifndef WOFF2_TABLE_TAGS_H_
++#define WOFF2_TABLE_TAGS_H_
++
++#include <inttypes.h>
++#include "woff2/port.h"
++
++namespace woff2 {
++
++// Tags of popular tables.
++static const uint32_t kGlyfTableTag = 0x676c7966;
++static const uint32_t kHeadTableTag = 0x68656164;
++static const uint32_t kLocaTableTag = 0x6c6f6361;
++static const uint32_t kDsigTableTag = 0x44534947;
++static const uint32_t kCffTableTag = 0x43464620;
++static const uint32_t kHmtxTableTag = 0x686d7478;
++static const uint32_t kHheaTableTag = 0x68686561;
++static const uint32_t kMaxpTableTag = 0x6d617870;
++
++extern WOFF2_COMMON_API const uint32_t kKnownTags[];
++
++} // namespace woff2
++
++#endif  // WOFF2_TABLE_TAGS_H_
+diff -urN woff2-1.0.2-orig/src/variable_length.h woff2-1.0.2/src/variable_length.h
+--- woff2-1.0.2-orig/src/variable_length.h	2017-11-14 02:31:28.000000000 +0800
++++ woff2-1.0.2/src/variable_length.h	2025-10-17 13:11:26.713923700 +0800
+@@ -12,17 +12,18 @@
+ #include <inttypes.h>
+ #include <vector>
+ #include "./buffer.h"
++#include "woff2/port.h"
+ 
+ namespace woff2 {
+ 
+-size_t Size255UShort(uint16_t value);
+-bool Read255UShort(Buffer* buf, unsigned int* value);
+-void Write255UShort(std::vector<uint8_t>* out, int value);
+-void Store255UShort(int val, size_t* offset, uint8_t* dst);
++WOFF2_COMMON_API size_t Size255UShort(uint16_t value);
++WOFF2_COMMON_API bool Read255UShort(Buffer* buf, unsigned int* value);
++WOFF2_COMMON_API void Write255UShort(std::vector<uint8_t>* out, int value);
++WOFF2_COMMON_API void Store255UShort(int val, size_t* offset, uint8_t* dst);
+ 
+-size_t Base128Size(size_t n);
+-bool ReadBase128(Buffer* buf, uint32_t* value);
+-void StoreBase128(size_t len, size_t* offset, uint8_t* dst);
++WOFF2_COMMON_API size_t Base128Size(size_t n);
++WOFF2_COMMON_API bool ReadBase128(Buffer* buf, uint32_t* value);
++WOFF2_COMMON_API void StoreBase128(size_t len, size_t* offset, uint8_t* dst);
+ 
+ } // namespace woff2
+ 
+diff -urN woff2-1.0.2-orig/src/woff2_common.cc woff2-1.0.2/src/woff2_common.cc
+--- woff2-1.0.2-orig/src/woff2_common.cc	2017-11-14 02:31:28.000000000 +0800
++++ woff2-1.0.2/src/woff2_common.cc	2025-10-17 13:11:26.713923700 +0800
+@@ -10,7 +10,7 @@
+ 
+ #include "./woff2_common.h"
+ 
+-#include "./port.h"
++#include "woff2/port.h"
+ 
+ namespace woff2 {
+ 
+diff -urN woff2-1.0.2-orig/src/woff2_common.h woff2-1.0.2/src/woff2_common.h
+--- woff2-1.0.2-orig/src/woff2_common.h	2017-11-14 02:31:28.000000000 +0800
++++ woff2-1.0.2/src/woff2_common.h	2025-10-17 13:11:19.478265500 +0800
+@@ -11,7 +11,7 @@
+ 
+ #include <stddef.h>
+ #include <inttypes.h>
+-
++#include "woff2/port.h"
+ #include <string>
+ 
+ namespace woff2 {
+@@ -54,10 +54,10 @@
+ // Size of the collection header. 0 if version indicates this isn't a
+ // collection. Ref http://www.microsoft.com/typography/otspec/otff.htm,
+ // True Type Collections
+-size_t CollectionHeaderSize(uint32_t header_version, uint32_t num_fonts);
++WOFF2_COMMON_API size_t CollectionHeaderSize(uint32_t header_version, uint32_t num_fonts);
+ 
+ // Compute checksum over size bytes of buf
+-uint32_t ComputeULongSum(const uint8_t* buf, size_t size);
++WOFF2_COMMON_API uint32_t ComputeULongSum(const uint8_t* buf, size_t size);
+ 
+ } // namespace woff2
+ 
+diff -urN woff2-1.0.2-orig/src/woff2_dec.cc woff2-1.0.2/src/woff2_dec.cc
+--- woff2-1.0.2-orig/src/woff2_dec.cc	2017-11-14 02:31:28.000000000 +0800
++++ woff2-1.0.2/src/woff2_dec.cc	2025-10-17 13:11:26.710929000 +0800
+@@ -21,7 +21,7 @@
+ 
+ #include <brotli/decode.h>
+ #include "./buffer.h"
+-#include "./port.h"
++#include "woff2/port.h"
+ #include "./round.h"
+ #include "./store_bytes.h"
+ #include "./table_tags.h"

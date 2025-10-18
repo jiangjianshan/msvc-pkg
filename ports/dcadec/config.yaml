@@ -1,0 +1,6 @@
+name: dcadec
+version: 0.2.0
+url: https://github.com/foo86/dcadec/archive/v0.2.0/dcadec-0.2.0.tar.gz
+sha256: ed9d207fde3e8d576f3af8b0d1235b3371e315175757173689104efcaebf0d44
+dependencies:
+script: build.bat

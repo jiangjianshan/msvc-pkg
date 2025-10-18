@@ -38,21 +38,27 @@ goto :end
 
 :clean_stage
 echo "Cleaning %PKG_NAME% %PKG_VER%"
-cd "%BUILD_DIR%" && rmdir /s /q target
+cd "%BUILD_DIR%" && del /s *.obj *.exp *.lib *.dll *.exe
 exit /b 0
 
 :build_stage
 echo "Building %PKG_NAME% %PKG_VER%"
-cd "%BUILD_DIR%" && cargo build --release --verbose || exit 1
+cd "%BUILD_DIR%"
+cl %C_OPTS% %C_DEFS% -c *.c || exit 1
+lib /OUT:libntldd.lib libntldd.obj || exit 1
+link /OUT:ntldd.exe ntldd.obj libntldd.lib imagehlp.lib || exit 1
 exit /b 0
 
 :install_stage
 echo "Installing %PKG_NAME% %PKG_VER%"
 if not exist "%PREFIX%\bin" mkdir "%PREFIX%\bin"
+if not exist "%PREFIX%\include" mkdir "%PREFIX%\include"
 if not exist "%PREFIX%\lib" mkdir "%PREFIX%\lib"
-cd "%BUILD_DIR%"
-xcopy /Y /F /I target\release\*.exe "%PREFIX%\bin" || exit 1
-xcopy /Y /F /I target\release\*.rlib "%PREFIX%\lib" || exit 1
+cd "%BUILD_DIR%" && (
+  xcopy /F /Y /I *.exe %PREFIX%\bin
+  xcopy /F /Y /I *.h %PREFIX%\include
+  xcopy /F /Y /I *.lib %PREFIX%\lib
+)
 exit /b 0
 
 :end

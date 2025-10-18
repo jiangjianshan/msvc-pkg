@@ -1,0 +1,6 @@
+name: ntldd
+version: '0.2'
+url: https://github.com/LRN/ntldd/archive/refs/tags/0.2.tar.gz
+sha256: 3c63d83333413be19dcf0823dc17bd3f014447a43b8d48212829c4cc5fbf74ce
+dependencies:
+script: build.bat

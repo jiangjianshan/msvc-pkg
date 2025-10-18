@@ -218,6 +218,12 @@ func_cl_wrapper ()
 					set x "$@" -I"$file"
 					shift
 					;;
+				-isystem)
+					eat=1
+					func_file_conv "$2" mingw
+					set x "$@" -I"$file"
+					shift
+					;;
 				-l)
 					eat=1
 					func_cl_dashl "$2"

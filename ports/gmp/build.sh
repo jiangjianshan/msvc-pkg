@@ -61,7 +61,6 @@ prepare_stage()
 configure_stage()
 {
   echo "Configuring $PKG_NAME $PKG_VER"
-  clean_stage
   mkdir -p "$BUILD_DIR" && cd "$BUILD_DIR"
   if [[ "$ARCH" == "x86" ]]; then
     HOST_TRIPLET=i686-w64-mingw32
@@ -125,7 +124,6 @@ configure_stage()
 configure2_stage()
 {
   echo "Configuring $PKG_NAME $PKG_VER"
-  clean_stage
   mkdir -p "$BUILD_DIR" && cd "$BUILD_DIR"
   if [[ "$ARCH" == "x86" ]]; then
     HOST_TRIPLET=i686-w64-mingw32

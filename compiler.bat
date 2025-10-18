@@ -43,13 +43,12 @@ if "%VSINSTALLDIR%" NEQ "" (
 )
 set "vcvarsall=%vsinstall%\VC\Auxiliary\Build\vcvarsall.bat"
 if exist "%vsinstall%\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt" (
-  set /p vsversion=<"%vsinstall%\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt"
+  set /p VCToolsVersion=<"%vsinstall%\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt"
 )
 if not exist "%vcvarsall%" (
   echo Can't find any installation of Visual Studio
   goto :end
 )
-echo Visual C++ Tools Version                                 : %vsversion%
 call "%vcvarsall%" %vc_target_arch%
 for /f "tokens=7,8" %%a in ('cl 2^>^&1 ^| findstr /r "Version [0-9]"') do (
   for /f "tokens=1,2,3 delims=." %%i in ("%%a") do (
@@ -57,7 +56,23 @@ for /f "tokens=7,8" %%a in ('cl 2^>^&1 ^| findstr /r "Version [0-9]"') do (
     set "MSC_VER=%%i.%%j"
   )
 )
+set "VCINSTALLDIR=%VSINSTALLDIR%\VC\Tools\MSVC\%VCToolsVersion%"
+if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
+    set "REG_ROOT=HKLM\SOFTWARE\WOW6432Node\Microsoft\Microsoft SDKs\Windows\v10.0"
+) else (
+    set "REG_ROOT=HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v10.0"
+)
+for /f "tokens=2,*" %%i in ('reg query "%REG_ROOT%" /v InstallationFolder 2^>nul ^| findstr "REG_SZ"') do set "WindowsSdkDir=%%j"
+for /f "tokens=2,*" %%i in ('reg query "%REG_ROOT%" /v ProductVersion 2^>nul ^| findstr "REG_SZ"') do set "WindowsSDKVersion=%%j"
+if defined WindowsSdkDir (
+    set "WindowsSDKVersion=!WindowsSDKVersion!.0"
+)
+
 echo Visual C++ Compiler Version                              : %MSC_FULL_VER%
+echo Visual C++ Tools Version                                 : %VCToolsVersion%
+echo Visual C++ Install Directory                             : %VCINSTALLDIR%
+echo Windows SDK Install Directory                            : %WindowsSdkDir%
+echo Windows SDK version                                      : %WindowsSDKVersion%
 
 rem Set Intel OneAPI environment
 rem FIXME: Use %with_oneapi% to control whether use compilers and library from oneapi will solved the
@@ -160,6 +175,5 @@ exit /B 0
 :end
 set vsinstall=
 set vswhere=
-set vsversion=
 set vc_target_arch=
 set with_oneapi=

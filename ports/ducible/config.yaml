@@ -1,0 +1,6 @@
+name: ducible
+version: 1.2.2
+url: https://github.com/jasonwhite/ducible/archive/refs/tags/v1.2.2.tar.gz
+sha256: 652024f41d73e3ba9e7515444b7644e1086f803b7396146009b8a480b3024318
+dependencies:
+script: build.bat

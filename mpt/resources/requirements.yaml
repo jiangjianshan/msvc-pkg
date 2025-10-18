@@ -307,6 +307,16 @@ dependencies:
         sha256: 2408af61717dae87b00c855b132769a125c708907fc94a46bb16dae076113e5c
         target: "{GIT_ROOT}\\usr"
         check: "if exist \"{GIT_ROOT}\\usr\\bin\\make.exe\" (exit 0) else (exit 1)"
+      - name: perl
+        url: https://mirror.msys2.org/msys/x86_64/perl-5.40.3-1-x86_64.pkg.tar.zst
+        sha256: 48a87fd3d9a0c3c1b47bd8097f694233a90e0f53b71872458301c380f6dddb3b
+        target: "{GIT_ROOT}"
+        check: "if exist \"{GIT_ROOT}\\usr\\bin\\msys-perl5_40.dll\" (exit 0) else (exit 1)"
+      - name: perl-Locale-Gettext
+        url: https://mirror.msys2.org/msys/x86_64/perl-Locale-Gettext-1.07-12-x86_64.pkg.tar.zst
+        sha256: a86bd0c6b64fc441d14799373c3444932f150857e26b17f3a9e03748ac68ac90
+        target: "{GIT_ROOT}\\usr"
+        check: "if exist \"{GIT_ROOT}\\usr\\lib\\perl5\\vendor_perl\\Locale\\gettext.pm\" (exit 0) else (exit 1)"
       - name: pkgconf
         url: https://mirror.msys2.org/msys/x86_64/pkgconf-2.5.1-1-x86_64.pkg.tar.zst
         sha256: 38efd4928ac0cb06e9bd558baa533fc923c0592115bf9bd44970250f3ae2cb7e

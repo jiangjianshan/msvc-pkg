@@ -1,0 +1,70 @@
+diff -urN ducible-1.2.2-orig/vs/vs2015/ducible/ducible.vcxproj ducible-1.2.2/vs/vs2015/ducible/ducible.vcxproj
+--- ducible-1.2.2-orig/vs/vs2015/ducible/ducible.vcxproj	2019-05-17 08:50:06.000000000 +0800
++++ ducible-1.2.2/vs/vs2015/ducible/ducible.vcxproj	2025-10-17 20:08:37.849367500 +0800
+@@ -97,6 +97,7 @@
+     <ClCompile>
+       <PrecompiledHeader>
+       </PrecompiledHeader>
++      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+       <WarningLevel>Level4</WarningLevel>
+       <Optimization>Disabled</Optimization>
+       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+@@ -123,6 +124,7 @@
+     <ClCompile>
+       <PrecompiledHeader>
+       </PrecompiledHeader>
++      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+       <WarningLevel>Level4</WarningLevel>
+       <Optimization>Disabled</Optimization>
+       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+@@ -150,6 +152,7 @@
+       <WarningLevel>Level4</WarningLevel>
+       <PrecompiledHeader>
+       </PrecompiledHeader>
++      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+       <Optimization>MaxSpeed</Optimization>
+       <FunctionLevelLinking>true</FunctionLevelLinking>
+       <IntrinsicFunctions>true</IntrinsicFunctions>
+@@ -181,6 +184,7 @@
+       <WarningLevel>Level4</WarningLevel>
+       <PrecompiledHeader>
+       </PrecompiledHeader>
++      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+       <Optimization>MaxSpeed</Optimization>
+       <FunctionLevelLinking>true</FunctionLevelLinking>
+       <IntrinsicFunctions>true</IntrinsicFunctions>
+diff -urN ducible-1.2.2-orig/vs/vs2015/pdbdump/pdbdump.vcxproj ducible-1.2.2/vs/vs2015/pdbdump/pdbdump.vcxproj
+--- ducible-1.2.2-orig/vs/vs2015/pdbdump/pdbdump.vcxproj	2019-05-17 08:50:06.000000000 +0800
++++ ducible-1.2.2/vs/vs2015/pdbdump/pdbdump.vcxproj	2025-10-17 20:09:11.242198100 +0800
+@@ -97,6 +97,7 @@
+     <ClCompile>
+       <PrecompiledHeader>
+       </PrecompiledHeader>
++      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+       <WarningLevel>Level4</WarningLevel>
+       <Optimization>Disabled</Optimization>
+       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+@@ -123,6 +124,7 @@
+     <ClCompile>
+       <PrecompiledHeader>
+       </PrecompiledHeader>
++      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+       <WarningLevel>Level4</WarningLevel>
+       <Optimization>Disabled</Optimization>
+       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+@@ -150,6 +152,7 @@
+       <WarningLevel>Level4</WarningLevel>
+       <PrecompiledHeader>
+       </PrecompiledHeader>
++      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+       <Optimization>MaxSpeed</Optimization>
+       <FunctionLevelLinking>true</FunctionLevelLinking>
+       <IntrinsicFunctions>true</IntrinsicFunctions>
+@@ -181,6 +184,7 @@
+       <WarningLevel>Level4</WarningLevel>
+       <PrecompiledHeader>
+       </PrecompiledHeader>
++      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+       <Optimization>MaxSpeed</Optimization>
+       <FunctionLevelLinking>true</FunctionLevelLinking>
+       <IntrinsicFunctions>true</IntrinsicFunctions>

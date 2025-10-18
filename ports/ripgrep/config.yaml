@@ -1,0 +1,8 @@
+name: ripgrep
+version: 15.0.0
+url: https://github.com/BurntSushi/ripgrep/archive/refs/tags/15.0.0.tar.gz
+sha256: e6b2d35ff79c3327edc0c92a29dc4bb74e82d8ee4b8156fb98e767678716be7a
+dependencies:
+  required:
+    - pcre2
+script: build.bat

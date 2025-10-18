@@ -1,0 +1,6 @@
+name: fd
+version: 10.3.0
+url: https://github.com/sharkdp/fd/archive/v10.3.0/fd-10.3.0.tar.gz
+sha256: 2edbc917a533053855d5b635dff368d65756ce6f82ddefd57b6c202622d791e9
+dependencies:
+script: build.bat

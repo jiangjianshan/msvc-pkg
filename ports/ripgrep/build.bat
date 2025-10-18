@@ -43,16 +43,16 @@ exit /b 0
 
 :build_stage
 echo "Building %PKG_NAME% %PKG_VER%"
-cd "%BUILD_DIR%" && cargo build --release --verbose || exit 1
+if not defined PCRE2_PREFIX set PCRE2_PREFIX=%_PREFIX%
+cd "%BUILD_DIR%"
+cargo rustc --release --features pcre2 -- -L %PCRE2_PREFIX%\lib -l pcre2-8 || exit 1
 exit /b 0
 
 :install_stage
 echo "Installing %PKG_NAME% %PKG_VER%"
 if not exist "%PREFIX%\bin" mkdir "%PREFIX%\bin"
-if not exist "%PREFIX%\lib" mkdir "%PREFIX%\lib"
 cd "%BUILD_DIR%"
 xcopy /Y /F /I target\release\*.exe "%PREFIX%\bin" || exit 1
-xcopy /Y /F /I target\release\*.rlib "%PREFIX%\lib" || exit 1
 exit /b 0
 
 :end

@@ -1,0 +1,8 @@
+name: woff2
+version: 1.0.2
+url: https://github.com/google/woff2/archive/refs/tags/v1.0.2.tar.gz
+sha256: add272bb09e6384a4833ffca4896350fdb16e0ca22df68c0384773c67a175594
+dependencies:
+  required:
+    - brotli
+script: build.bat

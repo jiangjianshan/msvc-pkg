@@ -1,0 +1,9 @@
+name: wabt
+version: main
+url: https://github.com/WebAssembly/wabt.git
+recursive: true
+depth: 1
+dependencies:
+  required:
+    - openssl
+script: build.bat

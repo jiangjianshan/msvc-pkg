@@ -38,24 +38,8 @@ clean_stage()
 prepare_stage()
 {
   echo "Preparing $PKG_NAME $PKG_VER"
+  # NOTE: Update version of autotools so that msvc can build shared library
   cd "$SRC_DIR"
-  export GNULIB_SRCDIR=$ROOT_DIR/buildtrees/sources/gnulib
-  GNULIB_TOOL=$GNULIB_SRCDIR/gnulib-tool
-  GNULIB_MODULES='
-    vasprintf
-    ftruncate
-    getrusage
-    gettimeofday
-    strsignal
-    sys_resource-h
-    sys_time-h
-    sys_utsname-h
-    unistd-h
-    uname
-  '
-  $GNULIB_TOOL --lib=libgrt --source-base=src --m4-base=config/m4 --without-tests \
-    --no-vc-files --makefile-name=Makefile.gnulib --libtool \
-    --import $GNULIB_MODULES
   WANT_AUTOCONF='2.69' WANT_AUTOMAKE='1.16' autoreconf -ifv
   rm -rfv autom4te.cache
   find . -name "*~" -type f -print -exec rm -rfv {} \;
@@ -78,17 +62,14 @@ configure_stage()
   # 2. Don't use 'compile cl -nologo' but 'compile cl'. Because configure
   #    on some libraries will detect whether is msvc compiler according to
   #    '*cl | cl.exe'
-  # 3. Taken care of the logic of func_resolve_sysroot() and func_replace_sysroot()
-  #    in ltmain.sh, otherwise may have '-L=*' in the filed of 'dependency_libs' in
-  #    *.la. So don't set --with-sysroot if --libdir has been set
   AR="$ROOT_DIR/wrappers/ar-lib lib -nologo"                                   \
-  CC="$ROOT_DIR/wrappers/compile cl"                                           \
+  CC="cl"                                                                      \
   CFLAGS="$C_OPTS"                                                             \
-  CPP="$ROOT_DIR/wrappers/compile cl -E"                                       \
+  CPP="cl -E"                                                                  \
   CPPFLAGS="$C_DEFS"                                                           \
-  CXX="$ROOT_DIR/wrappers/compile cl"                                          \
+  CXX="cl"                                                                     \
   CXXFLAGS="-EHsc $C_OPTS"                                                     \
-  CXXCPP="$ROOT_DIR/wrappers/compile cl -E"                                    \
+  CXXCPP="cl -E"                                                               \
   DLLTOOL="link -verbose -dll"                                                 \
   LD="link -nologo"                                                            \
   NM="dumpbin -nologo -symbols"                                                \
@@ -103,30 +84,7 @@ configure_stage()
     --includedir="$PREFIX/include"                                             \
     --libdir="$PREFIX/lib"                                                     \
     --datarootdir="$PREFIX/share"                                              \
-    --enable-static                                                            \
-    --enable-shared                                                            \
-    --with-gmp="$(cygpath -u "${GMP_PREFIX:-$_PREFIX}")"                       \
-    --with-mpfr="$(cygpath -u "${MPFR_PREFIX:-$_PREFIX}")"                     \
-    --with-mpc="$(cygpath -u "${MPC_PREFIX:-$_PREFIX}")"                       \
-    --with-mpfrcx="$(cygpath -u "${MPFRCX_PREFIX:-$_PREFIX}")"                 \
-    --with-fplll="$(cygpath -u "${FPLLL_PREFIX:-$_PREFIX}")"                   \
-    --with-pari="$(cygpath -u "${PARI_PREFIX:-$_PREFIX}")"                     \
-    gl_cv_func_free_preserves_errno=yes                                        \
-    lt_cv_deplibs_check_method=${lt_cv_deplibs_check_method='pass_all'}        \
     gt_cv_locale_zh_CN=none || exit 1
-}
-
-patch_stage()
-{
-  cd "$BUILD_DIR"
-  # FIXME:
-  # To solve following issue
-  # libtool: warning: undefined symbols not allowed in x86_64-w64-mingw32
-  # shared libraries; building static only
-  if [ -f "libtool" ]; then
-    sed -e "s/\(allow_undefined=\)yes/\1no/" -i libtool
-    chmod +x libtool
-  fi
 }
 
 build_stage()
@@ -144,7 +102,6 @@ install_stage()
 prepare_stage
 clean_stage
 configure_stage
-patch_stage
 build_stage
 install_stage
 clean_stage

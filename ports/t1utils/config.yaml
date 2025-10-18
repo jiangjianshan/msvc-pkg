@@ -1,0 +1,8 @@
+name: t1utils
+version: '1.42'
+url: https://github.com/kohler/t1utils/archive/refs/tags/v1.42.tar.gz
+sha256: d385fa78fca179e5edcf962bf1545a926f365c03e62b5a0ca5d80f104727ce81
+dependencies:
+  required:
+    - getopt
+script: build.sh

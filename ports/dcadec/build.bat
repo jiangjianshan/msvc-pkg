@@ -26,9 +26,10 @@ rem     {Dependency}_SRC - Source code directory of the dependency `{Dependency}
 rem     {Dependency}_VER - Version of the dependency `{Dependency}`.
 
 call "%ROOT_DIR%\compiler.bat" %ARCH%
-set BUILD_DIR=%SRC_DIR%
+set BUILD_DIR=%SRC_DIR%\msvc
 set C_OPTS=-nologo -MD -diagnostics:column -wd4819 -wd4996 -fp:precise -openmp:llvm -utf-8 -Zc:__cplusplus -experimental:c11atomics
 set C_DEFS=-DWIN32 -D_WIN32_WINNT=_WIN32_WINNT_WIN10 -D_CRT_DECLARE_NONSTDC_NAMES -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS -D_USE_MATH_DEFINES -DNOMINMAX
+set CL=-MP
 
 call :clean_stage
 call :build_stage
@@ -38,21 +39,29 @@ goto :end
 
 :clean_stage
 echo "Cleaning %PKG_NAME% %PKG_VER%"
-cd "%BUILD_DIR%" && rmdir /s /q target
+cd "%BUILD_DIR%" && rmdir /s /q %ARCH%
 exit /b 0
 
 :build_stage
 echo "Building %PKG_NAME% %PKG_VER%"
-cd "%BUILD_DIR%" && cargo build --release --verbose || exit 1
+cd "%BUILD_DIR%" && msbuild dcadec.sln /p:Configuration=Release               ^
+  /p:Platform=%ARCH% /p:PlatformToolset=v143 /p:UseEnv=true                    ^
+  /p:SkipUWP=true /p:ContinueOnError=true
 exit /b 0
 
 :install_stage
 echo "Installing %PKG_NAME% %PKG_VER%"
 if not exist "%PREFIX%\bin" mkdir "%PREFIX%\bin"
+if not exist "%PREFIX%\include\libdcadec" mkdir "%PREFIX%\include\libdcadec"
 if not exist "%PREFIX%\lib" mkdir "%PREFIX%\lib"
-cd "%BUILD_DIR%"
-xcopy /Y /F /I target\release\*.exe "%PREFIX%\bin" || exit 1
-xcopy /Y /F /I target\release\*.rlib "%PREFIX%\lib" || exit 1
+cd "%BUILD_DIR%" && (
+  xcopy /Y /F /I %ARCH%\Release\*.exe "%PREFIX%\bin"
+  xcopy /Y /F "%SRC_DIR%\libdcadec\dca_context.h" "%PREFIX%\include\libdcadec"
+  xcopy /Y /F "%SRC_DIR%\libdcadec\dca_frame.h" "%PREFIX%\include\libdcadec"
+  xcopy /Y /F "%SRC_DIR%\libdcadec\dca_stream.h" "%PREFIX%\include\libdcadec"
+  xcopy /Y /F "%SRC_DIR%\libdcadec\dca_waveout.h" "%PREFIX%\include\libdcadec"
+  xcopy /Y /F /I %ARCH%\Release\*.lib "%PREFIX%\lib"
+)
 exit /b 0
 
 :end

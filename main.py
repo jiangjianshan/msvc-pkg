@@ -8,10 +8,10 @@ from typing import NoReturn
 
 from yaml import SafeDumper
 
-from mpt.core.action import ActionHandler
-from mpt.core.cli import CommandLineParser
-from mpt.core.runtime import RuntimeManager
-from mpt.core.log import RichLogger
+from mpt.action import ActionHandler
+from mpt.cli import CommandLineParser
+from mpt.runtime import RuntimeManager
+from mpt.log import RichLogger
 
 
 def main() -> NoReturn:
@@ -87,7 +87,7 @@ def _update_user_configuration(lib_prefixes: dict) -> None:
 
     RichLogger.debug("Writing library prefixes to user configuration")
     try:
-        from mpt.core.config import UserConfig
+        from mpt.config import UserConfig
         UserConfig.dump({"lib_prefixes": lib_prefixes})
     except Exception as e:
         RichLogger.exception("Failed to write library prefixes to user configuration")

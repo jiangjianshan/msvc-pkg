@@ -49,10 +49,8 @@ exit /b 0
 :install_stage
 echo "Installing %PKG_NAME% %PKG_VER%"
 if not exist "%PREFIX%\bin" mkdir "%PREFIX%\bin"
-if not exist "%PREFIX%\lib" mkdir "%PREFIX%\lib"
 cd "%BUILD_DIR%"
 xcopy /Y /F /I target\release\*.exe "%PREFIX%\bin" || exit 1
-xcopy /Y /F /I target\release\*.rlib "%PREFIX%\lib" || exit 1
 exit /b 0
 
 :end
