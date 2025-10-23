@@ -21,7 +21,7 @@ class HistoryManager:
     including version information, build timestamps, and dependency type support. Maintains
     persistent records in YAML format for reliable state management across sessions.
     """
-    RECORD_FILE = ROOT_DIR / 'installed' / 'msvc-pkg' / 'status.yaml'
+    RECORD_FILE = ROOT_DIR / 'installed' / 'mslibx' / 'status.yaml'
 
     @classmethod
     def _get_record_path(cls) -> Path:

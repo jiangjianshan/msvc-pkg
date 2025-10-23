@@ -35,7 +35,7 @@ class UninstallManager:
         HistoryManager.remove_record(arch, lib)
 
         # Construct installed file list path
-        list_file = ROOT_DIR / 'installed' / 'msvc-pkg' / 'info' / f"{lib}_{arch}.list"
+        list_file = ROOT_DIR / 'installed' / 'mslibx' / 'info' / f"{lib}_{arch}.list"
 
         if not list_file.exists():
             RichLogger.debug(f"Installed file list not found: {list_file}")

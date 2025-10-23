@@ -161,7 +161,7 @@ class Win32FileMonitor:
                 self.kernel32.CloseHandle(dir_handle)
 
     def _process_buffer(self, buffer, buffer_size):
-        """Process notification buffer - track all file operations without filtering."""
+        """Process notification buffer - track file operations, exclude directories."""
         offset = 0
 
         while offset < buffer_size:
@@ -178,13 +178,13 @@ class Win32FileMonitor:
                     filename = filename_bytes.decode('utf-16le').rstrip('\x00')
                     full_path = self.target_dir / filename
 
-                    # Track all file operations without filtering
+                    # Track file operations, exclude directories
                     if action in [self.FILE_ACTION_ADDED,
                                 self.FILE_ACTION_RENAMED_NEW_NAME,
                                 self.FILE_ACTION_MODIFIED]:
                         try:
-                            # Track path if it exists within target_dir scope
-                            if full_path.exists():
+                            # Only track files, exclude directories
+                            if full_path.exists() and full_path.is_file():
                                 self.detected_files.add(full_path)
                         except OSError as e:
                             RichLoger.error(f"Error accessing path {filename}: {e}")
@@ -199,11 +199,12 @@ class Win32FileMonitor:
             offset += next_entry_offset
 
     def get_new_files(self) -> List[str]:
-        """Get list of new files detected during monitoring."""
+        """Get list of new files detected during monitoring (excluding directories)."""
         valid_files = []
 
         for file_path in self.detected_files:
             try:
+                # Only include files, exclude directories
                 if file_path.exists() and file_path.is_file():
                     rel_path = file_path.relative_to(self.target_dir)
                     valid_files.append(str(rel_path).replace('\\', '/'))  # Use forward slashes

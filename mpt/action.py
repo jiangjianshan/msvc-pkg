@@ -172,7 +172,7 @@ class ActionHandler:
             config = LibraryConfig.load(lib)
             # Perform cleaning based on user choice
             if choice == "1":
-                clean_result = CleanManager.clean_logs(lib)
+                clean_result = CleanManager.clean_logs(self.arch, lib)
                 log_success, log_path = clean_result
                 source_success, source_path = True, "N/A"
                 archive_success, archive_path = True, "N/A"

@@ -50,6 +50,12 @@ class BuildManager:
         # Parse node name to get library name and dependency type
         lib_name, dep_type = DependencyResolver.parse_dependency_name(node_name)
 
+        # Fetch source code
+        source_path = SourceManager.fetch_source(config)
+        if not source_path or not source_path.exists():
+            RichLogger.critical(f"[[bold cyan]{node_name}[/bold cyan]] Source acquisition failed")
+            return False
+
         # Check if rebuild is required
         if not BuildManager._should_build(arch, node_name, config):
             RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build skipped - already up to date")
@@ -58,12 +64,6 @@ class BuildManager:
         # Create log directory if it doesn't exist
         log_dir = ROOT_DIR / 'buildtrees' / 'logs'
         log_dir.mkdir(parents=True, exist_ok=True)
-
-        # Fetch source code
-        source_path = SourceManager.fetch_source(config)
-        if not source_path or not source_path.exists():
-            RichLogger.critical(f"[[bold cyan]{node_name}[/bold cyan]] Source acquisition failed")
-            return False
 
         # Run the main build script
         script_file = config.get('script')
@@ -82,7 +82,7 @@ class BuildManager:
                 for file_path in skipped_files:
                     if file_path not in installed_files:
                         installed_files.append(file_path)
-                info_file = ROOT_DIR / 'installed' / 'msvc-pkg' / 'info' / f"{lib_name}_{arch}.list"
+                info_file = ROOT_DIR / 'installed' / 'mslibx' / 'info' / f"{lib_name}_{arch}.list"
                 info_file.parent.mkdir(parents=True, exist_ok=True)
                 with open(info_file, 'w', encoding='utf-8') as f:
                     for file_path in sorted(installed_files):
@@ -234,6 +234,9 @@ class BuildManager:
                         full_path = full_path.strip("'\"").replace('\\', '/')
                         if full_path.startswith(prefix_str):
                             relative_path = full_path[len(prefix_str):].lstrip('/')
-                            skipped_files.append(relative_path)
+
+                            file_path = prefix / relative_path
+                            if file_path.exists() and file_path.is_file():
+                                skipped_files.append(relative_path)
                         break  # Stop checking other patterns if matched
         return skipped_files

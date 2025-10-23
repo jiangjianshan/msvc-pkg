@@ -353,11 +353,10 @@ class RuntimeManager:
             archive_extensions = {'.zip', '.tar', '.gz', '.tgz', '.bz2', '.tbz2', '.xz', '.txz', '.zst', '.zstd'}
 
             if installer_path.suffix.lower() in archive_extensions:
-                # Extract archive to target directory
-                if not target_path.is_dir():
-                    RichLogger.error(f"Target must be a directory for archive files: [bold cyan]{dep_name}[/bold cyan]")
-                    return False
+                # Create target directory if it doesn't exist
+                target_path.mkdir(parents=True, exist_ok=True)
 
+                # Extract archive to target directory
                 RichLogger.info(f"Extracting archive for [bold cyan]{dep_name}[/bold cyan] to [bold cyan]{target_path}[/bold cyan]")
                 if ArchiveHandler.extract(installer_path, target_path):
                     RichLogger.info(f"Extracted [bold cyan]{installer_path.name}[/bold cyan] to [bold cyan]{target_path}[/bold cyan]")
@@ -376,7 +375,7 @@ class RuntimeManager:
                     shutil.copy2(installer_path, dest_path)
                     RichLogger.info(f"Copied [bold cyan]{installer_path.name}[/bold cyan] to [bold cyan]{target_path}[/bold cyan]")
                 else:
-                    # Target is a file, copy and rename
+                    # Target is a file, create parent directory and copy
                     target_path.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(installer_path, target_path)
                     RichLogger.info(f"Copied [bold cyan]{installer_path.name}[/bold cyan] to [bold cyan]{target_path}[/bold cyan]")

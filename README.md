@@ -1,23 +1,23 @@
 <div align="center">
-  <h1>✨🚀 msvc-pkg 🚀✨</h1>
+  <h1>✨🚀 mslibx 🚀✨</h1>
 </div>
 
 # Overview
 
-msvc-pkg is an extremely lightweight library management system. It does not rely on environments like MinGW-w64, Cygwin, or WSL, but instead is built upon native Windows MSVC/MSVC-like command-line toolchains, focusing on compiling Windows native libraries from source code. This project provides developers with a vast collection of pre-configured open-source library definitions that have resolved common build issues, while significantly simplifying the workflow for adding new libraries. This embodies the very purpose and philosophy behind msvc-pkg's creation.
+mslibx is an extremely lightweight library management system. It does not rely on environments like MinGW-w64, Cygwin, or WSL, but instead is built upon native Windows MSVC or MSVC-like command-line toolchains, focusing on compiling Windows native libraries from source code. This project provides developers with a vast collection of pre-configured open-source library definitions that have resolved common build issues, while significantly simplifying the workflow for adding new libraries. This embodies the very purpose and philosophy behind mslibx's creation.
 
-msvc-pkg employs a flexible plugin-based architecture where each library is an independent plugin, allowing for deep customization of the build process. It features rich color output in both the console and log files, facilitating troubleshooting during builds, and is capable of handling complex dependency trees, including full support for scenarios like bootstrap builds.
+mslibx employs a flexible plugin-based architecture where each library is an independent plugin, allowing for deep customization of the build process. It features rich color output in both the console and log files, facilitating troubleshooting during builds, and is capable of handling complex dependency trees, including full support for scenarios like bootstrap builds.
 
-This project is continuously evolving, and we welcome your contributions! If a library you need is not yet supported, you can [submit an issue](https://github.com/jiangjianshan/msvc-pkg/issues) or refer to the [Contribution Guide](#contribution-guide) to add the open-source library yourself.
+This project is continuously evolving, and we welcome your contributions! If a library you need is not yet supported, you can [submit an issue](https://github.com/jiangjianshan/mslibx/issues) or refer to the [Contribution Guide](#contribution-guide) to add the open-source library yourself.
 
 # Quick Start
 
-Getting started with msvc-pkg is straightforward.
+Getting started with mslibx is straightforward.
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/jiangjianshan/msvc-pkg.git
-cd msvc-pkg
+git clone https://github.com/jiangjianshan/mslibx.git
+cd mslibx
 
 # 2. View all available commands and options
 mpt --help
@@ -31,9 +31,9 @@ mpt --install gmp ffmpeg gettext ncurses readline
 
 After installation, the libraries are built and ready for use in your projects. You can set a custom installation prefix for each library using the `--<library-name>-prefix` option.
 
-# Using msvc-pkg
+# Using mslibx
 
-msvc-pkg provides a simple, consistent command-line interface for all operations.
+mslibx provides a simple, consistent command-line interface for all operations.
 
 **Managing Libraries:**
 ```bash
@@ -81,10 +81,10 @@ For a complete list of commands and examples, run `mpt --help`.
 
 # Contribution Guide
 
-msvc-pkg is an open-source project serving the community. It has successfully built a wide variety of open-source libraries and continues to expand. The complete list of supported libraries can be viewed using the `mpt --list `command. We greatly appreciate your contributions.
+mslibx is an open-source project serving the community. It has successfully built a wide variety of open-source libraries and continues to expand. The complete list of supported libraries can be viewed using the `mpt --list `command. We greatly appreciate your contributions.
 
 **Ways you can help:**
-*   [Submit an issue](https://github.com/jiangjianshan/msvc-pkg/issues) to report bugs or request features.
+*   [Submit an issue](https://github.com/jiangjianshan/mslibx/issues) to report bugs or request features.
 *   [Add a new library](#adding-a-new-library) or fix existing ones.
 
 ### Adding a New Library
@@ -109,11 +109,11 @@ For more details, please refer to the existing library configurations in the `po
 
 # Resources
 
-*   **Source Code & Library Ports:** https://github.com/jiangjianshan/msvc-pkg
-*   **Issues & Discussions:** https://github.com/jiangjianshan/msvc-pkg/issues
+*   **Source Code & Library Ports:** https://github.com/jiangjianshan/mslibx
+*   **Issues & Discussions:** https://github.com/jiangjianshan/mslibx/issues
 
 ---
 
 <div align="center">
-If you appreciate the work on msvc-pkg, please give it a star ⭐ to encourage and support our continued development!
+If you appreciate the work on mslibx, please give it a star ⭐ to encourage and support our continued development!
 </div>
