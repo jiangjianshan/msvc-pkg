@@ -101,7 +101,7 @@ dependencies:
     url: https://github.com/ninja-build/ninja/releases/download/v1.13.1/ninja-win.zip
     sha256: 26a40fa8595694dec2fad4911e62d29e10525d2133c9a4230b66397774ae25bf
     check: "where ninja"
-    target: "{ROOT_DIR}\\installed\\x64\\bin"
+    target: "{ROOT_DIR}\\installed\\x64-windows\\bin"
 
   - name: wget
     check: "where wget"
@@ -110,11 +110,11 @@ dependencies:
       - name: wget x64 variant
         url: https://eternallybored.org/misc/wget/1.21.4/64/wget.exe
         sha256: 6136e66e41acd14c409c2d3eb10d48a32febaba04267303d0460ed3bee746cc5
-        target: "{ROOT_DIR}\\installed\\x64\\bin\\wget.exe"
+        target: "{ROOT_DIR}\\installed\\x64-windows\\bin\\wget.exe"
       - name: wget x86 variant
         url: https://eternallybored.org/misc/wget/1.21.4/32/wget.exe
         sha256: 7c722c4a25a26f7179027b1323ed8e291c48365c6f87345e61ee8d5ebd2e5ba0
-        target: "{ROOT_DIR}\\installed\\x86\\bin\\wget.exe"
+        target: "{ROOT_DIR}\\installed\\x86-windows\\bin\\wget.exe"
 
   - name: rust
     check: "where rustc"

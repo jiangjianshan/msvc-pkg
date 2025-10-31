@@ -37,14 +37,16 @@ class Runner:
     _prefix = None
 
     @classmethod
-    def _setup_basic_environment(cls, arch: str, lib_config: Dict[str, Any]) -> None:
+    def _setup_basic_environment(cls, triplet: str, lib_config: Dict[str, Any]) -> None:
         """
         Set up basic environment variables for the build process.
 
         Args:
-            arch: Target architecture specification
+            triplet: Target triplet specification
             lib_config: Library configuration dictionary
         """
+        # Parse architecture from triplet (e.g., 'x64' from 'x64-windows', 'arm64' from 'arm64-windows-static')
+        arch = triplet.split('-')[0] if '-' in triplet else triplet
         # Set basic environment variables
         cls._proc_env['ARCH'] = arch
 
@@ -72,26 +74,26 @@ class Runner:
         cls._proc_env['PKG_VER'] = lib_ver
 
     @classmethod
-    def _setup_prefix_environment(cls, arch: str, lib: str, lib_config: Dict[str, Any]) -> str:
+    def _setup_prefix_environment(cls, triplet: str, lib: str, lib_config: Dict[str, Any]) -> str:
         """
         Set up prefix-related environment variables and PATH configurations.
 
         Args:
-            arch: Target architecture specification
+            triplet: Target triplet specification
             lib: Library name for library-specific configuration
             lib_config: Library configuration dictionary
 
         Returns:
             str: The primary prefix path for the current library
         """
-        prefix = str(ROOT_DIR / 'installed' / arch)
+        prefix = str(ROOT_DIR / 'installed' / triplet)
         cls._proc_env['_PREFIX'] = prefix
         prefix_paths = [prefix]
         user_settings = UserConfig.load()
         prefix_config = user_settings.get('prefix', {}) or {}
-        # Process architecture-specific prefix configurations
-        if arch in prefix_config:
-            for lib_name, lib_prefix in prefix_config[arch].items():
+        # Process triplet-specific prefix configurations
+        if triplet in prefix_config:
+            for lib_name, lib_prefix in prefix_config[triplet].items():
                 # Create environment variable name from library name
                 prefix_env = lib_name.replace('-', '_').upper() + '_PREFIX'
                 cls._proc_env[prefix_env] = lib_prefix
@@ -141,25 +143,13 @@ class Runner:
             cls._proc_env[dep_ver_env] = str(dep_ver)
 
     @classmethod
-    def _setup_environment(cls, arch: str, lib: str) -> None:
+    def _setup_environment(cls, triplet: str, lib: str) -> None:
         """
         Prepare and configure environment variables for Windows build processes.
 
-        Constructs a comprehensive environment setup including:
-        - Architecture-specific build settings (ARCH)
-        - Library-specific configuration values (PKG_NAME, PKG_VER, SRC_DIR)
-        - Prefix path configurations from user settings
-        - Dependency library prefix references
-        - PATH updates for dependency binaries
-        - Source directory references for dependencies
-
         Args:
-            arch: Target architecture specification (e.g., 'x86_64', 'arm64')
+            triplet: Target triplet specification (e.g., 'x64-windows', 'arm64-windows')
             lib: Library name for library-specific configuration loading
-
-        Note:
-            This method modifies the class-level _proc_env variable which is used
-            by subsequent execute() calls. It should be called before any command execution.
         """
         # Create fresh environment copy to ensure isolation
         cls._proc_env = os.environ.copy()
@@ -168,8 +158,8 @@ class Runner:
         lib_config = LibraryConfig.load(lib)
 
         # Set up environment in logical stages
-        cls._setup_basic_environment(arch, lib_config)
-        cls._setup_prefix_environment(arch, lib, lib_config)
+        cls._setup_basic_environment(triplet, lib_config)
+        cls._setup_prefix_environment(triplet, lib, lib_config)
         cls._setup_dependency_environment(lib)
 
     @classmethod
@@ -296,15 +286,12 @@ class Runner:
             RichLogger.debug(f"Process exit code: {exit_code}")
 
     @classmethod
-    def run_script(cls, arch: str, lib: str, script_file: Union[str, Path], log_file: Optional[Union[str, Path]] = None) -> tuple:
+    def run_script(cls, triplet: str, lib: str, script_file: Union[str, Path], log_file: Optional[Union[str, Path]] = None) -> tuple:
         """
         Execute script files with file system monitoring and environment configuration.
 
-        Enhanced version that automatically configures the build environment and monitors
-        file system changes in the installation prefix directory during script execution.
-
         Args:
-            arch: Target architecture specification for environment configuration
+            triplet: Target triplet specification for environment configuration
             lib: Library name for library-specific environment setup
             script_file: Path to the script file to execute
             log_file: Optional path for capturing script output to a log file
@@ -314,7 +301,7 @@ class Runner:
                 - success: Boolean indicating if script executed successfully (exit code 0)
                 - new_files_list: List of relative paths of files created during execution.
         """
-        cls._setup_environment(arch, lib)
+        cls._setup_environment(triplet, lib)
         script_file = Path(script_file) if isinstance(script_file, str) else script_file
         script_dir = script_file.parent
         orig_dir = os.getcwd()

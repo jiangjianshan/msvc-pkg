@@ -44,24 +44,20 @@ class SourceManager:
         Returns:
             bool: True if all exclusion operations completed successfully, False if any errors occurred
         """
-        try:
-            success = True
-            for pattern in patterns:
-                for item in directory.glob(pattern):
-                    try:
-                        if item.is_file() or item.is_symlink():
-                            item.unlink()
-                            RichLogger.debug(f"Excluded file: [bold cyan]{item}[/bold cyan]")
-                        elif item.is_dir():
-                            shutil.rmtree(item)
-                            RichLogger.debug(f"Excluded directory: [bold cyan]{item}[/bold cyan]")
-                    except Exception as e:
-                        RichLogger.error(f"Failed to exclude [bold cyan]{item}[/bold cyan]: [bold red]{str(e)}[/bold red]")
-                        success = False
-            return success
-        except Exception as e:
-            RichLogger.exception(f"Exception in _apply_exclusions: {str(e)}")
-            return False
+        success = True
+        for pattern in patterns:
+            for item in directory.glob(pattern):
+                try:
+                    if item.is_file() or item.is_symlink():
+                        item.unlink()
+                        RichLogger.debug(f"Excluded file: [bold cyan]{item}[/bold cyan]")
+                    elif item.is_dir():
+                        shutil.rmtree(item)
+                        RichLogger.debug(f"Excluded directory: [bold cyan]{item}[/bold cyan]")
+                except Exception as e:
+                    RichLogger.error(f"Failed to exclude [bold cyan]{item}[/bold cyan]: [bold red]{str(e)}[/bold red]")
+                    success = False
+        return success
 
     @staticmethod
     def is_git_url(url: str) -> bool:
@@ -77,12 +73,8 @@ class SourceManager:
         Returns:
             bool: True if URL appears to point to a Git repository, False otherwise
         """
-        try:
-            is_git = GitHandler.is_git_source(url)
-            return is_git
-        except Exception as e:
-            RichLogger.exception(f"Exception in is_git_url: {str(e)}")
-            return False
+        is_git = GitHandler.is_git_source(url)
+        return is_git
 
     @staticmethod
     def _run_check_command(command: str, cwd: Path) -> bool:
@@ -100,16 +92,12 @@ class SourceManager:
         Returns:
             bool: True if command execution succeeds (return code 0), False otherwise
         """
-        try:
-            result = subprocess.run(command, shell=True, cwd=cwd, capture_output=True, text=True)
-            if result.returncode == 0:
-                RichLogger.debug(f"Check command passed: [bold cyan]{command}[/bold cyan]")
-                return True
-            else:
-                RichLogger.debug(f"Check command failed with return code {result.returncode}: [bold cyan]{command}[/bold cyan]")
-                return False
-        except Exception as e:
-            RichLogger.exception(f"Exception in _run_check_command: {str(e)}")
+        result = subprocess.run(command, shell=True, cwd=cwd, capture_output=True, text=True)
+        if result.returncode == 0:
+            RichLogger.debug(f"Check command passed: [bold cyan]{command}[/bold cyan]")
+            return True
+        else:
+            RichLogger.debug(f"Check command failed with return code {result.returncode}: [bold cyan]{command}[/bold cyan]")
             return False
 
     @staticmethod
@@ -128,23 +116,19 @@ class SourceManager:
         Returns:
             Path: Path to the processed source directory, or None on failure
         """
-        try:
-            source_dir = SourceManager._process_source(config)
-            if not source_dir:
-                RichLogger.error(f"Source fetch failed for [bold cyan]{config['name']}[/bold cyan]")
-                return None
-            if 'extras' in config:
-                for extra in config['extras']:
-                    extra_path = SourceManager._process_source(extra, base_dir=source_dir)
-                    if not extra_path:
-                        RichLogger.warning(f"Failed to process extra source: [bold cyan]{extra['name']}[/bold cyan]")
-            return source_dir
-        except Exception as e:
-            RichLogger.exception(f"Exception in fetch_source: {str(e)}")
+        source_dir = SourceManager._process_source(config)
+        if not source_dir:
+            RichLogger.error(f"Source fetch failed for [bold cyan]{config['name']}[/bold cyan]")
             return None
+        if 'extras' in config:
+            for extra in config['extras']:
+                extra_path = SourceManager._process_source(extra, base_dir=source_dir)
+                if not extra_path:
+                    RichLogger.warning(f"Failed to process extra source: [bold cyan]{extra['name']}[/bold cyan]")
+        return source_dir
 
     @staticmethod
-    def _process_source(source_config: dict,
+    def _process_source(config: dict,
                        base_dir: Optional[Path] = None) -> Optional[Path]:
         """
         Process an individual source component with support for both main and extra sources.
@@ -156,47 +140,55 @@ class SourceManager:
         - Configuration parameter expansion and validation
 
         Args:
-            source_config: Configuration dictionary for the specific source
+            config: Configuration dictionary for the specific source
             base_dir: Optional base directory for extra source processing
 
         Returns:
             Path: Path to the processed source directory, or None on failure
         """
-        try:
-            url = source_config['url']
-            name = source_config['name']
-            version = source_config.get('version', 'unknown')
-            sha256 = source_config.get('sha256')
-            extract_path = source_config.get('extract')
-            include = source_config.get('include')
-            target = source_config.get('target')
+        url = config['url']
+        name = config['name']
+        version = config.get('version', 'unknown')
+        sha256 = config.get('sha256')
+        extract_path = config.get('extract')
+        include = config.get('include')
+        target = config.get('target')
 
-            # Check for extra source check command
-            force_extract = False
-            # Determine target directory
-            if base_dir and target:
-                target_dir = base_dir / target
-                RichLogger.debug(f"Using base directory with target: [bold green]{target_dir}[/bold green]")
-                if 'check' in source_config:
-                    check_command = source_config['check']
-                    if SourceManager._run_check_command(check_command, base_dir):
-                        RichLogger.info(f"Check command indicates processing needed for extra source: [bold cyan]{name}[/bold cyan]")
-                        force_extract = True
-                    else:
-                        RichLogger.info(f"Check command indicates no processing needed for extra source: [bold cyan]{name}[/bold cyan]")
-            else:
-                if SourceManager.is_git_url(url):
-                    target_dir = ROOT_DIR / 'buildtrees' / 'sources' / f"{name}"
+        # Check for extra source check command
+        force_extract = False
+        # Determine target directory
+        if base_dir and target:
+            target_dir = base_dir / target
+            RichLogger.debug(f"Using base directory with target: [bold green]{target_dir}[/bold green]")
+            if 'check' in config:
+                check_command = config['check']
+                if SourceManager._run_check_command(check_command, base_dir):
+                    RichLogger.info(f"Check command indicates processing needed for extra source: [bold cyan]{name}[/bold cyan]")
+                    force_extract = True
                 else:
-                    target_dir = ROOT_DIR / 'buildtrees' / 'sources' / f"{name}-{version}"
-            if target_dir.exists():
-                return SourceManager._handle_existing_source(source_config, target_dir, force_extract)
+                    RichLogger.info(f"Check command indicates no processing needed for extra source: [bold cyan]{name}[/bold cyan]")
+        else:
+            if SourceManager.is_git_url(url):
+                target_dir = ROOT_DIR / 'buildtrees' / 'sources' / f"{name}"
             else:
-                RichLogger.debug(f"Target directory does not exist: [bold green]{target_dir}[/bold green]")
-                return SourceManager._fetch_new_source(source_config, target_dir, force_extract)
-        except Exception as e:
-            RichLogger.exception(f"Exception in _process_source: {str(e)}")
-            return None
+                target_dir = ROOT_DIR / 'buildtrees' / 'sources' / f"{name}-{version}"
+            lib_dir = ROOT_DIR / 'ports' / f"{name}"
+            # Check if any .diff file in port directory is newer than main source directory
+            if target_dir.exists() and lib_dir.exists():
+                # Get the latest modification time of source directory
+                target_mtime = target_dir.stat().st_mtime
+                # Check all .diff files in port directory
+                for diff_file in lib_dir.glob('*.diff'):
+                    if diff_file.is_file() and diff_file.stat().st_mtime > target_mtime:
+                        RichLogger.info(f"[[bold cyan]{name}[/bold cyan]] {diff_file.name} is newer than source")
+                        from mpt.clean import CleanManager
+                        # Remove source directory to ensure fresh extraction with patches
+                        CleanManager.clean_source(name, config)
+        if target_dir.exists():
+            return SourceManager._handle_existing_source(config, target_dir, force_extract)
+        else:
+            RichLogger.debug(f"Target directory does not exist: [bold green]{target_dir}[/bold green]")
+            return SourceManager._fetch_new_source(config, target_dir, force_extract)
 
     @staticmethod
     def _handle_existing_source(config: dict, source_dir: Path, force_extract: bool) -> Optional[Path]:
@@ -216,14 +208,10 @@ class SourceManager:
         Returns:
             Path: Path to the processed source directory, or None on failure
         """
-        try:
-            if SourceManager.is_git_url(config['url']):
-                return SourceManager._update_git_repository(config, source_dir)
-            else:
-                return SourceManager._process_archive_source(config, source_dir, force_extract)
-        except Exception as e:
-            RichLogger.exception(f"Exception in _handle_existing_source: {str(e)}")
-            return None
+        if SourceManager.is_git_url(config['url']):
+            return SourceManager._update_git_repository(config, source_dir)
+        else:
+            return SourceManager._process_archive_source(config, source_dir, force_extract)
 
     @staticmethod
     def _fetch_new_source(config: dict, source_dir: Path, force_extract: bool) -> Optional[Path]:
@@ -243,19 +231,15 @@ class SourceManager:
         Returns:
             Path: Path to the processed source directory, or None on failure
         """
-        try:
-            if SourceManager.is_git_url(config['url']):
-                RichLogger.debug(f"Cloning Git repository: [bold cyan]{config['url']}[/bold cyan]")
-                success = GitHandler.clone_repository(config, source_dir)
-                if not success:
-                    RichLogger.error(f"Failed to clone repository: [bold cyan]{config['url']}[/bold cyan]")
-                    return None
-                return source_dir
-            else:
-                return SourceManager._process_archive_source(config, source_dir, force_extract)
-        except Exception as e:
-            RichLogger.exception(f"Exception in _fetch_new_source: {str(e)}")
-            return None
+        if SourceManager.is_git_url(config['url']):
+            RichLogger.debug(f"Cloning Git repository: [bold cyan]{config['url']}[/bold cyan]")
+            success = GitHandler.clone_repository(config, source_dir)
+            if not success:
+                RichLogger.error(f"Failed to clone repository: [bold cyan]{config['url']}[/bold cyan]")
+                return None
+            return source_dir
+        else:
+            return SourceManager._process_archive_source(config, source_dir, force_extract)
 
     @staticmethod
     def _process_archive_source(config: dict, source_dir: Path, force_extract: bool) -> Optional[Path]:
@@ -276,20 +260,16 @@ class SourceManager:
         Returns:
             Path: Path to the processed source directory, or None on failure
         """
-        try:
-            archive_path = SourceManager._ensure_archive_exists(config)
-            if not archive_path:
-                RichLogger.error(f"Archive not available for [bold cyan]{config['name']}[/bold cyan]")
-                return None
-            if not source_dir.exists():
-                source_dir.mkdir(parents=True, exist_ok=True)
-            if force_extract or not any(source_dir.iterdir()):
-                if not SourceManager._extract_and_patch(archive_path, source_dir, config):
-                    return None
-            return source_dir
-        except Exception as e:
-            RichLogger.exception(f"Exception in _process_archive_source: {str(e)}")
+        archive_path = SourceManager._ensure_archive_exists(config)
+        if not archive_path:
+            RichLogger.error(f"Archive not available for [bold cyan]{config['name']}[/bold cyan]")
             return None
+        if not source_dir.exists():
+            source_dir.mkdir(parents=True, exist_ok=True)
+        if force_extract or not any(source_dir.iterdir()):
+            if not SourceManager._extract_and_patch(archive_path, source_dir, config):
+                return None
+        return source_dir
 
     @staticmethod
     def _ensure_archive_exists(config: dict) -> Optional[Path]:
@@ -308,38 +288,34 @@ class SourceManager:
         Returns:
             Path: Filesystem path to the verified archive file, or None if unavailable
         """
-        try:
-            url = config['url']
-            archive_filename = SourceManager._get_archive_filename(url, config)
-            archive_path = ROOT_DIR / 'downloads' / archive_filename
-            # Case 1: File exists and no hash verification needed
-            if archive_path.exists() and 'sha256' not in config:
-                RichLogger.info(f"Using existing archive: [bold cyan]{archive_filename}[/bold cyan]")
-                return archive_path
-            # Case 2: File exists but verification required
-            if archive_path.exists() and 'sha256' in config:
-                expected_hash = config['sha256']
-                # Perform single verification
-                if ArchiveHandler.verify_hash(archive_path, expected_hash):
-                    return archive_path
-                else:
-                    RichLogger.warning(f"Archive verification failed - removing invalid file: [bold cyan]{archive_filename}[/bold cyan]")
-                    FileUtils.delete_file(archive_path)
-            # Case 3: File doesn't exist, need to download
-            if not DownloadHandler.download_file(url, archive_path):
-                RichLogger.error(f"Archive download failed: [bold cyan]{archive_filename}[/bold cyan]")
-                return None
-            # Case 4: Verification needed after download
-            if 'sha256' in config:
-                expected_hash = config['sha256']
-                if not ArchiveHandler.verify_hash(archive_path, expected_hash):
-                    RichLogger.error(f"Downloaded archive failed verification: [bold cyan]{archive_filename}[/bold cyan]")
-                    FileUtils.delete_file(archive_path)
-                    return None
+        url = config['url']
+        archive_filename = SourceManager._get_archive_filename(url, config)
+        archive_path = ROOT_DIR / 'downloads' / archive_filename
+        # Case 1: File exists and no hash verification needed
+        if archive_path.exists() and 'sha256' not in config:
+            RichLogger.info(f"Using existing archive: [bold cyan]{archive_filename}[/bold cyan]")
             return archive_path
-        except Exception as e:
-            RichLogger.exception(f"Exception in _ensure_archive_exists: {str(e)}")
+        # Case 2: File exists but verification required
+        if archive_path.exists() and 'sha256' in config:
+            expected_hash = config['sha256']
+            # Perform single verification
+            if ArchiveHandler.verify_hash(archive_path, expected_hash):
+                return archive_path
+            else:
+                RichLogger.warning(f"Archive verification failed - removing invalid file: [bold cyan]{archive_filename}[/bold cyan]")
+                FileUtils.delete_file(archive_path)
+        # Case 3: File doesn't exist, need to download
+        if not DownloadHandler.download_file(url, archive_path):
+            RichLogger.error(f"Archive download failed: [bold cyan]{archive_filename}[/bold cyan]")
             return None
+        # Case 4: Verification needed after download
+        if 'sha256' in config:
+            expected_hash = config['sha256']
+            if not ArchiveHandler.verify_hash(archive_path, expected_hash):
+                RichLogger.error(f"Downloaded archive failed verification: [bold cyan]{archive_filename}[/bold cyan]")
+                FileUtils.delete_file(archive_path)
+                return None
+        return archive_path
 
     @staticmethod
     def _update_git_repository(config: dict, source_dir: Path) -> Optional[Path]:
@@ -359,33 +335,25 @@ class SourceManager:
         Returns:
             Path: Path to the updated repository, or None on failure
         """
-        try:
-            RichLogger.info(f"Updating Git repository: [bold cyan]{config['name']}[/bold cyan]")
-            if not GitHandler.verify_repository_integrity(source_dir, config):
-                RichLogger.warning(f"Repository integrity issue detected: [bold cyan]{source_dir}[/bold cyan]")
-                if GitHandler.repair_repository(source_dir, config):
-                    RichLogger.info(f"Repository repaired successfully: [bold cyan]{source_dir}[/bold cyan]")
-                    return source_dir
-                RichLogger.error(f"Repository repair failed: [bold cyan]{source_dir}[/bold cyan]")
-                return None
-
-            updated = GitHandler.update_repository(source_dir, config)
-            if not updated:
-                RichLogger.warning(f"Update failed - attempting repair: [bold cyan]{source_dir}[/bold cyan]")
-                if GitHandler.repair_repository(source_dir, config):
-                    RichLogger.info(f"Repository repaired after update failure: [bold cyan]{source_dir}[/bold cyan]")
-                    return source_dir
-                return None
-
-            RichLogger.info(f"Repository updated successfully: [bold cyan]{source_dir}[/bold cyan]")
-            return source_dir
-        except Exception as e:
-            RichLogger.exception(f"Exception in _update_git_repository: {str(e)}")
-            RichLogger.warning(f"Exception during update - attempting repair: [bold cyan]{source_dir}[/bold cyan]")
+        RichLogger.info(f"Updating Git repository: [bold cyan]{config['name']}[/bold cyan]")
+        if not GitHandler.verify_repository_integrity(source_dir, config):
+            RichLogger.warning(f"Repository integrity issue detected: [bold cyan]{source_dir}[/bold cyan]")
             if GitHandler.repair_repository(source_dir, config):
-                RichLogger.info(f"Repository repaired after exception: [bold cyan]{source_dir}[/bold cyan]")
+                RichLogger.info(f"Repository repaired successfully: [bold cyan]{source_dir}[/bold cyan]")
+                return source_dir
+            RichLogger.error(f"Repository repair failed: [bold cyan]{source_dir}[/bold cyan]")
+            return None
+
+        updated = GitHandler.update_repository(source_dir, config)
+        if not updated:
+            RichLogger.warning(f"Update failed - attempting repair: [bold cyan]{source_dir}[/bold cyan]")
+            if GitHandler.repair_repository(source_dir, config):
+                RichLogger.info(f"Repository repaired after update failure: [bold cyan]{source_dir}[/bold cyan]")
                 return source_dir
             return None
+
+        RichLogger.info(f"Repository updated successfully: [bold cyan]{source_dir}[/bold cyan]")
+        return source_dir
 
     @staticmethod
     def _extract_and_patch(archive_path: Path, source_dir: Path, config: dict) -> bool:
@@ -406,36 +374,32 @@ class SourceManager:
         Returns:
             bool: True if all extraction and processing stages completed successfully, False otherwise
         """
-        try:
-            extract_path = config.get('extract')
-            exclude_patterns = config.get('exclude', [])
+        extract_path = config.get('extract')
+        exclude_patterns = config.get('exclude', [])
 
-            RichLogger.debug(f"Extracting archive: [bold cyan]{archive_path}[/bold cyan] to [bold green]{source_dir}[/bold green]")
+        RichLogger.debug(f"Extracting archive: [bold cyan]{archive_path}[/bold cyan] to [bold green]{source_dir}[/bold green]")
 
-            if not ArchiveHandler.extract(
-                archive_path=archive_path,
-                target_dir=source_dir,
-                extract_path=extract_path,
-                remove_archive=False
-            ):
-                RichLogger.error(f"Archive extraction failed: [bold cyan]{archive_path}[/bold cyan]")
-                return False
-
-            if exclude_patterns:
-                RichLogger.info(f"Applying exclusions for [bold cyan]{config['name']}[/bold cyan]")
-                if not SourceManager._apply_exclusions(source_dir, exclude_patterns):
-                    RichLogger.error(f"File exclusion failed for [bold cyan]{config['name']}[/bold cyan]")
-                    return False
-
-            if not PatchHandler.apply_patches(source_dir, config=config):
-                RichLogger.error(f"Patch application failed for [bold cyan]{config['name']}[/bold cyan]")
-                return False
-
-            RichLogger.debug(f"Successfully extracted and patched: [bold cyan]{config['name']}[/bold cyan]")
-            return True
-        except Exception as e:
-            RichLogger.exception(f"Exception in _extract_and_patch: {str(e)}")
+        if not ArchiveHandler.extract(
+            archive_path=archive_path,
+            target_dir=source_dir,
+            extract_path=extract_path,
+            remove_archive=False
+        ):
+            RichLogger.error(f"Archive extraction failed: [bold cyan]{archive_path}[/bold cyan]")
             return False
+
+        if exclude_patterns:
+            RichLogger.info(f"Applying exclusions for [bold cyan]{config['name']}[/bold cyan]")
+            if not SourceManager._apply_exclusions(source_dir, exclude_patterns):
+                RichLogger.error(f"File exclusion failed for [bold cyan]{config['name']}[/bold cyan]")
+                return False
+
+        if not PatchHandler.apply_patches(source_dir, config=config):
+            RichLogger.error(f"Patch application failed for [bold cyan]{config['name']}[/bold cyan]")
+            return False
+
+        RichLogger.debug(f"Successfully extracted and patched: [bold cyan]{config['name']}[/bold cyan]")
+        return True
 
     @staticmethod
     def _get_archive_filename(url: str, config: dict) -> str:
@@ -454,58 +418,7 @@ class SourceManager:
         Returns:
             str: Generated filename for the archive file
         """
-        try:
-            base_name = f"{config['name']}-{config['version']}"
-            extension = SourceManager._guess_extension(url)
-            filename = f"{base_name}.{extension}"
-            return filename
-        except Exception as e:
-            RichLogger.exception(f"Exception in _get_archive_filename: {str(e)}")
-            return f"{config['name']}-{config['version']}.zip"
-
-    @staticmethod
-    def _guess_extension(url: str) -> str:
-        """
-        Determine archive file format based on URL patterns and common extension conventions.
-
-        Implements comprehensive archive type detection using:
-        - Extension pattern matching for common archive formats
-        - Regular expression matching for complex extension patterns
-        - Fallback to default format when detection fails
-
-        Args:
-            url: URL string to analyze for archive format indicators
-
-        Returns:
-            str: Detected archive format extension
-        """
-        try:
-            extensions = {
-                '.tar.gz': 'tar.gz',
-                '.tgz': 'tar.gz',
-                '.tar.bz2': 'tar.bz2',
-                '.tbz2': 'tar.bz2',
-                '.tar.xz': 'tar.xz',
-                '.txz': 'tar.xz',
-                '.tar': 'tar',
-                '.zip': 'zip'
-            }
-            for ext, result in extensions.items():
-                if url.endswith(ext):
-                    return result
-
-            patterns = {
-                r'\.t(?:ar\.)?gz$': 'tar.gz',
-                r'\.t(?:ar\.)?bz2$': 'tar.bz2',
-                r'\.t(?:ar\.)?xz$': 'tar.xz'
-            }
-            for pattern, result in patterns.items():
-                if re.search(pattern, url, re.IGNORECASE):
-                    RichLogger.debug(f"Detected pattern [bold cyan]{pattern}[/bold cyan] for URL: [bold green]{url}[/bold green]")
-                    return result
-
-            RichLogger.warning(f"Unknown extension for URL [bold cyan]{url}[/bold cyan], defaulting to zip")
-            return 'zip'
-        except Exception as e:
-            RichLogger.exception(f"Exception in _guess_extension: {str(e)}")
-            return 'zip'
+        base_name = f"{config['name']}-{config['version']}"
+        extension = FileUtils.extract_file_extension(url)
+        filename = f"{base_name}.{extension}"
+        return filename

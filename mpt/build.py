@@ -9,6 +9,7 @@ from typing import Dict, Optional
 
 from mpt import ROOT_DIR
 from mpt.bash import BashUtils
+from mpt.clean import CleanManager
 from mpt.config import UserConfig
 from mpt.dependency import DependencyResolver
 from mpt.git import GitHandler
@@ -28,24 +29,14 @@ class BuildManager:
     """
 
     @staticmethod
-    def build_library(node_name: str, arch: str, config: Dict) -> bool:
+    def build_library(triplet: str, node_name: str, config: Dict) -> bool:
         """
         Execute the complete build process for a library with dependency tracking.
 
-        Coordinates the entire build workflow including dependency checking, source
-        acquisition, environment setup, script execution, and history recording.
-        Supports conditional rebuilding based on various change detection mechanisms.
-
         Args:
+            triplet: Target triplet specification (e.g., "x64-windows", "arm64-windows")
             node_name: Library identifier with optional dependency type suffix
-                       (e.g., "pcre:required" for required dependency)
-            arch: Target architecture specification (e.g., "x86_64", "arm64")
-            config: Library configuration dictionary containing build instructions,
-                    source location, version information, and other metadata
-
-        Returns:
-            bool: True if build completed successfully or was legitimately skipped,
-                  False if any critical build step failed
+            config: Library configuration dictionary containing build instructions
         """
         # Parse node name to get library name and dependency type
         lib_name, dep_type = DependencyResolver.parse_dependency_name(node_name)
@@ -57,7 +48,7 @@ class BuildManager:
             return False
 
         # Check if rebuild is required
-        if not BuildManager._should_build(arch, node_name, config):
+        if not BuildManager._should_build(triplet, node_name, config):
             RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build skipped - already up to date")
             return True
 
@@ -68,31 +59,31 @@ class BuildManager:
         # Run the main build script
         script_file = config.get('script')
         if script_file:
-            log_file = log_dir / f"{lib_name}_{arch}.log"
+            log_file = log_dir / triplet / f"{lib_name}.log"
             script_path = ROOT_DIR / 'ports' / lib_name / script_file
             if not script_path.exists():
                 RichLogger.error(f"Build script not found: [bold cyan]{script_path}[/bold cyan]")
                 return False
-            success, installed_files = Runner.run_script(arch, lib_name, script_path, log_file)
+            success, installed_files = Runner.run_script(triplet, lib_name, script_path, log_file)
             if success:
-                prefix = UserConfig.get_prefix(arch, lib_name)
+                prefix = UserConfig.get_prefix(triplet, lib_name)
                 # Extract files skipped during installation from the log
                 skipped_files = BuildManager.extract_skipped_files(log_file, prefix)
                 # Add any missing skipped files to installed_files
                 for file_path in skipped_files:
                     if file_path not in installed_files:
                         installed_files.append(file_path)
-                info_file = ROOT_DIR / 'installed' / 'mslibx' / 'info' / f"{lib_name}_{arch}.list"
+                info_file = ROOT_DIR / 'installed' / 'info' / triplet / f"{lib_name}.list"
                 info_file.parent.mkdir(parents=True, exist_ok=True)
                 with open(info_file, 'w', encoding='utf-8') as f:
                     for file_path in sorted(installed_files):
                         f.write(f"{file_path}\n")
                 version = config.get('version', 'unknown')
-                HistoryManager.add_record(arch, node_name, version)
+                HistoryManager.add_record(triplet, node_name, version)
                 RichLogger.info(f"[[bold cyan]{node_name}[/bold cyan]] Build completed successfully")
                 return True
             else:
-                HistoryManager.remove_record(arch, node_name)
+                HistoryManager.remove_record(triplet, node_name)
                 RichLogger.error(f"[[bold cyan]{node_name}[/bold cyan]] Build failed")
                 return False
         else:
@@ -100,42 +91,30 @@ class BuildManager:
         return False
 
     @staticmethod
-    def _should_build(arch: str, node_name: str, config: Dict) -> bool:
+    def _should_build(triplet: str, node_name: str, config: Dict) -> bool:
         """
         Determine whether a library requires rebuilding based on multiple factors.
 
-        Performs comprehensive change detection including:
-        - Installation status verification
-        - Version update availability checking
-        - Configuration file modification detection
-        - Build script modification detection
-        - Source code updates (for Git repositories)
-        - Dependency rebuild requirement propagation
-
         Args:
-            arch: Target architecture for build compatibility checking
+            triplet: Target triplet for build compatibility checking
             node_name: Library identifier with dependency type specification
             config: Library configuration containing source and version information
-
-        Returns:
-            bool: True if any condition warrants a rebuild, False if the existing
-                  build remains valid and up-to-date
         """
         # Parse node name to get library name and dependency type
         lib_name, dep_type = DependencyResolver.parse_dependency_name(node_name)
 
         # Check if library node is not installed
-        if not HistoryManager.check_installed(arch, node_name):
+        if not HistoryManager.check_installed(triplet, node_name):
             RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build required: not installed")
             return True
 
         # Check if library node update is available
-        if HistoryManager.check_for_update(arch, node_name, config):
+        if HistoryManager.check_for_update(triplet, node_name, config):
             RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build required: update available")
             return True
 
         # Get library node information
-        lib_info = HistoryManager.get_library_info(arch, node_name)
+        lib_info = HistoryManager.get_library_info(triplet, node_name)
         if not lib_info:
             RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Build required: no library info")
             return True
@@ -149,32 +128,24 @@ class BuildManager:
         # Check for any file changes in the port directory
         lib_dir = ROOT_DIR / 'ports' / lib_name
         if lib_dir.exists():
-            try:
-                # Walk through all files in the port directory
-                for file_path in lib_dir.rglob('*'):
-                    if file_path.is_file():
-                        file_mtime = file_path.stat().st_mtime
-                        if file_mtime > lib_built.timestamp():
-                            RichLogger.info(f"[[bold cyan]{node_name}[/bold cyan]] Build required: file {file_path.relative_to(lib_dir)} modified")
-                            return True
-            except OSError as e:
-                RichLogger.exception(f"Error checking file modification times in [bold cyan]{lib_dir}[/bold cyan]")
-                return True
+            # Walk through all files in the port directory
+            for file_path in lib_dir.rglob('*'):
+                if file_path.is_file():
+                    file_mtime = file_path.stat().st_mtime
+                    if file_mtime > lib_built.timestamp():
+                        RichLogger.info(f"[[bold cyan]{node_name}[/bold cyan]] Build required: file {file_path.relative_to(lib_dir)} modified")
+                        return True
 
         # Check for source code updates (for git repositories)
         if SourceManager.is_git_url(config.get('url', '')):
             source_dir = ROOT_DIR / 'buildtrees' / 'sources' / lib_name
             if source_dir.exists():
-                try:
-                    last_commit_time = GitHandler.get_last_commit_time(source_dir)
-                    if not last_commit_time:
-                        RichLogger.info(f"[[bold cyan]{node_name}[/bold cyan]] Build required: Failed to get commit time")
-                        return True
-                    elif last_commit_time > lib_built.timestamp():
-                        RichLogger.info(f"[[bold cyan]{node_name}[/bold cyan]] Build required: source code updated")
-                        return True
-                except Exception as e:
-                    RichLogger.exception(f"Error checking git commit time for {source_dir}")
+                last_commit_time = GitHandler.get_last_commit_time(source_dir)
+                if not last_commit_time:
+                    RichLogger.info(f"[[bold cyan]{node_name}[/bold cyan]] Build required: Failed to get commit time")
+                    return True
+                elif last_commit_time > lib_built.timestamp():
+                    RichLogger.info(f"[[bold cyan]{node_name}[/bold cyan]] Build required: source code updated")
                     return True
 
         # Check all dependencies for rebuild requirements
@@ -184,7 +155,7 @@ class BuildManager:
             RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] Checking dependency: [bold cyan]{dep}[/bold cyan]")
 
             # Get dependency information
-            dep_info = HistoryManager.get_library_info(arch, dep)
+            dep_info = HistoryManager.get_library_info(triplet, dep)
             if not dep_info:
                 RichLogger.debug(f"[[bold cyan]{node_name}[/bold cyan]] No info for dependency [bold cyan]{dep}[/bold cyan]")
                 continue

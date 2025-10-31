@@ -42,13 +42,13 @@ def main() -> NoReturn:
         sys.exit(1)
 
     # Parse command line arguments
-    arch, action, libraries, lib_prefixes = CommandLineParser.parse_arguments()
+    triplet, action, libraries, lib_prefixes = CommandLineParser.parse_arguments()
 
     # Update user configuration if library prefixes are provided
     _update_user_configuration(lib_prefixes)
 
     # Execute the requested action
-    success = _execute_action(arch, action, libraries)
+    success = _execute_action(triplet, action, libraries)
 
     # Exit with appropriate status code
     sys.exit(0 if success else 1)
@@ -94,19 +94,19 @@ def _update_user_configuration(lib_prefixes: dict) -> None:
         # Non-critical error - continue execution
 
 
-def _execute_action(arch: str, action: str, libraries: list) -> bool:
+def _execute_action(triplet: str, action: str, libraries: list) -> bool:
     """
     Execute the requested action with the given parameters.
 
     Args:
-        arch: Target architecture
+        triplet: Target triplet (e.g., x64-windows)
         action: Action to perform
         libraries: List of libraries to process
 
     Returns:
         bool: True if action completed successfully, False otherwise
     """
-    handler = ActionHandler(arch, libraries)
+    handler = ActionHandler(triplet, libraries)
 
     if not _dispatch_action(handler, action):
         RichLogger.error(f"Action '{action}' failed.")

@@ -74,80 +74,51 @@ class UserConfig:
             return False
 
     @staticmethod
-    def get_prefix(arch: str, lib: str) -> Path:
+    def get_prefix(triplet: str, lib: str) -> Path:
         """
-        Retrieve the installation prefix path for a specific library and architecture.
-
-        Looks up the configured prefix path for the given library and architecture
-        from the user settings. If no custom prefix is defined in settings.yaml,
-        falls back to the default installation directory within the project.
+        Retrieve the installation prefix path for a specific library and triplet.
 
         Args:
-            arch: Target architecture (e.g., 'x64', 'x86')
+            triplet: Target triplet (e.g., 'x64-windows', 'x86-windows')
             lib: Name of the library whose prefix path should be retrieved
-
-        Returns:
-            Path object representing the installation directory for the specified
-            library and architecture
-
-        Algorithm:
-            1. Load user configuration from settings.yaml
-            2. Navigate through the prefix configuration hierarchy (prefix -> arch -> lib)
-            3. Return custom prefix if defined in user configuration
-            4. Fall back to default path (ROOT_DIR / 'installed' / arch) if not configured
         """
         config = UserConfig.load()
 
-        # Check if prefix configuration exists and has the specified architecture
+        # Check if prefix configuration exists and has the specified triplet
         prefix_config = config.get('prefix', {})
-        if arch in prefix_config:
-            arch_prefixes = prefix_config[arch]
+        if triplet in prefix_config:
+            triplet_prefixes = prefix_config[triplet]
             # Return custom prefix if defined for the specific library
-            if lib in arch_prefixes:
-                custom_prefix = Path(arch_prefixes[lib])
+            if lib in triplet_prefixes:
+                custom_prefix = Path(triplet_prefixes[lib])
                 return custom_prefix
 
         # Fall back to default installation directory
-        default_prefix = ROOT_DIR / 'installed' / arch
+        default_prefix = ROOT_DIR / 'installed' / triplet
         return default_prefix
 
     @staticmethod
-    def get_prefixs(arch: str) -> Dict[str, Path]:
+    def get_prefixs(triplet: str) -> Dict[str, Path]:
         """
-        Retrieve all defined prefix paths for a specific architecture.
-
-        Extracts the complete mapping of library names to their prefix paths
-        for the given architecture from the user configuration. Returns an
-        empty dictionary if no prefixes are defined for the specified architecture.
+        Retrieve all defined prefix paths for a specific triplet.
 
         Args:
-            arch: Target architecture (e.g., 'x64', 'x86') whose prefix mappings should be retrieved
-
-        Returns:
-            Dictionary mapping library names to their configured Path objects for the specified architecture,
-            or empty dictionary if no prefixes are defined
-
-        Algorithm:
-            1. Load user configuration from settings.yaml
-            2. Extract prefix configuration for the specified architecture
-            3. Convert all string paths to Path objects for consistent interface
-            4. Return complete mapping of library prefixes
+            triplet: Target triplet (e.g., 'x64-windows', 'x86-windows') whose prefix mappings should be retrieved
         """
         config = UserConfig.load()
 
-        # Navigate to the architecture-specific prefix configuration
+        # Navigate to the triplet-specific prefix configuration
         prefix_config = config.get('prefix', {})
-        arch_prefixes = prefix_config.get(arch, {})
+        triplet_prefixes = prefix_config.get(triplet, {})
 
         # Convert all string paths to Path objects
-        result = {lib: Path(path) for lib, path in arch_prefixes.items()}
+        result = {lib: Path(path) for lib, path in triplet_prefixes.items()}
 
         RichLogger.debug(
             f"Retrieved [bold cyan]{len(result)}[/bold cyan] prefix mappings "
-            f"for architecture [bold cyan]{arch}[/bold cyan]"
+            f"for triplet [bold cyan]{triplet}[/bold cyan]"
         )
         return result
-
 
 class LibraryConfig:
     """

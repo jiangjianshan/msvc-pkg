@@ -45,7 +45,7 @@ class CommandLineHelp:
             CommandLineHelp._display_examples_table()
 
             RichLogger.print(
-                "Default behavior: Install all libraries for x64 architecture",
+                "Default behavior: Install all libraries for x64-windows triplet",
                 style="italic"
             )
 
@@ -85,7 +85,7 @@ class CommandLineHelp:
                 ("--clean", "🧹 Clean build artifacts for specified libraries"),
                 ("--fetch", "📥 Download source archives for specified libraries"),
                 ("--<lib>-prefix PATH", "📚 Set library-specific installation prefix"),
-                ("--arch ARCH", "🎯 Specify target architecture (x64 or x86)"),
+                ("--triplet TRIPLET", "🎯 Specify target triplet in format {arch}-{os} (default: x64-windows)"),
                 ("--add", "➕ Add and configure a new library with build system detection"),
                 ("--remove", "➖ Remove library configuration files"),
                 ("-h, --help", "💡 Show this help message and exit"),
@@ -123,7 +123,7 @@ class CommandLineHelp:
 
             example_rows = [
                 ("mpt", "🔄 Install all libraries for x64 (default behavior)"),
-                ("mpt --arch x86", "🔧 Install all libraries for x86 architecture"),
+                ("mpt --triplet x86-windows", "🔧 Install all libraries for x86-windows triplet"),
                 ("mpt --add libjxl", "➕ Add and configure specific library with auto-detection"),
                 ("mpt --add gmp fftw", "➕ Add multiple library configurations"),
                 ("mpt --remove libjxl", "➖ Remove specific library configuration"),
@@ -134,9 +134,9 @@ class CommandLineHelp:
                 ("mpt --install llvm-project", "🔧 Install complex toolchain (LLVM) for x64"),
                 ("mpt --install ffmpeg", "🎬 Install multimedia framework (FFmpeg) for x64"),
                 ("mpt --install openssl curl", "📡 Install networking libraries (OpenSSL, cURL) for x64"),
-                ("mpt --install --arch x86 gmp fftw", "🧮 Install math libraries for x86 architecture"),
+                ("mpt --install --triplet x86-windows gmp fftw", "🧮 Install math libraries for x86-windows triplet"),
                 ("mpt --uninstall", "🗑️ Uninstall all libraries for x64"),
-                ("mpt --arch x86 --uninstall gmp fftw", "🗑️ Uninstall specific libraries for x86"),
+                ("mpt --triplet x86-windows --uninstall gmp fftw", "🗑️ Uninstall specific libraries for x86-windows"),
                 ("mpt --list", "📋 List status of all libraries for x64"),
                 ("mpt --list gmp fftw", "📋 List status of specific libraries"),
                 ("mpt --dependency", "🌳 Show dependency tree for all libraries"),
@@ -223,7 +223,7 @@ class CommandLineHelp:
                 ("🌳 Dependency Tree", "Use --dependency to visualize library dependencies"),
                 ("🧹 Clean Builds", "Use --clean to remove build artifacts before rebuilding"),
                 ("📥 Source Download", "Use --fetch to download sources without building"),
-                ("🎯 Cross-Compilation", "Use --arch to specify target architecture (x64/x86)"),
+                ("🎯 Cross-Compilation", "Use --triplet to specify target triplet (e.g., x64-windows, x86-windows)"),
             ]
 
             for tip, description in tip_rows:

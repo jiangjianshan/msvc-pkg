@@ -24,24 +24,13 @@ class CleanManager:
     """
 
     @staticmethod
-    def clean_library(arch: str, lib: str) -> Dict[str, Tuple[bool, str] | bool]:
+    def clean_library(triplet: str, lib: str) -> Dict[str, Tuple[bool, str] | bool]:
         """
         Execute comprehensive cleanup of all artifacts for a specific library.
 
-        Coordinates the complete cleanup process including log files, source directories,
-        and downloaded archives. Handles configuration loading, error recovery, and
-        provides detailed results for each cleanup category.
-
         Args:
-            arch: Architecture identifier used for log file naming
+            triplet: Target triplet (e.g., x64-windows) used for log file naming
             lib: Name of the library to clean, used to identify related artifacts
-
-        Returns:
-            Dictionary containing cleanup results for each category with:
-            - logs: Tuple of (success status, log file path or error message)
-            - source: Tuple of (success status, source directory path or error message)
-            - archives: Tuple of (success status, archive file path or error message)
-            - is_git: Boolean indicating if the library uses Git source repository
         """
         RichLogger.info(f"[[bold cyan]{lib}[/bold cyan]] Starting clean process")
         try:
@@ -50,7 +39,7 @@ class CleanManager:
                 RichLogger.error(f"[[bold cyan]{lib}[/bold cyan]] Failed to load config")
                 return CleanManager._create_error_result("Config error")
 
-            log_result = CleanManager.clean_logs(arch, lib)
+            log_result = CleanManager.clean_logs(triplet, lib)
             source_result = CleanManager.clean_source(lib, config)
             archive_result = CleanManager.clean_archives(lib)
             is_git = config and config.get('url') and SourceManager.is_git_url(config.get('url', ''))
@@ -90,23 +79,15 @@ class CleanManager:
         }
 
     @staticmethod
-    def clean_logs(arch: str, lib: str) -> Tuple[bool, str]:
+    def clean_logs(triplet: str, lib: str) -> Tuple[bool, str]:
         """
-        Remove build log files associated with a specific library and architecture.
-
-        Deletes the architecture-specific log file for the library build process while
-        providing appropriate logging and error handling for the operation.
+        Remove build log files associated with a specific library and triplet.
 
         Args:
-            arch: Architecture identifier used for log file naming
+            triplet: Target triplet (e.g., x64-windows) used for log file naming
             lib: Library name used to identify the corresponding log file
-
-        Returns:
-            Tuple containing:
-            - Boolean indicating overall success of log cleanup operation
-            - String with path of deleted log file or "N/A" if no log found
         """
-        log_file = ROOT_DIR / 'buildtrees' / 'logs' / f"{lib}_{arch}.log"
+        log_file = ROOT_DIR / 'buildtrees' / 'logs' / triplet / f"{lib}.log"
         if log_file.exists():
             try:
                 RichLogger.info(f"Removing log file: [bold green]{log_file}[/bold green]")
@@ -116,7 +97,7 @@ class CleanManager:
             except Exception as e:
                 RichLogger.exception(f"Failed to remove log file [bold green]{log_file}[/bold green]")
                 return False, f"Failed to remove {log_file.relative_to(ROOT_DIR)}"
-        RichLogger.info(f"No log file found for library: [bold cyan]{lib}[/bold cyan] with architecture: [bold cyan]{arch}[/bold cyan]")
+        RichLogger.info(f"No log file found for library: [bold cyan]{lib}[/bold cyan] with triplet: [bold cyan]{triplet}[/bold cyan]")
         return True, "N/A"
 
     @staticmethod

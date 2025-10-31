@@ -102,26 +102,40 @@ class FileUtils:
     def delete_file(file_path, permanent=True):
         """
         Deletes a file, either permanently or by moving it to the recycle bin.
+        Handles regular files, symbolic links, and junction points.
 
         Args:
             file_path: Path object or string of the file to delete.
-            permanent: If True, deletes permanently; if False, moves to recycle bin. Defaults to True.
+            permanent: If True, deletes permanently; if False, moves to recycle bin.
 
         Returns:
             bool: True if successful, False otherwise.
-
-        Raises:
-            Exception: If the file operation fails.
         """
         try:
-            if not os.path.exists(file_path):
+            file_path = Path(file_path)
+            if not file_path.exists():
                 return True
 
-            # Attempt to remove read-only attribute to allow deletion
+            # Handle symbolic links for files
+            if file_path.is_symlink():
+                # Symbolic links are always deleted permanently
+                file_path.unlink()
+                RichLogger.info(f"Deleted symbolic link: [bold yellow]{file_path}[/bold yellow]")
+                return True
+
+            # Handle junction points (Windows)
+            if FileUtils.is_junction_point(file_path):
+                # Junction points are always deleted permanently
+                import ctypes
+                ctypes.windll.kernel32.RemoveDirectoryW(str(file_path))
+                RichLogger.info(f"Deleted junction point: [bold yellow]{file_path}[/bold yellow]")
+                return True
+
+            # Original logic for regular files
             try:
                 os.chmod(file_path, stat.S_IWRITE)
-            except Exception as e:
-                RichLogger.exception(f"Failed to change file permissions: {file_path}")
+            except Exception:
+                pass  # Ignore permission errors, try deletion anyway
 
             if permanent:
                 os.remove(file_path)
@@ -140,28 +154,44 @@ class FileUtils:
     @staticmethod
     def delete_directory(directory, permanent=True):
         """
-        Deletes a directory and all its contents, either permanently or by moving to the recycle bin.
+        Deletes a directory and all its contents.
+        Handles regular directories, symbolic links, and junction points.
 
         Args:
             directory: Path object of the directory to delete.
-            permanent: If True, deletes permanently; if False, moves to recycle bin. Defaults to True.
+            permanent: If True, deletes permanently; if False, moves to recycle bin.
 
         Returns:
             bool: True if successful, False otherwise.
         """
         try:
+            directory = Path(directory)
             if not directory.exists():
                 return True
 
-            # Helper function to make files/directories writable during deletion
+            # Handle directory symbolic links
+            if directory.is_symlink():
+                # Directory symbolic links are always deleted permanently
+                directory.unlink()
+                RichLogger.info(f"Deleted directory symbolic link: [bold yellow]{directory}[/bold yellow]")
+                return True
+
+            # Handle junction points (Windows)
+            if FileUtils.is_junction_point(directory):
+                # Junction points are always deleted permanently
+                import ctypes
+                ctypes.windll.kernel32.RemoveDirectoryW(str(directory))
+                RichLogger.info(f"Deleted junction point: [bold yellow]{directory}[/bold yellow]")
+                return True
+
+            # Original logic for regular directories
             def make_writable(action, name, exc):
                 try:
                     os.chmod(name, stat.S_IWRITE)
                     if action:
                         action(name)
-                except Exception as e:
-                    RichLogger.exception(f"Failed to make writable: {name}")
-                    raise
+                except Exception:
+                    pass  # Continue with deletion
 
             if permanent:
                 shutil.rmtree(directory, onerror=make_writable)
@@ -175,6 +205,43 @@ class FileUtils:
             return True
         except Exception as e:
             RichLogger.exception(f"Critical error during directory processing: [bold red]{directory}[/bold red]")
+            return False
+
+    @staticmethod
+    def is_junction_point(path):
+        """
+        Check if a path is a Windows junction point.
+
+        Args:
+            path: Path object to check.
+
+        Returns:
+            bool: True if the path is a junction point.
+        """
+        try:
+            if not path.exists() or not path.is_dir():
+                return False
+
+            # Check for reparse point attribute on Windows
+            if os.name == 'nt':
+                import ctypes
+                from ctypes import wintypes
+
+                FILE_ATTRIBUTE_REPARSE_POINT = 0x400
+                INVALID_FILE_ATTRIBUTES = -1
+
+                get_file_attributes = ctypes.windll.kernel32.GetFileAttributesW
+                get_file_attributes.argtypes = [wintypes.LPCWSTR]
+                get_file_attributes.restype = wintypes.DWORD
+
+                attrs = get_file_attributes(str(path))
+                if attrs == INVALID_FILE_ATTRIBUTES:
+                    return False
+
+                return bool(attrs & FILE_ATTRIBUTE_REPARSE_POINT)
+
+            return False
+        except Exception:
             return False
 
     @staticmethod

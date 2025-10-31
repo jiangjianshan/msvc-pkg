@@ -35,7 +35,7 @@ class DependencyResolver:
             dep_name (str): Dependency specification string in format "lib:type" or "lib"
 
         Returns:
-            tuple: (library_name, dependency_type) where type can be 'required', 'optional', 
+            tuple: (library_name, dependency_type) where type can be 'required', 'optional',
                    or None if no type specified
         """
         try:
@@ -83,26 +83,27 @@ class DependencyResolver:
             return []
 
     @staticmethod
-    def build_tree(root):
+    def build_tree(triplet, root):
         """
-        Construct a complete dependency graph starting from a root node.
-
-        Performs breadth-first traversal of dependency relationships to build a
-        comprehensive graph representation of all transitive dependencies. Handles
-        both typed and untyped dependency specifications.
+        Construct a complete dependency graph starting from a root node with platform filtering.
 
         Args:
+            triplet (str): Target triplet for platform filtering (e.g., "x64-windows")
             root (str): Root dependency specification to start graph construction
 
         Returns:
-            dict: Dependency graph where keys are node names and values are sets
-                  of direct dependencies for each node
+            dict: Dependency graph filtered by platform support
         """
         graph = {}
         visited = set()
         queue = deque([root])
 
         try:
+            # Extract OS from triplet (e.g., "windows" from "x64-windows")
+            target_os = None
+            if triplet and '-' in triplet:
+                target_os = triplet.split('-', 1)[1].lower()
+
             while queue:
                 current_node = queue.popleft()
                 if current_node in visited:
@@ -110,6 +111,16 @@ class DependencyResolver:
                 visited.add(current_node)
 
                 lib_name, dep_type = DependencyResolver.parse_dependency_name(current_node)
+
+                # Check if library supports the target platform
+                if triplet and target_os:
+                    config = LibraryConfig.load(lib_name)
+                    if config:
+                        supports = config.get('supports', [])
+                        if supports and target_os not in supports:
+                            RichLogger.info(f"Skipping {lib_name}: not supported on {target_os}")
+                            continue  # Skip this node entirely, don't add to graph
+
                 dependencies = DependencyResolver.get_dependencies(lib_name, dep_type)
 
                 graph[current_node] = set(dependencies)
@@ -225,26 +236,18 @@ class DependencyResolver:
             RichLogger.exception(f"Failed to render dependency tree for root '{root}': {str(e)}")
 
     @staticmethod
-    def resolve(arch, root, build=False):
+    def resolve(triplet, root, build=False):
         """
         Complete dependency resolution process with optional build execution.
 
-        Coordinates the full dependency resolution workflow including graph construction,
-        visualization, topological sorting, and conditional build execution. Provides
-        comprehensive error handling and logging throughout the process.
-
         Args:
-            arch: Target architecture for any build operations
+            triplet: Target triplet (e.g., x64-windows) for any build operations
             root (str): Root library specification to resolve dependencies for
             build (bool): If True, execute build process for resolved dependencies
-
-        Returns:
-            bool: True if resolution (and optional build) completed successfully,
-                  False if any error occurred during the process
         """
         try:
             # Build dependency tree for the root
-            graph = DependencyResolver.build_tree(root)
+            graph = DependencyResolver.build_tree(triplet, root)
             DependencyResolver.render_tree(root, graph)
             order = DependencyResolver.topological_sort(root, graph)
 
@@ -257,7 +260,7 @@ class DependencyResolver:
                         return False
 
                     from mpt.build import BuildManager
-                    success = BuildManager.build_library(node_name, arch, config)
+                    success = BuildManager.build_library(triplet, node_name, config)
                     if not success:
                         RichLogger.error(f"[[bold cyan]{root}[/bold cyan]] Build failed for [bold cyan]{node_name}[/bold cyan]")
                         return False

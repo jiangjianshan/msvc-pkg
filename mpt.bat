@@ -66,6 +66,6 @@ reg query HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled >
 )
 
 set "ORIG_PATH=%PATH%"
-set "PATH=%~dp0installed\x64\bin;%~dp0installed\x86\bin;%PATH%"
+set "PATH=%~dp0installed\x64-windows\bin;%~dp0installed\x86-windows\bin;%PATH%"
 python main.py %*
 set "PATH=%ORIG_PATH%"

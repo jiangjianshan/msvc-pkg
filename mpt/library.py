@@ -220,13 +220,10 @@ class LibraryManager:
                 # Download source file
                 source_path = SourceManager.fetch_source(source_config)
                 if source_path is not None:
-                    # Get file extension using improved method
                     ext = FileUtils.extract_file_extension(source_config['url'])
-
                     # Build download filename
                     download_filename = f"{source_config['name']}-{source_config['version']}.{ext}"
                     download_filepath = ROOT_DIR / 'downloads' / download_filename
-
                     # Calculate SHA256
                     if download_filepath.exists():
                         sha256_value = FileUtils.calc_hash(download_filepath)

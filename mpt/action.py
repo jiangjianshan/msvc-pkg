@@ -36,14 +36,14 @@ from mpt.view import RichTable, RichPanel
 
 
 class ActionHandler:
-    def __init__(self, arch, libraries):
-        """Initialize ActionHandler with target architecture and library list.
+    def __init__(self, triplet, libraries):
+        """Initialize ActionHandler with target triplet and library list.
 
         Args:
-            arch: Target architecture for library operations
+            triplet: Target triplet (e.g., x64-windows) for library operations
             libraries: List of library names to process
         """
-        self.arch = arch
+        self.triplet = triplet
         self.libraries = libraries
         self.terminal_width = RichLogger.get_console_width()
 
@@ -172,7 +172,7 @@ class ActionHandler:
             config = LibraryConfig.load(lib)
             # Perform cleaning based on user choice
             if choice == "1":
-                clean_result = CleanManager.clean_logs(self.arch, lib)
+                clean_result = CleanManager.clean_logs(self.triplet, lib)
                 log_success, log_path = clean_result
                 source_success, source_path = True, "N/A"
                 archive_success, archive_path = True, "N/A"
@@ -190,7 +190,7 @@ class ActionHandler:
                 archive_success, archive_path = True, "N/A"
                 lib_success = source_success
             else:  # choice == "4"
-                clean_result = CleanManager.clean_library(self.arch, lib)
+                clean_result = CleanManager.clean_library(self.triplet, lib)
                 log_success, log_path = clean_result['logs']
                 source_success, source_path = clean_result['source']
                 archive_success, archive_path = clean_result['archives']
@@ -254,7 +254,7 @@ class ActionHandler:
         for lib in self.libraries:
             try:
                 # Resolve dependencies and build library
-                dep_success = DependencyResolver.resolve(self.arch, lib, build=True)
+                dep_success = DependencyResolver.resolve(self.triplet, lib, build=True)
                 if not dep_success:
                     status = "[bold red]Failed[/bold red]"
                     overall_success = False
@@ -301,7 +301,7 @@ class ActionHandler:
 
         for lib in self.libraries:
             # Remove library installation files and records
-            removed_count = UninstallManager.uninstall_library(self.arch, lib)
+            removed_count = UninstallManager.uninstall_library(self.triplet, lib)
             if removed_count > 0:
                 status = "[bold green]Success[/bold green]"
                 success_count += 1
@@ -341,7 +341,7 @@ class ActionHandler:
         Returns:
             bool: Always returns True (operation doesn't fail on display)
         """
-        arch_records = HistoryManager.get_arch_records(self.arch)
+        arch_records = HistoryManager.get_triplet_records(self.triplet)
 
         list_table = RichTable.create()
         RichTable.add_column(list_table, "📁 Library", style="cyan", header_style="bold cyan", justify="left")
@@ -452,7 +452,7 @@ class ActionHandler:
         for lib in self.libraries:
             try:
                 # Resolve dependencies without building
-                success = DependencyResolver.resolve(self.arch, lib, build=False)
+                success = DependencyResolver.resolve(self.triplet, lib, build=False)
                 if not success:
                     overall_success = False
             except Exception as e:

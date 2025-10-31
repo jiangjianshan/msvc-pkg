@@ -60,7 +60,7 @@ class CommandLineParser:
             libraries = args.libraries
         else:
             libraries = CommandLineParser._validate_libraries(args.libraries)
-        return args.arch, action, libraries, lib_prefixes
+        return args.triplet, action, libraries, lib_prefixes
 
     @staticmethod
     def _create_parser() -> argparse.ArgumentParser:
@@ -101,10 +101,9 @@ class CommandLineParser:
                 action_group.add_argument(arg, action='store_true', help=help_text)
 
             parser.add_argument(
-                '--arch',
-                choices=['x64', 'x86'],
-                default='x64',
-                help="Specify target architecture (default: x64)"
+                '--triplet',
+                default='x64-windows',
+                help="Specify target triplet in format {arch}-{os} (default: x64-windows)"
             )
 
             parser.add_argument(

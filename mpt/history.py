@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-History manager module for tracking library installation records
+History manager module for tracking library installation records per triplet
 
 Copyright (c) 2024 Jianshan Jiang
 
@@ -15,182 +15,157 @@ from mpt.yaml import YamlUtils
 
 
 class HistoryManager:
-    """Manages installation history records for libraries with version tracking and build metadata.
+    """Manages installation history records for libraries with per-triplet storage.
 
-    Provides comprehensive tracking of library installations across different architectures,
-    including version information, build timestamps, and dependency type support. Maintains
-    persistent records in YAML format for reliable state management across sessions.
+    Provides comprehensive tracking of library installations across different triplets,
+    including version information, build timestamps. Maintains persistent records in
+    separate YAML files for each triplet for better organization.
     """
-    RECORD_FILE = ROOT_DIR / 'installed' / 'mslibx' / 'status.yaml'
 
     @classmethod
-    def _get_record_path(cls) -> Path:
+    def _get_record_path(cls, triplet: str) -> Path:
         """
-        Retrieve the filesystem path to the installation history storage file.
+        Retrieve the filesystem path to the installation history storage file for a specific triplet.
 
-        Provides a centralized access point for the history file location, ensuring
-        consistent path resolution throughout the history management system.
+        Args:
+            triplet: Target triplet identifier (e.g., 'x64-windows')
 
         Returns:
-            Path: Absolute filesystem path to the installation history YAML file
+            Path: Absolute filesystem path to the triplet-specific installation history YAML file
         """
         try:
-            return cls.RECORD_FILE
+            return ROOT_DIR / 'installed' / 'info' / triplet / 'status.yaml'
         except Exception as e:
-            RichLogger.exception(f"Error getting record path: {e}")
+            RichLogger.exception(f"Error getting record path for triplet {triplet}: {e}")
             raise
 
     @classmethod
-    def _load_records(cls) -> dict:
+    def _load_records(cls, triplet: str) -> dict:
         """
-        Load installation records from persistent YAML storage with error handling.
+        Load installation records from triplet-specific YAML storage with error handling.
 
-        Safely reads the history file from disk, handling various error conditions
-        including missing files, permission issues, and malformed YAML content.
-        Provides graceful fallback to empty records on any failure.
+        Args:
+            triplet: Target triplet identifier
 
         Returns:
-            dict: Nested dictionary structure containing installation records,
+            dict: Nested dictionary structure containing installation records for the triplet,
                   or empty dictionary if file doesn't exist or errors occur
         """
-        record_path = cls._get_record_path()
+        record_path = cls._get_record_path(triplet)
         if not record_path.exists():
             return {}
-        records = YamlUtils.load(record_path, "installed.yaml") or {}
+        records = YamlUtils.load(record_path, f"status.yaml") or {}
         return records
 
     @classmethod
-    def _save_records(cls, records: dict) -> bool:
+    def _save_records(cls, triplet: str, records: dict) -> bool:
         """
-        Persist installation records to YAML storage with comprehensive error handling.
-
-        Safely writes the complete history structure to disk, ensuring proper
-        directory creation, file permissions, and data integrity. Uses YAML
-        serialization with Unicode support and deterministic key ordering.
+        Persist installation records to triplet-specific YAML storage.
 
         Args:
-            records (dict): Complete installation records structure to persist
+            triplet: Target triplet identifier
+            records: Complete installation records structure to persist for the triplet
 
         Returns:
             bool: True if records were successfully written to disk, False on any error
         """
-        record_path = cls._get_record_path()
+        record_path = cls._get_record_path(triplet)
         record_path.parent.mkdir(parents=True, exist_ok=True)
-        return YamlUtils.dump(record_path, records, "installed.yaml", sort_keys=True)
+        return YamlUtils.dump(record_path, records, f"status.yaml", sort_keys=True)
 
     @classmethod
-    def add_record(cls, arch: str, node_name: str, version: str) -> bool:
+    def add_record(cls, triplet: str, node_name: str, version: str) -> bool:
         """
-        Create or update an installation record for a specific library node and architecture.
-
-        Records comprehensive installation metadata including library version,
-        build timestamp, and architecture specification. Supports both new
-        installations and updates to existing records with proper version tracking.
+        Create or update an installation record for a specific library node and triplet.
 
         Args:
-            arch (str): Target architecture identifier (e.g., 'x64', 'x86')
-            node_name (str): Library node identifier with optional dependency type
-                            (e.g., "pcre:required" for required dependency)
-            version (str): Version string of the installed library
+            triplet: Target triplet identifier (e.g., 'x64-windows')
+            node_name: Library node identifier with optional dependency type
+            version: Version string of the installed library
 
         Returns:
             bool: True if record was successfully created or updated, False on error
         """
         try:
-            records = cls._load_records()
-
-            # Initialize architecture record if it doesn't exist
-            if arch not in records:
-                records[arch] = {}
+            records = cls._load_records(triplet)
 
             # Initialize library record if it doesn't exist
-            if node_name not in records[arch]:
-                records[arch][node_name] = {}
+            if node_name not in records:
+                records[node_name] = {}
 
-            records[arch][node_name] = {
+            records[node_name] = {
                 'version': version,
-                'built': datetime.now(),
+                'built': datetime.now()
             }
 
-            success = cls._save_records(records)
+            success = cls._save_records(triplet, records)
             if not success:
-                RichLogger.error(f"[[bold red]{node_name}[/bold red]] Failed to add record for library on arch [magenta]{arch}[/magenta]")
+                RichLogger.error(f"[[bold red]{node_name}[/bold red]] Failed to add record for library on triplet [magenta]{triplet}[/magenta]")
+            else:
+                RichLogger.info(f"[[bold green]{node_name}[/bold green]] Successfully added installation record for triplet [magenta]{triplet}[/magenta]")
             return success
         except Exception as e:
-            RichLogger.exception(f"Error adding record for {node_name} on {arch}: {e}")
+            RichLogger.exception(f"Error adding record for {node_name} on {triplet}: {e}")
             return False
 
     @classmethod
-    def remove_record(cls, arch: str, node_name: str) -> bool:
+    def remove_record(cls, triplet: str, node_name: str) -> bool:
         """
-        Remove installation record for a specific library node and architecture.
-
-        Deletes the specified library record and performs cleanup of empty architecture
-        entries to maintain data consistency. Handles non-existent records gracefully.
+        Remove installation record for a specific library node and triplet.
 
         Args:
-            arch (str): Target architecture identifier from which to remove the record
-            node_name (str): Library node identifier to remove from history
+            triplet: Target triplet identifier from which to remove the record
+            node_name: Library node identifier to remove from history
 
         Returns:
             bool: True if record was removed or didn't exist, False on persistence error
         """
         try:
-            records = cls._load_records()
+            records = cls._load_records(triplet)
             if not records:
                 return True
 
-            if arch in records and node_name in records[arch]:
-                # Remove the specific dependency type record
-                del records[arch][node_name]
-
-                # Clean up empty architecture entries
-                if not records[arch]:
-                    del records[arch]
-
-                return cls._save_records(records)
+            if node_name in records:
+                # Remove the specific library record
+                del records[node_name]
+                success = cls._save_records(triplet, records)
+                if success:
+                    RichLogger.info(f"[[bold green]{node_name}[/bold green]] Successfully removed installation record for triplet [magenta]{triplet}[/magenta]")
+                return success
             return True
         except Exception as e:
-            RichLogger.exception(f"Error removing record for {node_name} on {arch}: {e}")
+            RichLogger.exception(f"Error removing record for {node_name} on {triplet}: {e}")
             return False
 
     @classmethod
-    def check_installed(cls, arch: str, node_name: str) -> bool:
+    def check_installed(cls, triplet: str, node_name: str) -> bool:
         """
-        Verify if a specific library node is installed for a given architecture.
-
-        Checks the installation history for evidence of a successful installation
-        of the specified library node on the target architecture, regardless of
-        version or build timestamp.
+        Verify if a specific library node is installed for a given triplet.
 
         Args:
-            arch (str): Target architecture to check for installation
-            node_name (str): Library node identifier to verify installation status
+            triplet: Target triplet to check for installation
+            node_name: Library node identifier to verify installation status
 
         Returns:
-            bool: True if library node is recorded as installed for the architecture,
+            bool: True if library node is recorded as installed for the triplet,
                   False otherwise
         """
         try:
-            records = cls._load_records()
-            return arch in records and node_name in records[arch]
+            records = cls._load_records(triplet)
+            return node_name in records
         except Exception as e:
-            RichLogger.exception(f"Error checking installation status for {node_name} on {arch}: {e}")
+            RichLogger.exception(f"Error checking installation status for {node_name} on {triplet}: {e}")
             return False
 
     @classmethod
-    def check_for_update(cls, arch: str, node_name: str, config: dict) -> bool:
+    def check_for_update(cls, triplet: str, node_name: str, config: dict) -> bool:
         """
         Determine if a library node requires updating based on version comparison.
 
-        Compares the currently installed version (from history) with the target
-        version (from configuration) to identify update requirements. Also detects
-        missing installation records that would necessitate an initial installation.
-
         Args:
-            arch (str): Target architecture for version comparison
-            node_name (str): Library node identifier to check for updates
-            config (dict): Current library configuration containing target version
+            triplet: Target triplet for version comparison
+            node_name: Library node identifier to check for updates
+            config: Current library configuration containing target version
 
         Returns:
             bool: True if an update is required (version mismatch or not installed),
@@ -198,12 +173,12 @@ class HistoryManager:
         """
         try:
             # Check if library node is installed
-            installed = cls.check_installed(arch, node_name)
+            installed = cls.check_installed(triplet, node_name)
             if not installed:
                 return True
 
             # Get library node information
-            lib_info = cls.get_library_info(arch, node_name)
+            lib_info = cls.get_library_info(triplet, node_name)
             if not lib_info:
                 return True
 
@@ -214,34 +189,30 @@ class HistoryManager:
 
             return False
         except Exception as e:
-            RichLogger.exception(f"Error checking for update for {node_name} on {arch}: {e}")
+            RichLogger.exception(f"Error checking for update for {node_name} on {triplet}: {e}")
             return True
 
     @classmethod
-    def get_library_info(cls, arch: str, node_name: str) -> dict:
+    def get_library_info(cls, triplet: str, node_name: str) -> dict:
         """
         Retrieve comprehensive installation information for a specific library node.
 
-        Extracts complete installation metadata including version, build timestamp,
-        and architecture details. Handles various timestamp formats and provides
-        normalized datetime objects for consistent processing.
-
         Args:
-            arch (str): Target architecture from which to retrieve library information
-            node_name (str): Library node identifier for information lookup
+            triplet: Target triplet from which to retrieve library information
+            node_name: Library node identifier for information lookup
 
         Returns:
-            dict: Dictionary containing version string and datetime object for build time,
-                  or None if no record exists for the specified library and architecture
+            dict: Dictionary containing version string, datetime object for build time,
+                 or None if no record exists
         """
         try:
-            records = cls._load_records()
-            if not records or arch not in records or node_name not in records[arch]:
+            records = cls._load_records(triplet)
+            if not records or node_name not in records:
                 return None
 
-            record = records[arch][node_name]
+            record = records[node_name]
             result = {
-                'version': record.get('version'),
+                'version': record.get('version')
             }
 
             time_val = record.get('built')
@@ -254,22 +225,23 @@ class HistoryManager:
 
             return result
         except Exception as e:
-            RichLogger.exception(f"Error getting library info for {node_name} on {arch}: {e}")
+            RichLogger.exception(f"Error getting library info for {node_name} on {triplet}: {e}")
             return None
 
     @classmethod
-    def get_arch_records(cls, arch: str) -> dict:
-        """Get all records for a specific architecture.
+    def get_triplet_records(cls, triplet: str) -> dict:
+        """
+        Get all records for a specific triplet.
 
         Args:
-            arch: Target architecture identifier
+            triplet: Target triplet identifier
 
         Returns:
-            dict: Dictionary of library records for the architecture, or empty dict if none
+            dict: Dictionary of library records for the triplet, or empty dict if none
         """
         try:
-            records = cls._load_records()
-            return records.get(arch, {})
+            records = cls._load_records(triplet)
+            return records
         except Exception as e:
-            RichLogger.exception(f"Error getting records for arch {arch}: {e}")
+            RichLogger.exception(f"Error getting records for triplet {triplet}: {e}")
             return {}

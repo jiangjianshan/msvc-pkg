@@ -24,6 +24,9 @@ class Win32FileMonitor:
     OPEN_EXISTING = 3
     FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
 
+    # Symbolic link related flags
+    FILE_FLAG_OPEN_REPARSE_POINT = 0x00200000
+
     # Monitor flags - track all file operations
     FILE_NOTIFY_CHANGE_FILE_NAME = 0x00000001
     FILE_NOTIFY_CHANGE_DIR_NAME = 0x00000002
@@ -43,6 +46,7 @@ class Win32FileMonitor:
         """Initialize file monitor for specified directory."""
         self.target_dir = Path(target_dir).resolve()
         self.detected_files: Set[Path] = set()
+        self.detected_symlinks: Set[Path] = set()
         self._monitoring = False
         self._thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
@@ -99,20 +103,20 @@ class Win32FileMonitor:
             # Ensure target directory exists
             self.target_dir.mkdir(parents=True, exist_ok=True)
 
-            # Open directory handle
+            # Open directory handle with symbolic link support
             dir_handle = self.kernel32.CreateFileW(
                 str(self.target_dir),
                 self.FILE_LIST_DIRECTORY,
                 0x7,  # FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE
                 None,
                 self.OPEN_EXISTING,
-                self.FILE_FLAG_BACKUP_SEMANTICS,
+                self.FILE_FLAG_BACKUP_SEMANTICS | self.FILE_FLAG_OPEN_REPARSE_POINT,
                 None
             )
 
             if dir_handle == -1:
                 error = ctypes.WinError(ctypes.get_last_error())
-                RichLoger.error(f"Failed to open directory: {error}")
+                RichLogger.error(f"Failed to open directory: {error}")
                 return
 
             # Use larger buffer for notifications
@@ -144,7 +148,7 @@ class Win32FileMonitor:
 
                 if not success:
                     error = ctypes.WinError(ctypes.get_last_error())
-                    RichLoger.error(f"ReadDirectoryChangesW failed: {error}")
+                    RichLogger.error(f"ReadDirectoryChangesW failed: {error}")
                     time.sleep(0.1)
                     continue
 
@@ -155,13 +159,13 @@ class Win32FileMonitor:
                     time.sleep(0.05)
 
         except Exception as e:
-            RichLoger.error(f"Monitoring error: {e}")
+            RichLogger.error(f"Monitoring error: {e}")
         finally:
             if dir_handle and dir_handle != -1:
                 self.kernel32.CloseHandle(dir_handle)
 
     def _process_buffer(self, buffer, buffer_size):
-        """Process notification buffer - track file operations, exclude directories."""
+        """Process notification buffer - track all file operations, no filtering for directories."""
         offset = 0
 
         while offset < buffer_size:
@@ -178,16 +182,28 @@ class Win32FileMonitor:
                     filename = filename_bytes.decode('utf-16le').rstrip('\x00')
                     full_path = self.target_dir / filename
 
-                    # Track file operations, exclude directories
+                    # Track all file operations, including symbolic links
                     if action in [self.FILE_ACTION_ADDED,
                                 self.FILE_ACTION_RENAMED_NEW_NAME,
                                 self.FILE_ACTION_MODIFIED]:
                         try:
-                            # Only track files, exclude directories
-                            if full_path.exists() and full_path.is_file():
+                            # Track all paths, including directories and symbolic links
+                            if full_path.exists():
                                 self.detected_files.add(full_path)
+
+                                # Special handling for symbolic links
+                                if self._is_symlink(full_path):
+                                    self.detected_symlinks.add(full_path)
+
                         except OSError as e:
-                            RichLoger.error(f"Error accessing path {filename}: {e}")
+                            # Enhanced error handling for symbolic links
+                            if "symbolic link" in str(e).lower() or "reparse point" in str(e).lower():
+                                RichLogger.warning(f"Symbolic link access issue for {filename}: {e}")
+                                # Still track the path even if access is restricted
+                                self.detected_files.add(full_path)
+                                self.detected_symlinks.add(full_path)
+                            else:
+                                RichLogger.error(f"Error accessing path {filename}: {e}")
 
                 except UnicodeDecodeError:
                     # Skip filename decoding errors
@@ -198,20 +214,83 @@ class Win32FileMonitor:
                 break
             offset += next_entry_offset
 
+    def _is_symlink(self, path: Path) -> bool:
+        """Check if the given path is a symbolic link."""
+        try:
+            return path.is_symlink()
+        except (OSError, PermissionError):
+            # Fallback method for cases where is_symlink() fails
+            try:
+                if path.exists():
+                    # Check file attributes for reparse point flag
+                    attributes = ctypes.windll.kernel32.GetFileAttributesW(str(path))
+                    return attributes != -1 and (attributes & 0x400) != 0  # FILE_ATTRIBUTE_REPARSE_POINT
+            except:
+                pass
+        return False
+
+    def scan_existing_symlinks(self) -> List[str]:
+        """Scan and return all existing symbolic links in the target directory."""
+        symlinks_found = []
+
+        try:
+            RichLogger.info(f"Scanning for existing symbolic links in: {self.target_dir}")
+
+            for item in self.target_dir.iterdir():
+                try:
+                    if self._is_symlink(item):
+                        symlinks_found.append(item.name)
+                        self.detected_symlinks.add(item)
+                        RichLogger.info(f"Found existing symbolic link: {item.name}")
+                except (OSError, PermissionError) as e:
+                    RichLogger.warning(f"Cannot check symbolic link {item}: {e}")
+
+        except Exception as e:
+            RichLogger.error(f"Error scanning for symbolic links: {e}")
+
+        return sorted(symlinks_found)
+
+    def get_detected_symlinks(self) -> List[str]:
+        """Get list of detected symbolic links during monitoring."""
+        valid_symlinks = []
+
+        for symlink_path in self.detected_symlinks:
+            try:
+                if symlink_path.exists() and self._is_symlink(symlink_path):
+                    rel_path = symlink_path.relative_to(self.target_dir)
+                    valid_symlinks.append(str(rel_path).replace('\\', '/'))
+            except Exception as e:
+                RichLogger.error(f"Skipping invalid symbolic link {symlink_path}: {e}")
+
+        return sorted(valid_symlinks)
+
     def get_new_files(self) -> List[str]:
-        """Get list of new files detected during monitoring (excluding directories)."""
+        """Get list of new files detected during monitoring (including symbolic links)."""
         valid_files = []
 
         for file_path in self.detected_files:
             try:
-                # Only include files, exclude directories
-                if file_path.exists() and file_path.is_file():
+                # Include all paths, no directory filtering
+                if file_path.exists():
                     rel_path = file_path.relative_to(self.target_dir)
-                    valid_files.append(str(rel_path).replace('\\', '/'))  # Use forward slashes
+                    valid_files.append(str(rel_path).replace('\\', '/'))
             except Exception as e:
-                RichLoger.error(f"Skipping invalid file {file_path}: {e}")
+                RichLogger.error(f"Skipping invalid file {file_path}: {e}")
 
         return sorted(valid_files)
+
+    def refresh_detection(self) -> dict:
+        """Refresh detection and return all detected items including symbolic links."""
+        # Scan for existing symbolic links
+        self.scan_existing_symlinks()
+
+        return {
+            'all_files': self.get_new_files(),
+            'symlinks': self.get_detected_symlinks(),
+            'regular_files': [f for f in self.get_new_files()
+                            if f not in self.get_detected_symlinks()]
+        }
+
 
 # FILE_NOTIFY_INFORMATION structure for reference
 class FILE_NOTIFY_INFORMATION(ctypes.Structure):
